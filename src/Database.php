@@ -26,7 +26,7 @@ namespace Froq\Database;
 /**
  * @package    Froq
  * @subpackage Froq\Database
- * @object     Froq\Database\DatabaseException
+ * @object     Froq\Database\Database
  * @author     Kerem Güneş <k-gun@mail.com>
  */
 final class Database
