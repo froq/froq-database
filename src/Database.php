@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace Froq\Database;
 
+use Froq\Database\Vendor\{Vendor, VendorInterface, Mysql};
+
 /**
  * @package    Froq
  * @subpackage Froq\Database
@@ -30,4 +32,62 @@ namespace Froq\Database;
  * @author     Kerem Güneş <k-gun@mail.com>
  */
 final class Database
-{}
+{
+    /**
+    * Vendors.
+    * @const string
+    */
+    const VENDOR_MYSQL = 'mysql',
+          VENDOR_COUCH = 'couch',
+          VENDOR_MONGO = 'mongo';
+
+    /**
+     * Instances.
+     * @var array
+     */
+    private static $instances = [];
+
+    /**
+     * Constructor.
+     */
+    final public function __construct()
+    {}
+
+    /**
+     * Init.
+     * @param  string $vendor
+     * @return Froq\Database\Vendor\VendorInterface
+     */
+    final public static function init(string $vendor): VendorInterface
+    {
+        if (isset(self::$instances[$vendor])) {
+            return self::$instances[$vendor];
+        }
+
+        $app = app();
+        $cfg = $app->config->get('db');
+        if (!isset($cfg[$vendor][$app->env])) {
+            throw new DatabaseException("'{$vendor}' options not found in config!");
+        }
+
+        switch ($vendor) {
+            // only mysql for now
+            case self::VENDOR_MYSQL:
+                $instance = Mysql::init($cfg[$vendor][$app->env]);
+                break;
+            default:
+                throw new DatabaseException('Unimplemented vendor given!');
+        }
+
+        return (self::$instances[$vendor] = $instance);
+    }
+
+    /**
+     * Create a MySQL worker instance.
+     * @return Froq\Database\Vendor\Mysql
+     */
+    final public static function initMysql(): Mysql
+    {
+        return self::init(self::VENDOR_MYSQL);
+    }
+}
