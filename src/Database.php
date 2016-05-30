@@ -83,7 +83,7 @@ final class Database
     }
 
     /**
-     * Create a MySQL worker instance.
+     * Init MySQL.
      * @return Froq\Database\Vendor\Mysql
      */
     final public static function initMysql(): Mysql
