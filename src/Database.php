@@ -60,26 +60,28 @@ final class Database
      */
     final public static function init(string $vendor): VendorInterface
     {
-        if (isset(self::$instances[$vendor])) {
-            return self::$instances[$vendor];
+        if (!isset(self::$instances[$vendor])) {
+            $app = app();
+            $appEnv = $app->env;
+            $appConfig = $app->config;
+
+            $cfg = $appConfig['db'];
+            if (!isset($cfg[$vendor][$appEnv])) {
+                throw new DatabaseException(
+                    "'{$vendor}' options not found for '{$appEnv}' env in config!");
+            }
+
+            switch ($vendor) {
+                // only mysql for now
+                case self::VENDOR_MYSQL:
+                    self::$instances[$vendor] = Mysql::init($cfg[$vendor][$appEnv]);
+                    break;
+                default:
+                    throw new DatabaseException('Unimplemented vendor given!');
+            }
         }
 
-        $app = app();
-        $cfg = $app->config->get('db');
-        if (!isset($cfg[$vendor][$app->env])) {
-            throw new DatabaseException("'{$vendor}' options not found in config!");
-        }
-
-        switch ($vendor) {
-            // only mysql for now
-            case self::VENDOR_MYSQL:
-                $instance = Mysql::init($cfg[$vendor][$app->env]);
-                break;
-            default:
-                throw new DatabaseException('Unimplemented vendor given!');
-        }
-
-        return (self::$instances[$vendor] = $instance);
+        return self::$instances[$vendor];
     }
 
     /**
