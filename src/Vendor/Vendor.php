@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Froq\Database\Vendor;
 
-use Froq\Util\Traits\SingleTrait as Single;
+use Froq\Util\Traits\SingleTrait;
 
 /**
  * @package    Froq
@@ -37,7 +37,7 @@ abstract class Vendor implements VendorInterface
      * Single.
      * @object Froq\Util\Traits\SingleTrait
      */
-    use Single;
+    use SingleTrait;
 
     /**
      * Database.
