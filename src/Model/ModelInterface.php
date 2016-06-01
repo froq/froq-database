@@ -26,7 +26,7 @@ namespace Froq\Database\Model;
 /**
  * @package    Froq
  * @subpackage Froq\Database\Model
- * @object     Froq\Database\ModelInterface
+ * @object     Froq\Database\Model\ModelInterface
  * @author     Kerem Güneş <k-gun@mail.com>
  */
 interface ModelInterface
