@@ -11,7 +11,7 @@
         "php": "^7.0",
         "froq/froq": "~1.0",
         "froq/froq-util": "~1.0",
-        "k-gun/oppa": "~2.1"
+        "k-gun/oppa": "~2.2"
     },
     "autoload": {
         "classmap": ["src/"]
