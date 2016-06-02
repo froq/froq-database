@@ -30,4 +30,34 @@ namespace Froq\Database\Model;
  * @author     Kerem Güneş <k-gun@mail.com>
  */
 interface ModelInterface
-{}
+{
+    /**
+     * Find.
+     * @return any
+     */
+    public function find();
+
+    /**
+     * Find all.
+     * @return any
+     */
+    public function findAll();
+
+    /**
+     * Save.
+     * @return any
+     */
+    public function save();
+
+    /**
+     * Remove.
+     * @return bool
+     */
+    public function remove(): bool;
+
+    /**
+     * Count.
+     * @return int
+     */
+    public function count(): int;
+}
