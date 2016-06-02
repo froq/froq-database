@@ -51,9 +51,9 @@ interface ModelInterface
 
     /**
      * Remove.
-     * @return bool
+     * @return int|bool
      */
-    public function remove(): bool;
+    public function remove();
 
     /**
      * Count.
