@@ -23,6 +23,9 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
+use Froq\Pager\Pager;
+use Froq\Database\Vendor\VendorInterface;
+
 /**
  * @package    Froq
  * @subpackage Froq\Database\Model
@@ -30,4 +33,200 @@ namespace Froq\Database\Model;
  * @author     Kerem Güneş <k-gun@mail.com>
  */
 abstract class Model implements ModelInterface
-{}
+{
+    /**
+     * Db.
+     * @var Froq\Database\Vendor\VendorInterface
+     */
+    protected $db;
+
+    /**
+     * Stack.
+     * @var string
+     */
+    protected $stack;
+
+    /**
+     * Stack primary.
+     * @var string
+     */
+    protected $stackPrimary;
+
+    /**
+     * Use transaction.
+     * @var bool
+     */
+    protected $useTransaction = true;
+
+    /**
+     * Pager.
+     * @var Froq\Pager\Pager
+     */
+    protected $pager;
+
+    /**
+     * Fail.
+     * @var \Throwable|null
+     */
+    protected $fail;
+
+    /**
+     * Data.
+     * @var Froq\Database\Model\ModelData
+     */
+    protected $data;
+
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        $this->data = new ModelData();
+    }
+
+    /**
+     * Set.
+     * @param string $key
+     * @param any    $value
+     */
+    final public function __set(string $key, $value)
+    {
+        $this->data->set($key, $value);
+    }
+
+    /**
+     * Get.
+     * @param  string $key
+     * @return any
+     */
+    final public function __get(string $key)
+    {
+        return $this->data->get($key);
+    }
+
+    /**
+     * Isset.
+     * @param  string $key
+     * @return bool
+     */
+    final public function __isset(string $key): bool
+    {
+        return $this->data->isset($key);
+    }
+
+    /**
+     * Unset.
+     * @param  string $key
+     * @return void
+     */
+    final public function __unset(string $key)
+    {
+        return $this->data->unset($key);
+    }
+
+    /**
+     * Set db.
+     * @param Froq\Database\Vendor\VendorInterface $db
+     */
+    final public function setDb(VendorInterface $db)
+    {
+        $this->db = $db;
+    }
+
+    /**
+     * Get db.
+     * @return Froq\Database\Vendor\VendorInterface
+     */
+    final public function getDb(): VendorInterface
+    {
+        return $this->db;
+    }
+
+    /**
+     * Set pager.
+     * @param Froq\Pager\Pager $pager
+     */
+    final public function setPager(Pager $pager)
+    {
+        $this->pager = $pager;
+    }
+
+    /**
+     * Get pager.
+     * @return Froq\Pager\Pager|null
+     */
+    final public function getPager()
+    {
+        return $this->pager;
+    }
+
+    /**
+     * Set fail.
+     * @param  \Throwable $fail
+     * @return void
+     */
+    final public function setFail(\Throwable $fail)
+    {
+        $this->fail = $fail;
+    }
+
+    /**
+     * Get fail.
+     * @return \Throwable|null
+     */
+    final public function getFail()
+    {
+        return $this->fail;
+    }
+
+    /**
+     * Is fail.
+     * @return bool
+     */
+    final public function isFail(): bool
+    {
+        return ($this->fail != null);
+    }
+
+    /**
+     * Set stack primary value.
+     * @param  any $value
+     * @return void
+     */
+    final public function setStackPrimaryValue($value)
+    {
+        $this->data->set($this->stackPrimary, $value);
+    }
+
+    /**
+     * Get stack primary value.
+     * @return any
+     */
+    final public function getStackPrimaryValue()
+    {
+        return $this->data->get($this->stackPrimary);
+    }
+
+    /**
+     * Load.
+     * @param  array $data
+     * @return void
+     */
+    final public function load(array $data)
+    {
+        foreach ($data as $key => $value) {
+            $this->data->set($key, $value);
+        }
+    }
+
+    /**
+     * Unload.
+     * @return void
+     */
+    final public function unload()
+    {
+        foreach ($this->data->keys() as $key) {
+            $this->data->unset($key);
+        }
+    }
+}
