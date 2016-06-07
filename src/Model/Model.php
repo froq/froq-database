@@ -81,7 +81,8 @@ abstract class Model implements ModelInterface
      */
     public function __construct()
     {
-        $this->data = new ModelData();
+        $this->pager = new Pager();
+        $this->data  = new ModelData();
 
         // call init if exists
         if (method_exists($this, 'init')) {
