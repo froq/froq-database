@@ -72,7 +72,7 @@ class Mysql extends Model
      * @return any
      */
     public function findAll(string $where = null, array $whereParams = null,
-        int $limit = 10, int $order = -1)
+        int $limit = null, int $order = -1)
     {
         try {
             $query = $this->queryBuilder();
@@ -90,7 +90,21 @@ class Mysql extends Model
                 $query->orderBy($this->stackPrimary, QueryBuilder::OP_ASC);
             }
 
-            return $query->limit($limit)->getAll();
+            // paginate
+            if ($limit === null) {
+                $this->pager->setTotalRecords($query->count());
+                $this->pager->run();
+
+                $start = $this->pager->getStart();
+                $stop = $this->pager->getStop();
+                if ($start || $stop) {
+                    $query->limit($start, $stop);
+                }
+            } else {
+                $query->limit($limit);
+            }
+
+            return $query->getAll();
         } catch (\Throwable $e) {
             $this->setFail($e);
         }
