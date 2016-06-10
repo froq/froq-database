@@ -92,11 +92,7 @@ class Mysql extends Model
 
             // paginate
             if ($limit === null) {
-                $this->pager->setTotalRecords($query->count());
-                $this->pager->run();
-
-                $start = $this->pager->getStart();
-                $stop = $this->pager->getStop();
+                list($start, $stop) = $this->pager->setTotalRecords($query->count())->run();
                 if ($start || $stop) {
                     $query->limit($start, $stop);
                 }
