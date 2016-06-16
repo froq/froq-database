@@ -132,7 +132,7 @@ class Mysql extends Model
             }
 
             if ($this->useTransaction) {
-                $result = $batch->queue($query->toString())->run()->getResult()[0] ?? null;
+                $result = $batch->runQuery($query->toString())->getResult();
             } else {
                 $result = $agent->query($query->toString());
             }
@@ -182,7 +182,7 @@ class Mysql extends Model
             $query->delete()->whereEqual($this->stackPrimary, $id);
 
             if ($this->useTransaction) {
-                $result = $batch->queue($query->toString())->run()->getResult()[0] ?? null;
+                $result = $batch->runQuery($query->toString())->getResult();
             } else {
                 $result = $agent->query($query->toString());
             }
