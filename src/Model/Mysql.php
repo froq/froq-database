@@ -112,7 +112,7 @@ class Mysql extends Model
      */
     public function save()
     {
-        $agent = $this->db->getConnection()->getAgent();
+        $agent = $this->db->getLink()->getAgent();
         $batch = null;
         if ($this->useTransaction) {
             $batch = $agent->getBatch();
@@ -167,7 +167,7 @@ class Mysql extends Model
             return false;
         }
 
-        $agent = $this->db->getConnection()->getAgent();
+        $agent = $this->db->getLink()->getAgent();
         $batch = null;
         if ($this->useTransaction) {
             $batch = $agent->getBatch();
@@ -233,7 +233,7 @@ class Mysql extends Model
     final public function queryBuilder(string $stack = null): QueryBuilder
     {
         $queryBuilder = new QueryBuilder();
-        $queryBuilder->setConnection($this->db->getConnection());
+        $queryBuilder->setLink($this->db->getLink());
 
         // use self name
         if ($stack == '') {
