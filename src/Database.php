@@ -72,7 +72,7 @@ final class Database
             }
 
             switch ($vendor) {
-                // only mysql for now
+                // only mysql & pgsql for now
                 case self::VENDOR_MYSQL:
                 case self::VENDOR_PGSQL:
                     self::$instances[$vendor] = Oppa::init($cfg[$vendor][$appEnv]);
