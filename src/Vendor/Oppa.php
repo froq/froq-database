@@ -28,10 +28,10 @@ use Oppa\Database;
 /**
  * @package    Froq
  * @subpackage Froq\Database\Vendor
- * @object     Froq\Database\Vendor\Mysql
+ * @object     Froq\Database\Vendor\Oppa
  * @author     Kerem Güneş <k-gun@mail.com>
  */
-final class Mysql extends Vendor
+final class Oppa extends Vendor
 {
     /**
      * Constructor.

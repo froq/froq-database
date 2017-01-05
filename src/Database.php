@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Froq\Database;
 
-use Froq\Database\Vendor\{Vendor, VendorInterface, Mysql};
+use Froq\Database\Vendor\{Vendor, VendorInterface, Oppa};
 
 /**
  * @package    Froq
@@ -38,6 +38,7 @@ final class Database
     * @const string
     */
     const VENDOR_MYSQL = 'mysql',
+          VENDOR_PGSQL = 'pgsql',
           VENDOR_COUCH = 'couch',
           VENDOR_MONGO = 'mongo';
 
@@ -50,8 +51,7 @@ final class Database
     /**
      * Constructor.
      */
-    final public function __construct()
-    {}
+    final public function __construct() {}
 
     /**
      * Init.
@@ -62,8 +62,8 @@ final class Database
     {
         if (!isset(self::$instances[$vendor])) {
             $app = app();
-            $appEnv = $app->env;
-            $appConfig = $app->config;
+            $appEnv = $app->getEnv();
+            $appConfig = $app->getConfig();
 
             $cfg = $appConfig['db'];
             if (!isset($cfg[$vendor][$appEnv])) {
@@ -74,7 +74,8 @@ final class Database
             switch ($vendor) {
                 // only mysql for now
                 case self::VENDOR_MYSQL:
-                    self::$instances[$vendor] = Mysql::init($cfg[$vendor][$appEnv]);
+                case self::VENDOR_PGSQL:
+                    self::$instances[$vendor] = Oppa::init($cfg[$vendor][$appEnv]);
                     break;
                 default:
                     throw new DatabaseException('Unimplemented vendor given!');
@@ -85,10 +86,10 @@ final class Database
     }
 
     /**
-     * Init MySQL.
-     * @return Froq\Database\Vendor\Mysql
+     * Init oppa (mysql & pgsql).
+     * @return Froq\Database\Vendor\Oppa
      */
-    final public static function initMysql(): Mysql
+    final public static function initOppa(): Oppa
     {
         return self::init(self::VENDOR_MYSQL);
     }

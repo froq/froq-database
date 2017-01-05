@@ -28,17 +28,17 @@ use Oppa\Query\Builder as QueryBuilder;
 /**
  * @package    Froq
  * @subpackage Froq\Database\Model
- * @object     Froq\Database\Model\Mysql
+ * @object     Froq\Database\Model\Oppa
  * @author     Kerem Güneş <k-gun@mail.com>
  */
-class Mysql extends Model
+class Oppa extends Model
 {
     /**
      * Constructor.
      */
     final public function __construct()
     {
-        $this->db = app('db')->initMysql();
+        $this->db = app('db')->initOppa();
 
         parent::__construct();
     }
