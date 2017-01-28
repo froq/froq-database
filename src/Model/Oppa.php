@@ -50,14 +50,18 @@ class Oppa extends Model
      */
     public function find($id = null)
     {
-        $id = $id ?? $this->getStackPrimaryValue();
-        if ($id === null) {
+        $idn = $this->getStackPrimary();
+        if (!$idn) {
+            throw new ModelException('Stack primary is not defined!');
+        }
+
+        $idv = $idv ?? $this->getStackPrimaryValue();
+        if ($idv === null) {
             return;
         }
 
         try {
-            return $this->queryBuilder()
-                ->select('*')->whereEqual($this->stackPrimary, $id)->limit(1)->get();
+            return $this->queryBuilder()->select('*')->whereEqual($idn, $id)->limit(1)->get();
         } catch (\Throwable $e) {
             $this->setFail($e);
         }
@@ -71,23 +75,26 @@ class Oppa extends Model
      * @param  int         $order
      * @return any
      */
-    public function findAll(string $where = null, array $whereParams = null,
-        int $limit = null, int $order = -1)
+    public function findAll(string $where = null, array $whereParams = null, int $limit = null,
+        int $order = -1)
     {
+        $idn = $this->getStackPrimary();
+        if (!$idn) {
+            throw new ModelException('Stack primary is not defined!');
+        }
+
         try {
             $query = $this->queryBuilder();
             $query->select('*');
 
-            // where
             if ($where) {
                 $query->where($where, $whereParams);
             }
 
-            // order
             if ($order == -1) {
-                $query->orderBy($this->stackPrimary, QueryBuilder::OP_DESC);
+                $query->orderBy($idn, QueryBuilder::OP_DESC);
             } elseif ($order == 1) {
-                $query->orderBy($this->stackPrimary, QueryBuilder::OP_ASC);
+                $query->orderBy($idn, QueryBuilder::OP_ASC);
             }
 
             // paginate
@@ -124,21 +131,25 @@ class Oppa extends Model
 
         $return = null;
         try {
-            $id = $this->getStackPrimaryValue();
-            if (!$id) { // insert
-                $query->insert($this->data->toArray());
-            } else {    // update
-                $query->update($this->data->toArray())->whereEqual($this->stackPrimary, $id);
+            $idv = $this->getStackPrimaryValue();
+            if (!$idv) { // insert
+                $query = $query->insert($this->data->toArray())->toString();
+            } else {     // update
+                $idn = $this->getStackPrimary();
+                if (!$idn) {
+                    throw new ModelException('Stack primary is not defined!');
+                }
+                $query = $query->update($this->data->toArray())->whereEqual($idn, $idv)->toString();
             }
 
-            if ($this->useTransaction) {
-                $result = $batch->runQuery($query->toString())->getResult();
+            if ($batch) {
+                $result = $batch->runQuery($query)->getResult();
             } else {
-                $result = $agent->query($query->toString());
+                $result = $agent->query($query);
             }
 
             // set return
-            if ($id) {
+            if ($idv) {
                 $return = $result ? $result->getRowsAffected() : 0;
             } else {
                 // set with new id
@@ -162,8 +173,13 @@ class Oppa extends Model
      */
     public function remove()
     {
-        $id = $this->getStackPrimaryValue();
-        if (!$id) {
+        $idn = $this->getStackPrimary();
+        if (!$idn) {
+            throw new ModelException('Stack primary is not defined!');
+        }
+
+        $idv = $this->getStackPrimaryValue();
+        if (!$idv) {
             return false;
         }
 
@@ -179,12 +195,12 @@ class Oppa extends Model
 
         $return = false;
         try {
-            $query->delete()->whereEqual($this->stackPrimary, $id);
+            $query = $query->delete()->whereEqual($idn, $idv)->toString();
 
-            if ($this->useTransaction) {
-                $result = $batch->runQuery($query->toString())->getResult();
+            if ($batch) {
+                $result = $batch->runQuery($query)->getResult();
             } else {
-                $result = $agent->query($query->toString());
+                $result = $agent->query($query);
             }
 
             // set return
@@ -236,8 +252,10 @@ class Oppa extends Model
         $queryBuilder->setLink($this->db->getLink());
 
         // use self name
-        if ($stack == '') {
-            $stack = $this->stack;
+        $stack =  $stack ?: $this->stack;
+
+        if (!$stack) {
+            throw new ModelException('Stack is not defined!');
         }
 
         $queryBuilder->setTable($stack);
