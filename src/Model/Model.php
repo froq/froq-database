@@ -132,7 +132,8 @@ abstract class Model implements ModelInterface
 
     /**
      * Set db.
-     * @param Froq\Database\Vendor\VendorInterface $db
+     * @param  Froq\Database\Vendor\VendorInterface $db
+     * @return void
      */
     final public function setDb(VendorInterface $db)
     {
@@ -149,8 +150,47 @@ abstract class Model implements ModelInterface
     }
 
     /**
+     * Set stack.
+     * @param  string $stack
+     * @return void
+     */
+    final public function setStack(string $stack)
+    {
+        $this->stack = $stack;
+    }
+
+    /**
+     * Get stack.
+     * @return string|null
+     */
+    final public function getStack()
+    {
+        return $this->stack;
+    }
+
+    /**
+     * Set stack primary.
+     * @param  string $stackPrimary
+     * @return void
+     */
+    final public function setStackPrimary(string $stackPrimary)
+    {
+        $this->stackPrimary = $stackPrimary;
+    }
+
+    /**
+     * Get stack primary.
+     * @return string|null
+     */
+    final public function getStackPrimary()
+    {
+        return $this->stackPrimary;
+    }
+
+    /**
      * Set pager.
-     * @param Froq\Pager\Pager $pager
+     * @param  Froq\Pager\Pager $pager
+     * @return void
      */
     final public function setPager(Pager $pager)
     {
