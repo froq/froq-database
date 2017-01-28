@@ -143,7 +143,7 @@ class Oppa extends Model
             }
 
             if ($batch) {
-                $result = $batch->runQuery($query)->getResult();
+                $result = $batch->doQuery($query)->getResult();
             } else {
                 $result = $agent->query($query);
             }
@@ -159,7 +159,7 @@ class Oppa extends Model
             $this->setFail($e);
 
             // rollback
-            $batch && $batch->cancel();
+            $batch && $batch->undo();
         }
 
         $batch && $batch->unlock();
@@ -198,7 +198,7 @@ class Oppa extends Model
             $query = $query->delete()->whereEqual($idn, $idv)->toString();
 
             if ($batch) {
-                $result = $batch->runQuery($query)->getResult();
+                $result = $batch->doQuery($query)->getResult();
             } else {
                 $result = $agent->query($query);
             }
@@ -209,7 +209,7 @@ class Oppa extends Model
             $this->setFail($e);
 
             // rollback
-            $batch && $batch->cancel();
+            $batch && $batch->undo();
         }
 
         $batch && $batch->unlock();
