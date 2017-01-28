@@ -188,6 +188,25 @@ abstract class Model implements ModelInterface
     }
 
     /**
+     * Set stack primary value.
+     * @param  any $value
+     * @return void
+     */
+    final public function setStackPrimaryValue($value)
+    {
+        $this->data->set($this->stackPrimary, $value);
+    }
+
+    /**
+     * Get stack primary value.
+     * @return any
+     */
+    final public function getStackPrimaryValue()
+    {
+        return $this->data->get($this->stackPrimary);
+    }
+
+    /**
      * Set pager.
      * @param  Froq\Pager\Pager $pager
      * @return void
@@ -232,25 +251,6 @@ abstract class Model implements ModelInterface
     final public function isFail(): bool
     {
         return ($this->fail != null);
-    }
-
-    /**
-     * Set stack primary value.
-     * @param  any $value
-     * @return void
-     */
-    final public function setStackPrimaryValue($value)
-    {
-        $this->data->set($this->stackPrimary, $value);
-    }
-
-    /**
-     * Get stack primary value.
-     * @return any
-     */
-    final public function getStackPrimaryValue()
-    {
-        return $this->data->get($this->stackPrimary);
     }
 
     /**
