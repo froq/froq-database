@@ -121,7 +121,7 @@ class Oppa extends Model
     {
         $agent = $this->db->getLink()->getAgent();
         $batch = null;
-        if ($this->useTransaction) {
+        if ($this->usesTransaction()) {
             $batch = $agent->getBatch();
             $batch->lock();
         }
@@ -185,7 +185,7 @@ class Oppa extends Model
 
         $agent = $this->db->getLink()->getAgent();
         $batch = null;
-        if ($this->useTransaction) {
+        if ($this->usesTransaction()) {
             $batch = $agent->getBatch();
             $batch->lock();
         }
