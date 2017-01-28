@@ -194,7 +194,9 @@ abstract class Model implements ModelInterface
      */
     final public function setStackPrimaryValue($value)
     {
-        $this->data->set($this->stackPrimary, $value);
+        if ($this->stackPrimary) {
+            $this->data->set($this->stackPrimary, $value);
+        }
     }
 
     /**
@@ -203,7 +205,9 @@ abstract class Model implements ModelInterface
      */
     final public function getStackPrimaryValue()
     {
-        return $this->data->get($this->stackPrimary);
+        if ($this->stackPrimary) {
+            return $this->data->get($this->stackPrimary);
+        }
     }
 
     /**
