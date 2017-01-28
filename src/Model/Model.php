@@ -254,6 +254,15 @@ abstract class Model implements ModelInterface
     }
 
     /**
+     * Uses transaction.
+     * @return bool
+     */
+    final public function usesTransaction(): bool
+    {
+        return !!$this->useTransaction;
+    }
+
+    /**
      * Load.
      * @param  array $data
      * @return void
