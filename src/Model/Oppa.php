@@ -55,7 +55,7 @@ class Oppa extends Model
             throw new ModelException('Stack primary is not defined!');
         }
 
-        $idv = $idv ?? $this->getStackPrimaryValue();
+        $idv = $id ?? $this->getStackPrimaryValue();
         if ($idv === null) {
             return;
         }
