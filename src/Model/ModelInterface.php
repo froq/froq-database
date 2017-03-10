@@ -33,15 +33,41 @@ interface ModelInterface
 {
     /**
      * Find.
+     * @param int|string $id
      * @return any
      */
-    public function find();
+    public function find($id = null);
 
     /**
      * Find all.
+     * @param  string|null $where
+     * @param  array|null  $whereParams
+     * @param  int|null    $limit
+     * @param  int         $order
      * @return any
      */
-    public function findAll();
+    public function findAll(string $where = null, array $whereParams = null, int $limit = null,
+        int $order = -1);
+
+    /**
+     * Find by.
+     * @param  string $field
+     * @param  any    $fieldParam
+     * @param  int    $order
+     * @return any
+     */
+    public function findBy(string $field, $fieldParam, int $order = -1);
+
+    /**
+     * Find by all.
+     * @param  string     $field
+     * @param  array|null $fieldParam
+     * @param  int|null   $limit
+     * @param  int        $order
+     * @return any
+     */
+    public function findByAll(string $field, array $fieldParam = null, int $limit = null,
+        int $order = -1);
 
     /**
      * Save.

@@ -114,6 +114,32 @@ class Oppa extends Model
     }
 
     /**
+     * Find by.
+     * @param  string $field
+     * @param  any    $fieldParam
+     * @param  int    $order
+     * @return any
+     */
+    public function findBy(string $field, $fieldParam, int $order = -1)
+    {
+        return $this->findAll($field .' = %s', [$fieldParam], 1, $order)[0] ?? null;
+    }
+
+    /**
+     * Find by all.
+     * @param  string     $field
+     * @param  array|null $fieldParam
+     * @param  int|null   $limit
+     * @param  int        $order
+     * @return any
+     */
+    public function findByAll(string $field, array $fieldParam = null, int $limit = null,
+        int $order = -1)
+    {
+        return $this->findAll($field .' = %s', [$fieldParam], $limit, $order);
+    }
+
+    /**
      * Save an object.
      * @return int|null
      */
