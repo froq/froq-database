@@ -157,16 +157,17 @@ class Oppa extends Model
 
         $return = null;
         try {
+            $data = $this->data->toArray();
+
             $pv = $this->getStackPrimaryValue();
             if (!$pv) { // insert
-                $query = $query->insert($this->data->toArray())->toString();
+                $query = $query->insert($data)->toString();
             } else {    // update
                 $pn = $this->getStackPrimary();
                 if (!$pn) {
                     throw new ModelException('Stack primary is not defined!');
                 }
 
-                $data = $this->data->toArray();
                 // drop primary name
                 unset($data[$pn]);
 
@@ -178,6 +179,9 @@ class Oppa extends Model
             } else {
                 $result = $agent->query($query);
             }
+
+            // free data
+            $this->reset();
 
             // set return
             if ($pv) {
