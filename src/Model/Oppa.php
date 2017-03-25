@@ -45,23 +45,23 @@ class Oppa extends Model
 
     /**
      * Find.
-     * @param  any $id
+     * @param  any $pv
      * @return any
      */
-    public function find($id = null)
+    public function find($pv = null)
     {
-        $idn = $this->getStackPrimary();
-        if (!$idn) {
+        $pn = $this->getStackPrimary();
+        if (!$pn) {
             throw new ModelException('Stack primary is not defined!');
         }
 
-        $idv = $id ?? $this->getStackPrimaryValue();
-        if ($idv === null) {
+        $pv = $pv ?? $this->getStackPrimaryValue();
+        if ($pv === null) {
             return;
         }
 
         try {
-            return $this->queryBuilder()->select('*')->whereEqual($idn, $id)->limit(1)->get();
+            return $this->queryBuilder()->select('*')->whereEqual($pn, $pv)->limit(1)->get();
         } catch (\Throwable $e) {
             $this->setFail($e);
         }
@@ -78,8 +78,8 @@ class Oppa extends Model
     public function findAll(string $where = null, array $whereParams = null, int $limit = null,
         int $order = -1)
     {
-        $idn = $this->getStackPrimary();
-        if (!$idn) {
+        $pn = $this->getStackPrimary();
+        if (!$pn) {
             throw new ModelException('Stack primary is not defined!');
         }
 
@@ -92,9 +92,9 @@ class Oppa extends Model
             }
 
             if ($order == -1) {
-                $query->orderBy($idn, QueryBuilder::OP_DESC);
+                $query->orderBy($pn, QueryBuilder::OP_DESC);
             } elseif ($order == 1) {
-                $query->orderBy($idn, QueryBuilder::OP_ASC);
+                $query->orderBy($pn, QueryBuilder::OP_ASC);
             }
 
             // paginate
@@ -145,8 +145,8 @@ class Oppa extends Model
      */
     public function save()
     {
-        $agent = $this->db->getLink()->getAgent();
         $batch = null;
+        $agent = $this->db->getLink()->getAgent();
         if ($this->usesTransaction()) {
             $batch = $agent->getBatch();
             $batch->lock();
@@ -157,15 +157,20 @@ class Oppa extends Model
 
         $return = null;
         try {
-            $idv = $this->getStackPrimaryValue();
-            if (!$idv) { // insert
+            $pv = $this->getStackPrimaryValue();
+            if (!$pv) { // insert
                 $query = $query->insert($this->data->toArray())->toString();
-            } else {     // update
-                $idn = $this->getStackPrimary();
-                if (!$idn) {
+            } else {    // update
+                $pn = $this->getStackPrimary();
+                if (!$pn) {
                     throw new ModelException('Stack primary is not defined!');
                 }
-                $query = $query->update($this->data->toArray())->whereEqual($idn, $idv)->toString();
+
+                $data = $this->data->toArray();
+                // drop primary name
+                unset($data[$pn]);
+
+                $query = $query->update($data)->whereEqual($pn, $pv)->toString();
             }
 
             if ($batch) {
@@ -175,7 +180,7 @@ class Oppa extends Model
             }
 
             // set return
-            if ($idv) {
+            if ($pv) {
                 $return = $result ? $result->getRowsAffected() : 0;
             } else {
                 // set with new id
@@ -199,18 +204,18 @@ class Oppa extends Model
      */
     public function remove()
     {
-        $idn = $this->getStackPrimary();
-        if (!$idn) {
+        $pn = $this->getStackPrimary();
+        if (!$pn) {
             throw new ModelException('Stack primary is not defined!');
         }
 
-        $idv = $this->getStackPrimaryValue();
-        if (!$idv) {
+        $pv = $this->getStackPrimaryValue();
+        if (!$pv) {
             return false;
         }
 
-        $agent = $this->db->getLink()->getAgent();
         $batch = null;
+        $agent = $this->db->getLink()->getAgent();
         if ($this->usesTransaction()) {
             $batch = $agent->getBatch();
             $batch->lock();
@@ -221,7 +226,7 @@ class Oppa extends Model
 
         $return = false;
         try {
-            $query = $query->delete()->whereEqual($idn, $idv)->toString();
+            $query = $query->delete()->whereEqual($pn, $pv)->toString();
 
             if ($batch) {
                 $result = $batch->doQuery($query)->getResult();
