@@ -269,23 +269,36 @@ abstract class Model implements ModelInterface
     /**
      * Load.
      * @param  array $data
-     * @return void
+     * @return self
      */
-    final public function load(array $data)
+    final public function load(array $data): self
     {
         foreach ($data as $key => $value) {
             $this->data->set($key, $value);
         }
+
+        return $this;
     }
 
     /**
      * Unload.
-     * @return void
+     * @return self
      */
-    final public function unload()
+    final public function unload(): self
     {
         foreach ($this->data->keys() as $key) {
             $this->data->unset($key);
         }
+
+        return $this;
+    }
+
+    /**
+     * Reset.
+     * @return void
+     */
+    final public function reset()
+    {
+        $this->data->empty();
     }
 }
