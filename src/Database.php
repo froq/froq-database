@@ -86,11 +86,12 @@ final class Database
     }
 
     /**
-     * Init oppa (mysql & pgsql).
+     * Init oppa.
+     * @param  string $vendor
      * @return Froq\Database\Vendor\Oppa
      */
-    final public static function initOppa(): Oppa
+    final public static function initOppa(string $vendor = self::VENDOR_MYSQL): Oppa
     {
-        return self::init(self::VENDOR_MYSQL);
+        return self::init($vendor);
     }
 }
