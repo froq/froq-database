@@ -46,10 +46,15 @@ abstract class Vendor implements VendorInterface
     protected $db;
 
     /**
-     * Call (proxy call method to database object methods).
-     * @param  string $method
-     * @param  array  $arguments
-     * @return any
+     * @inheritDoc
+     */
+    final public function getDb()
+    {
+        return $this->db;
+    }
+
+    /**
+     * @inheritDoc
      */
     final public function __call(string $method, array $arguments)
     {

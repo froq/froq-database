@@ -32,6 +32,12 @@ namespace Froq\Database\Vendor;
 interface VendorInterface
 {
     /**
+     * Get db.
+     * @return object|null
+     */
+    public function getDb();
+
+    /**
      * Call (proxy call method to database object methods).
      * @param  string $method
      * @param  array  $arguments
