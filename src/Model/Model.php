@@ -79,7 +79,7 @@ abstract class Model implements ModelInterface
     /**
      * Constructor.
      */
-    final public function __construct()
+    public function __construct()
     {
         $this->pager = new Pager();
         $this->data  = new ModelData();
