@@ -62,7 +62,7 @@ class Oppa extends Model
 
         try {
             return $this->queryBuilder()->select('*')->whereEqual($pn, $pv)->limit(1)->get();
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             $this->setFail($e);
         }
     }
@@ -110,7 +110,7 @@ class Oppa extends Model
             }
 
             return $query->getAll();
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             $this->setFail($e);
         }
     }
@@ -192,7 +192,7 @@ class Oppa extends Model
                 // set with new id
                 $result && $this->setStackPrimaryValue($return = $result->getId());
             }
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             $this->setFail($e);
 
             // rollback
@@ -242,7 +242,7 @@ class Oppa extends Model
 
             // set return
             $return = $result ? $result->getRowsAffected() : 0;
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             $this->setFail($e);
 
             // rollback
@@ -271,7 +271,7 @@ class Oppa extends Model
             }
 
             return $query->count();
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             $this->setFail($e);
 
             return -1;
