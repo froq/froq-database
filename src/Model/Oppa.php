@@ -97,14 +97,16 @@ class Oppa extends Model
                 $query->orderBy($pn, QueryBuilder::OP_ASC);
             }
 
-            // paginate
-            if ($limit === null) {
-                list($start, $stop) = $this->pager->run($query->count());
-                if ($start || $stop) {
-                    $query->limit($start, $stop);
+            if ($limit != -1) { // no pager?
+                if ($limit === null) {
+                    // paginate
+                    list($start, $stop) = $this->pager->run($query->count());
+                    if ($start || $stop) {
+                        $query->limit($start, $stop);
+                    }
+                } else {
+                    $query->limit($limit);
                 }
-            } else {
-                $query->limit($limit);
             }
 
             return $query->getAll();
@@ -122,7 +124,7 @@ class Oppa extends Model
      */
     public function findBy(string $field, $fieldParam, int $order = -1)
     {
-        return $this->findAll($field .' = %s', [$fieldParam], 1, $order)[0] ?? null;
+        return $this->findAll($field .' = ?', [$fieldParam], 1, $order)[0] ?? null;
     }
 
     /**
@@ -136,7 +138,7 @@ class Oppa extends Model
     public function findByAll(string $field, array $fieldParam = null, int $limit = null,
         int $order = -1)
     {
-        return $this->findAll($field .' = %s', [$fieldParam], $limit, $order);
+        return $this->findAll($field .' = ?', [$fieldParam], $limit, $order);
     }
 
     /**
