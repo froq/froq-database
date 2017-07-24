@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
-use Froq\Service\ServiceInterface;
+use Froq\Service\Service;
 use Froq\Pager\Pager;
 use Froq\Database\Vendor\VendorInterface;
 
@@ -85,9 +85,9 @@ abstract class Model implements ModelInterface
 
     /**
      * Constructor.
-     * @param Froq\Service\ServiceInterface
+     * @param Froq\Service\Service
      */
-    public function __construct(ServiceInterface $service)
+    public function __construct(Service $service)
     {
         // all must be set in child class: $vendorName, $stack, $stackPrimary
         if (!$this->vendorName) {
