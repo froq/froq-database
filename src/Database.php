@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace Froq\Database;
 
 use Froq\App;
-use Froq\Database\Vendor\{Vendor, VendorInterface, Oppa};
+use Froq\Database\Vendor\{VendorInterface, Oppa};
 
 /**
  * @package    Froq
@@ -60,6 +60,24 @@ final class Database
     final public function __construct(App $app)
     {
         $this->app = $app;
+    }
+
+    /**
+     * Get app.
+     * @return Froq\App
+     */
+    final public function getApp(): App
+    {
+        return $this->app;
+    }
+
+    /**
+     * Get instances.
+     * @return array
+     */
+    final public function getInstances(): array
+    {
+        return self::$instances;
     }
 
     /**
