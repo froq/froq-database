@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
-use Froq\Service\Service;
 use Froq\Pager\Pager;
 use Froq\Database\Vendor\VendorInterface;
 
@@ -91,9 +90,8 @@ abstract class Model implements ModelInterface
 
     /**
      * Constructor.
-     * @param Froq\Service\Service
      */
-    public function __construct(Service $service)
+    public function __construct()
     {
         // all must be set in child class: $vendorName, $stack, $stackPrimary
         if (!$this->vendorName) {
@@ -103,11 +101,17 @@ abstract class Model implements ModelInterface
             throw new ModelException(sprintf('Both $stack and $stackPrimary must be set in %s first!', get_called_class()));
         }
 
-        $this->service = $service;
+        // can rid of initing like new FooModel() without service arg
+        $app = app();
+        if (!$app) {
+            throw new ModelException('No $app found in global scope!');
+        }
+
+        $this->service = $app->getService();
         $this->vendor = $this->service->getApp()->getDatabase()->init($this->vendorName);
 
         $this->pager = new Pager();
-        $this->data  = new ModelData();
+        $this->data = new ModelData();
 
         // call init if exists
         if (method_exists($this, 'init')) {

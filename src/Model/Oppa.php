@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
-use Froq\Service\Service;
 use Oppa\Query\Builder as QueryBuilder;
 
 /**
@@ -37,9 +36,9 @@ class Oppa extends Model
     /**
      * @inheritDoc Froq\Database\Model\Model
      */
-    final public function __construct(Service $service)
+    final public function __construct()
     {
-        parent::__construct($service);
+        parent::__construct();
     }
 
     /**
