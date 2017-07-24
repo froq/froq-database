@@ -89,6 +89,7 @@ abstract class Model implements ModelInterface
      */
     public function __construct(ServiceInterface $service)
     {
+        // all must be set in child class: $vendorName, $stack, $stackPrimary
         if (!$this->vendorName) {
             throw new ModelException(sprintf('$vendorName not set in %s model class!', get_called_class()));
         }
@@ -96,8 +97,7 @@ abstract class Model implements ModelInterface
             throw new ModelException(sprintf('Both $stack and $stackPrimary must be set in %s first!', get_called_class()));
         }
 
-        $this->vendor = $service->app->database->init($this->vendorName);
-        // $this->vendor = $service->getApp()->getDatabase()->init($this->vendorName);
+        $this->vendor = $service->getApp()->getDatabase()->init($this->vendorName);
 
         $this->pager = new Pager();
         $this->data  = new ModelData();
