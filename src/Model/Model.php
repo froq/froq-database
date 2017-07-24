@@ -36,6 +36,12 @@ use Froq\Database\Vendor\VendorInterface;
 abstract class Model implements ModelInterface
 {
     /**
+     * Service.
+     * @var Froq\Service\Service
+     */
+    protected $service;
+
+    /**
      * Vendor.
      * @var Froq\Database\Vendor\VendorInterface
      */
@@ -97,7 +103,8 @@ abstract class Model implements ModelInterface
             throw new ModelException(sprintf('Both $stack and $stackPrimary must be set in %s first!', get_called_class()));
         }
 
-        $this->vendor = $service->getApp()->getDatabase()->init($this->vendorName);
+        $this->service = $service;
+        $this->vendor = $this->service->getApp()->getDatabase()->init($this->vendorName);
 
         $this->pager = new Pager();
         $this->data  = new ModelData();
@@ -149,13 +156,12 @@ abstract class Model implements ModelInterface
     }
 
     /**
-     * Set database.
-     * @param  Froq\Database\Vendor\VendorInterface $database
-     * @return void
+     * Get serice.
+     * @return Froq\Service\Service
      */
-    final public function setVendor(VendorInterface $vendor)
+    public function getService(): Service
     {
-        $this->vendor = $vendor;
+        return $this->service;
     }
 
     /**
@@ -168,39 +174,28 @@ abstract class Model implements ModelInterface
     }
 
     /**
-     * Set stack.
-     * @param  string $stack
-     * @return void
+     * Get vendor name.
+     * @return string
      */
-    final public function setStack(string $stack)
+    public function getVendorName(): string
     {
-        $this->stack = $stack;
+        return $this->vendorName;
     }
 
     /**
      * Get stack.
-     * @return string|null
+     * @return string
      */
-    final public function getStack()
+    final public function getStack(): string
     {
         return $this->stack;
     }
 
     /**
-     * Set stack primary.
-     * @param  string $stackPrimary
-     * @return void
-     */
-    final public function setStackPrimary(string $stackPrimary)
-    {
-        $this->stackPrimary = $stackPrimary;
-    }
-
-    /**
      * Get stack primary.
-     * @return string|null
+     * @return string
      */
-    final public function getStackPrimary()
+    final public function getStackPrimary(): string
     {
         return $this->stackPrimary;
     }
@@ -229,22 +224,21 @@ abstract class Model implements ModelInterface
     }
 
     /**
-     * Set pager.
-     * @param  Froq\Pager\Pager $pager
-     * @return void
+     * Get pager.
+     * @return Froq\Pager\Pager
      */
-    final public function setPager(Pager $pager)
+    final public function getPager(): Pager
     {
-        $this->pager = $pager;
+        return $this->pager;
     }
 
     /**
-     * Get pager.
-     * @return Froq\Pager\Pager|null
+     * Get data.
+     * @return Froq\Database\Model\ModelData
      */
-    final public function getPager()
+    public function getData(): ModelData
     {
-        return $this->pager;
+        return $this->data;
     }
 
     /**
@@ -272,7 +266,7 @@ abstract class Model implements ModelInterface
      */
     final public function isFail(): bool
     {
-        return ($this->fail != null);
+        return !!$this->fail;
     }
 
     /**
