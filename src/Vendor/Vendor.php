@@ -43,14 +43,14 @@ abstract class Vendor implements VendorInterface
      * Database.
      * @var Froq\Database
      */
-    protected $db;
+    protected $database;
 
     /**
      * @inheritDoc
      */
-    final public function getDb()
+    final public function getDatabase()
     {
-        return $this->db;
+        return $this->database;
     }
 
     /**
@@ -58,6 +58,6 @@ abstract class Vendor implements VendorInterface
      */
     final public function __call(string $method, array $arguments)
     {
-        return call_user_func_array([$this->db, $method], $arguments);
+        return call_user_func_array([$this->database, $method], $arguments);
     }
 }

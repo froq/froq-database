@@ -39,7 +39,7 @@ final class Oppa extends Vendor
      */
     final private function __construct(array $config)
     {
-        $this->db = new Database($config);
-        $this->db->connect();
+        $this->database = new Database($config);
+        $this->database->connect();
     }
 }

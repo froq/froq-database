@@ -32,10 +32,10 @@ namespace Froq\Database\Vendor;
 interface VendorInterface
 {
     /**
-     * Get db.
+     * Get database.
      * @return object|null
      */
-    public function getDb();
+    public function getDatabase();
 
     /**
      * Call (proxy call method to database object methods).
