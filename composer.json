@@ -13,6 +13,7 @@
         "froq/froq-util": "~1.0",
         "froq/froq-collection": "~1.0",
         "froq/froq-pager": "~1.0",
+        "froq/froq-service": "~2.0",
         "k-gun/oppa": "~3.0"
     },
     "autoload": {
