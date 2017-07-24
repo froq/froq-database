@@ -32,6 +32,14 @@ namespace Froq\Database\Model;
 interface ModelInterface
 {
     /**
+     * Query.
+     * @param  string     $query
+     * @param  array|null $queryParams
+     * @return any
+     */
+    public function query(string $query, array $queryParams = null);
+
+    /**
      * Find.
      * @param int|string $id
      * @return any
@@ -46,28 +54,7 @@ interface ModelInterface
      * @param  int         $order
      * @return any
      */
-    public function findAll(string $where = null, array $whereParams = null, int $limit = null,
-        int $order = -1);
-
-    /**
-     * Find by.
-     * @param  string $field
-     * @param  any    $fieldParam
-     * @param  int    $order
-     * @return any
-     */
-    public function findBy(string $field, $fieldParam, int $order = -1);
-
-    /**
-     * Find by all.
-     * @param  string     $field
-     * @param  array|null $fieldParam
-     * @param  int|null   $limit
-     * @param  int        $order
-     * @return any
-     */
-    public function findByAll(string $field, array $fieldParam = null, int $limit = null,
-        int $order = -1);
+    public function findAll(string $where = null, array $whereParams = null, int $limit = null, int $order = 1);
 
     /**
      * Save.
@@ -77,7 +64,7 @@ interface ModelInterface
 
     /**
      * Remove.
-     * @return int|bool
+     * @return int|null
      */
     public function remove();
 

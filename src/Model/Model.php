@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
+use Froq\Service\ServiceInterface;
 use Froq\Pager\Pager;
 use Froq\Database\Vendor\VendorInterface;
 
@@ -35,10 +36,16 @@ use Froq\Database\Vendor\VendorInterface;
 abstract class Model implements ModelInterface
 {
     /**
-     * Db.
+     * Vendor.
      * @var Froq\Database\Vendor\VendorInterface
      */
-    protected $db;
+    protected $vendor;
+
+    /**
+     * Vendor name.
+     * @var string
+     */
+    protected $vendorName;
 
     /**
      * Stack.
@@ -65,22 +72,32 @@ abstract class Model implements ModelInterface
     protected $pager;
 
     /**
-     * Fail.
-     * @var \Throwable|null
-     */
-    protected $fail;
-
-    /**
      * Data.
      * @var Froq\Database\Model\ModelData
      */
     protected $data;
 
     /**
-     * Constructor.
+     * Fail.
+     * @var \Throwable|null
      */
-    public function __construct()
+    protected $fail;
+
+    /**
+     * Constructor.
+     * @param Froq\Service\ServiceInterface
+     */
+    public function __construct(ServiceInterface $service)
     {
+        if (!$this->vendorName) {
+            throw new ModelException(sprintf('$vendorName not set in %s model class!', get_called_class()));
+        }
+        if (!$this->stack || !$this->stackPrimary) {
+            throw new ModelException(sprintf('Both $stack and $stackPrimary must be set in %s first!', get_called_class()));
+        }
+
+        $this->vendor = $service->app->database->init($this->vendorName);
+
         $this->pager = new Pager();
         $this->data  = new ModelData();
 
@@ -131,22 +148,22 @@ abstract class Model implements ModelInterface
     }
 
     /**
-     * Set db.
-     * @param  Froq\Database\Vendor\VendorInterface $db
+     * Set database.
+     * @param  Froq\Database\Vendor\VendorInterface $database
      * @return void
      */
-    final public function setDb(VendorInterface $db)
+    final public function setVendor(VendorInterface $vendor)
     {
-        $this->db = $db;
+        $this->vendor = $vendor;
     }
 
     /**
-     * Get db.
+     * Get vendor.
      * @return Froq\Database\Vendor\VendorInterface
      */
-    final public function getDb(): VendorInterface
+    final public function getVendor(): VendorInterface
     {
-        return $this->db;
+        return $this->vendor;
     }
 
     /**

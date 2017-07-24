@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
+use Froq\Service\ServiceInterface;
 use Oppa\Query\Builder as QueryBuilder;
 
 /**
@@ -34,79 +35,71 @@ use Oppa\Query\Builder as QueryBuilder;
 class Oppa extends Model
 {
     /**
-     * Constructor.
+     * @inheritDoc Froq\Database\Model\Model
      */
-    final public function __construct()
+    final public function __construct(ServiceInterface $service)
     {
-        $this->db = app('db')->initOppa();
-
-        parent::__construct();
+        parent::__construct($service);
     }
 
     /**
-     * Find.
-     * @param  any $pv
-     * @return any
+     * @inheritDoc Froq\Database\Model\ModelInterface
      */
-    public function find($pv = null)
+    public function query(string $query, array $queryParams = null)
     {
-        $pn = $this->getStackPrimary();
-        if (!$pn) {
-            throw new ModelException('Stack primary is not defined!');
-        }
-
-        $pv = $pv ?? $this->getStackPrimaryValue();
-        if ($pv === null) {
-            return;
-        }
-
         try {
-            return $this->queryBuilder()->select('*')->whereEqual($pn, $pv)->limit(1)->get();
+            return $this->vendor->getLink()->getAgent()->query($query, $queryParams);
         } catch (\Exception $e) {
             $this->setFail($e);
         }
     }
 
     /**
-     * Find all.
-     * @param  string|null $where
-     * @param  array|null  $whereParams
-     * @param  int         $limit
-     * @param  int         $order
-     * @return any
+     * @inheritDoc Froq\Database\Model\ModelInterface
      */
-    public function findAll(string $where = null, array $whereParams = null, int $limit = null,
-        int $order = -1)
+    public function find($pv = null)
     {
         $pn = $this->getStackPrimary();
-        if (!$pn) {
-            throw new ModelException('Stack primary is not defined!');
+        $pv = $pv ?? $this->getStackPrimaryValue();
+        if ($pv === null) {
+            return;
         }
 
         try {
-            $query = $this->queryBuilder();
+            return $this->initQueryBuilder()->select('*')->whereEqual($pn, $pv)->limit(1)->get();
+        } catch (\Exception $e) {
+            $this->setFail($e);
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function findAll(string $where = null, array $whereParams = null, int $limit = null, int $order = 1)
+    {
+        $pn = $this->getStackPrimary();
+
+        try {
+            $query = $this->initQueryBuilder();
             $query->select('*');
 
             if ($where) {
                 $query->where($where, $whereParams);
             }
 
-            if ($order == -1) {
-                $query->orderBy($pn, QueryBuilder::OP_DESC);
-            } elseif ($order == 1) {
+            if ($order == 1) {
                 $query->orderBy($pn, QueryBuilder::OP_ASC);
+            } elseif ($order == -1) {
+                $query->orderBy($pn, QueryBuilder::OP_DESC);
             }
 
-            if ($limit != -1) { // no pager?
-                if ($limit === null) {
-                    // paginate
-                    list($start, $stop) = $this->pager->run($query->count());
-                    if ($start || $stop) {
-                        $query->limit($start, $stop);
-                    }
-                } else {
-                    $query->limit($limit);
+            if ($limit === null) { // null => paginate
+                list($start, $stop) = $this->pager->run($query->count());
+                if ($start || $stop) {
+                    $query->limit($start, $stop);
                 }
+            } elseif ($limit != -1) { // -1 => no limit
+                $query->limit($limit);
             }
 
             return $query->getAll();
@@ -116,46 +109,19 @@ class Oppa extends Model
     }
 
     /**
-     * Find by.
-     * @param  string $field
-     * @param  any    $fieldParam
-     * @param  int    $order
-     * @return any
-     */
-    public function findBy(string $field, $fieldParam, int $order = -1)
-    {
-        return $this->findAll($field .' = ?', [$fieldParam], 1, $order)[0] ?? null;
-    }
-
-    /**
-     * Find by all.
-     * @param  string     $field
-     * @param  array|null $fieldParam
-     * @param  int|null   $limit
-     * @param  int        $order
-     * @return any
-     */
-    public function findByAll(string $field, array $fieldParam = null, int $limit = null,
-        int $order = -1)
-    {
-        return $this->findAll($field .' = ?', [$fieldParam], $limit, $order);
-    }
-
-    /**
-     * Save an object.
-     * @return int|null
+     * @inheritDoc Froq\Database\Model\ModelInterface
      */
     public function save()
     {
         $batch = null;
-        $agent = $this->db->getLink()->getAgent();
+        $agent = $this->vendor->getLink()->getAgent();
         if ($this->usesTransaction()) {
             $batch = $agent->getBatch();
             $batch->lock();
         }
 
         // create query builder
-        $query = $this->queryBuilder();
+        $query = $this->initQueryBuilder();
 
         $return = null;
         try {
@@ -166,9 +132,6 @@ class Oppa extends Model
                 $query = $query->insert($data)->toString();
             } else {    // update
                 $pn = $this->getStackPrimary();
-                if (!$pn) {
-                    throw new ModelException('Stack primary is not defined!');
-                }
 
                 // drop primary name
                 unset($data[$pn]);
@@ -205,32 +168,27 @@ class Oppa extends Model
     }
 
     /**
-     * Remove.
-     * @return int|bool
+     * @inheritDoc Froq\Database\Model\ModelInterface
      */
     public function remove()
     {
         $pn = $this->getStackPrimary();
-        if (!$pn) {
-            throw new ModelException('Stack primary is not defined!');
-        }
-
         $pv = $this->getStackPrimaryValue();
         if (!$pv) {
-            return false;
+            return null;
         }
 
         $batch = null;
-        $agent = $this->db->getLink()->getAgent();
+        $agent = $this->vendor->getLink()->getAgent();
         if ($this->usesTransaction()) {
             $batch = $agent->getBatch();
             $batch->lock();
         }
 
         // create query builder
-        $query = $this->queryBuilder();
+        $query = $this->initQueryBuilder();
 
-        $return = false;
+        $return = null;
         try {
             $query = $query->delete()->whereEqual($pn, $pv)->toString();
 
@@ -255,15 +213,12 @@ class Oppa extends Model
     }
 
     /**
-     * Count.
-     * @param  string|null $where
-     * @param  array|null  $whereParams
-     * @return int
+     * @inheritDoc Froq\Database\Model\ModelInterface
      */
     public function count(string $where = null, array $whereParams = null): int
     {
         try {
-            $query = $this->queryBuilder();
+            $query = $this->initQueryBuilder();
             $query->select('1');
 
             if ($where) {
@@ -279,14 +234,14 @@ class Oppa extends Model
     }
 
     /**
-     * New query builder.
+     * Init query builder.
      * @param  string|null $stack
      * @return Oppa\Query\Builder
      */
-    final public function queryBuilder(string $stack = null): QueryBuilder
+    final public function initQueryBuilder(string $stack = null): QueryBuilder
     {
         $queryBuilder = new QueryBuilder();
-        $queryBuilder->setLink($this->db->getLink());
+        $queryBuilder->setLink($this->vendor->getLink());
 
         // use self name
         $stack =  $stack ?: $this->stack;
