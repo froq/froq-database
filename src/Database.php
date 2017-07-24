@@ -37,10 +37,10 @@ final class Database
     * Vendors.
     * @const string
     */
-    const VENDOR_MYSQL = 'mysql',
-          VENDOR_PGSQL = 'pgsql',
-          VENDOR_COUCH = 'couch',
-          VENDOR_MONGO = 'mongo';
+    const VENDOR_NAME_MYSQL = 'mysql',
+          VENDOR_NAME_PGSQL = 'pgsql';
+
+    // private static $application;
 
     /**
      * Instances.
@@ -51,47 +51,38 @@ final class Database
     /**
      * Constructor.
      */
-    final public function __construct() {}
+    final public function __construct()
+    {}
 
     /**
      * Init.
-     * @param  string $vendor
+     * @param  string $vendorName
      * @return Froq\Database\Vendor\VendorInterface
      */
-    final public static function init(string $vendor): VendorInterface
+    final public static function init(string $vendorName): VendorInterface
     {
-        if (!isset(self::$instances[$vendor])) {
-            $app = app();
+        $vendorName = strtolower($vendorName);
+        if (!isset(self::$instances[$vendorName])) {
+            $app = app(); // = self::$application;
             $appEnv = $app->getEnv();
             $appConfig = $app->getConfig();
 
             $cfg = $appConfig['db'];
-            if (!isset($cfg[$vendor][$appEnv])) {
-                throw new DatabaseException(
-                    "'{$vendor}' options not found for '{$appEnv}' env in config!");
+            if (!isset($cfg[$vendorName][$appEnv])) {
+                throw new DatabaseException("'{$vendorName}' options not found for '{$appEnv}' env in config!");
             }
 
-            switch ($vendor) {
+            switch ($vendorName) {
                 // only mysql & pgsql for now
-                case self::VENDOR_MYSQL:
-                case self::VENDOR_PGSQL:
-                    self::$instances[$vendor] = Oppa::init($cfg[$vendor][$appEnv]);
+                case self::VENDOR_NAME_MYSQL:
+                case self::VENDOR_NAME_PGSQL:
+                    self::$instances[$vendorName] = Oppa::init($cfg[$vendorName][$appEnv]);
                     break;
                 default:
-                    throw new DatabaseException('Unimplemented vendor given!');
+                    throw new DatabaseException("Unimplemented vendor name '{$vendorName}' given!");
             }
         }
 
-        return self::$instances[$vendor];
-    }
-
-    /**
-     * Init oppa.
-     * @param  string $vendor
-     * @return Froq\Database\Vendor\Oppa
-     */
-    final public static function initOppa(string $vendor = self::VENDOR_MYSQL): Oppa
-    {
-        return self::init($vendor);
+        return self::$instances[$vendorName];
     }
 }
