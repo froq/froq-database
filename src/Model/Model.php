@@ -101,13 +101,13 @@ abstract class Model implements ModelInterface
             throw new ModelException(sprintf('Both $stack and $stackPrimary must be set in %s first!', get_called_class()));
         }
 
-        // can rid of initing like new FooModel() without service arg
+        // cannot rid of init'ing like new FooModel() without $service argument
         $app = app();
         if (!$app) {
             throw new ModelException('No $app found in global scope!');
         }
 
-        $this->service = $app->getService();
+        $this->service = $app->service();
         $this->vendor = $this->service->getApp()->getDatabase()->init($this->vendorName);
 
         $this->pager = new Pager();
