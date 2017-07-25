@@ -108,7 +108,7 @@ abstract class Model implements ModelInterface
         }
 
         $this->service = $app->service();
-        $this->vendor = $this->service->getApp()->getDatabase()->init($this->vendorName);
+        $this->vendor = $this->service->getApp()->db()->init($this->vendorName);
 
         $this->pager = new Pager();
         $this->data = new ModelData();
