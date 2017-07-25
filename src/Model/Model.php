@@ -160,7 +160,7 @@ abstract class Model implements ModelInterface
     }
 
     /**
-     * Get serice.
+     * Get service.
      * @return Froq\Service\Service
      */
     public function getService(): Service
