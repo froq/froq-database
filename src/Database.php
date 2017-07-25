@@ -89,8 +89,8 @@ final class Database
     {
         $vendorName = strtolower($vendorName);
         if (!isset(self::$instances[$vendorName])) {
-            $appEnv = $this->app->getEnv();
-            $appConfig = $this->app->getConfig();
+            $appEnv = $this->app->env();
+            $appConfig = $this->app->config();
 
             $cfg = $appConfig['db'];
             if (!isset($cfg[$vendorName][$appEnv])) {
