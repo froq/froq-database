@@ -57,7 +57,7 @@ final class Database
      * Constructor.
      * @param Froq\App $app
      */
-    final public function __construct(App $app)
+    public final function __construct(App $app)
     {
         $this->app = $app;
     }
@@ -66,7 +66,7 @@ final class Database
      * Get app.
      * @return Froq\App
      */
-    final public function getApp(): App
+    public final function getApp(): App
     {
         return $this->app;
     }
@@ -75,7 +75,7 @@ final class Database
      * Get instances.
      * @return array
      */
-    final public function getInstances(): array
+    public final function getInstances(): array
     {
         return self::$instances;
     }
@@ -85,7 +85,7 @@ final class Database
      * @param  string $vendorName
      * @return Froq\Database\Vendor\VendorInterface
      */
-    final public function init(string $vendorName): VendorInterface
+    public final function init(string $vendorName): VendorInterface
     {
         $vendorName = strtolower($vendorName);
         if (!isset(self::$instances[$vendorName])) {

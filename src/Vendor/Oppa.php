@@ -37,7 +37,7 @@ final class Oppa extends Vendor
      * Constructor.
      * @param array $config
      */
-    final private function __construct(array $config)
+    private final function __construct(array $config)
     {
         $this->database = new Database($config);
         $this->database->connect();

@@ -121,7 +121,7 @@ abstract class Model implements ModelInterface
      * @param string $key
      * @param any    $value
      */
-    final public function __set(string $key, $value)
+    public final function __set(string $key, $value)
     {
         $this->data->set($key, $value);
     }
@@ -131,7 +131,7 @@ abstract class Model implements ModelInterface
      * @param  string $key
      * @return any
      */
-    final public function __get(string $key)
+    public final function __get(string $key)
     {
         return $this->data->get($key);
     }
@@ -141,7 +141,7 @@ abstract class Model implements ModelInterface
      * @param  string $key
      * @return bool
      */
-    final public function __isset(string $key): bool
+    public final function __isset(string $key): bool
     {
         return $this->data->isset($key);
     }
@@ -151,7 +151,7 @@ abstract class Model implements ModelInterface
      * @param  string $key
      * @return void
      */
-    final public function __unset(string $key)
+    public final function __unset(string $key)
     {
         return $this->data->unset($key);
     }
@@ -160,7 +160,7 @@ abstract class Model implements ModelInterface
      * Get service.
      * @return Froq\Service\Service
      */
-    public function getService(): Service
+    public final function getService(): Service
     {
         return $this->service;
     }
@@ -169,7 +169,7 @@ abstract class Model implements ModelInterface
      * Get vendor.
      * @return Froq\Database\Vendor\VendorInterface
      */
-    final public function getVendor(): VendorInterface
+    public final function getVendor(): VendorInterface
     {
         return $this->vendor;
     }
@@ -178,7 +178,7 @@ abstract class Model implements ModelInterface
      * Get vendor name.
      * @return string
      */
-    public function getVendorName(): string
+    public final function getVendorName(): string
     {
         return $this->vendorName;
     }
@@ -187,7 +187,7 @@ abstract class Model implements ModelInterface
      * Get stack.
      * @return ?string
      */
-    final public function getStack(): ?string
+    public final function getStack(): ?string
     {
         return $this->stack;
     }
@@ -196,7 +196,7 @@ abstract class Model implements ModelInterface
      * Get stack primary.
      * @return ?string
      */
-    final public function getStackPrimary(): ?string
+    public final function getStackPrimary(): ?string
     {
         return $this->stackPrimary;
     }
@@ -206,7 +206,7 @@ abstract class Model implements ModelInterface
      * @param  any $value
      * @return void
      */
-    final public function setStackPrimaryValue($value)
+    public final function setStackPrimaryValue($value)
     {
         if ($this->stackPrimary != null) {
             $this->data->set($this->stackPrimary, $value);
@@ -217,7 +217,7 @@ abstract class Model implements ModelInterface
      * Get stack primary value.
      * @return any
      */
-    final public function getStackPrimaryValue()
+    public final function getStackPrimaryValue()
     {
         if ($this->stackPrimary != null) {
             return $this->data->get($this->stackPrimary);
@@ -228,7 +228,7 @@ abstract class Model implements ModelInterface
      * Get pager.
      * @return Froq\Pager\Pager
      */
-    final public function getPager(): Pager
+    public final function getPager(): Pager
     {
         return $this->pager;
     }
@@ -237,7 +237,7 @@ abstract class Model implements ModelInterface
      * Get data.
      * @return Froq\Database\Model\ModelData
      */
-    public function getData(): ModelData
+    public final function getData(): ModelData
     {
         return $this->data;
     }
@@ -247,7 +247,7 @@ abstract class Model implements ModelInterface
      * @param  \Throwable $fail
      * @return void
      */
-    final public function setFail(\Throwable $fail)
+    public final function setFail(\Throwable $fail)
     {
         $this->fail = $fail;
     }
@@ -256,7 +256,7 @@ abstract class Model implements ModelInterface
      * Get fail.
      * @return \Throwable
      */
-    final public function getFail(): ?\Throwable
+    public final function getFail(): ?\Throwable
     {
         return $this->fail;
     }
@@ -265,7 +265,7 @@ abstract class Model implements ModelInterface
      * Is fail.
      * @return bool
      */
-    final public function isFail(): bool
+    public final function isFail(): bool
     {
         return $this->fail != null;
     }
@@ -274,7 +274,7 @@ abstract class Model implements ModelInterface
      * Uses transaction.
      * @return bool
      */
-    final public function usesTransaction(): bool
+    public final function usesTransaction(): bool
     {
         return $this->useTransaction == true;
     }
@@ -284,7 +284,7 @@ abstract class Model implements ModelInterface
      * @param  array $data
      * @return self
      */
-    final public function load(array $data): self
+    public final function load(array $data): self
     {
         foreach ($data as $key => $value) {
             $this->data->set($key, $value);
@@ -297,7 +297,7 @@ abstract class Model implements ModelInterface
      * Unload.
      * @return self
      */
-    final public function unload(): self
+    public final function unload(): self
     {
         foreach ($this->data->keys() as $key) {
             $this->data->unset($key);
@@ -310,7 +310,7 @@ abstract class Model implements ModelInterface
      * Reset.
      * @return void
      */
-    final public function reset()
+    public final function reset()
     {
         $this->data->empty();
     }

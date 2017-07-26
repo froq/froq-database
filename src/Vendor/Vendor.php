@@ -48,7 +48,7 @@ abstract class Vendor implements VendorInterface
     /**
      * @inheritDoc
      */
-    final public function getDatabase()
+    public final function getDatabase()
     {
         return $this->database;
     }
@@ -56,8 +56,8 @@ abstract class Vendor implements VendorInterface
     /**
      * @inheritDoc
      */
-    final public function __call(string $method, array $arguments)
+    public final function __call(string $method, array $methodArguments)
     {
-        return call_user_func_array([$this->database, $method], $arguments);
+        return call_user_func_array([$this->database, $method], $methodArguments);
     }
 }

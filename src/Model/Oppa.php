@@ -36,7 +36,7 @@ class Oppa extends Model
     /**
      * @inheritDoc Froq\Database\Model\Model
      */
-    final public function __construct()
+    public final function __construct()
     {
         parent::__construct();
     }
@@ -251,7 +251,7 @@ class Oppa extends Model
      * @param  string|null $stack
      * @return Oppa\Query\Builder
      */
-    final public function initQueryBuilder(string $stack = null): QueryBuilder
+    public final function initQueryBuilder(string $stack = null): QueryBuilder
     {
         $queryBuilder = new QueryBuilder();
         $queryBuilder->setLink($this->vendor->getLink());

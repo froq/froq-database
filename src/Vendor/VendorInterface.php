@@ -40,8 +40,8 @@ interface VendorInterface
     /**
      * Call (proxy call method to database object methods).
      * @param  string $method
-     * @param  array  $arguments
+     * @param  array  $methodArguments
      * @return any
      */
-    public function __call(string $method, array $arguments);
+    public function __call(string $method, array $methodArguments);
 }
