@@ -64,9 +64,9 @@ interface ModelInterface
 
     /**
      * Remove.
-     * @return int|null
+     * @return ?int
      */
-    public function remove();
+    public function remove(): ?int;
 
     /**
      * Count.

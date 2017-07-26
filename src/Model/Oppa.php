@@ -180,7 +180,7 @@ class Oppa extends Model
     /**
      * @inheritDoc Froq\Database\Model\ModelInterface
      */
-    public function remove()
+    public function remove(): ?int
     {
         $pn = $this->getStackPrimary();
         if ($pn == null) {
