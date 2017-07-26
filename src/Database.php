@@ -38,8 +38,8 @@ final class Database
     * Vendors.
     * @const string
     */
-    const VENDOR_NAME_MYSQL = 'mysql',
-          VENDOR_NAME_PGSQL = 'pgsql';
+    public const VENDOR_NAME_MYSQL = 'mysql',
+                 VENDOR_NAME_PGSQL = 'pgsql';
 
     /**
      * App.
