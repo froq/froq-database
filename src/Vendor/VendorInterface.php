@@ -25,7 +25,7 @@ namespace Froq\Database\Vendor;
 
 /**
  * @package    Froq
- * @subpackage Froq\Database\Vendor
+ * @subpackage Froq\Database
  * @object     Froq\Database\Vendor\VendorInterface
  * @author     Kerem Güneş <k-gun@mail.com>
  */

@@ -27,7 +27,7 @@ use Froq\Collection\Collection;
 
 /**
  * @package    Froq
- * @subpackage Froq\Database\Model
+ * @subpackage Froq\Database
  * @object     Froq\Database\Model\ModelData
  * @author     Kerem Güneş <k-gun@mail.com>
  */

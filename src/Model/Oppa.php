@@ -27,7 +27,7 @@ use Oppa\Query\Builder as QueryBuilder;
 
 /**
  * @package    Froq
- * @subpackage Froq\Database\Model
+ * @subpackage Froq\Database
  * @object     Froq\Database\Model\Oppa
  * @author     Kerem Güneş <k-gun@mail.com>
  */

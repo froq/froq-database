@@ -28,7 +28,7 @@ use Froq\Database\Vendor\VendorInterface;
 
 /**
  * @package    Froq
- * @subpackage Froq\Database\Model
+ * @subpackage Froq\Database
  * @object     Froq\Database\Model\Model
  * @author     Kerem Güneş <k-gun@mail.com>
  */

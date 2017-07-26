@@ -27,7 +27,7 @@ use Froq\Util\Traits\SingleTrait;
 
 /**
  * @package    Froq
- * @subpackage Froq\Database\Vendor
+ * @subpackage Froq\Database
  * @object     Froq\Database\Vendor\Vendor
  * @author     Kerem Güneş <k-gun@mail.com>
  */
