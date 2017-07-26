@@ -100,7 +100,7 @@ class Oppa extends Model
             }
 
             if ($limit === null) { // null => paginate
-                list($start, $stop) = $this->pager->run($query->count());
+                [$start, $stop] = $this->pager->run($query->count());
                 if ($start || $stop) {
                     $query->limit($start, $stop);
                 }
