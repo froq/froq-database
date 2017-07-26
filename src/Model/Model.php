@@ -94,16 +94,13 @@ abstract class Model implements ModelInterface
     public function __construct()
     {
         // all must be set in child class: $vendorName, $stack, $stackPrimary
-        if (!$this->vendorName) {
+        if ($this->vendorName == null) {
             throw new ModelException(sprintf('$vendorName not set in %s model class!', get_called_class()));
-        }
-        if (!$this->stack || !$this->stackPrimary) {
-            throw new ModelException(sprintf('Both $stack and $stackPrimary must be set in %s first!', get_called_class()));
         }
 
         // cannot rid of init'ing like new FooModel() without $service argument
         $app = app();
-        if (!$app) {
+        if ($app == null) {
             throw new ModelException('No $app found in global scope!');
         }
 
@@ -188,18 +185,18 @@ abstract class Model implements ModelInterface
 
     /**
      * Get stack.
-     * @return string
+     * @return ?string
      */
-    final public function getStack(): string
+    final public function getStack(): ?string
     {
         return $this->stack;
     }
 
     /**
      * Get stack primary.
-     * @return string
+     * @return ?string
      */
-    final public function getStackPrimary(): string
+    final public function getStackPrimary(): ?string
     {
         return $this->stackPrimary;
     }
@@ -211,7 +208,7 @@ abstract class Model implements ModelInterface
      */
     final public function setStackPrimaryValue($value)
     {
-        if ($this->stackPrimary) {
+        if ($this->stackPrimary != null) {
             $this->data->set($this->stackPrimary, $value);
         }
     }
@@ -222,7 +219,7 @@ abstract class Model implements ModelInterface
      */
     final public function getStackPrimaryValue()
     {
-        if ($this->stackPrimary) {
+        if ($this->stackPrimary != null) {
             return $this->data->get($this->stackPrimary);
         }
     }
@@ -257,9 +254,9 @@ abstract class Model implements ModelInterface
 
     /**
      * Get fail.
-     * @return \Throwable|null
+     * @return \Throwable
      */
-    final public function getFail()
+    final public function getFail(): ?\Throwable
     {
         return $this->fail;
     }
@@ -270,7 +267,7 @@ abstract class Model implements ModelInterface
      */
     final public function isFail(): bool
     {
-        return !!$this->fail;
+        return $this->fail != null;
     }
 
     /**
@@ -279,7 +276,7 @@ abstract class Model implements ModelInterface
      */
     final public function usesTransaction(): bool
     {
-        return !!$this->useTransaction;
+        return $this->useTransaction == true;
     }
 
     /**

@@ -59,13 +59,18 @@ class Oppa extends Model
     public function find($pv = null)
     {
         $pn = $this->getStackPrimary();
+        if ($pn == null) {
+            throw new ModelException(sprintf('None $stackPrimary, set it in %s first!', get_called_class()));
+        }
+
         $pv = $pv ?? $this->getStackPrimaryValue();
         if ($pv === null) {
             return;
         }
 
+        $query = $this->initQueryBuilder();
         try {
-            return $this->initQueryBuilder()->select('*')->whereEqual($pn, $pv)->limit(1)->get();
+            return $query->select('*')->whereEqual($pn, $pv)->limit(1)->get();
         } catch (\Exception $e) {
             $this->setFail($e);
         }
@@ -77,12 +82,14 @@ class Oppa extends Model
     public function findAll(string $where = null, array $whereParams = null, int $limit = null, int $order = 1)
     {
         $pn = $this->getStackPrimary();
+        if ($pn == null) {
+            throw new ModelException(sprintf('Null $stackPrimary, set it in %s first!', get_called_class()));
+        }
 
+        $query = $this->initQueryBuilder();
         try {
-            $query = $this->initQueryBuilder();
             $query->select('*');
-
-            if ($where) {
+            if ($where != null) {
                 $query->where($where, $whereParams);
             }
 
@@ -119,18 +126,20 @@ class Oppa extends Model
             $batch->lock();
         }
 
-        // create query builder
-        $query = $this->initQueryBuilder();
-
+        $data = $this->data->toArray();
         $return = null;
+
+        $query = $this->initQueryBuilder();
         try {
-            $data = $this->data->toArray();
 
             $pv = $this->getStackPrimaryValue();
-            if (!$pv) { // insert
+            if ($pv == null) { // insert
                 $query = $query->insert($data)->toString();
             } else {    // update
                 $pn = $this->getStackPrimary();
+                if ($pn == null) {
+                    throw new ModelException(sprintf('Null $stackPrimary, set it in %s first!', get_called_class()));
+                }
 
                 // drop primary name
                 unset($data[$pn]);
@@ -154,6 +163,8 @@ class Oppa extends Model
                 // set with new id
                 $result && $this->setStackPrimaryValue($return = $result->getId());
             }
+        } catch (ModelException $e) {
+            throw $e;
         } catch (\Exception $e) {
             $this->setFail($e);
 
@@ -172,8 +183,12 @@ class Oppa extends Model
     public function remove()
     {
         $pn = $this->getStackPrimary();
+        if ($pn == null) {
+            throw new ModelException(sprintf('Null $stackPrimary, set it in %s first!', get_called_class()));
+        }
+
         $pv = $this->getStackPrimaryValue();
-        if (!$pv) {
+        if ($pv == null) {
             return null;
         }
 
@@ -184,10 +199,9 @@ class Oppa extends Model
             $batch->lock();
         }
 
-        // create query builder
-        $query = $this->initQueryBuilder();
-
         $return = null;
+
+        $query = $this->initQueryBuilder();
         try {
             $query = $query->delete()->whereEqual($pn, $pv)->toString();
 
@@ -198,7 +212,7 @@ class Oppa extends Model
             }
 
             // set return
-            $return = $result ? $result->getRowsAffected() : 0;
+            $return = ($result != null) ? $result->getRowsAffected() : 0;
         } catch (\Exception $e) {
             $this->setFail($e);
 
@@ -216,11 +230,11 @@ class Oppa extends Model
      */
     public function count(string $where = null, array $whereParams = null): int
     {
+        $query = $this->initQueryBuilder();
         try {
-            $query = $this->initQueryBuilder();
             $query->select('1');
 
-            if ($where) {
+            if ($where != null) {
                 $query->where($where, $whereParams);
             }
 
@@ -242,11 +256,10 @@ class Oppa extends Model
         $queryBuilder = new QueryBuilder();
         $queryBuilder->setLink($this->vendor->getLink());
 
-        // use self name
-        $stack =  $stack ?: $this->stack;
-
-        if (!$stack) {
-            throw new ModelException('Stack is not defined!');
+        // use self stack
+        $stack =  $stack ?: $this->getStack();
+        if ($stack == null) {
+            throw new ModelException(sprintf('Null $stack, set it in %s first!', get_called_class()));
         }
 
         $queryBuilder->setTable($stack);
