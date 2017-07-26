@@ -46,7 +46,7 @@ abstract class Vendor implements VendorInterface
     protected $database;
 
     /**
-     * @inheritDoc
+     * @inheritDoc Froq\Database\Vendor\VendorInterface
      */
     public final function getDatabase()
     {
@@ -54,7 +54,7 @@ abstract class Vendor implements VendorInterface
     }
 
     /**
-     * @inheritDoc
+     * @inheritDoc Froq\Database\Vendor\VendorInterface
      */
     public final function __call(string $method, array $methodArguments)
     {
