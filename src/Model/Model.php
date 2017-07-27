@@ -141,7 +141,7 @@ abstract class Model implements ModelInterface
      * @param  string $key
      * @return bool
      */
-    public final function __isset(string $key): bool
+    public final function __isset(string $key)
     {
         return $this->data->isset($key);
     }
@@ -206,7 +206,7 @@ abstract class Model implements ModelInterface
      * @param  any $value
      * @return void
      */
-    public final function setStackPrimaryValue($value)
+    public final function setStackPrimaryValue($value): void
     {
         if ($this->stackPrimary != null) {
             $this->data->set($this->stackPrimary, $value);
@@ -247,7 +247,7 @@ abstract class Model implements ModelInterface
      * @param  \Throwable $fail
      * @return void
      */
-    public final function setFail(\Throwable $fail)
+    public final function setFail(\Throwable $fail): void
     {
         $this->fail = $fail;
     }
@@ -310,7 +310,7 @@ abstract class Model implements ModelInterface
      * Reset.
      * @return void
      */
-    public final function reset()
+    public final function reset(): void
     {
         $this->data->empty();
     }
