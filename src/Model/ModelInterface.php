@@ -33,44 +33,31 @@ interface ModelInterface
 {
     /**
      * Query.
-     * @param  string     $query
-     * @param  array|null $queryParams
-     * @return any
      */
-    public function query(string $query, array $queryParams = null);
+    public function query();
 
     /**
      * Find.
-     * @param int|string $id
-     * @return any
      */
-    public function find($id = null);
+    public function find();
 
     /**
      * Find all.
-     * @param  string|null $where
-     * @param  array|null  $whereParams
-     * @param  int|null    $limit
-     * @param  int         $order
-     * @return any
      */
-    public function findAll(string $where = null, array $whereParams = null, int $limit = null, int $order = 1);
+    public function findAll();
 
     /**
      * Save.
-     * @return any
      */
     public function save();
 
     /**
      * Remove.
-     * @return ?int
      */
-    public function remove(): ?int;
+    public function remove();
 
     /**
      * Count.
-     * @return int
      */
-    public function count(): int;
+    public function count();
 }

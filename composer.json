@@ -11,7 +11,6 @@
         "php": "^7.1",
         "froq/froq": "~2.0",
         "froq/froq-util": "~2.0",
-        "froq/froq-collection": "~2.0",
         "froq/froq-pager": "~2.0",
         "froq/froq-service": "~2.0",
         "k-gun/oppa": "~3.0"

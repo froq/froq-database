@@ -42,10 +42,17 @@ class Oppa extends Model
     }
 
     /**
-     * @inheritDoc Froq\Database\Model\ModelInterface
+     * Query.
+     * @param  string     $query
+     * @param  array|null $queryParams
+     * @return any
      */
-    public function query(string $query, array $queryParams = null)
+    public function query(string $query = '', array $queryParams = null)
     {
+        if ($query == '') {
+            throw new ModelException('Query is empty!');
+        }
+
         try {
             return $this->vendor->getLink()->getAgent()->query($query, $queryParams);
         } catch (\Exception $e) {
@@ -54,7 +61,9 @@ class Oppa extends Model
     }
 
     /**
-     * @inheritDoc Froq\Database\Model\ModelInterface
+     * Find.
+     * @param  int|string $id
+     * @return any
      */
     public function find($pv = null)
     {
@@ -77,9 +86,15 @@ class Oppa extends Model
     }
 
     /**
-     * @inheritDoc
+     * Find all.
+     * @param  string|null $where
+     * @param  array|null  $whereParams
+     * @param  int|null    $limit
+     * @param  int         $order
+     * @return ?array
      */
-    public function findAll(string $where = null, array $whereParams = null, int $limit = null, int $order = 1)
+    public function findAll(string $where = null, array $whereParams = null, int $limit = null,
+        int $order = 1): ?array
     {
         $pn = $this->getStackPrimary();
         if ($pn == null) {
@@ -111,13 +126,16 @@ class Oppa extends Model
             return $query->getAll();
         } catch (\Exception $e) {
             $this->setFail($e);
+
+            return null;
         }
     }
 
     /**
-     * @inheritDoc Froq\Database\Model\ModelInterface
+     * Save
+     * @return ?int
      */
-    public function save()
+    public function save(): ?int
     {
         $batch = null;
         $agent = $this->vendor->getLink()->getAgent();
@@ -126,11 +144,11 @@ class Oppa extends Model
             $batch->lock();
         }
 
-        $data = $this->data->toArray();
-        $return = null;
 
+        $return = null;
         $query = $this->initQueryBuilder();
         try {
+            $data = $this->getData();
 
             $pv = $this->getStackPrimaryValue();
             if ($pv == null) { // insert
@@ -138,7 +156,8 @@ class Oppa extends Model
             } else {    // update
                 $pn = $this->getStackPrimary();
                 if ($pn == null) {
-                    throw new ModelException(sprintf('Null $stackPrimary, set it in %s first!', get_called_class()));
+                    throw new ModelException(sprintf('Null $stackPrimary, set it in %s first!',
+                        get_called_class()));
                 }
 
                 // drop primary name
@@ -178,7 +197,8 @@ class Oppa extends Model
     }
 
     /**
-     * @inheritDoc Froq\Database\Model\ModelInterface
+     * Remove.
+     * @return ?int
      */
     public function remove(): ?int
     {
@@ -200,7 +220,6 @@ class Oppa extends Model
         }
 
         $return = null;
-
         $query = $this->initQueryBuilder();
         try {
             $query = $query->delete()->whereEqual($pn, $pv)->toString();
@@ -212,7 +231,7 @@ class Oppa extends Model
             }
 
             // set return
-            $return = ($result != null) ? $result->getRowsAffected() : 0;
+            $return = $result ? $result->getRowsAffected() : 0;
         } catch (\Exception $e) {
             $this->setFail($e);
 
@@ -226,9 +245,12 @@ class Oppa extends Model
     }
 
     /**
-     * @inheritDoc Froq\Database\Model\ModelInterface
+     * Count.
+     * @param  string|null $where
+     * @param  array|null  $whereParams
+     * @return ?int
      */
-    public function count(string $where = null, array $whereParams = null): int
+    public function count(string $where = null, array $whereParams = null): ?int
     {
         $query = $this->initQueryBuilder();
         try {
@@ -242,7 +264,7 @@ class Oppa extends Model
         } catch (\Exception $e) {
             $this->setFail($e);
 
-            return -1;
+            return null;
         }
     }
 

@@ -78,9 +78,9 @@ abstract class Model implements ModelInterface
 
     /**
      * Data.
-     * @var Froq\Database\Model\ModelData
+     * @var array
      */
-    protected $data;
+    protected $data = [];
 
     /**
      * Fail.
@@ -108,7 +108,6 @@ abstract class Model implements ModelInterface
         $this->vendor = $this->service->getApp()->db()->init($this->vendorName);
 
         $this->pager = new Pager();
-        $this->data = new ModelData();
 
         // call init if exists
         if (method_exists($this, 'init')) {
@@ -116,44 +115,22 @@ abstract class Model implements ModelInterface
         }
     }
 
-    /**
-     * Set.
-     * @param string $key
-     * @param any    $value
-     */
+    /** Forbidden magic methods. */
     public final function __set(string $key, $value)
     {
-        $this->data->set($key, $value);
+        throw new ModelException("Dynamic set call not allowed, use set() method instead!");
     }
-
-    /**
-     * Get.
-     * @param  string $key
-     * @return any
-     */
     public final function __get(string $key)
     {
-        return $this->data->get($key);
+        throw new ModelException("Dynamic get call not allowed, use get() method instead!");
     }
-
-    /**
-     * Isset.
-     * @param  string $key
-     * @return bool
-     */
     public final function __isset(string $key)
     {
-        return $this->data->isset($key);
+        throw new ModelException("Dynamic isset call not allowed, use isset() method instead!");
     }
-
-    /**
-     * Unset.
-     * @param  string $key
-     * @return void
-     */
     public final function __unset(string $key)
     {
-        return $this->data->unset($key);
+        throw new ModelException("Dynamic unset call not allowed, use unset() method instead!");
     }
 
     /**
@@ -209,7 +186,7 @@ abstract class Model implements ModelInterface
     public final function setStackPrimaryValue($value): void
     {
         if ($this->stackPrimary != null) {
-            $this->data->set($this->stackPrimary, $value);
+            $this->set($this->stackPrimary, $value);
         }
     }
 
@@ -220,7 +197,7 @@ abstract class Model implements ModelInterface
     public final function getStackPrimaryValue()
     {
         if ($this->stackPrimary != null) {
-            return $this->data->get($this->stackPrimary);
+            return $this->get($this->stackPrimary);
         }
     }
 
@@ -235,9 +212,9 @@ abstract class Model implements ModelInterface
 
     /**
      * Get data.
-     * @return Froq\Database\Model\ModelData
+     * @return array
      */
-    public final function getData(): ModelData
+    public final function getData(): array
     {
         return $this->data;
     }
@@ -280,6 +257,50 @@ abstract class Model implements ModelInterface
     }
 
     /**
+     * Set.
+     * @param  string $key
+     * @param  any    $value
+     * @return self
+     */
+    public final function set(string $key, $value): self
+    {
+        $this->data[$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Get.
+     * @param  string $key
+     * @param  any    $valueDefault
+     * @return any
+     */
+    public final function get(string $key, $valueDefault = null)
+    {
+        return array_key_exists($key, $this->data) ? $this->data[$key] : $valueDefault;
+    }
+
+    /**
+     * Isset.
+     * @param  string $key
+     * @return bool
+     */
+    public final function isset(string $key): bool
+    {
+        return array_key_exists($key, $this->data);
+    }
+
+    /**
+     * Unset.
+     * @param  string $key
+     * @return void
+     */
+    public final function unset(string $key): void
+    {
+        unset($this->data[$key]);
+    }
+
+    /**
      * Load.
      * @param  array $data
      * @return self
@@ -287,7 +308,7 @@ abstract class Model implements ModelInterface
     public final function load(array $data): self
     {
         foreach ($data as $key => $value) {
-            $this->data->set($key, $value);
+            $this->set($key, $value);
         }
 
         return $this;
@@ -299,19 +320,19 @@ abstract class Model implements ModelInterface
      */
     public final function unload(): self
     {
-        foreach ($this->data->keys() as $key) {
-            $this->data->unset($key);
-        }
+        $this->reset();
 
         return $this;
     }
 
     /**
      * Reset.
-     * @return void
+     * @return self
      */
-    public final function reset(): void
+    public final function reset(): self
     {
-        $this->data->empty();
+        $this->data = [];
+
+        return $this;
     }
 }
