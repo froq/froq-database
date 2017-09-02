@@ -74,7 +74,7 @@ class Oppa extends Model
 
         $pv = $pv ?? $this->getStackPrimaryValue();
         if ($pv === null) {
-            return;
+            return null;
         }
 
         $query = $this->initQueryBuilder();
@@ -198,17 +198,18 @@ class Oppa extends Model
 
     /**
      * Remove.
+     * @param  int|string $pv
      * @return ?int
      */
-    public function remove(): ?int
+    public function remove($pv = null): ?int
     {
         $pn = $this->getStackPrimary();
         if ($pn == null) {
             throw new ModelException(sprintf('Null $stackPrimary, set it in %s first!', get_called_class()));
         }
 
-        $pv = $this->getStackPrimaryValue();
-        if ($pv == null) {
+        $pv = $pv ?? $this->getStackPrimaryValue();
+        if ($pv === null) {
             return null;
         }
 
