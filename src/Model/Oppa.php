@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
+use Oppa\Query\Result\ResultInterface;
 use Oppa\Query\Builder as QueryBuilder;
 
 /**
@@ -45,31 +46,28 @@ class Oppa extends Model
      * Query.
      * @param  string     $query
      * @param  array|null $queryParams
-     * @return any
+     * @return ?Oppa\Query\Result\ResultInterface
      */
-    public function query(string $query = '', array $queryParams = null)
+    public function query(string $query, array $queryParams = null): ?ResultInterface
     {
-        if ($query == '') {
-            throw new ModelException('Query is empty!');
-        }
-
         try {
             return $this->vendor->getLink()->getAgent()->query($query, $queryParams);
         } catch (\Exception $e) {
             $this->setFail($e);
+            return null;
         }
     }
 
     /**
      * Find.
-     * @param  int|string $id
+     * @param  int|string $pv
      * @return any
      */
     public function find($pv = null)
     {
         $pn = $this->getStackPrimary();
         if ($pn == null) {
-            throw new ModelException(sprintf('None $stackPrimary, set it in %s first!', get_called_class()));
+            throw new ModelException(sprintf('Null $stackPrimary, set it in %s first!', get_called_class()));
         }
 
         $pv = $pv ?? $this->getStackPrimaryValue();
@@ -280,7 +278,7 @@ class Oppa extends Model
         $queryBuilder->setLink($this->vendor->getLink());
 
         // use self stack
-        $stack =  $stack ?: $this->getStack();
+        $stack = $stack ?: $this->getStack();
         if ($stack == null) {
             throw new ModelException(sprintf('Null $stack, set it in %s first!', get_called_class()));
         }
