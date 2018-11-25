@@ -51,7 +51,7 @@ abstract class Vendor implements VendorInterface
     /**
      * @inheritDoc Froq\Database\Vendor\VendorInterface
      */
-    public final function getDatabase()
+    public final function getDatabase(): ?object
     {
         return $this->database;
     }

@@ -38,7 +38,7 @@ interface VendorInterface
      * Get database.
      * @return object|null
      */
-    public function getDatabase();
+    public function getDatabase(): ?object;
 
     /**
      * Call (proxy call method to database object methods).
