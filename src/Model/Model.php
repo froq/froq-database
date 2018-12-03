@@ -35,7 +35,7 @@ use Froq\Database\Vendor\VendorInterface;
  * @object     Froq\Database\Model\Model
  * @author     Kerem Güneş <k-gun@mail.com>
  */
-abstract class Model implements ModelInterface
+abstract class Model
 {
     /**
      * Service.
@@ -87,12 +87,13 @@ abstract class Model implements ModelInterface
 
     /**
      * Fail.
-     * @var \Throwable|null
+     * @var \Throwable
      */
     protected $fail;
 
     /**
      * Constructor.
+     * @throws Froq\Database\Model\ModelException
      */
     public function __construct()
     {

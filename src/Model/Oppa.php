@@ -35,7 +35,7 @@ use Oppa\Query\Builder as QueryBuilder;
  * @object     Froq\Database\Model\Oppa
  * @author     Kerem Güneş <k-gun@mail.com>
  */
-class Oppa extends Model
+class Oppa extends Model implements ModelInterface
 {
     /**
      * @inheritDoc Froq\Database\Model\Model
@@ -51,7 +51,7 @@ class Oppa extends Model
      * @param  array|null $queryParams
      * @return ?Oppa\Query\Result\ResultInterface
      */
-    public function query(string $query, array $queryParams = null): ?ResultInterface
+    public function query(string $query = '', array $queryParams = null): ?ResultInterface
     {
         try {
             return $this->vendor->getLink()->getAgent()->query($query, $queryParams);
@@ -65,6 +65,7 @@ class Oppa extends Model
      * Find.
      * @param  int|string $pv
      * @return any
+     * @throws Froq\Database\Model\ModelException
      */
     public function find($pv = null)
     {
@@ -93,6 +94,7 @@ class Oppa extends Model
      * @param  int|null    $limit
      * @param  int         $order
      * @return ?array
+     * @throws Froq\Database\Model\ModelException
      */
     public function findAll(string $where = null, array $whereParams = null, int $limit = null,
         int $order = 1): ?array
@@ -135,6 +137,7 @@ class Oppa extends Model
     /**
      * Save
      * @return ?int
+     * @throws Froq\Database\Model\ModelException
      */
     public function save(): ?int
     {
@@ -201,6 +204,7 @@ class Oppa extends Model
      * Remove.
      * @param  int|string $pv
      * @return ?int
+     * @throws Froq\Database\Model\ModelException
      */
     public function remove($pv = null): ?int
     {
@@ -274,20 +278,15 @@ class Oppa extends Model
      * Init query builder.
      * @param  string|null $stack
      * @return Oppa\Query\Builder
+     * @throws Froq\Database\Model\ModelException
      */
     public final function initQueryBuilder(string $stack = null): QueryBuilder
     {
-        $queryBuilder = new QueryBuilder();
-        $queryBuilder->setLink($this->vendor->getLink());
-
-        // use self stack
-        $stack = $stack ?: $this->getStack();
+        $stack = $stack ?? $this->getStack(); // use self stack if $stack is null
         if ($stack == null) {
             throw new ModelException(sprintf('Null $stack, set it in %s first!', get_called_class()));
         }
 
-        $queryBuilder->setTable($stack);
-
-        return $queryBuilder;
+        return new QueryBuilder($this->vendor->getLink(), $stack);
     }
 }

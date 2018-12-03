@@ -87,6 +87,7 @@ final class Database
      * Init.
      * @param  string $vendorName
      * @return Froq\Database\Vendor\VendorInterface
+     * @throws Froq\Database\DatabaseException
      */
     public function init(string $vendorName): VendorInterface
     {
