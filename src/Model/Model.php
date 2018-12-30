@@ -99,17 +99,21 @@ abstract class Model
     {
         // all must be set in child class: $vendorName, $stack, $stackPrimary
         if ($this->vendorName == null) {
-            throw new ModelException(sprintf('$vendorName not set in %s model class!', get_called_class()));
+            throw new ModelException(sprintf("Null \$vendorName, set in '%s' class", get_called_class()));
         }
 
         // cannot rid of init'ing like new FooModel() without $service argument
         $app = app();
         if ($app == null) {
-            throw new ModelException('No $app found in global scope!');
+            throw new ModelException('No $app found in global scope, this module is dependent on app module');
         }
 
         $this->service = $app->service();
-        $this->vendor = $this->service->getApp()->db()->init($this->vendorName);
+        if ($this->service == null) {
+            throw new ModelException('No service found, this module is only usable in service objects');
+        }
+
+        $this->vendor = $app->db()->init($this->vendorName);
 
         $this->pager = new Pager();
 
@@ -122,19 +126,19 @@ abstract class Model
     /** Forbidden magic methods. */
     public final function __set(string $key, $value)
     {
-        throw new ModelException("Dynamic set call not allowed, use set() method instead!");
+        throw new ModelException("Dynamic set call not allowed, use set() method instead");
     }
     public final function __get(string $key)
     {
-        throw new ModelException("Dynamic get call not allowed, use get() method instead!");
+        throw new ModelException("Dynamic get call not allowed, use get() method instead");
     }
     public final function __isset(string $key)
     {
-        throw new ModelException("Dynamic isset call not allowed, use isset() method instead!");
+        throw new ModelException("Dynamic isset call not allowed, use isset() method instead");
     }
     public final function __unset(string $key)
     {
-        throw new ModelException("Dynamic unset call not allowed, use unset() method instead!");
+        throw new ModelException("Dynamic unset call not allowed, use unset() method instead");
     }
 
     /**

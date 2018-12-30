@@ -96,9 +96,13 @@ final class Database
             $appEnv = $this->app->env();
             $appConfig = $this->app->config();
 
-            $cfg = $appConfig['db'];
+            @ $cfg = $appConfig['db'];
+            if ($cfg == null) {
+                throw new DatabaseException("Config error, no 'db' options found");
+            }
+
             if (!isset($cfg[$vendorName][$appEnv])) {
-                throw new DatabaseException("'{$vendorName}' options not found for '{$appEnv}' env in config!");
+                throw new DatabaseException("Config error, '{$vendorName}' options not found for '{$appEnv}'");
             }
 
             switch ($vendorName) {
@@ -108,7 +112,7 @@ final class Database
                     self::$instances[$vendorName] = Oppa::init($cfg[$vendorName][$appEnv]);
                     break;
                 default:
-                    throw new DatabaseException("Unimplemented vendor name '{$vendorName}' given!");
+                    throw new DatabaseException("Unimplemented vendor name '{$vendorName}' given");
             }
         }
 
