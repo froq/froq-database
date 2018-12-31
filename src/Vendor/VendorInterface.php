@@ -39,12 +39,4 @@ interface VendorInterface
      * @return object|null
      */
     public function getDatabase(): ?object;
-
-    /**
-     * Call (proxy call method to database object methods).
-     * @param  string $method
-     * @param  array  $methodArguments
-     * @return any
-     */
-    public function __call(string $method, array $methodArguments);
 }

@@ -34,7 +34,7 @@ use Froq\Util\Traits\SingleTrait;
  * @object     Froq\Database\Vendor\Vendor
  * @author     Kerem Güneş <k-gun@mail.com>
  */
-abstract class Vendor implements VendorInterface
+abstract class Vendor
 {
     /**
      * Single.
@@ -54,13 +54,5 @@ abstract class Vendor implements VendorInterface
     public final function getDatabase(): ?object
     {
         return $this->database;
-    }
-
-    /**
-     * @inheritDoc Froq\Database\Vendor\VendorInterface
-     */
-    public final function __call(string $method, array $methodArguments)
-    {
-        return call_user_func_array([$this->database, $method], $methodArguments);
     }
 }

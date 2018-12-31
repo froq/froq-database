@@ -54,7 +54,7 @@ class Oppa extends Model implements ModelInterface
     public function query(string $query = '', array $queryParams = null): ?ResultInterface
     {
         try {
-            return $this->vendor->getLink()->getAgent()->query($query, $queryParams);
+            return $this->vendor->getDatabase()->getLink()->getAgent()->query($query, $queryParams);
         } catch (\Exception $e) {
             $this->setFail($e);
             return null;
@@ -142,7 +142,7 @@ class Oppa extends Model implements ModelInterface
     public function save(): ?int
     {
         $batch = null;
-        $agent = $this->vendor->getLink()->getAgent();
+        $agent = $this->vendor->getDatabase()->getLink()->getAgent();
         if ($this->usesTransaction()) {
             $batch = $agent->getBatch();
             $batch->lock();
@@ -218,7 +218,7 @@ class Oppa extends Model implements ModelInterface
         }
 
         $batch = null;
-        $agent = $this->vendor->getLink()->getAgent();
+        $agent = $this->vendor->getDatabase()->getLink()->getAgent();
         if ($this->usesTransaction()) {
             $batch = $agent->getBatch();
             $batch->lock();
@@ -286,6 +286,6 @@ class Oppa extends Model implements ModelInterface
             throw new ModelException(sprintf("Null \$stack, set it in '%s' class", get_called_class()));
         }
 
-        return new QueryBuilder($this->vendor->getLink(), $stack);
+        return new QueryBuilder($this->vendor->getDatabase()->getLink(), $stack);
     }
 }

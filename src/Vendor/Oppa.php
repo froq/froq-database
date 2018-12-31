@@ -34,7 +34,7 @@ use Oppa\Database;
  * @object     Froq\Database\Vendor\Oppa
  * @author     Kerem Güneş <k-gun@mail.com>
  */
-final class Oppa extends Vendor
+final class Oppa extends Vendor implements VendorInterface
 {
     /**
      * Constructor.
