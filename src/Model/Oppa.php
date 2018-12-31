@@ -160,14 +160,14 @@ class Oppa extends Model implements ModelInterface
             $pv = $this->getStackPrimaryValue();
             if ($pv == null) { // insert
                 $query = $query->insert($data)->toString();
-            } else {    // update
+            } else {           // update
                 $pn = $this->getStackPrimary();
                 if ($pn == null) {
                     throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
                         get_called_class()));
                 }
 
-                // drop primary name
+                // drop primary
                 unset($data[$pn]);
 
                 $query = $query->update($data)->whereEqual($pn, $pv)->toString();
