@@ -26,8 +26,9 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
-use Froq\Pager\Pager;
+use Froq\Database\DatabaseException;
 use Froq\Database\Vendor\VendorInterface;
+use Froq\Pager\Pager;
 
 /**
  * @package    Froq
@@ -93,24 +94,27 @@ abstract class Model
 
     /**
      * Constructor.
-     * @throws Froq\Database\Model\ModelException
+     * @throws Froq\Database\DatabaseException
      */
     public function __construct()
     {
         // all must be set in child class: $vendorName, $stack, $stackPrimary
         if ($this->vendorName == null) {
-            throw new ModelException(sprintf("Null \$vendorName, set in '%s' class", get_called_class()));
+            throw new DatabaseException(sprintf("Null \$vendorName, set in '%s' class",
+                get_called_class()));
         }
 
         // cannot rid of init'ing like new FooModel() without $service argument
         $app = app();
         if ($app == null) {
-            throw new ModelException('No $app found in global scope, this module is dependent on app module');
+            throw new DatabaseException('No $app found in global scope, this module is dependent '.
+                'on app module');
         }
 
         $this->service = $app->service();
         if ($this->service == null) {
-            throw new ModelException('No service found, this module is only usable in service objects');
+            throw new DatabaseException('No service found, this module is only usable in service '.
+                'objects');
         }
 
         $this->vendor = $app->db()->init($this->vendorName);
@@ -126,19 +130,19 @@ abstract class Model
     /** Forbidden magic methods. */
     public final function __set(string $key, $value)
     {
-        throw new ModelException("Dynamic set call not allowed, use set() method instead");
+        throw new DatabaseException('Dynamic set call not allowed, use set() method instead');
     }
     public final function __get(string $key)
     {
-        throw new ModelException("Dynamic get call not allowed, use get() method instead");
+        throw new DatabaseException('Dynamic get call not allowed, use get() method instead');
     }
     public final function __isset(string $key)
     {
-        throw new ModelException("Dynamic isset call not allowed, use isset() method instead");
+        throw new DatabaseException('Dynamic isset call not allowed, use isset() method instead');
     }
     public final function __unset(string $key)
     {
-        throw new ModelException("Dynamic unset call not allowed, use unset() method instead");
+        throw new DatabaseException('Dynamic unset call not allowed, use unset() method instead');
     }
 
     /**
