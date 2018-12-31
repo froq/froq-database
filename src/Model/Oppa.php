@@ -136,22 +136,18 @@ class Oppa extends Model implements ModelInterface
      */
     public function save(): ?int
     {
-        $batch = null;
         $agent = $this->vendor->getDatabase()->getLink()->getAgent();
-        if ($this->useTransaction) {
-            $batch = $agent->getBatch();
-            $batch->lock();
-        }
+        $batch = $this->useTransaction ? $agent->getBatch() : null;
 
+        $batch && $batch->lock();
 
         $return = null;
-        $query = $this->initQueryBuilder();
         try {
-            $data = $this->getData();
+            $query = $this->initQueryBuilder();
 
             $pv = $this->getStackPrimaryValue();
             if ($pv == null) { // insert
-                $query = $query->insert($data)->toString();
+                $query = $query->insert($this->data)->toString();
             } else {           // update
                 $pn = $this->getStackPrimary();
                 if ($pn == null) {
@@ -159,13 +155,15 @@ class Oppa extends Model implements ModelInterface
                         get_called_class()));
                 }
 
+                $data = $this->getData();
+
                 // drop primary
                 unset($data[$pn]);
 
                 $query = $query->update($data)->whereEqual($pn, $pv)->toString();
             }
 
-            if ($batch) {
+            if ($batch != null) {
                 $result = $batch->doQuery($query)->getResult();
             } else {
                 $result = $agent->query($query);
@@ -175,7 +173,7 @@ class Oppa extends Model implements ModelInterface
             $this->reset();
 
             // set return
-            if ($pv) {
+            if ($pv != null) {
                 $return = $result ? $result->getRowsAffected() : 0;
             } else {
                 // set with new id
@@ -187,7 +185,9 @@ class Oppa extends Model implements ModelInterface
             $this->setFail($e);
 
             // rollback
-            $batch && $batch->undo();
+            if ($batch != null) {
+                $batch->undo();
+            }
         }
 
         $batch && $batch->unlock();
@@ -214,19 +214,17 @@ class Oppa extends Model implements ModelInterface
             return null;
         }
 
-        $batch = null;
         $agent = $this->vendor->getDatabase()->getLink()->getAgent();
-        if ($this->useTransaction) {
-            $batch = $agent->getBatch();
-            $batch->lock();
-        }
+        $batch = $this->useTransaction ? $agent->getBatch() : null;
+
+        $batch && $batch->lock();
 
         $return = null;
-        $query = $this->initQueryBuilder();
         try {
+            $query = $this->initQueryBuilder();
             $query = $query->delete()->whereEqual($pn, $pv)->toString();
 
-            if ($batch) {
+            if ($batch != null) {
                 $result = $batch->doQuery($query)->getResult();
             } else {
                 $result = $agent->query($query);
@@ -234,11 +232,15 @@ class Oppa extends Model implements ModelInterface
 
             // set return
             $return = $result ? $result->getRowsAffected() : 0;
+        } catch (DatabaseException $e) {
+            throw $e;
         } catch (\Exception $e) {
             $this->setFail($e);
 
             // rollback
-            $batch && $batch->undo();
+            if ($batch != null) {
+                $batch->undo();
+            }
         }
 
         $batch && $batch->unlock();
