@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
+use Froq\Database\DatabaseException;
 use Oppa\Query\Result\ResultInterface;
 use Oppa\Query\Builder as QueryBuilder;
 
@@ -65,13 +66,14 @@ class Oppa extends Model implements ModelInterface
      * Find.
      * @param  int|string $pv
      * @return any
-     * @throws Froq\Database\Model\ModelException
+     * @throws Froq\Database\DatabaseException
      */
     public function find($pv = null)
     {
         $pn = $this->getStackPrimary();
         if ($pn == null) {
-            throw new ModelException(sprintf("Null \$stackPrimary, set it in '%s' class", get_called_class()));
+            throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
+                get_called_class()));
         }
 
         $pv = $pv ?? $this->getStackPrimaryValue();
@@ -94,14 +96,15 @@ class Oppa extends Model implements ModelInterface
      * @param  int|null    $limit
      * @param  int         $order
      * @return ?array
-     * @throws Froq\Database\Model\ModelException
+     * @throws Froq\Database\DatabaseException
      */
     public function findAll(string $where = null, array $whereParams = null, int $limit = null,
         int $order = 1): ?array
     {
         $pn = $this->getStackPrimary();
         if ($pn == null) {
-            throw new ModelException(sprintf("Null \$stackPrimary, set it in '%s' class", get_called_class()));
+            throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
+                get_called_class()));
         }
 
         $query = $this->initQueryBuilder();
@@ -137,7 +140,7 @@ class Oppa extends Model implements ModelInterface
     /**
      * Save
      * @return ?int
-     * @throws Froq\Database\Model\ModelException
+     * @throws Froq\Database\DatabaseException
      */
     public function save(): ?int
     {
@@ -160,7 +163,8 @@ class Oppa extends Model implements ModelInterface
             } else {    // update
                 $pn = $this->getStackPrimary();
                 if ($pn == null) {
-                    throw new ModelException(sprintf("Null \$stackPrimary, set it in '%s' class", get_called_class()));
+                    throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
+                        get_called_class()));
                 }
 
                 // drop primary name
@@ -185,7 +189,7 @@ class Oppa extends Model implements ModelInterface
                 // set with new id
                 $result && $this->setStackPrimaryValue($return = $result->getId());
             }
-        } catch (ModelException $e) {
+        } catch (DatabaseException $e) {
             throw $e;
         } catch (\Exception $e) {
             $this->setFail($e);
@@ -203,13 +207,14 @@ class Oppa extends Model implements ModelInterface
      * Remove.
      * @param  int|string $pv
      * @return ?int
-     * @throws Froq\Database\Model\ModelException
+     * @throws Froq\Database\DatabaseException
      */
     public function remove($pv = null): ?int
     {
         $pn = $this->getStackPrimary();
         if ($pn == null) {
-            throw new ModelException(sprintf("Null \$stackPrimary, set it in '%s' class", get_called_class()));
+            throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
+                get_called_class()));
         }
 
         $pv = $pv ?? $this->getStackPrimaryValue();
@@ -277,13 +282,14 @@ class Oppa extends Model implements ModelInterface
      * Init query builder.
      * @param  string|null $stack
      * @return Oppa\Query\Builder
-     * @throws Froq\Database\Model\ModelException
+     * @throws Froq\Database\DatabaseException
      */
     public final function initQueryBuilder(string $stack = null): QueryBuilder
     {
         $stack = $stack ?? $this->getStack(); // use self stack if $stack is null
         if ($stack == null) {
-            throw new ModelException(sprintf("Null \$stack, set it in '%s' class", get_called_class()));
+            throw new DatabaseException(sprintf("Null \$stack, set it in '%s' class",
+                get_called_class()));
         }
 
         return new QueryBuilder($this->vendor->getDatabase()->getLink(), $stack);
