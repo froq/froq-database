@@ -138,7 +138,7 @@ class Oppa extends Model implements ModelInterface
     {
         $batch = null;
         $agent = $this->vendor->getDatabase()->getLink()->getAgent();
-        if ($this->usesTransaction()) {
+        if ($this->useTransaction) {
             $batch = $agent->getBatch();
             $batch->lock();
         }
@@ -216,7 +216,7 @@ class Oppa extends Model implements ModelInterface
 
         $batch = null;
         $agent = $this->vendor->getDatabase()->getLink()->getAgent();
-        if ($this->usesTransaction()) {
+        if ($this->useTransaction) {
             $batch = $agent->getBatch();
             $batch->lock();
         }
