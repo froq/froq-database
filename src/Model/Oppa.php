@@ -39,14 +39,6 @@ use Oppa\Query\Builder as QueryBuilder;
 class Oppa extends Model implements ModelInterface
 {
     /**
-     * @inheritDoc Froq\Database\Model\Model
-     */
-    public final function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Query.
      * @param  string     $query
      * @param  array|null $queryParams

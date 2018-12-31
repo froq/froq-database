@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace Froq\Database\Model;
 
+use Froq\Service\Service;
 use Froq\Database\DatabaseException;
 use Froq\Database\Vendor\VendorInterface;
 use Froq\Pager\Pager;
@@ -94,34 +95,21 @@ abstract class Model
 
     /**
      * Constructor.
+     * @param  Froq\Service\Service $service
      * @throws Froq\Database\DatabaseException
      */
-    public function __construct()
+    public function __construct(Service $service)
     {
         // all must be set in child class: $vendorName, $stack, $stackPrimary
         if ($this->vendorName == null) {
             throw new DatabaseException(sprintf("Null \$vendorName, set in '%s' class",
                 get_called_class()));
         }
-
-        // cannot rid of init'ing like new FooModel() without $service argument
-        $app = app();
-        if ($app == null) {
-            throw new DatabaseException('No $app found in global scope, this module is dependent '.
-                'on app module');
-        }
-
-        $this->service = $app->service();
-        if ($this->service == null) {
-            throw new DatabaseException('No service found, this module is only usable in service '.
-                'objects');
-        }
-
-        $this->vendor = $app->db()->init($this->vendorName);
-
+        $this->vendor = $service->getApp()->getDatabase()->init($this->vendorName);
+        $this->service = $service;
         $this->pager = new Pager();
 
-        // call init if exists
+        // call init method if exists
         if (method_exists($this, 'init')) {
             $this->init();
         }
