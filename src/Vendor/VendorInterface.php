@@ -31,6 +31,7 @@ namespace Froq\Database\Vendor;
  * @subpackage Froq\Database
  * @object     Froq\Database\Vendor\VendorInterface
  * @author     Kerem Güneş <k-gun@mail.com>
+ * @since      1.0
  */
 interface VendorInterface
 {

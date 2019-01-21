@@ -31,6 +31,7 @@ namespace Froq\Database;
  * @subpackage Froq\Database
  * @object     Froq\Database\DatabaseException
  * @author     Kerem Güneş <k-gun@mail.com>
+ * @since      1.0
  */
 final class DatabaseException extends \Exception
 {}

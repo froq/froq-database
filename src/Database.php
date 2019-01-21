@@ -34,6 +34,7 @@ use Froq\Database\Vendor\{VendorInterface, Oppa};
  * @subpackage Froq\Database
  * @object     Froq\Database\Database
  * @author     Kerem Güneş <k-gun@mail.com>
+ * @since      1.0
  */
 final class Database
 {

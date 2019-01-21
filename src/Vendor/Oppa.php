@@ -33,6 +33,7 @@ use Oppa\Database;
  * @subpackage Froq\Database
  * @object     Froq\Database\Vendor\Oppa
  * @author     Kerem Güneş <k-gun@mail.com>
+ * @since      1.0
  */
 final class Oppa extends Vendor implements VendorInterface
 {

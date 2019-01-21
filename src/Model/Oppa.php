@@ -35,6 +35,7 @@ use Oppa\Query\Builder as QueryBuilder;
  * @subpackage Froq\Database
  * @object     Froq\Database\Model\Oppa
  * @author     Kerem Güneş <k-gun@mail.com>
+ * @since      1.0
  */
 class Oppa extends Model implements ModelInterface
 {

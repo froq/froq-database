@@ -33,6 +33,7 @@ use Froq\Util\Traits\SingleTrait;
  * @subpackage Froq\Database
  * @object     Froq\Database\Vendor\Vendor
  * @author     Kerem Güneş <k-gun@mail.com>
+ * @since      1.0
  */
 abstract class Vendor
 {
