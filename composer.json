@@ -9,11 +9,11 @@
     ],
     "require": {
         "php": "^7.2",
-        "froq/froq": "3.0.0",
-        "froq/froq-util": "3.0.0",
-        "froq/froq-pager": "3.0.0",
-        "froq/froq-service": "3.0.0",
-        "k-gun/oppa": "~3.0"
+        "froq/froq": "^3.0",
+        "froq/froq-util": "^3.0",
+        "froq/froq-pager": "^3.0",
+        "froq/froq-service": "^3.0",
+        "k-gun/oppa": "^3.0"
     },
     "autoload": {
         "classmap": ["src/"]
