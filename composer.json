@@ -9,10 +9,10 @@
     ],
     "require": {
         "php": "^7.2",
-        "froq/froq": "~3.0",
-        "froq/froq-util": "~3.0",
-        "froq/froq-pager": "~3.0",
-        "froq/froq-service": "~3.0",
+        "froq/froq": "dev-master",
+        "froq/froq-util": "dev-master",
+        "froq/froq-pager": "dev-master",
+        "froq/froq-service": "dev-master",
         "k-gun/oppa": "~3.0"
     },
     "autoload": {
