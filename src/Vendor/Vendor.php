@@ -38,7 +38,7 @@ use Froq\Util\Traits\SingletonTrait;
 abstract class Vendor
 {
     /**
-     * Single.
+     * Singleton trait.
      * @object Froq\Util\Traits\SingletonTrait
      */
     use SingletonTrait;
