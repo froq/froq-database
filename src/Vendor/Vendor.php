@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace Froq\Database\Vendor;
 
-use Froq\Util\Traits\SingleTrait;
+use Froq\Util\Traits\SingletonTrait;
 
 /**
  * @package    Froq
@@ -39,9 +39,9 @@ abstract class Vendor
 {
     /**
      * Single.
-     * @object Froq\Util\Traits\SingleTrait
+     * @object Froq\Util\Traits\SingletonTrait
      */
-    use SingleTrait;
+    use SingletonTrait;
 
     /**
      * Database.
