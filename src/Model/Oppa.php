@@ -41,12 +41,14 @@ class Oppa extends Model implements ModelInterface
 {
     /**
      * Query.
-     * @param  string     $query
-     * @param  array|null $queryParams
+     * @param any ... $arguments (string $query, ?array $queryParams)
      * @return ?Oppa\Query\Result\ResultInterface
      */
-    public function query(string $query = '', array $queryParams = null): ?ResultInterface
+    public function query(...$arguments): ?ResultInterface
     {
+        $query       = $arguments[0] ?? '';
+        $queryParams = $arguments[1] ?? null;
+
         try {
             return $this->vendor->getDatabase()->getLink()->getAgent()->query($query, $queryParams);
         } catch (\Exception $e) {
@@ -57,12 +59,13 @@ class Oppa extends Model implements ModelInterface
 
     /**
      * Find.
-     * @param  int|string $pv
+     * @param  any ...$arguments (?int|?string $pv)
      * @return any
      * @throws Froq\Database\DatabaseException
      */
-    public function find($pv = null)
+    public function find(...$arguments)
     {
+        $pv = $arguments[0] ?? null;
         $pn = $this->getStackPrimary();
         if ($pn == null) {
             throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
@@ -84,16 +87,17 @@ class Oppa extends Model implements ModelInterface
 
     /**
      * Find all.
-     * @param  string|null $where
-     * @param  array|null  $whereParams
-     * @param  int|null    $limit
-     * @param  int         $order
+     * @param  any ...$arguments (?string $where, ?array $whereParams, int order, ?int limit)
      * @return ?array
      * @throws Froq\Database\DatabaseException
      */
-    public function findAll(string $where = null, array $whereParams = null, int $limit = null,
-        int $order = 1): ?array
+    public function findAll(...$arguments): ?array
     {
+        $where       = $arguments[0] ?? null;
+        $whereParams = $arguments[1] ?? null;
+        $order       = $arguments[2] ?? 1;
+        $limit       = $arguments[3] ?? null;
+
         $pn = $this->getStackPrimary();
         if ($pn == null) {
             throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
@@ -198,12 +202,13 @@ class Oppa extends Model implements ModelInterface
 
     /**
      * Remove.
-     * @param  int|string $pv
+     * @param  any ...$arguments (?int|?string $pv)
      * @return ?int
      * @throws Froq\Database\DatabaseException
      */
-    public function remove($pv = null): ?int
+    public function remove(...$arguments): ?int
     {
+        $pv = $arguments[0] ?? null;
         $pn = $this->getStackPrimary();
         if ($pn == null) {
             throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
@@ -251,12 +256,14 @@ class Oppa extends Model implements ModelInterface
 
     /**
      * Count.
-     * @param  string|null $where
-     * @param  array|null  $whereParams
+     * @param  any ...$arguments (?string $where, ?array $whereParams)
      * @return ?int
      */
-    public function count(string $where = null, array $whereParams = null): ?int
+    public function count(...$arguments): ?int
     {
+        $where       = $arguments[0] ?? null;
+        $whereParams = $arguments[1] ?? null;
+
         $query = $this->initQueryBuilder();
         try {
             $query->select('1');
