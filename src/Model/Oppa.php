@@ -146,6 +146,7 @@ class Oppa extends Model implements ModelInterface
 
         $batch && $batch->lock();
 
+        $fail = null;
         $return = null;
         try {
             $query = $this->initQueryBuilder();
@@ -185,9 +186,9 @@ class Oppa extends Model implements ModelInterface
                 $result && $this->setStackPrimaryValue($return = $result->getId());
             }
         } catch (DatabaseException $e) {
-            throw $e;
+            $fail = $e;
         } catch (\Exception $e) {
-            $this->setFail($e);
+            $fail = $e;
 
             // rollback
             if ($batch != null) {
@@ -196,6 +197,14 @@ class Oppa extends Model implements ModelInterface
         }
 
         $batch && $batch->unlock();
+
+        // handle fail stuff
+        if ($fail != null) {
+            if ($fail instanceof DatabaseException) {
+                throw $e;
+            }
+            $this->setFail($fail);
+        }
 
         return $return;
     }
@@ -225,6 +234,7 @@ class Oppa extends Model implements ModelInterface
 
         $batch && $batch->lock();
 
+        $fail = null;
         $return = null;
         try {
             $query = $this->initQueryBuilder();
@@ -239,9 +249,9 @@ class Oppa extends Model implements ModelInterface
             // set return
             $return = $result ? $result->getRowsAffected() : 0;
         } catch (DatabaseException $e) {
-            throw $e;
+            $fail = $e;
         } catch (\Exception $e) {
-            $this->setFail($e);
+            $fail = $e;
 
             // rollback
             if ($batch != null) {
@@ -250,6 +260,14 @@ class Oppa extends Model implements ModelInterface
         }
 
         $batch && $batch->unlock();
+
+        // handle fail stuff
+        if ($fail != null) {
+            if ($fail instanceof DatabaseException) {
+                throw $e;
+            }
+            $this->setFail($fail);
+        }
 
         return $return;
     }

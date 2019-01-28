@@ -95,6 +95,18 @@ abstract class Model
     protected $fail;
 
     /**
+     * Fail option.
+     * @var bool
+     */
+    protected $failOption;
+
+    /**
+     * Fail log directory.
+     * @var string
+     */
+    protected $failLogDirectory = APP_DIR .'/tmp/log/db';
+
+    /**
      * Constructor.
      * @param  Froq\Service\Service $service
      * @throws Froq\Database\DatabaseException
@@ -221,12 +233,31 @@ abstract class Model
     }
 
     /**
+     * Is fail.
+     * @return bool
+     */
+    public final function isFail(): bool
+    {
+        return $this->fail != null;
+    }
+
+    /**
      * Set fail.
      * @param  \Throwable $fail
      * @return void
+     * @throws \Throwable
      */
     public final function setFail(\Throwable $fail): void
     {
+        if ($this->failOption) {
+            if ($this->failOption == 'log') {
+                $logger = clone $this->service->getApp()->getLogger();
+                $logger->setDirectory($this->failLogDirectory);
+                $logger->logFail($fail);
+            } elseif ($this->failOption == 'throw') {
+                throw $fail;
+            }
+        }
         $this->fail = $fail;
     }
 
@@ -240,12 +271,31 @@ abstract class Model
     }
 
     /**
-     * Is fail.
-     * @return bool
+     * Set fail option.
+     * @param  string $failOption
+     * @return vaoid
      */
-    public final function isFail(): bool
+    public final function setFailOption(string $failOption): void
     {
-        return $this->fail != null;
+        $this->failOption = $failOption;
+    }
+
+    /**
+     * Get fail option.
+     * @return ?string
+     */
+    public final function getFailOption(): ?string
+    {
+        return $this->failOption;
+    }
+
+    /**
+     * Get fail log directory.
+     * @return string
+     */
+    public final function getFailLogDirectory(): string
+    {
+        return $this->failLogDirectory;
     }
 
     /**
