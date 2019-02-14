@@ -24,31 +24,31 @@
  */
 declare(strict_types=1);
 
-namespace Froq\Database\Model;
+namespace froq\database\model;
 
-use Froq\Service\Service;
-use Froq\Database\DatabaseException;
-use Froq\Database\Vendor\VendorInterface;
-use Froq\Pager\Pager;
+use froq\service\Service;
+use froq\database\DatabaseException;
+use froq\database\vendor\VendorInterface;
+use froq\pager\Pager;
 
 /**
- * @package    Froq
- * @subpackage Froq\Database
- * @object     Froq\Database\Model\Model
- * @author     Kerem Güneş <k-gun@mail.com>
- * @since      1.0
+ * Model.
+ * @package froq\database\model
+ * @object  froq\database\model\Model
+ * @author  Kerem Güneş <k-gun@mail.com>
+ * @since   1.0
  */
 abstract class Model
 {
     /**
      * Service.
-     * @var Froq\Service\Service
+     * @var froq\service\Service
      */
     protected $service;
 
     /**
      * Vendor.
-     * @var Froq\Database\Vendor\VendorInterface
+     * @var froq\database\vendor\VendorInterface
      */
     protected $vendor;
 
@@ -78,7 +78,7 @@ abstract class Model
 
     /**
      * Pager.
-     * @var Froq\Pager\Pager
+     * @var froq\pager\Pager
      */
     protected $pager;
 
@@ -108,8 +108,8 @@ abstract class Model
 
     /**
      * Constructor.
-     * @param  Froq\Service\Service $service
-     * @throws Froq\Database\DatabaseException
+     * @param  froq\service\Service $service
+     * @throws froq\database\DatabaseException
      */
     public function __construct(Service $service)
     {
@@ -148,7 +148,7 @@ abstract class Model
 
     /**
      * Get service.
-     * @return Froq\Service\Service
+     * @return froq\service\Service
      */
     public final function getService(): Service
     {
@@ -157,7 +157,7 @@ abstract class Model
 
     /**
      * Get vendor.
-     * @return Froq\Database\Vendor\VendorInterface
+     * @return froq\database\vendor\VendorInterface
      */
     public final function getVendor(): VendorInterface
     {
@@ -216,7 +216,7 @@ abstract class Model
 
     /**
      * Get pager.
-     * @return Froq\Pager\Pager
+     * @return froq\pager\Pager
      */
     public final function getPager(): Pager
     {

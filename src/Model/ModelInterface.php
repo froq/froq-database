@@ -24,14 +24,14 @@
  */
 declare(strict_types=1);
 
-namespace Froq\Database\Model;
+namespace froq\database\model;
 
 /**
- * @package    Froq
- * @subpackage Froq\Database
- * @object     Froq\Database\Model\ModelInterface
- * @author     Kerem Güneş <k-gun@mail.com>
- * @since      1.0
+ * Model Interface.
+ * @package froq\database\model
+ * @object  froq\database\model\ModelInterface
+ * @author  Kerem Güneş <k-gun@mail.com>
+ * @since   1.0
  */
 interface ModelInterface
 {

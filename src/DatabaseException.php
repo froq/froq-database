@@ -24,14 +24,14 @@
  */
 declare(strict_types=1);
 
-namespace Froq\Database;
+namespace froq\database;
 
 /**
- * @package    Froq
- * @subpackage Froq\Database
- * @object     Froq\Database\DatabaseException
- * @author     Kerem Güneş <k-gun@mail.com>
- * @since      1.0
+ * Database Exception.
+ * @package froq\database
+ * @object  froq\database\DatabaseException
+ * @author  Kerem Güneş <k-gun@mail.com>
+ * @since   1.0
  */
 final class DatabaseException extends \Exception
 {}

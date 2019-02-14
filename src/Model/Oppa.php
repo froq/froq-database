@@ -24,24 +24,24 @@
  */
 declare(strict_types=1);
 
-namespace Froq\Database\Model;
+namespace froq\database\model;
 
-use Froq\Database\DatabaseException;
+use froq\database\DatabaseException;
 use Oppa\Query\Result\ResultInterface;
 use Oppa\Query\Builder as QueryBuilder;
 
 /**
- * @package    Froq
- * @subpackage Froq\Database
- * @object     Froq\Database\Model\Oppa
- * @author     Kerem Güneş <k-gun@mail.com>
- * @since      1.0
+ * Oppa.
+ * @package froq\database\model
+ * @object  froq\database\model\Oppa
+ * @author  Kerem Güneş <k-gun@mail.com>
+ * @since   1.0
  */
 class Oppa extends Model implements ModelInterface
 {
     /**
      * Query.
-     * @param any ... $arguments (string $query, ?array $queryParams)
+     * @param any ...$arguments (string $query, ?array $queryParams)
      * @return ?Oppa\Query\Result\ResultInterface
      */
     public function query(...$arguments): ?ResultInterface
@@ -61,7 +61,7 @@ class Oppa extends Model implements ModelInterface
      * Find.
      * @param  any ...$arguments (?int|?string $pv)
      * @return any
-     * @throws Froq\Database\DatabaseException
+     * @throws froq\database\DatabaseException
      */
     public function find(...$arguments)
     {
@@ -89,7 +89,7 @@ class Oppa extends Model implements ModelInterface
      * Find all.
      * @param  any ...$arguments (?string $where, ?array $whereParams, int order, ?int limit)
      * @return ?array
-     * @throws Froq\Database\DatabaseException
+     * @throws froq\database\DatabaseException
      */
     public function findAll(...$arguments): ?array
     {
@@ -137,7 +137,7 @@ class Oppa extends Model implements ModelInterface
     /**
      * Save
      * @return ?int
-     * @throws Froq\Database\DatabaseException
+     * @throws froq\database\DatabaseException
      */
     public function save(): ?int
     {
@@ -213,7 +213,7 @@ class Oppa extends Model implements ModelInterface
      * Remove.
      * @param  any ...$arguments (?int|?string $pv)
      * @return ?int
-     * @throws Froq\Database\DatabaseException
+     * @throws froq\database\DatabaseException
      */
     public function remove(...$arguments): ?int
     {
@@ -302,7 +302,7 @@ class Oppa extends Model implements ModelInterface
      * Init query builder.
      * @param  string|null $stack
      * @return Oppa\Query\Builder
-     * @throws Froq\Database\DatabaseException
+     * @throws froq\database\DatabaseException
      */
     public final function initQueryBuilder(string $stack = null): QueryBuilder
     {

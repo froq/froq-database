@@ -24,33 +24,33 @@
  */
 declare(strict_types=1);
 
-namespace Froq\Database\Vendor;
+namespace froq\database\vendor;
 
-use Froq\Util\Traits\SingletonTrait;
+use froq\util\traits\SingletonTrait;
 
 /**
- * @package    Froq
- * @subpackage Froq\Database
- * @object     Froq\Database\Vendor\Vendor
- * @author     Kerem Güneş <k-gun@mail.com>
- * @since      1.0
+ * Vendor.
+ * @package froq\database\vendor
+ * @object  froq\database\vendor\Vendor
+ * @author  Kerem Güneş <k-gun@mail.com>
+ * @since   1.0
  */
 abstract class Vendor
 {
     /**
      * Singleton trait.
-     * @object Froq\Util\Traits\SingletonTrait
+     * @object froq\util\traits\SingletonTrait
      */
     use SingletonTrait;
 
     /**
      * Database.
-     * @var Froq\Database
+     * @var froq\Database
      */
     protected $database;
 
     /**
-     * @inheritDoc Froq\Database\Vendor\VendorInterface
+     * @inheritDoc froq\database\vendor\VendorInterface
      */
     public final function getDatabase(): ?object
     {

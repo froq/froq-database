@@ -24,14 +24,14 @@
  */
 declare(strict_types=1);
 
-namespace Froq\Database\Vendor;
+namespace froq\database\vendor;
 
 /**
- * @package    Froq
- * @subpackage Froq\Database
- * @object     Froq\Database\Vendor\VendorInterface
- * @author     Kerem Güneş <k-gun@mail.com>
- * @since      1.0
+ * Vendor Interface.
+ * @package froq\database\vendor
+ * @object  froq\database\vendor\VendorInterface
+ * @author  Kerem Güneş <k-gun@mail.com>
+ * @since   1.0
  */
 interface VendorInterface
 {

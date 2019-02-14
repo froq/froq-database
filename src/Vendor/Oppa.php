@@ -24,16 +24,16 @@
  */
 declare(strict_types=1);
 
-namespace Froq\Database\Vendor;
+namespace froq\database\vendor;
 
 use Oppa\Database;
 
 /**
- * @package    Froq
- * @subpackage Froq\Database
- * @object     Froq\Database\Vendor\Oppa
- * @author     Kerem Güneş <k-gun@mail.com>
- * @since      1.0
+ * Oppa.
+ * @package froq\database\vendor
+ * @object  froq\database\vendor\Oppa
+ * @author  Kerem Güneş <k-gun@mail.com>
+ * @since   1.0
  */
 final class Oppa extends Vendor implements VendorInterface
 {

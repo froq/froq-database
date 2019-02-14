@@ -24,22 +24,22 @@
  */
 declare(strict_types=1);
 
-namespace Froq\Database;
+namespace froq\database;
 
-use Froq\App;
-use Froq\Database\Vendor\{VendorInterface, Oppa};
+use froq\App;
+use froq\database\vendor\{VendorInterface, Oppa};
 
 /**
- * @package    Froq
- * @subpackage Froq\Database
- * @object     Froq\Database\Database
- * @author     Kerem Güneş <k-gun@mail.com>
- * @since      1.0
+ * Database.
+ * @package froq\database
+ * @object  froq\database\Database
+ * @author  Kerem Güneş <k-gun@mail.com>
+ * @since   1.0
  */
 final class Database
 {
     /**
-    * Vendors.
+    * Vendors names.
     * @const string
     */
     public const VENDOR_NAME_MYSQL = 'mysql',
@@ -47,7 +47,7 @@ final class Database
 
     /**
      * App.
-     * @var Froq\App
+     * @var froq\App
      */
     private $app;
 
@@ -59,7 +59,7 @@ final class Database
 
     /**
      * Constructor.
-     * @param Froq\App $app
+     * @param froq\App $app
      */
     public function __construct(App $app)
     {
@@ -68,7 +68,7 @@ final class Database
 
     /**
      * Get app.
-     * @return Froq\App
+     * @return froq\App
      */
     public function getApp(): App
     {
@@ -87,8 +87,8 @@ final class Database
     /**
      * Init.
      * @param  string $vendorName
-     * @return Froq\Database\Vendor\VendorInterface
-     * @throws Froq\Database\DatabaseException
+     * @return froq\database\vendor\VendorInterface
+     * @throws froq\database\DatabaseException
      */
     public function init(string $vendorName): VendorInterface
     {
