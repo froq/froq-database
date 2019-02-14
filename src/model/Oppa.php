@@ -41,10 +41,10 @@ class Oppa extends Model implements ModelInterface
 {
     /**
      * Query.
-     * @param any ...$arguments (string $query, ?array $queryParams)
-     * @return ?Oppa\Query\Result\ResultInterface
+     * @param  any ...$arguments (string $query, ?array $queryParams)
+     * @return Oppa\Query\Result\ResultInterface|null
      */
-    public function query(...$arguments): ?ResultInterface
+    public function query(...$arguments) // don't define return type, so user can
     {
         $query       = $arguments[0] ?? '';
         $queryParams = $arguments[1] ?? null;
@@ -60,10 +60,10 @@ class Oppa extends Model implements ModelInterface
     /**
      * Find.
      * @param  any ...$arguments (?int|?string $pv)
-     * @return any
+     * @return any|null
      * @throws froq\database\DatabaseException
      */
-    public function find(...$arguments)
+    public function find(...$arguments) // don't define return type, so user can
     {
         $pv = $arguments[0] ?? null;
         $pn = $this->getStackPrimary();
@@ -88,10 +88,10 @@ class Oppa extends Model implements ModelInterface
     /**
      * Find all.
      * @param  any ...$arguments (?string $where, ?array $whereParams, int order, ?int limit)
-     * @return ?array
+     * @return array|null
      * @throws froq\database\DatabaseException
      */
-    public function findAll(...$arguments): ?array
+    public function findAll(...$arguments) // don't define return type, so user can
     {
         $where       = $arguments[0] ?? null;
         $whereParams = $arguments[1] ?? null;
