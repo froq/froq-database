@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 /**
- * Database Exception.
+ * Database exception.
  * @package froq\database
  * @object  froq\database\DatabaseException
  * @author  Kerem Güneş <k-gun@mail.com>

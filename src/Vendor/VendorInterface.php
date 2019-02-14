@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace froq\database\vendor;
 
 /**
- * Vendor Interface.
+ * Vendor interface.
  * @package froq\database\vendor
  * @object  froq\database\vendor\VendorInterface
  * @author  Kerem Güneş <k-gun@mail.com>

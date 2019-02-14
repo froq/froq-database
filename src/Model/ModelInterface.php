@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace froq\database\model;
 
 /**
- * Model Interface.
+ * Model interface.
  * @package froq\database\model
  * @object  froq\database\model\ModelInterface
  * @author  Kerem Güneş <k-gun@mail.com>
