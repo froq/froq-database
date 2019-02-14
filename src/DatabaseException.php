@@ -26,8 +26,6 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\exception\Exception;
-
 /**
  * Database exception.
  * @package froq\database
@@ -35,5 +33,5 @@ use froq\exception\Exception;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   1.0
  */
-final class DatabaseException extends Exception
+final class DatabaseException extends \Exception
 {}
