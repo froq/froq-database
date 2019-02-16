@@ -174,6 +174,15 @@ abstract class Model
     }
 
     /**
+     * Get vendor agent.
+     * @return object
+     */
+    public final function getVendorAgent(): object
+    {
+        return $this->vendor->getDatabase()->getLink()->getAgent();
+    }
+
+    /**
      * Get stack.
      * @return ?string
      */
