@@ -227,9 +227,28 @@ abstract class Model
      * Get pager.
      * @return froq\pager\Pager
      */
-    public final function getPager(): Pager
+    public final function getPager(int $totalRecords = null): Pager
     {
+        if ($totalRecords !== null) {
+            $this->pager->setTotalRecords($totalRecords);
+        }
+
         return $this->pager;
+    }
+
+    /**
+     * Get pager limits.
+     * @param  int|null    $totalRecords
+     * @param  string|null $startKey
+     * @param  string|null $stopKey
+     * @return array
+     */
+    public final function getPagerLimits(int $totalRecords = null, string $startKey = null, string $stopKey = null): array
+    {
+        $startKey && $this->pager->setStartKey($startKey);
+        $stopKey && $this->pager->setStartKey($stopKey);
+
+        return $this->pager->run($totalRecords);
     }
 
     /**
