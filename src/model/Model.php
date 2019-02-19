@@ -80,31 +80,31 @@ abstract class Model
      * Pager.
      * @var froq\pager\Pager
      */
-    protected $pager;
+    private $pager;
 
     /**
      * Data.
      * @var array
      */
-    protected $data = [];
+    private $data = [];
 
     /**
      * Fail.
      * @var \Throwable
      */
-    protected $fail;
+    private $fail;
 
     /**
      * Fail option.
      * @var bool
      */
-    protected $failOption;
+    private $failOption;
 
     /**
      * Fail log directory.
      * @var string
      */
-    protected $failLogDirectory = APP_DIR .'/tmp/log/db';
+    private $failLogDirectory = APP_DIR .'/tmp/log/db';
 
     /**
      * Constructor.
@@ -225,30 +225,32 @@ abstract class Model
 
     /**
      * Get pager.
+     * @param  int|null    $totalRecords
+     * @param  string|null $startKey
+     * @param  string|null $stopKey
      * @return froq\pager\Pager
      */
-    public final function getPager(int $totalRecords = null): Pager
+    public final function getPager(int $totalRecords = null, string $startKey = null,
+        string $stopKey = null): Pager
     {
         if ($totalRecords !== null) {
-            $this->pager->setTotalRecords($totalRecords);
+            $this->pager->run($totalRecords, $startKey, $stopKey);
         }
 
         return $this->pager;
     }
 
     /**
-     * Get pager limits.
-     * @param  int|null    $totalRecords
+     * Get pager results.
+     * @param  int         $totalRecords
      * @param  string|null $startKey
      * @param  string|null $stopKey
      * @return array
      */
-    public final function getPagerLimits(int $totalRecords = null, string $startKey = null, string $stopKey = null): array
+    public final function getPagerResults(int $totalRecords, string $startKey = null,
+        string $stopKey = null): array
     {
-        $startKey && $this->pager->setStartKey($startKey);
-        $stopKey && $this->pager->setStartKey($stopKey);
-
-        return $this->pager->run($totalRecords);
+        return $this->pager->run($totalRecords, $startKey, $stopKey);
     }
 
     /**

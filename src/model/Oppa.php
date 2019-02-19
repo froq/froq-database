@@ -153,7 +153,7 @@ class Oppa extends Model implements ModelInterface
 
             $pv = $this->getStackPrimaryValue();
             if ($pv == null) { // insert
-                $query = $query->insert($this->data)->toString();
+                $query = $query->insert($this->getData())->toString();
             } else {           // update
                 $pn = $this->getStackPrimary();
                 if ($pn == null) {
