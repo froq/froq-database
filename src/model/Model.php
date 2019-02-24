@@ -116,7 +116,7 @@ abstract class Model
         // all must be set in child class: $vendorName, $stack, $stackPrimary
         if ($this->vendorName == null) {
             throw new DatabaseException(sprintf("Null \$vendorName, set in '%s' class",
-                get_called_class()));
+                static::class));
         }
         $this->vendor = $service->getApp()->getDatabase()->init($this->vendorName);
         $this->service = $service;

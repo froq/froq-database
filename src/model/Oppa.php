@@ -69,7 +69,7 @@ class Oppa extends Model implements ModelInterface
         $pn = $this->getStackPrimary();
         if ($pn == null) {
             throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
-                get_called_class()));
+                static::class));
         }
 
         $pv = $pv ?? $this->getStackPrimaryValue();
@@ -101,7 +101,7 @@ class Oppa extends Model implements ModelInterface
         $pn = $this->getStackPrimary();
         if ($pn == null) {
             throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
-                get_called_class()));
+                static::class));
         }
 
         $query = $this->initQueryBuilder();
@@ -158,7 +158,7 @@ class Oppa extends Model implements ModelInterface
                 $pn = $this->getStackPrimary();
                 if ($pn == null) {
                     throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
-                        get_called_class()));
+                        static::class));
                 }
 
                 $data = $this->getData();
@@ -221,7 +221,7 @@ class Oppa extends Model implements ModelInterface
         $pn = $this->getStackPrimary();
         if ($pn == null) {
             throw new DatabaseException(sprintf("Null \$stackPrimary, set it in '%s' class",
-                get_called_class()));
+                static::class));
         }
 
         $pv = $pv ?? $this->getStackPrimaryValue();
@@ -309,12 +309,9 @@ class Oppa extends Model implements ModelInterface
         $stack = $stack ?? $this->getStack(); // use self stack if $stack is null
         if ($stack == null) {
             throw new DatabaseException(sprintf("Null \$stack, set it in '%s' class",
-                get_called_class()));
+                static::class));
         }
 
-        $link = $this->vendor->getDatabase()->getLink();
-        $stack = $link->getAgent()->escapeIdentifier($stack);
-
-        return new QueryBuilder($link, $stack);
+        return new QueryBuilder($this->vendor->getDatabase()->getLink(), $stack);
     }
 }
