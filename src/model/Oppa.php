@@ -312,6 +312,9 @@ class Oppa extends Model implements ModelInterface
                 get_called_class()));
         }
 
-        return new QueryBuilder($this->vendor->getDatabase()->getLink(), $stack);
+        $link = $this->vendor->getDatabase()->getLink();
+        $stack = $link->getAgent()->escapeIdentifier($stack);
+
+        return new QueryBuilder($link, $stack);
     }
 }
