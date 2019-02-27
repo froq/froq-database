@@ -118,9 +118,17 @@ abstract class Model
             throw new DatabaseException(sprintf("Null \$vendorName, set in '%s' class",
                 static::class));
         }
+
         $this->vendor = $service->getApp()->getDatabase()->init($this->vendorName);
         $this->service = $service;
         $this->pager = new Pager();
+
+        // escape identifiers
+        if ($this->stack != null || $this->stackPrimary != null) {
+            $agent = $this->vendor->getDatabase()->getLink()->getAgent();
+            $this->stack && $this->stack = $agent->escapeIdentifier($this->stack);
+            $this->stackPrimary && $this->stackPrimary = $agent->escapeIdentifier($this->stackPrimary);
+        }
 
         // call init method if exists
         if (method_exists($this, 'init')) {
@@ -131,19 +139,19 @@ abstract class Model
     /** Forbidden magic methods. */
     public final function __set(string $key, $value)
     {
-        throw new DatabaseException('Dynamic set call not allowed, use set() method instead');
+        throw new DatabaseException('Magic __set() not allowed, use set() method instead');
     }
     public final function __get(string $key)
     {
-        throw new DatabaseException('Dynamic get call not allowed, use get() method instead');
+        throw new DatabaseException('Magic __get() not allowed, use get() method instead');
     }
     public final function __isset(string $key)
     {
-        throw new DatabaseException('Dynamic isset call not allowed, use isset() method instead');
+        throw new DatabaseException('Magic __isset() not allowed, use isset() method instead');
     }
     public final function __unset(string $key)
     {
-        throw new DatabaseException('Dynamic unset call not allowed, use unset() method instead');
+        throw new DatabaseException('Magic __unset() not allowed, use unset() method instead');
     }
 
     /**
