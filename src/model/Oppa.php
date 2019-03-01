@@ -301,10 +301,11 @@ class Oppa extends Model implements ModelInterface
     /**
      * Init query builder.
      * @param  string|null $stack
+     * @param  bool $isSub
      * @return Oppa\Query\Builder
      * @throws froq\database\DatabaseException
      */
-    public final function initQueryBuilder(string $stack = null): QueryBuilder
+    public final function initQueryBuilder(string $stack = null, bool $isSub = false): QueryBuilder
     {
         $stack = $stack ?? $this->getStack(); // use self stack if $stack is null
         if ($stack == null) {
@@ -312,6 +313,6 @@ class Oppa extends Model implements ModelInterface
                 static::class));
         }
 
-        return new QueryBuilder($this->vendor->getDatabase()->getLink(), $stack);
+        return new QueryBuilder($this->vendor->getDatabase()->getLink(), $stack, $isSub);
     }
 }
