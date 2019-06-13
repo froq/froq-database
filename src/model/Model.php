@@ -123,13 +123,6 @@ abstract class Model
         $this->service = $service;
         $this->pager = new Pager();
 
-        // escape identifiers
-        if ($this->stack != null || $this->stackPrimary != null) {
-            $agent = $this->vendor->getDatabase()->getLink()->getAgent();
-            $this->stack && $this->stack = $agent->escapeIdentifier($this->stack);
-            $this->stackPrimary && $this->stackPrimary = $agent->escapeIdentifier($this->stackPrimary);
-        }
-
         // call init method if exists
         if (method_exists($this, 'init')) {
             $this->init();
