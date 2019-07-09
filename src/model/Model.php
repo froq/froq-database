@@ -113,15 +113,16 @@ abstract class Model
      */
     public function __construct(Service $service)
     {
-        // all must be set in child class: $vendorName, $stack, $stackPrimary
+        // all must be set in child class: $vendorName (and $stack, $stackPrimary for save() etc.)
         if ($this->vendorName == null) {
             throw new DatabaseException(sprintf("Null \$vendorName, set in '%s' class",
                 static::class));
         }
 
-        $this->vendor = $service->getApp()->getDatabase()->init($this->vendorName);
+        $app = $service->getApp();
         $this->service = $service;
-        $this->pager = new Pager();
+        $this->vendor = $app->getDatabase()->init($this->vendorName);
+        $this->pager = new Pager($app->configValue('pager', []));
 
         // call init method if exists
         if (method_exists($this, 'init')) {
