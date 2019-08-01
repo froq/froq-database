@@ -418,4 +418,24 @@ abstract class Model
 
         return $this;
     }
+
+    /**
+     * Init model.
+     * @param  string                    $name
+     * @param  froq\service\Service|null $service
+     * @return froq\database\model\ModelInterface
+     * @throws froq\database\DatabaseException
+     * @since  3.1
+     */
+    public function initModel(string $name, Service $service = null): ModelInterface
+    {
+        // base name is ok (eg: froq\app\database\UserModel => UserModel)
+        $name = 'froq\\app\\database\\'. $name;
+
+        if (!class_exists($name)) {
+            throw new DatabaseException(sprintf("Model class '%s' not found", $name));
+        }
+
+        return new $name($service ?? $this->service);
+    }
 }
