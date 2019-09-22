@@ -228,31 +228,32 @@ abstract class Model
     /**
      * Get pager.
      * @param  int|null    $totalRecords
+     * @param  int|null    $limit
      * @param  string|null $startKey
      * @param  string|null $stopKey
      * @return froq\pager\Pager
      */
-    public final function getPager(int $totalRecords = null, string $startKey = null,
-        string $stopKey = null): Pager
+    public final function getPager(int $totalRecords = null, int $limit = null,
+        string $startKey = null, string $stopKey = null): Pager
     {
         if ($totalRecords !== null) {
-            $this->pager->run($totalRecords, $startKey, $stopKey);
+            $this->pager->run($totalRecords, $limit, $startKey, $stopKey);
         }
-
         return $this->pager;
     }
 
     /**
-     * Get pager results.
+     * Get pager run.
      * @param  int         $totalRecords
+     * @param  int|null    $limit
      * @param  string|null $startKey
      * @param  string|null $stopKey
      * @return array
      */
-    public final function getPagerResults(int $totalRecords, string $startKey = null,
-        string $stopKey = null): array
+    public final function getPagerRun(int $totalRecords, int $limit = null,
+        string $startKey = null, string $stopKey = null): array
     {
-        return $this->pager->run($totalRecords, $startKey, $stopKey);
+        return $this->pager->run($totalRecords, $limit, $startKey, $stopKey);
     }
 
     /**
