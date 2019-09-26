@@ -122,7 +122,7 @@ abstract class Model
         $app = $service->getApp();
         $this->service = $service;
         $this->vendor = $app->getDatabase()->init($this->vendorName);
-        $this->pager = new Pager($app->configValue('pager', []));
+        $this->pager = new Pager($app->config('pager', []));
 
         // call init method if exists
         if (method_exists($this, 'init')) {
