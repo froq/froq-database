@@ -93,16 +93,17 @@ final class Database
     public function init(string $vendorName): VendorInterface
     {
         $vendorName = strtolower($vendorName);
-        if (!isset(self::$instances[$vendorName])) {
+        if (empty(self::$instances[$vendorName])) {
             $appEnv = $this->app->env();
             $appConfig = $this->app->config();
 
-            @ $cfg = $appConfig['db'];
+            $cfg = $appConfig['db'] ?? null;
             if ($cfg == null) {
                 throw new DatabaseException("Config error, no 'db' options found");
             }
 
-            if (!isset($cfg[$vendorName][$appEnv])) {
+            // eg: $cfg['db']['mysql']['dev']
+            if (empty($cfg[$vendorName][$appEnv])) {
                 throw new DatabaseException("Config error, '{$vendorName}' options not found for '{$appEnv}'");
             }
 
