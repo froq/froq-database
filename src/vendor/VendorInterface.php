@@ -37,7 +37,7 @@ interface VendorInterface
 {
     /**
      * Get database.
-     * @return object|null
+     * @return ?object
      */
     public function getDatabase(): ?object;
 }
