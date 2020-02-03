@@ -24,26 +24,16 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\vendor;
+namespace froq\database\sql;
 
-use Oppa\Database;
+use froq\database\DatabaseException;
 
 /**
- * Oppa.
- * @package froq\database\vendor
- * @object  froq\database\vendor\Oppa
+ * Sql Exception.
+ * @package froq\database\sql
+ * @object  froq\database\sql\SqlException
  * @author  Kerem Güneş <k-gun@mail.com>
- * @since   1.0
+ * @since   4.0
  */
-final class Oppa extends Vendor implements VendorInterface
-{
-    /**
-     * Constructor.
-     * @param array $config
-     */
-    private function __construct(array $config)
-    {
-        $this->database = new Database($config);
-        $this->database->connect();
-    }
-}
+final class SqlException extends DatabaseException
+{}

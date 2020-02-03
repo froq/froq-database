@@ -24,20 +24,55 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\vendor;
+namespace froq\database\sql;
+
+use froq\database\sql\SqlException;
 
 /**
- * Vendor interface.
- * @package froq\database\vendor
- * @object  froq\database\vendor\VendorInterface
+ * Abstract Sql.
+ * @package froq\database\sql
+ * @object  froq\database\sql\AbstractSql
  * @author  Kerem Güneş <k-gun@mail.com>
- * @since   1.0
+ * @since   4.0
  */
-interface VendorInterface
+abstract class AbstractSql
 {
     /**
-     * Get database.
-     * @return ?object
+     * Content.
+     * @var string
      */
-    public function getDatabase(): ?object;
+    protected string $content;
+
+    /**
+     * Constructor.
+     * @param  string $content
+     * @throws froq\database\sql\SqlException
+     */
+    public function __construct(string $content)
+    {
+        $content = trim($content);
+        if ($content == '') {
+            throw new SqlException('Empty content given to "%s", non-empty content required',
+                [static::class]);
+        }
+
+        $this->content = $content;
+    }
+
+    /**
+     * String magic.
+     */
+    public function __toString()
+    {
+        return $this->content();
+    }
+
+    /**
+     * Content.
+     * @return string
+     */
+    public function content(): string
+    {
+        return $this->content;
+    }
 }

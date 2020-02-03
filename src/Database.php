@@ -26,98 +26,560 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\App;
-use froq\database\vendor\{VendorInterface, Oppa};
+use froq\database\{DatabaseException, DatabaseConnectionException, DatabaseQueryException,
+    Link, LinkException, Result, Profiler, QueryBuilder};
+use froq\database\sql\{Sql, Name, DateTime, Date};
+use PDO, PDOStatement, PDOException, Exception;
 
 /**
  * Database.
  * @package froq\database
  * @object  froq\database\Database
  * @author  Kerem Güneş <k-gun@mail.com>
- * @since   1.0
+ * @since   1.0, 4.0 Refactored.
  */
 final class Database
 {
     /**
-    * Vendors names.
-    * @const string
-    */
-    public const VENDOR_NAME_MYSQL = 'mysql',
-                 VENDOR_NAME_PGSQL = 'pgsql';
+     * Link.
+     * @var froq\database\Link
+     */
+    private Link $link;
 
     /**
-     * App.
-     * @var froq\App
+     * Profiler.
+     * @var froq\database\Profiler.
      */
-    private $app;
-
-    /**
-     * Instances.
-     * @var array
-     */
-    private static $instances = [];
+    private Profiler $profiler;
 
     /**
      * Constructor.
-     * @param froq\App $app
+     * @param  array $options
+     * @throws froq\database\DatabaseConnectionException
      */
-    public function __construct(App $app)
+    public function __construct(array $options)
     {
-        $this->app = $app;
+        // Default is false (no profiling).
+        $profile = $options['profile'] ?? false;
+        if ($profile) {
+            $this->profiler = new Profiler();
+        }
+
+        $this->link = Link::init($options);
+        try {
+            empty($this->profiler) ? $this->link->connect()
+                : $this->profiler->profileConnection(fn() => $this->link->connect());
+        } catch (LinkException $e) {
+            throw new DatabaseConnectionException($e->getMessage());
+        }
     }
 
     /**
-     * Get app.
-     * @return froq\App
+     * Get link.
+     * @return froq\database\Link
      */
-    public function getApp(): App
+    public function getLink(): Link
     {
-        return $this->app;
+        return $this->link;
     }
 
     /**
-     * Get instances.
-     * @return array
-     */
-    public function getInstances(): array
-    {
-        return self::$instances;
-    }
-
-    /**
-     * Init.
-     * @param  string $vendorName
-     * @return froq\database\vendor\VendorInterface
+     * Get profiler.
+     * @return froq\database\Profiler
      * @throws froq\database\DatabaseException
      */
-    public function init(string $vendorName): VendorInterface
+    public function getProfiler(): Profiler
     {
-        $vendorName = strtolower($vendorName);
-        if (empty(self::$instances[$vendorName])) {
-            $appEnv = $this->app->env();
-            $appConfig = $this->app->config();
+        if (empty($this->profiler)) {
+            throw new DatabaseException('Database object has no profiler, be sure "profile" '.
+                'option is "true" in configuration');
+        }
 
-            $cfg = $appConfig['db'] ?? null;
-            if ($cfg == null) {
-                throw new DatabaseException("Config error, no 'db' options found");
+        return $this->profiler;
+    }
+
+    /**
+     * Query.
+     * @param  string     $query
+     * @param  array|null $queryParams
+     * @param  array|null $fetchOptions
+     * @return froq\database\Result
+     * @throws froq\database\DatabaseException, froq\database\DatabaseQueryException
+     */
+    public function query(string $query, array $queryParams = null, array $fetchOptions = null): Result
+    {
+        $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
+        if (!$query) {
+            throw new DatabaseException('Empty query given to "%s()", non-empty query required', [__method__]);
+        }
+
+        try {
+            $pdo = $this->link->getPdo();
+            $pdoStatement = empty($this->profiler) ? $pdo->query($query)
+                                : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
+            return new Result($pdo, $pdoStatement, $fetchOptions);
+        } catch (PDOException $e) {
+            throw new DatabaseQueryException($e->getMessage());
+        }
+    }
+
+    /**
+     * Get.
+     * @param  string     $query
+     * @param  array|null $queryParams
+     * @param  array|null $fetchOptions
+     * @return ?array|?object
+     */
+    public function get(string $query, array $queryParams = null, array $fetchOptions = null)
+    {
+        return $this->query($query, $queryParams, $fetchOptions)->row(0);
+    }
+
+    /**
+     * Get all.
+     * @param  string     $query
+     * @param  array|null $queryParams
+     * @param  array|null $fetchOptions
+     * @return ?array
+     */
+    public function getAll(string $query, array $queryParams = null, array $fetchOptions = null): ?array
+    {
+        return $this->query($query, $queryParams, $fetchOptions)->rows();
+    }
+
+    /**
+     * Select.
+     * @param  string      $table
+     * @param  string      $fields
+     * @param  string|null $where
+     * @param  array|null  $whereParams
+     * @param  string|null $order
+     * @return ?array|?object
+     */
+    public function select(string $table, string $fields, string $where = null, array $whereParams = null,
+        string $order = null)
+    {
+        $query = $this->initQueryBuilder($table)->select($fields);
+        $where && $query->where($where, $whereParams);
+        $order && $query->orderBy($order);
+        $query->limit(1);
+
+        return $query->run()->row(0);
+    }
+
+    /**
+     * Select all.
+     * @param  string      $table
+     * @param  string      $fields
+     * @param  string|null $where
+     * @param  array|null  $whereParams
+     * @param  string|null $order
+     * @param  array|null  $limit
+     * @return ?array
+     */
+    public function selectAll(string $table, string $fields, string $where = null, array $whereParams = null,
+        string $order = null, array $limit = null): ?array
+    {
+        $query = $this->initQueryBuilder($table)->select($fields);
+        $where && $query->where($where, $whereParams);
+        $order && $query->orderBy($order);
+        $limit && $query->limit(...$limit);
+
+        return $query->run()->rows();
+    }
+
+    /**
+     * Insert.
+     * @param  string $table
+     * @param  array  $data
+     * @param  bool   $multi
+     * @return ?int|?array<int>
+     */
+    public function insert(string $table, array $data, bool $multi = false)
+    {
+        $query = $this->initQueryBuilder($table)->insert($data, $multi);
+
+        return !$multi ? $query->run()->id() : $query->run()->ids();
+    }
+
+    /**
+     * Update.
+     * @param  string      $table
+     * @param  array       $data
+     * @param  string|null $where
+     * @param  array|null  $whereParams
+     * @param  int|null    $limit
+     * @return int
+     */
+    public function update(string $table, array $data, string $where = null, array $whereParams = null,
+        int $limit = null): int
+    {
+        $query = $this->initQueryBuilder($table)->update($data);
+        $where && $query->where($where, $whereParams);
+        $limit && $query->limit($limit);
+
+        return $query->run()->count();
+    }
+
+    /**
+     * Delete.
+     * @param  string      $table
+     * @param  string|null $where
+     * @param  array|null  $whereParams
+     * @param  int|null    $limit
+     * @return int
+     */
+    public function delete(string $table, string $where = null, array $whereParams = null,
+        int $limit = null): int
+    {
+        $query = $this->initQueryBuilder($table)->delete();
+        $where && $query->where($where, $whereParams);
+        $limit && $query->limit($limit);
+
+        return $query->run()->count();
+    }
+
+    /**
+     * Count.
+     * @param  string      $table
+     * @param  string|null $where
+     * @param  array|null  $whereParams
+     * @return int
+     */
+    public function count(string $table, string $where = null, array $whereParams = null): int
+    {
+        $query = $this->initQueryBuilder($table);
+        $where && $query->where($where, $whereParams);
+
+        return $query->count();
+    }
+
+    /**
+     * Count query.
+     * @param  string     $query
+     * @param  array|null $queryParams
+     * @return int
+     */
+    public function countQuery(string $query, array $queryParams = null): int
+    {
+        $query  = 'SELECT count(*) AS c FROM ('. $query .') AS t';
+        $result = $this->get($query, $queryParams, ['array']);
+
+        return (int) ($result['c'] ?? 0);
+    }
+
+    /**
+     * Transaction.
+     * @param  callable $call
+     * @return any
+     * @throws froq\database\DatabaseException
+     */
+    public function transaction(callable $call)
+    {
+        $pdo = $this->link->getPdo();
+        try {
+            if (!$pdo->beginTransaction()) {
+                throw new DatabaseException('Failed to start transaction');
             }
+            // And for all others.
+        } catch (Exception $e) {
+            throw new DatabaseException($e->getMessage());
+        }
 
-            // eg: $cfg['db']['mysql']['dev']
-            if (empty($cfg[$vendorName][$appEnv])) {
-                throw new DatabaseException("Config error, '{$vendorName}' options not found for '{$appEnv}'");
-            }
+        try {
+            $ret = call_user_func($call, $this);
+            $pdo->commit();
+            return $ret;
+        } catch(Exception $e) {
+            $pdo->rollBack();
+            throw new DatabaseException($e->getMessage());
+        }
+    }
 
-            switch ($vendorName) {
-                // only mysql & pgsql for now
-                case self::VENDOR_NAME_MYSQL:
-                case self::VENDOR_NAME_PGSQL:
-                    self::$instances[$vendorName] = Oppa::init($cfg[$vendorName][$appEnv]);
-                    break;
-                default:
-                    throw new DatabaseException("Unimplemented vendor name '{$vendorName}' given");
+    /**
+     * Quote.
+     * @param  string $input
+     * @return string
+     */
+    public function quote(string $input): string
+    {
+        return '\'' . $input . '\'';
+    }
+
+    /**
+     * Quote name.
+     * @param  string $input
+     * @return string
+     */
+    public function quoteName(string $input): string
+    {
+        if ($input == '*') {
+            return $input;
+        }
+
+        // Dot notations (eg: foo.id => "foo"."id").
+        $pos = strpos($input, '.');
+        if ($pos) {
+            return $this->quoteName(substr($input, 0, $pos)) .'.'.
+                   $this->quoteName(substr($input, $pos + 1));
+        }
+
+        $pdoDriver = $this->link->getPdoDriver();
+        if ($pdoDriver == 'pgsql') {
+            // Array notations.
+            $pos = strpos($input, '[');
+            if ($pos) {
+                return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
             }
         }
 
-        return self::$instances[$vendorName];
+        switch ($pdoDriver) {
+            case 'mysql': return '`'. $input .'`';
+            case 'mssql': return '['. $input .']';
+                 default: return '"'. $input .'"';
+        }
+    }
+
+    /**
+     * Escape.
+     * @param  any         $input
+     * @param  string|null $inputFormat
+     * @return any
+     * @throws froq\database\DatabaseException
+     */
+    public function escape($input, string $inputFormat = null)
+    {
+        $inputType = gettype($input);
+
+        if ($inputType == 'array' && $inputFormat != '?a') {
+            return array_map([$this, 'escape'], $input);
+        } elseif ($inputType == 'object') {
+            $inputClass = get_class($input);
+            switch ($inputClass) {
+                case Sql::class:          return $input->content();
+                case Name::class:         return $this->escapeName($input->content());
+                case DateTime::class:     return $this->escapeString($input->content());
+                case Date::class:         return $this->escapeString($input->content());
+                case QueryBuilder::class: return $input->toString();
+                default:
+                    throw new DatabaseException('Invalid input object "%s" given, valids are '.
+                        '"QueryBuilder, sql\{Sql, Name, DateTime, Date}"', [$inputClass]);
+            }
+        }
+
+        // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a".
+        if ($inputFormat) {
+            if ($inputFormat == '?' || $inputFormat == '??') {
+                return ($inputFormat == '?') ? $this->escape($input)
+                                             : $this->escapeName($input);
+            }
+
+            switch ($inputFormat) {
+                case '?s': return $this->escapeString((string) $input);
+                case '?i': return (int) $input;
+                case '?f': return (float) $input;
+                case '?b': return $input ? 'true' : 'false';
+                case '?r': return $input; // Raw.
+                case '?n': return $this->escapeName($input);
+                case '?a': return join(', ', (array) $this->escape($input)); // Array.
+            }
+
+            throw new DatabaseException('Unimplemented input format "%s" encountered', [$inputFormat]);
+        }
+
+        switch ($inputType) {
+            case 'NULL':    return 'NULL';
+            case 'string':  return $this->escapeString($input);
+            case 'integer': return $input;
+            case 'double':  return $input;
+            case 'boolean': return $input ? 'true' : 'false';
+            default:
+                throw new DatabaseException('Unimplemented input type "%s" encountered', [$inputType]);
+        }
+    }
+
+    /**
+     * Escape string.
+     * @param  string $input
+     * @param  bool   $quote
+     * @param  string $extra
+     * @return string
+     */
+    public function escapeString(string $input, bool $quote = true, string $extra = ''): string
+    {
+        $input = $this->link->getPdo()->quote($input);
+
+        if (!$quote) {
+            $input = trim($input, '\'');
+        }
+        if ($extra) {
+            $input = addcslashes($input, $extra);
+        }
+
+        return $input;
+    }
+
+    /**
+     * Escape like string.
+     * @param  string $input
+     * @param  bool   $quote
+     * @return string
+     */
+    public function escapeLikeString(string $input, bool $quote = true): string
+    {
+        return $this->escapeString($input, $quote, '%_');
+    }
+
+    /**
+     * Escape name.
+     * @param  string $input
+     * @return string
+     */
+    public function escapeName(string $input): string
+    {
+        switch ($this->link->getPdoDriver()) {
+            case 'mysql': $input = str_replace('`', '``', $input); break;
+            case 'mssql': $input = str_replace(']', ']]', $input); break;
+                 default: $input = str_replace('"', '""', $input);
+        }
+
+        return $this->quoteName($input);
+    }
+
+    /**
+     * Escape names.
+     * @param  string $input
+     * @return string
+     */
+    public function escapeNames(string $input): string
+    {
+        // Eg: "id, name ..." or "id as ID, ...".
+        preg_match_all('~([^\s,]+)(?:\s+(?:(AS)\s+)?([^\s,]+))?~i', $input, $match);
+
+        $names = array_filter($match[1], 'strlen');
+        $aliases = array_filter($match[3], 'strlen');
+        if (empty($names)) {
+            return $input;
+        }
+
+        foreach ($names as $i => $name) {
+            $names[$i] = $this->escapeName($name);
+            if (isset($aliases[$i])) {
+                $names[$i] .= ' AS '. $this->escapeName($aliases[$i]);
+            }
+        }
+
+        return join(', ', $names);
+    }
+
+    /**
+     * Prepare.
+     * @param  string     $input
+     * @param  array|null $inputParams
+     * @return string
+     * @throws froq\database\DatabaseException
+     */
+    public function prepare(string $input, array $inputParams = null): string
+    {
+        $input = $this->preparePrepareInput($input);
+        if (!$input) {
+            throw new DatabaseException('Empty input given to "%s()", non-empty input required', [__method__]);
+        }
+
+        // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a / :foo, :foo_bar".
+        static $pattern = '~
+              \?[sifbnra](?![\w]) # Scalars/(n)ame/(r)aw. Eg: ("id = ?i", ["1"]) or ("?n = ?i", ["id", "1"]).
+            | \?\?                # Names (identifier).   Eg: ("?? = ?", ["id", 1]).
+            | \?(?![\w|&])        # Any type.             Eg: ("id = ?", [1]), but not "id ?| array[..]" for PgSQL.
+            | (?<!:):\w+          # Named parameters.     Eg: ("id = :id", [1]), but not "id::int" casts for PgSQL.
+        ~xu';
+
+        if (preg_match_all($pattern, $input, $match)) {
+            if (!$inputParams) {
+                throw new DatabaseException('Empty input parameters given to "%s()", non-empty '.
+                    'input parameters required when input contains parameter placeholders like '.
+                    '"?", "??" or ":foo"', [__method__]);
+            }
+
+            $i = 0;
+            $holders = array_filter($match[0]);
+
+            foreach ($holders as $holder) {
+                $pos = strpos($holder, ':');
+                if ($pos > -1) {
+                    $key = trim($holder, ':');
+                    if (!array_key_exists($key, $inputParams)) {
+                        throw new DatabaseException('Replacement key "%s" not found in given parameters', [$key]);
+                    }
+
+                    $value = $this->escape($inputParams[$key]);
+                    $input = substr_replace($input, $value, strpos($input, ':'), strlen($holder));
+                } else {
+                    if (!array_key_exists($i, $inputParams)) {
+                        throw new DatabaseException('Replacement index "%s" not found in given parameters', [$i]);
+                    }
+
+                    $value = $this->escape($inputParams[$i++], $holder);
+                    $input = substr_replace($input, $value, strpos($input, $holder), strlen($holder));
+                }
+            }
+        }
+
+        return $input;
+    }
+
+    /**
+     * Prepare statement.
+     * @param  string $input
+     * @return PDOStatement
+     * @throws froq\database\DatabaseException
+     */
+    public function prepareStatement(string $input): PDOStatement
+    {
+        $input = $this->preparePrepareInput($input);
+        if (!$input) {
+            throw new DatabaseException('Empty input given to "%s()", non-empty input required', [__method__]);
+        }
+
+        try {
+            return $this->link->getPdo()->prepare($input);
+        } catch (PDOException $e) {
+            throw new DatabaseException($e);
+        }
+    }
+
+    /**
+     * Prepare prepare input.
+     * @param  string $input
+     * @return string
+     */
+    public function preparePrepareInput(string $input): string
+    {
+        $input = trim($input);
+
+        if ($input) {
+            // Prepare names (eg: '@id = ?', 1 or '@[id,..]') .
+            $pos = strpos($input, '@');
+            if ($pos > -1) {
+                $input = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
+                    if (count($match) == 1) {
+                        return $this->escapeNames(substr($match[0], 2, -1));
+                    }
+                    return $this->escapeName($match[1]);
+                }, $input);
+            }
+        }
+
+        return $input;
+    }
+
+    /**
+     * Init query builder.
+     * @param  string|null $table
+     * @return froq\database\QueryBuilder
+     */
+    public function initQueryBuilder(string $table = null): QueryBuilder
+    {
+        return new QueryBuilder($this, $table);
     }
 }
