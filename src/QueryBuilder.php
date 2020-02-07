@@ -760,10 +760,6 @@ final class QueryBuilder
                 'update(), or delete() first');
         }
 
-        if ($ret && $pretty) {
-            $ret .= !$sub ? "" : "\n\t";
-        }
-
         return $ret;
     }
 
@@ -783,11 +779,12 @@ final class QueryBuilder
                 'set target table first.');
         }
 
-        $s = ''; $n = $t = $nt = ''; $ns = ' ';
-        if ($pretty) {
-            $s = "\t"; $n = "\n"; $t = "\t"; $nt = $n . $t; $ns = $n;
+        $n = $t = $nt = $ns = ' ';
+        if (!$pretty) {
+            $n = "\n"; $t = "\t";
+            $nt = "\n\t"; $ns = "\n";
             if ($sub) {
-                $ns = $nt . $t; $t = $t . $t;
+                $nt = "\n\t\t"; $ns = "\n\t";
             }
         }
 
@@ -796,11 +793,10 @@ final class QueryBuilder
         switch ($key) {
             case 'select':
                 $select = $query['select'];
-                $select = $nt . join(', '. $nt, $select);
 
-                $ret = trim(
-                    "SELECT {$select} {$n}FROM "
-                    . $this->toQueryString('table', $pretty, $sub)
+                $ret  = sprintf('SELECT%s%s%sFROM ', $nt, join(','. $nt, $select), $ns);
+                $ret .= trim(
+                      $this->toQueryString('table', $pretty, $sub)
                     . $this->toQueryString('join', $pretty, $sub)
                     . $this->toQueryString('where', $pretty, $sub)
                     . $this->toQueryString('groupBy', $pretty, $sub)
@@ -808,6 +804,10 @@ final class QueryBuilder
                     . $this->toQueryString('orderBy', $pretty, $sub)
                     . $this->toQueryString('limit', $pretty, $sub)
                 );
+
+                if ($sub) {
+                    $ret = $ns . $ret . $n;
+                }
                 break;
             case 'table':
                 $table = $query['table'];
@@ -834,7 +834,7 @@ final class QueryBuilder
                 if (isset($query['where'])) {
                     $wheres = $query['where'];
                     if (count($wheres) == 1) {
-                        $ret = $ns . 'WHERE '. $wheres[0][0];
+                        $ret = $ns .'WHERE '. $wheres[0][0];
                     } else {
                         $ws = ''; $wsi = 0;
                         foreach ($wheres as $i => [$where, $op]) {
@@ -853,10 +853,7 @@ final class QueryBuilder
                         }
 
                         $ret = $ws . str_repeat(')', $wsi); // Join & close parentheses.
-                        if ($sub) {
-                            $n = $n . $t; $nt = $n . $s;
-                        }
-                        $ret = $ns . 'WHERE ('. $nt . $ret . $n . ')';
+                        $ret = $ns .'WHERE ('. $nt . $ret . $ns .')';
                     }
                 }
                 break;
