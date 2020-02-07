@@ -686,6 +686,17 @@ final class QueryBuilder
     }
 
     /**
+     * Paginate.
+     * @return self
+     */
+    public function paginate(): self
+    {
+        $pager = $this->db->initPager($this->count());
+
+        return $this->limit($pager->getLimit(), $pager->getOffset());
+    }
+
+    /**
      * Name.
      * @param  string $input
      * @return froq\database\sql\Sql

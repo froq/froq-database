@@ -29,6 +29,7 @@ namespace froq\database;
 use froq\database\{DatabaseException, DatabaseConnectionException, DatabaseQueryException,
     Link, LinkException, Result, Profiler, QueryBuilder};
 use froq\database\sql\{Sql, Name, DateTime, Date};
+use froq\pager\Pager;
 use PDO, PDOStatement, PDOException, Exception;
 
 /**
@@ -571,6 +572,19 @@ final class Database
         }
 
         return $input;
+    }
+
+    /**
+     * Init pager.
+     * @param  int|null $totalRecords
+     * @return froq\pager\Pager
+     */
+    public final function initPager(int $totalRecords = null): Pager
+    {
+        $pager = new Pager();
+        $pager->run($totalRecords);
+
+        return $pager;
     }
 
     /**
