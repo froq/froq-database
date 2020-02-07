@@ -780,7 +780,7 @@ final class QueryBuilder
         }
 
         $n = $t = $nt = $ns = ' ';
-        if (!$pretty) {
+        if ($pretty) {
             $n = "\n"; $t = "\t";
             $nt = "\n\t"; $ns = "\n";
             if ($sub) {
