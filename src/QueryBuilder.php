@@ -211,7 +211,7 @@ final class QueryBuilder
      */
     public function join(string $to, string $on, array $onParams = null, string $type = null): self
     {
-        return $this->add('join', sprintf('%sJOIN %s ON (%s)',
+        return $this->add('join', sprintf('%sJOIN %s ON %s',
             $type ? strtoupper($type) .' ' : '',
             $this->prepareFields($to),
             $this->prepare($on, $onParams)
