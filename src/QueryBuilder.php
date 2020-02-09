@@ -80,15 +80,6 @@ final class QueryBuilder
     }
 
     /**
-     * Get query.
-     * @return array
-     */
-    public function getQuery(): array
-    {
-        return $this->query;
-    }
-
-    /**
      * Db.
      * @aliasOf getDb()
      */
@@ -126,14 +117,42 @@ final class QueryBuilder
      * @param  string $select
      * @param  bool   $prepare
      * @return self
+     * @throws froq\database\QueryBuilderException
      */
     public function select(string $select, bool $prepare = true): self
     {
+        $select = trim($select);
+        if ($select == '') {
+            throw new QueryBuilderException('Empty select given');
+        }
+
         if ($prepare) {
             $select = $this->prepareFields($select);
         }
 
         return $this->add('select', $select);
+    }
+
+    /**
+     * Select query.
+     * @param  string|self $query
+     * @param  string      $as
+     * @return self
+     * @throws froq\database\QueryBuilderException
+     */
+    public function selectQuery($query, string $as): self
+    {
+        if (!is_string($query) && !($query instanceof self)) {
+            throw new QueryBuilderException('Invalid query type "%s", valids are "string, QueryBuilder"',
+                [gettype($query)]);
+        }
+
+        $select = trim($query);
+        if ($select == '') {
+            throw new QueryBuilderException('Empty select query given');
+        }
+
+        return $this->select('('. $select .') AS '. $this->prepareField($as), false);
     }
 
     /**
@@ -177,6 +196,7 @@ final class QueryBuilder
      * Update.
      * @param  array $data
      * @return self
+     * @throws froq\database\QueryBuilderException
      */
     public function update(array $data): self
     {
