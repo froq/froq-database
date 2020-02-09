@@ -147,7 +147,7 @@ final class QueryBuilder
                 [gettype($query)]);
         }
 
-        $select = trim($query);
+        $select = trim((string) $query);
         if ($select == '') {
             throw new QueryBuilderException('Empty select query given');
         }
