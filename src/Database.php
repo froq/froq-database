@@ -577,12 +577,13 @@ final class Database
     /**
      * Init pager.
      * @param  int|null $totalRecords
+     * @param  int|null $limit
      * @return froq\pager\Pager
      */
-    public final function initPager(int $totalRecords = null): Pager
+    public final function initPager(int $totalRecords = null, int $limit = null): Pager
     {
         $pager = new Pager();
-        $pager->run($totalRecords);
+        $pager->run($totalRecords, $limit);
 
         return $pager;
     }

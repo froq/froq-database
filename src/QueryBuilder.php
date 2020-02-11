@@ -707,11 +707,12 @@ final class QueryBuilder
 
     /**
      * Paginate.
+     * @param  int|null $limit
      * @return self
      */
-    public function paginate(): self
+    public function paginate(int $limit = null): self
     {
-        $pager = $this->db->initPager($this->count());
+        $pager = $this->db->initPager($this->count(), $limit);
 
         return $this->limit($pager->getLimit(), $pager->getOffset());
     }
