@@ -503,6 +503,7 @@ final class Database
             }
 
             $i = 0;
+            $keys = $values = [];
             $holders = array_filter($match[0]);
 
             foreach ($holders as $holder) {
@@ -513,17 +514,19 @@ final class Database
                         throw new DatabaseException('Replacement key "%s" not found in given parameters', [$key]);
                     }
 
-                    $value = $this->escape($inputParams[$key]);
-                    $input = substr_replace($input, $value, strpos($input, ':'), strlen($holder));
+                    $keys[] = '~:'. $key .'~';
+                    $values[] = $this->escape($inputParams[$key]);
                 } else {
                     if (!array_key_exists($i, $inputParams)) {
                         throw new DatabaseException('Replacement index "%s" not found in given parameters', [$i]);
                     }
 
-                    $value = $this->escape($inputParams[$i++], $holder);
-                    $input = substr_replace($input, $value, strpos($input, $holder), strlen($holder));
+                    $keys[] = '~\\'. $holder .'(?![|&])~';
+                    $values[] = $this->escape($inputParams[$i++], $holder);
                 }
             }
+
+            $input = preg_replace($keys, $values, $input, 1);
         }
 
         return $input;
