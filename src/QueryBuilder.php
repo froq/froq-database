@@ -585,19 +585,23 @@ final class QueryBuilder
 
     /**
      * Order by.
-     * @param  string $field
+     * @param  string      $field
+     * @param  string|null $collation
      * @return self
      */
-    public function orderBy(string $field): self
+    public function orderBy(string $field, string $collation = null): self
     {
         $field = trim($field);
+        if ($collation) {
+            $collation = ' COLLATE '. $this->prepareCollation($collation);
+        }
 
         // Eg: "id ASC" or "id ASC, name DESC".
         if (strpos($field, ' ')) {
             $fields = [];
             foreach (explode(',', $field) as $i => $field) {
                 @ [$field, $op] = explode(' ', trim($field));
-                $fields[$i] = $this->prepareField($field);
+                $fields[$i] = $this->prepareField($field) . $collation;
                 if ($op) {
                     $fields[$i] .= ' '. $this->prepareOp($op);
                 }
@@ -606,7 +610,7 @@ final class QueryBuilder
             return $this->add('orderBy', implode(', ', $fields));
         }
 
-        return $this->add('orderBy', $this->prepareField($field));
+        return $this->add('orderBy', $this->prepareField($field) . $collation);
     }
 
     /**
@@ -1022,6 +1026,22 @@ final class QueryBuilder
         }
 
         throw new QueryBuilderException('Invalid op "%s", valids are "%s"', [$op, join(', ', $ops)]);
+    }
+
+    /**
+     * Prepare collation.
+     * @param  string $collation
+     * @return string
+     */
+    public function prepareCollation(string $collation): string
+    {
+        $collation = trim($collation);
+
+        if ($this->db->getLink()->getPdoDriver() == 'pgsql') {
+            $collation = '"'. trim($collation, '"') .'"';
+        }
+
+        return $collation;
     }
 
     /**
