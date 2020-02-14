@@ -143,8 +143,8 @@ final class QueryBuilder
     public function selectQuery($query, string $as): self
     {
         if (!is_string($query) && !($query instanceof self)) {
-            throw new QueryBuilderException('Invalid query type "%s", valids are "string, QueryBuilder"',
-                [gettype($query)]);
+            throw new QueryBuilderException('Invalid query type "%s", valids are: string, '.
+                'QueryBuilder', [gettype($query)]);
         }
 
         $select = trim((string) $query);
@@ -184,7 +184,7 @@ final class QueryBuilder
         foreach ($values as $i => $value) {
             $value = (array) $value;
             if (count($value) != $fieldsCount) {
-                throw new QueryBuilderException('Count of value set %s is not matching with fields count', [$i]);
+                throw new QueryBuilderException('Count of value set "%s" not matched with fields count', [$i]);
             }
             $values[$i] = '('. join(', ', $this->db->escape($value)) .')';
         }
@@ -1049,7 +1049,7 @@ final class QueryBuilder
             return $op;
         }
 
-        throw new QueryBuilderException('Invalid op "%s", valids are "%s"', [$op, join(', ', $ops)]);
+        throw new QueryBuilderException('Invalid op "%s", valids are: "%s"', [$op, join(', ', $ops)]);
     }
 
     /**

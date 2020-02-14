@@ -198,7 +198,8 @@ final class Profiler
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid type "%s" given, valids are "connection, query"', [$type]);
+                throw new ProfilerException('Invalid type "%s" given, valids are: "connection, '.
+                    'query"', [$type]);
         }
     }
 
@@ -217,18 +218,19 @@ final class Profiler
         $end = microtime(true);
         switch ($type) {
             case 'connection':
-                $this->profiles['connection']['end'] = $end;
-                $this->profiles['connection']['time'] = round($end - $this->profiles['connection']['start'], 10);
+                $this->profiles[$type]['end'] = $end;
+                $this->profiles[$type]['time'] = round($end - $this->profiles[$type]['start'], 10);
                 break;
             case 'query':
                 $i = $this->queryCount;
-                if (isset($this->profiles['query'][$i])) {
-                    $this->profiles['query'][$i]['end'] = $end;
-                    $this->profiles['query'][$i]['time'] = round($end - $this->profiles['query'][$i]['start'], 10);
+                if (isset($this->profiles[$type][$i])) {
+                    $this->profiles[$type][$i]['end'] = $end;
+                    $this->profiles[$type][$i]['time'] = round($end - $this->profiles[$type][$i]['start'], 10);
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid type "%s" given, valids are "connection, query"', [$type]);
+                throw new ProfilerException('Invalid type "%s" given, valids are: "connection, '.
+                    'query"', [$type]);
         }
     }
 }

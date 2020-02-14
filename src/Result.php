@@ -65,6 +65,7 @@ final class Result implements Countable, IteratorAggregate
     public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $fetchOptions = null)
     {
         if ($pdoStatement->errorCode() == '00000') {
+            // Assign count (affected rows etc).
             $this->count = $pdoStatement->rowCount();
 
             // Select queries.
@@ -76,8 +77,8 @@ final class Result implements Countable, IteratorAggregate
                     case 'object': $fetchType = PDO::FETCH_OBJ;   break;
                     case  'class':
                         if (!$fetchClass) {
-                            throw new ResultException('No fetch class given, fetch class is required '.
-                                'when fetch type is "class"');
+                            throw new ResultException('No fetch class given, fetch class is required'.
+                                ' when fetch type is "class"');
                         } elseif (!class_exists($fetchClass)) {
                             throw new ResultException('No fetch class found such "%s"', [$fetchClass]);
                         }
@@ -88,7 +89,7 @@ final class Result implements Countable, IteratorAggregate
                         static $fetchTypes = ['array', 'object', 'class'];
 
                         if ($fetchType && !in_array($fetchType, $fetchTypes)) {
-                            throw new ResultException('Invalid fetch type "%s" given, valids are "%s"',
+                            throw new ResultException('Invalid fetch type "%s" given, valids are: %s',
                                 [$fetchType, join(', ', $fetchTypes)]);
                         }
 

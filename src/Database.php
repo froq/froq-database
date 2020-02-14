@@ -111,7 +111,8 @@ final class Database
     {
         $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
         if (!$query) {
-            throw new DatabaseException('Empty query given to "%s()", non-empty query required', [__method__]);
+            throw new DatabaseException('Empty query given to "%s()", non-empty query required',
+                [__method__]);
         }
 
         try {
@@ -363,8 +364,8 @@ final class Database
                 case Date::class:         return $this->escapeString($input->content());
                 case QueryBuilder::class: return $input->toString();
                 default:
-                    throw new DatabaseException('Invalid input object "%s" given, valids are '.
-                        '"QueryBuilder, sql\{Sql, Name, DateTime, Date}"', [$inputClass]);
+                    throw new DatabaseException('Invalid input object "%s" given, valids are: '.
+                        'QueryBuilder, sql\{Sql, Name, DateTime, Date}', [$inputClass]);
             }
         }
 
@@ -385,7 +386,8 @@ final class Database
                 case '?a': return join(', ', (array) $this->escape($input)); // Array.
             }
 
-            throw new DatabaseException('Unimplemented input format "%s" encountered', [$inputFormat]);
+            throw new DatabaseException('Unimplemented input format "%s" encountered',
+                [$inputFormat]);
         }
 
         switch ($inputType) {
@@ -395,7 +397,8 @@ final class Database
             case 'double':  return $input;
             case 'boolean': return $input ? 'true' : 'false';
             default:
-                throw new DatabaseException('Unimplemented input type "%s" encountered', [$inputType]);
+                throw new DatabaseException('Unimplemented input type "%s" encountered',
+                    [$inputType]);
         }
     }
 
@@ -484,7 +487,8 @@ final class Database
     {
         $input = $this->preparePrepareInput($input);
         if (!$input) {
-            throw new DatabaseException('Empty input given to "%s()", non-empty input required', [__method__]);
+            throw new DatabaseException('Empty input given to "%s()", non-empty input required',
+                [__method__]);
         }
 
         // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a / :foo, :foo_bar".
@@ -511,14 +515,16 @@ final class Database
                 if ($pos > -1) {
                     $key = trim($holder, ':');
                     if (!array_key_exists($key, $inputParams)) {
-                        throw new DatabaseException('Replacement key "%s" not found in given parameters', [$key]);
+                        throw new DatabaseException('Replacement key "%s" not found in given '.
+                            'parameters', [$key]);
                     }
 
                     $keys[] = '~:'. $key .'~';
                     $values[] = $this->escape($inputParams[$key]);
                 } else {
                     if (!array_key_exists($i, $inputParams)) {
-                        throw new DatabaseException('Replacement index "%s" not found in given parameters', [$i]);
+                        throw new DatabaseException('Replacement index "%s" not found in given '.
+                            'parameters', [$i]);
                     }
 
                     $keys[] = '~\\'. $holder .'(?![|&])~';
@@ -542,7 +548,8 @@ final class Database
     {
         $input = $this->preparePrepareInput($input);
         if (!$input) {
-            throw new DatabaseException('Empty input given to "%s()", non-empty input required', [__method__]);
+            throw new DatabaseException('Empty input given to "%s()", non-empty input required',
+                [__method__]);
         }
 
         try {

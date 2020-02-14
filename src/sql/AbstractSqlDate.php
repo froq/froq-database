@@ -71,7 +71,7 @@ abstract class AbstractSqlDate extends AbstractSql
         } elseif (is_string($datetime)) {
             $content = new DateTime($datetime, $timezone);
         } else {
-            throw new SqlException('Invalid datetime type "%s" given, valids are "int, string, null"',
+            throw new SqlException('Invalid datetime type "%s" given, valids are: int, string, null',
                 [gettype($datetime)]);
         }
 
