@@ -627,6 +627,17 @@ final class QueryBuilder
     }
 
     /**
+     * Order by random.
+     * @return self
+     */
+    public function orderByRandom(): self
+    {
+        return ($this->db->getLink()->getPdoDriver() == 'pgsql')
+            ? $this->add('orderBy', 'random()')
+            : $this->add('orderBy', 'rand()');
+    }
+
+    /**
      * Limit.
      * @param  int      $limit
      * @param  int|null $offset
