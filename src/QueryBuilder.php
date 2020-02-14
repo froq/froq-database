@@ -491,7 +491,7 @@ final class QueryBuilder
 
         $where = $field .' LIKE '. $search;
         if ($ilike) {
-            $where = $this->db->getLink()->getPdoDriver() == 'pgsql'
+            $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
                 ? sprintf('%s ILIKE %s', $field, $search)
                 : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
         }
@@ -518,7 +518,7 @@ final class QueryBuilder
 
         $where = $field .' NOT LIKE '. $search;
         if ($ilike) {
-            $where = $this->db->getLink()->getPdoDriver() == 'pgsql'
+            $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
                 ? sprintf('%s NOT ILIKE %s', $field, $search)
                 : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
         }
@@ -556,6 +556,19 @@ final class QueryBuilder
         }
 
         return $this->where('NOT EXISTS ('. $query .')', null, $op);
+    }
+
+    /**
+     * Where random.
+     * @param  float       $value
+     * @param  string|null $op
+     * @return self
+     */
+    public function whereRandom(float $value = 0.01, string $op = null): self
+    {
+        return ($this->db->getLink()->getPdoDriver() == 'pgsql')
+            ? $this->where('random() < '. $value, $op)
+            : $this->where('rand() < '. $value, $op);
     }
 
     /**
