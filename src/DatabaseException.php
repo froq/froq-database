@@ -61,7 +61,7 @@ class DatabaseException extends Exception
                 $errorInfo = $message->errorInfo ?: $this->parseMessageInfo($message->getMessage());
             } else {
                 throw new Exception(
-                    'Invalid message type "%s" given to "%s", valids are: "string, PDOException"',
+                    'Invalid message type "%s" given to "%s", valids are: string, PDOException',
                     [is_object($message) ? get_class($message) : gettype($message), static::class]
                 );
             }

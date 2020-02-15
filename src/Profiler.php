@@ -198,8 +198,7 @@ final class Profiler
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid type "%s" given, valids are: "connection, '.
-                    'query"', [$type]);
+                throw new ProfilerException('Invalid type "%s" given, valids are: connection, query', [$type]);
         }
     }
 
@@ -229,8 +228,7 @@ final class Profiler
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid type "%s" given, valids are: "connection, '.
-                    'query"', [$type]);
+                throw new ProfilerException('Invalid type "%s" given, valids are: connection, query', [$type]);
         }
     }
 }

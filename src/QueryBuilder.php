@@ -1049,7 +1049,7 @@ final class QueryBuilder
             return $op;
         }
 
-        throw new QueryBuilderException('Invalid op "%s", valids are: "%s"', [$op, join(', ', $ops)]);
+        throw new QueryBuilderException('Invalid op "%s", valids are: %s', [$op, join(', ', $ops)]);
     }
 
     /**
