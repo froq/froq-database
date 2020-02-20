@@ -140,8 +140,9 @@ final class Link
                 throw new LinkException($e);
             } finally {
                 // Safety (for dumping etc.)..
-                $this->options['user'] = '****';
-                $this->options['pass'] = '****';
+                $this->options['dsn']  = preg_replace('~dbname=[^;]+~', 'dbname=<****>', $this->options['dsn']);
+                $this->options['user'] = '<****>';
+                $this->options['pass'] = '<****>';
             }
 
             $charset  && $this->setCharset($charset);
