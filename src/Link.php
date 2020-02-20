@@ -138,6 +138,10 @@ final class Link
                     throw new LinkException('Could not find driver "%s"', [$driver]);
                 }
                 throw new LinkException($e);
+            } finally {
+                // Safety (for dumping etc.)..
+                $this->options['user'] = '****';
+                $this->options['pass'] = '****';
             }
 
             $charset  && $this->setCharset($charset);
