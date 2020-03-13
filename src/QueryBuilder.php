@@ -597,6 +597,18 @@ final class QueryBuilder
     }
 
     /**
+     * Order.
+     * @param  string      $field
+     * @param  string      $op
+     * @param  string|null $collation
+     * @return self
+     */
+    public function order(string $field, string $op, string $collation = null): self
+    {
+        return $this->orderBy($field .' '. $op, $collation);
+    }
+
+    /**
      * Order by.
      * @param  string      $field
      * @param  string|null $collation
