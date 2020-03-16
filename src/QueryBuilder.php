@@ -292,7 +292,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' = ?', [$fieldParam], $op);
+        return $this->where($field .' = ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -309,7 +309,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' != ?', [$fieldParam], $op);
+        return $this->where($field .' != ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -420,7 +420,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' < ?', [$fieldParam], $op);
+        return $this->where($field .' < ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -437,7 +437,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' <= ?', [$fieldParam], $op);
+        return $this->where($field .' <= ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -453,7 +453,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' > ?', [$fieldParam], $op);
+        return $this->where($field .' > ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -469,7 +469,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' >= ?', [$fieldParam], $op);
+        return $this->where($field .' >= ?', (array) $fieldParam, $op);
     }
 
     /**
