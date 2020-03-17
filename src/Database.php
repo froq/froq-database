@@ -156,17 +156,18 @@ final class Database
      * @param  string|null $where
      * @param  array|null  $whereParams
      * @param  string|null $order
+     * @param  array|null  $fetchOptions
      * @return ?array|?object
      */
     public function select(string $table, string $fields, string $where = null, array $whereParams = null,
-        string $order = null)
+        string $order = null, array $fetchOptions = null)
     {
         $query = $this->initQuery($table)->select($fields);
         $where && $query->where($where, $whereParams);
         $order && $query->orderBy($order);
         $query->limit(1);
 
-        return $query->run()->row(0);
+        return $query->run($fetchOptions)->row(0);
     }
 
     /**
@@ -177,17 +178,18 @@ final class Database
      * @param  array|null  $whereParams
      * @param  string|null $order
      * @param  array|null  $limit
+     * @param  array|null  $fetchOptions
      * @return ?array
      */
     public function selectAll(string $table, string $fields, string $where = null, array $whereParams = null,
-        string $order = null, array $limit = null): ?array
+        string $order = null, array $limit = null, array $fetchOptions = null): ?array
     {
         $query = $this->initQuery($table)->select($fields);
         $where && $query->where($where, $whereParams);
         $order && $query->orderBy($order);
         $limit && $query->limit(...$limit);
 
-        return $query->run()->rows();
+        return $query->run($fetchOptions)->rows();
     }
 
     /**
