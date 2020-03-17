@@ -729,6 +729,15 @@ final class Query
     }
 
     /**
+     * Between.
+     * @aliasOf whereBetween().
+     */
+    public function between(...$arguments): self
+    {
+        return $this->whereBetween(...$arguments);
+    }
+
+    /**
      * Asc.
      * @param  string      $field
      * @param  string|null $collation
