@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
+use froq\pager\Pager;
 use froq\database\{QueryBuilderException, Database, Result};
 use froq\database\sql\{Sql, Name};
 
@@ -292,7 +293,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' = ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' = ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -309,7 +310,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' != ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' != ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -320,7 +321,7 @@ final class QueryBuilder
      */
     public function whereNull(string $field, string $op = null): self
     {
-        return $this->where($field .' IS NULL', null, $op);
+        return $this->where($this->prepareField($field) .' IS NULL', null, $op);
     }
 
     /**
@@ -331,7 +332,7 @@ final class QueryBuilder
      */
     public function whereNotNull(string $field, string $op = null): self
     {
-        return $this->where($field .' IS NOT NULL', null, $op);
+        return $this->where($this->prepareField($field) .' IS NOT NULL', null, $op);
     }
 
     /**
@@ -348,9 +349,8 @@ final class QueryBuilder
             throw new QueryBuilderException('No parameters given');
         }
 
-        $placeholders = $this->prepareWhereInPlaceholders($fieldParams);
-
-        return $this->where($field .' IN ('. $placeholders .')', $fieldParams, $op);
+        return $this->where($this->prepareField($field)
+            .' IN ('. $this->prepareWhereInPlaceholders($fieldParams) .')', $fieldParams, $op);
     }
 
     /**
@@ -367,9 +367,8 @@ final class QueryBuilder
             throw new QueryBuilderException('No parameters given');
         }
 
-        $placeholders = $this->prepareWhereInPlaceholders($fieldParams);
-
-        return $this->where($field .' NOT IN ('. $placeholders .')', $fieldParams, $op);
+        return $this->where($this->prepareField($field)
+            .' NOT IN ('. $this->prepareWhereInPlaceholders($fieldParams) .')', $fieldParams, $op);
     }
 
     /**
@@ -386,7 +385,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No parameters given');
         }
 
-        return $this->where($field .' BETWEEN ? AND ?', $fieldParams, $op);
+        return $this->where($this->prepareField($field) .' BETWEEN ? AND ?', $fieldParams, $op);
     }
 
     /**
@@ -403,7 +402,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No parameters given');
         }
 
-        return $this->where($field .' NOT BETWEEN ? AND ?', $fieldParams, $op);
+        return $this->where($this->prepareField($field) .' NOT BETWEEN ? AND ?', $fieldParams, $op);
     }
 
     /**
@@ -420,7 +419,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' < ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' < ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -437,7 +436,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' <= ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' <= ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -453,7 +452,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' > ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' > ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -469,7 +468,7 @@ final class QueryBuilder
             throw new QueryBuilderException('No field parameter given');
         }
 
-        return $this->where($field .' >= ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' >= ?', (array) $fieldParam, $op);
     }
 
     /**
@@ -489,8 +488,9 @@ final class QueryBuilder
 
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($fieldParams)];
 
-        $where = $field .' LIKE '. $search;
-        if ($ilike) {
+        if (!$ilike) {
+            $where = $field .' LIKE '. $search;
+        } else {
             $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
                 ? sprintf('%s ILIKE %s', $field, $search)
                 : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
@@ -516,8 +516,9 @@ final class QueryBuilder
 
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($fieldParams)];
 
-        $where = $field .' NOT LIKE '. $search;
-        if ($ilike) {
+        if (!$ilike) {
+            $where = $field .' NOT LIKE '. $search;
+        } else {
             $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
                 ? sprintf('%s NOT ILIKE %s', $field, $search)
                 : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
@@ -598,13 +599,18 @@ final class QueryBuilder
 
     /**
      * Order.
-     * @param  string      $field
-     * @param  string      $op
-     * @param  string|null $collation
+     * @param  string|int|bool|null $field
+     * @param  string               $op
+     * @param  string|null          $collation
      * @return self
      */
-    public function order(string $field, string $op, string $collation = null): self
+    public function order(string $field, $op = null, string $collation = null): self
     {
+        $op = $op ?? 'ASC';
+        if (is_int($op) || is_bool($op)) {
+            $op = ($op == 1) ? 'ASC' : 'DESC';
+        }
+
         return $this->orderBy($field .' '. $op, $collation);
     }
 
@@ -704,6 +710,26 @@ final class QueryBuilder
     }
 
     /**
+     * Asc.
+     * @param  string|null $collation
+     * @return self
+     */
+    public function asc(string $collation = null): self
+    {
+        return $this->orderBy('ASC', $collation);
+    }
+
+    /**
+     * Desc.
+     * @param  string|null $collation
+     * @return self
+     */
+    public function desc(string $collation = null): self
+    {
+        return $this->orderBy('DESC', $collation);
+    }
+
+    /**
      * Run.
      * @param  array|null $fetchOptions
      * @return froq\database\Result
@@ -747,13 +773,24 @@ final class QueryBuilder
 
     /**
      * Paginate.
-     * @param  int|null $limit
+     * @param  froq\pager\Pager|null &$pager
+     * @param  int|null               $limit
      * @return self
      */
-    public function paginate(int $limit = null): self
+    public function paginate(Pager &$pager = null, int $limit = null): self
     {
-        $pager = $this->db->initPager($this->count(), $limit);
+        $pager = $pager ?? $this->db->initPager($this->count(), $limit);
 
+        return $this->paginateWith($pager);
+    }
+
+    /**
+     * Paginate.
+     * @param  froq\pager\Pager|null $pager
+     * @return self
+     */
+    public function paginateWith(Pager $pager): self
+    {
         return $this->limit($pager->getLimit(), $pager->getOffset());
     }
 
