@@ -29,11 +29,11 @@ namespace froq\database;
 use froq\database\DatabaseException;
 
 /**
- * Query Builder Exception.
+ * Query Exception.
  * @package froq\database
- * @object  froq\database\QueryBuilderException
+ * @object  froq\database\QueryException
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.0
  */
-final class QueryBuilderException extends DatabaseException
+final class QueryException extends DatabaseException
 {}

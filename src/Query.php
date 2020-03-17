@@ -27,17 +27,17 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\pager\Pager;
-use froq\database\{QueryBuilderException, Database, Result};
+use froq\database\{QueryException, Database, Result};
 use froq\database\sql\{Sql, Name};
 
 /**
- * Query Builder.
+ * Query.
  * @package froq\database
- * @object  froq\database\QueryBuilder
+ * @object  froq\database\Query
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.0
  */
-final class QueryBuilder
+final class Query
 {
     /**
      * Db.
@@ -46,10 +46,10 @@ final class QueryBuilder
     private Database $db;
 
     /**
-     * Query.
+     * Stack.
      * @var array
      */
-    private array $query = [];
+    private array $stack = [];
 
     /**
      * Constructor.
@@ -118,13 +118,13 @@ final class QueryBuilder
      * @param  string $select
      * @param  bool   $prepare
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function select(string $select, bool $prepare = true): self
     {
         $select = trim($select);
         if ($select == '') {
-            throw new QueryBuilderException('Empty select given');
+            throw new QueryException('Empty select given');
         }
 
         if ($prepare) {
@@ -139,18 +139,18 @@ final class QueryBuilder
      * @param  string|self $query
      * @param  string      $as
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function selectQuery($query, string $as): self
     {
         if (!is_string($query) && !($query instanceof self)) {
-            throw new QueryBuilderException('Invalid query type "%s", valids are: string, '.
-                'QueryBuilder', [gettype($query)]);
+            throw new QueryException('Invalid query type "%s", valids are: string, %s',
+                [gettype($query), self::class]);
         }
 
         $select = trim((string) $query);
         if ($select == '') {
-            throw new QueryBuilderException('Empty select query given');
+            throw new QueryException('Empty select query given');
         }
 
         return $this->select('('. $select .') AS '. $this->prepareField($as), false);
@@ -161,7 +161,7 @@ final class QueryBuilder
      * @param  array $data
      * @param  bool  $multi
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function insert(array $data, bool $multi = false): self
     {
@@ -177,7 +177,7 @@ final class QueryBuilder
         }
 
         if (!$fields || !$values) {
-            throw new QueryBuilderException('Both fields & values should not be empty for insert');
+            throw new QueryException('Both fields & values should not be empty for insert');
         }
 
         $fieldsCount = count($fields);
@@ -185,7 +185,7 @@ final class QueryBuilder
         foreach ($values as $i => $value) {
             $value = (array) $value;
             if (count($value) != $fieldsCount) {
-                throw new QueryBuilderException('Count of value set "%s" not matched with fields count', [$i]);
+                throw new QueryException('Count of value set "%s" not matched with fields count', [$i]);
             }
             $values[$i] = '('. join(', ', $this->db->escape($value)) .')';
         }
@@ -197,12 +197,12 @@ final class QueryBuilder
      * Update.
      * @param  array $data
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function update(array $data): self
     {
         if (!$data) {
-            throw new QueryBuilderException('Empty data given for update');
+            throw new QueryException('Empty data given for update');
         }
 
         $set = [];
@@ -285,12 +285,12 @@ final class QueryBuilder
      * @param  any         $fieldParam
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereEqual(string $field, $fieldParam, string $op = null): self
     {
         if (!$fieldParam) {
-            throw new QueryBuilderException('No field parameter given');
+            throw new QueryException('No field parameter given');
         }
 
         return $this->where($this->prepareField($field) .' = ?', (array) $fieldParam, $op);
@@ -302,12 +302,12 @@ final class QueryBuilder
      * @param  any         $fieldParam
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereNotEqual(string $field, $fieldParam, string $op = null): self
     {
         if (!$fieldParam) {
-            throw new QueryBuilderException('No field parameter given');
+            throw new QueryException('No field parameter given');
         }
 
         return $this->where($this->prepareField($field) .' != ?', (array) $fieldParam, $op);
@@ -341,12 +341,12 @@ final class QueryBuilder
      * @param  array       $fieldParams
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereIn(string $field, array $fieldParams, string $op = null): self
     {
         if (!$fieldParams) {
-            throw new QueryBuilderException('No parameters given');
+            throw new QueryException('No parameters given');
         }
 
         return $this->where($this->prepareField($field)
@@ -359,12 +359,12 @@ final class QueryBuilder
      * @param  array       $fieldParams
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereNotIn(string $field, array $fieldParams, string $op = null): self
     {
         if (!$fieldParams) {
-            throw new QueryBuilderException('No parameters given');
+            throw new QueryException('No parameters given');
         }
 
         return $this->where($this->prepareField($field)
@@ -377,12 +377,12 @@ final class QueryBuilder
      * @param  array       $fieldParams
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereBetween(string $field, array $fieldParams, string $op = null): self
     {
         if (!$fieldParams) {
-            throw new QueryBuilderException('No parameters given');
+            throw new QueryException('No parameters given');
         }
 
         return $this->where($this->prepareField($field) .' BETWEEN ? AND ?', $fieldParams, $op);
@@ -394,12 +394,12 @@ final class QueryBuilder
      * @param  array       $fieldParams
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereNotBetween(string $field, array $fieldParams, string $op = null): self
     {
         if (!$fieldParams) {
-            throw new QueryBuilderException('No parameters given');
+            throw new QueryException('No parameters given');
         }
 
         return $this->where($this->prepareField($field) .' NOT BETWEEN ? AND ?', $fieldParams, $op);
@@ -411,12 +411,12 @@ final class QueryBuilder
      * @param  string|number $fieldParam
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereLessThan(string $field, $fieldParam, string $op = null): self
     {
         if (!$fieldParam) {
-            throw new QueryBuilderException('No field parameter given');
+            throw new QueryException('No field parameter given');
         }
 
         return $this->where($this->prepareField($field) .' < ?', (array) $fieldParam, $op);
@@ -428,12 +428,12 @@ final class QueryBuilder
      * @param  string|number $fieldParam
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereLessThanEqual(string $field, $fieldParam, string $op = null): self
     {
         if (!$fieldParam) {
-            throw new QueryBuilderException('No field parameter given');
+            throw new QueryException('No field parameter given');
         }
 
         return $this->where($this->prepareField($field) .' <= ?', (array) $fieldParam, $op);
@@ -449,7 +449,7 @@ final class QueryBuilder
     public function whereGreaterThan(string $field, $fieldParam, string $op = null): self
     {
         if (!$fieldParam) {
-            throw new QueryBuilderException('No field parameter given');
+            throw new QueryException('No field parameter given');
         }
 
         return $this->where($this->prepareField($field) .' > ?', (array) $fieldParam, $op);
@@ -465,7 +465,7 @@ final class QueryBuilder
     public function whereGreaterThanEqual(string $field, $fieldParam, string $op = null): self
     {
         if (!$fieldParam) {
-            throw new QueryBuilderException('No field parameter given');
+            throw new QueryException('No field parameter given');
         }
 
         return $this->where($this->prepareField($field) .' >= ?', (array) $fieldParam, $op);
@@ -478,12 +478,12 @@ final class QueryBuilder
      * @param  bool        $ilike
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereLike(string $field, array $fieldParams, bool $ilike = false, string $op = null): self
     {
         if (!$fieldParams) {
-            throw new QueryBuilderException('No parameters given');
+            throw new QueryException('No parameters given');
         }
 
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($fieldParams)];
@@ -506,12 +506,12 @@ final class QueryBuilder
      * @param  bool        $ilike
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function whereNotLike(string $field, array $fieldParams, bool $ilike = false, string $op = null): self
     {
         if (!$fieldParams) {
-            throw new QueryBuilderException('No parameters given');
+            throw new QueryException('No parameters given');
         }
 
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($fieldParams)];
@@ -672,12 +672,12 @@ final class QueryBuilder
      * Offset.
      * @param  int $offset
      * @return self
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function offset(int $offset): self
     {
         if (!$this->has('limit')) {
-            throw new QueryBuilderException('Limit not set yet, call limit() first for offset');
+            throw new QueryException('Limit not set yet, call limit() first for offset');
         }
 
         return $this->add('offset', abs($offset), false);
@@ -689,8 +689,8 @@ final class QueryBuilder
      */
     public function or(): self
     {
-        if (isset($this->query['where'])) {
-            $this->query['where'][count($this->query['where']) - 1][1] = 'OR';
+        if (isset($this->stack['where'])) {
+            $this->stack['where'][count($this->stack['where']) - 1][1] = 'OR';
         }
 
         return $this;
@@ -702,8 +702,8 @@ final class QueryBuilder
      */
     public function and(): self
     {
-        if (isset($this->query['where'])) {
-            $this->query['where'][count($this->query['where']) - 1][1] = 'AND';
+        if (isset($this->stack['where'])) {
+            $this->stack['where'][count($this->stack['where']) - 1][1] = 'AND';
         }
 
         return $this;
@@ -841,7 +841,7 @@ final class QueryBuilder
      */
     public function reset(): self
     {
-        $this->query = [];
+        $this->stack = [];
 
         return $this;
     }
@@ -852,7 +852,7 @@ final class QueryBuilder
      */
     public function toArray(): array
     {
-        return $this->query;
+        return $this->stack;
     }
 
     /**
@@ -860,7 +860,7 @@ final class QueryBuilder
      * @param  bool $pretty
      * @param  bool $sub
      * @return string
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function toString(bool $pretty = false, bool $sub = false): string
     {
@@ -875,7 +875,7 @@ final class QueryBuilder
         } elseif ($this->has('delete')) {
             $ret = $this->toQueryString('delete', $pretty, $sub);
         } else {
-            throw new QueryBuilderException('No query ready to build, use select(), insert(), '.
+            throw new QueryException('No query ready to build, use select(), insert(), '.
                 'update(), or delete() first');
         }
 
@@ -888,13 +888,13 @@ final class QueryBuilder
      * @param  bool   $pretty
      * @param  bool   $sub
      * @return string
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function toQueryString(string $key, bool $pretty = false, bool $sub = false): string
     {
-        $query = $this->query;
-        if (empty($query['table'])) {
-            throw new QueryBuilderException('Table is not defined yet, call table() or from() to '.
+        $stack = $this->stack;
+        if (empty($stack['table'])) {
+            throw new QueryException('Table is not defined yet, call table() or from() to '.
                 'set target table first.');
         }
 
@@ -911,7 +911,7 @@ final class QueryBuilder
 
         switch ($key) {
             case 'select':
-                $select = $query['select'];
+                $select = $stack['select'];
 
                 $ret  = sprintf('SELECT%s%s%sFROM ', $nt, join(','. $nt, $select), $ns);
                 $ret .= trim(
@@ -929,7 +929,7 @@ final class QueryBuilder
                 }
                 break;
             case 'table':
-                $table = $query['table'];
+                $table = $stack['table'];
                 // Could not remove after writing.. :(
                 // if ($pretty && strpos($table, "\n") > -1) {
                 //     $lines = explode("\n", $table);
@@ -950,8 +950,8 @@ final class QueryBuilder
                 $ret = $table;
                 break;
             case 'where':
-                if (isset($query['where'])) {
-                    $wheres = $query['where'];
+                if (isset($stack['where'])) {
+                    $wheres = $stack['where'];
                     if (count($wheres) == 1) {
                         $ret = $ns .'WHERE '. $wheres[0][0];
                     } else {
@@ -977,22 +977,22 @@ final class QueryBuilder
                 }
                 break;
             case 'insert':
-                if (isset($query['insert'])) {
-                    [$fields, $values] = $query['insert'];
+                if (isset($stack['insert'])) {
+                    [$fields, $values] = $stack['insert'];
 
-                    $ret = "INSERT INTO {$query['table']} {$nt}({$fields}) {$n}VALUES {$nt}"
+                    $ret = "INSERT INTO {$stack['table']} {$nt}({$fields}) {$n}VALUES {$nt}"
                         . join(','. ($nt ?: $ns), $values);
                 }
                 break;
             case 'update':
-                if (isset($query['update'])) {
-                    if (!isset($query['where'])) {
-                        throw new QueryBuilderException('No "where" for %s yet, it must be provided for '.
+                if (isset($stack['update'])) {
+                    if (!isset($stack['where'])) {
+                        throw new QueryException('No "where" for %s yet, it must be provided for '.
                             'security reasons at least "1=1" that proves you’re aware of what’s going on', [$key]);
                     }
 
                     $ret = trim(
-                        "UPDATE {$query['table']} SET {$nt}". $query['update']
+                        "UPDATE {$stack['table']} SET {$nt}". $stack['update']
                         . $this->toQueryString('where', $pretty, $sub)
                         . $this->toQueryString('orderBy', $pretty, $sub)
                         . $this->toQueryString('limit', $pretty, $sub)
@@ -1000,14 +1000,14 @@ final class QueryBuilder
                 }
                 break;
             case 'delete':
-                if (isset($query['delete'])) {
-                    if (!isset($query['where'])) {
-                        throw new QueryBuilderException('No "where" for %s yet, it must be provided for '.
+                if (isset($stack['delete'])) {
+                    if (!isset($stack['where'])) {
+                        throw new QueryException('No "where" for %s yet, it must be provided for '.
                             'security reasons at least "1=1" that proves you’re aware of what’s going on', [$key]);
                     }
 
                     $ret = trim(
-                        "DELETE FROM {$query['table']}"
+                        "DELETE FROM {$stack['table']}"
                         . $this->toQueryString('where', $pretty, $sub)
                         . $this->toQueryString('orderBy', $pretty, $sub)
                         . $this->toQueryString('limit', $pretty, $sub)
@@ -1015,32 +1015,32 @@ final class QueryBuilder
                 }
                 break;
             case 'groupBy':
-                if (isset($query['groupBy'])) {
-                    $ret = $ns .'GROUP BY '. join(', ', $query['groupBy']);
+                if (isset($stack['groupBy'])) {
+                    $ret = $ns .'GROUP BY '. join(', ', $stack['groupBy']);
                 }
                 break;
             case 'orderBy':
-                if (isset($query['orderBy'])) {
-                    $ret = $ns .'ORDER BY '. join(', ', $query['orderBy']);
+                if (isset($stack['orderBy'])) {
+                    $ret = $ns .'ORDER BY '. join(', ', $stack['orderBy']);
                 }
                 break;
             case 'limit':
-                if (isset($query['limit'])) {
-                    $ret = isset($query['offset'])
-                        ? $ns .'LIMIT '. $query['limit'] .' OFFSET '. $query['offset']
-                        : $ns .'LIMIT '. $query['limit'];
+                if (isset($stack['limit'])) {
+                    $ret = isset($stack['offset'])
+                        ? $ns .'LIMIT '. $stack['limit'] .' OFFSET '. $stack['offset']
+                        : $ns .'LIMIT '. $stack['limit'];
                 }
                 break;
             case 'join':
-                if (isset($query['join'])) {
-                    foreach ($query['join'] as $join) {
+                if (isset($stack['join'])) {
+                    foreach ($stack['join'] as $join) {
                         $ret .= $ns . $join;
                     }
                 }
                 break;
             case 'having':
-                if (isset($query['having'])) {
-                    $ret = $ns .'HAVING ('. $query['having'] .')';
+                if (isset($stack['having'])) {
+                    $ret = $ns .'HAVING ('. $stack['having'] .')';
                 }
                 break;
         }
@@ -1053,14 +1053,14 @@ final class QueryBuilder
      * @param  string     $input
      * @param  array|null $inputParams
      * @return string
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function prepare(string $input, array $inputParams = null): string
     {
         $input = trim($input);
 
         if ($input === '') {
-            throw new QueryBuilderException('Empty input given');
+            throw new QueryException('Empty input given');
         }
 
         return $this->db->prepare($input, $inputParams);
@@ -1070,14 +1070,14 @@ final class QueryBuilder
      * Prepare field.
      * @param  string $field
      * @return string
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function prepareField(string $field): string
     {
         $field = trim($field);
 
         if ($field === '') {
-            throw new QueryBuilderException('Empty field given');
+            throw new QueryException('Empty field given');
         }
 
         return $this->db->escapeName($field);
@@ -1087,14 +1087,14 @@ final class QueryBuilder
      * Prepare fields.
      * @param  string $fields
      * @return string
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function prepareFields(string $fields): string
     {
         $fields = trim($fields);
 
         if ($fields === '') {
-            throw new QueryBuilderException('Empty fields given');
+            throw new QueryException('Empty fields given');
         }
 
         if (!strpbrk($fields, ', ')) {
@@ -1108,7 +1108,7 @@ final class QueryBuilder
      * Prepare op.
      * @param  string $op
      * @return string
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     public function prepareOp(string $op): string
     {
@@ -1119,7 +1119,7 @@ final class QueryBuilder
             return $op;
         }
 
-        throw new QueryBuilderException('Invalid op "%s", valids are: %s', [$op, join(', ', $ops)]);
+        throw new QueryException('Invalid op "%s", valids are: %s', [$op, join(', ', $ops)]);
     }
 
     /**
@@ -1152,7 +1152,7 @@ final class QueryBuilder
      * Prepare where like search.
      * @param  array $fieldParams
      * @return string
-     * @throws froq\database\QueryBuilderException
+     * @throws froq\database\QueryException
      */
     private function prepareWhereLikeSearch(array $fieldParams): string
     {
@@ -1162,7 +1162,7 @@ final class QueryBuilder
         }
 
         if ($count < 3) {
-            throw new QueryBuilderException('Like parameters count must be 1 or 3, %s given', [$count]);
+            throw new QueryException('Like parameters count must be 1 or 3, %s given', [$count]);
         }
 
         [$end, $search, $start] = $fieldParams;
@@ -1177,7 +1177,7 @@ final class QueryBuilder
      */
     private function has(string $key): bool
     {
-        return isset($this->query[$key]);
+        return isset($this->stack[$key]);
     }
 
     /**
@@ -1188,7 +1188,7 @@ final class QueryBuilder
      */
     private function add(string $key, $value, bool $merge = true): self
     {
-        $this->query[$key] = $merge ? [...$this->query[$key] ?? [], $value] : $value;
+        $this->stack[$key] = $merge ? [...$this->stack[$key] ?? [], $value] : $value;
 
         return $this;
     }

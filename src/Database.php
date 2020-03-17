@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\{DatabaseException, DatabaseConnectionException, DatabaseQueryException,
-    Link, LinkException, Result, Profiler, QueryBuilder};
+    Link, LinkException, Result, Profiler, Query};
 use froq\database\sql\{Sql, Name, DateTime, Date};
 use froq\pager\Pager;
 use PDO, PDOStatement, PDOException, Exception;
@@ -161,7 +161,7 @@ final class Database
     public function select(string $table, string $fields, string $where = null, array $whereParams = null,
         string $order = null)
     {
-        $query = $this->initQueryBuilder($table)->select($fields);
+        $query = $this->initQuery($table)->select($fields);
         $where && $query->where($where, $whereParams);
         $order && $query->orderBy($order);
         $query->limit(1);
@@ -182,7 +182,7 @@ final class Database
     public function selectAll(string $table, string $fields, string $where = null, array $whereParams = null,
         string $order = null, array $limit = null): ?array
     {
-        $query = $this->initQueryBuilder($table)->select($fields);
+        $query = $this->initQuery($table)->select($fields);
         $where && $query->where($where, $whereParams);
         $order && $query->orderBy($order);
         $limit && $query->limit(...$limit);
@@ -199,7 +199,7 @@ final class Database
      */
     public function insert(string $table, array $data, bool $multi = false)
     {
-        $query = $this->initQueryBuilder($table)->insert($data, $multi);
+        $query = $this->initQuery($table)->insert($data, $multi);
 
         return !$multi ? $query->run()->id() : $query->run()->ids();
     }
@@ -216,7 +216,7 @@ final class Database
     public function update(string $table, array $data, string $where = null, array $whereParams = null,
         int $limit = null): int
     {
-        $query = $this->initQueryBuilder($table)->update($data);
+        $query = $this->initQuery($table)->update($data);
         $where && $query->where($where, $whereParams);
         $limit && $query->limit($limit);
 
@@ -234,7 +234,7 @@ final class Database
     public function delete(string $table, string $where = null, array $whereParams = null,
         int $limit = null): int
     {
-        $query = $this->initQueryBuilder($table)->delete();
+        $query = $this->initQuery($table)->delete();
         $where && $query->where($where, $whereParams);
         $limit && $query->limit($limit);
 
@@ -250,7 +250,7 @@ final class Database
      */
     public function count(string $table, string $where = null, array $whereParams = null): int
     {
-        $query = $this->initQueryBuilder($table);
+        $query = $this->initQuery($table);
         $where && $query->where($where, $whereParams);
 
         return $query->count();
@@ -362,10 +362,10 @@ final class Database
                 case Name::class:         return $this->escapeName($input->content());
                 case DateTime::class:     return $this->escapeString($input->content());
                 case Date::class:         return $this->escapeString($input->content());
-                case QueryBuilder::class: return $input->toString();
+                case Query::class: return $input->toString();
                 default:
                     throw new DatabaseException('Invalid input object "%s" given, valids are: '.
-                        'QueryBuilder, sql\{Sql, Name, DateTime, Date}', [$inputClass]);
+                        'Query, sql\{Sql, Name, DateTime, Date}', [$inputClass]);
             }
         }
 
@@ -599,12 +599,12 @@ final class Database
     }
 
     /**
-     * Init query builder.
+     * Init query.
      * @param  string|null $table
-     * @return froq\database\QueryBuilder
+     * @return froq\database\Query
      */
-    public function initQueryBuilder(string $table = null): QueryBuilder
+    public function initQuery(string $table = null): Query
     {
-        return new QueryBuilder($this, $table);
+        return new Query($this, $table);
     }
 }
