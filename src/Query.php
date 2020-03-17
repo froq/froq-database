@@ -289,11 +289,12 @@ final class Query
      */
     public function whereEqual(string $field, $fieldParam, string $op = null): self
     {
+        $fieldParam = (array) $fieldParam;
         if (!$fieldParam) {
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' = ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' = ?', $fieldParam, $op);
     }
 
     /**
@@ -306,11 +307,12 @@ final class Query
      */
     public function whereNotEqual(string $field, $fieldParam, string $op = null): self
     {
+        $fieldParam = (array) $fieldParam;
         if (!$fieldParam) {
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' != ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' != ?', $fieldParam, $op);
     }
 
     /**
@@ -415,11 +417,12 @@ final class Query
      */
     public function whereLessThan(string $field, $fieldParam, string $op = null): self
     {
+        $fieldParam = (array) $fieldParam;
         if (!$fieldParam) {
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' < ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' < ?', $fieldParam, $op);
     }
 
     /**
@@ -432,11 +435,12 @@ final class Query
      */
     public function whereLessThanEqual(string $field, $fieldParam, string $op = null): self
     {
+        $fieldParam = (array) $fieldParam;
         if (!$fieldParam) {
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' <= ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' <= ?', $fieldParam, $op);
     }
 
     /**
@@ -448,11 +452,12 @@ final class Query
      */
     public function whereGreaterThan(string $field, $fieldParam, string $op = null): self
     {
+        $fieldParam = (array) $fieldParam;
         if (!$fieldParam) {
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' > ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' > ?', $fieldParam, $op);
     }
 
     /**
@@ -464,11 +469,12 @@ final class Query
      */
     public function whereGreaterThanEqual(string $field, $fieldParam, string $op = null): self
     {
+        $fieldParam = (array) $fieldParam;
         if (!$fieldParam) {
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' >= ?', (array) $fieldParam, $op);
+        return $this->where($this->prepareField($field) .' >= ?', $fieldParam, $op);
     }
 
     /**
