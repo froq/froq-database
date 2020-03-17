@@ -710,23 +710,44 @@ final class QueryBuilder
     }
 
     /**
+     * Id.
+     * @param  int|string $id
+     * @return self
+     */
+    public function id($id): self
+    {
+        return $this->whereEqual('id', $id);
+    }
+
+    /**
+     * Equal.
+     * @aliasOf whereEqual().
+     */
+    public function equal(...$arguments): self
+    {
+        return $this->whereEqual(...$arguments);
+    }
+
+    /**
      * Asc.
+     * @param  string      $field
      * @param  string|null $collation
      * @return self
      */
-    public function asc(string $collation = null): self
+    public function asc(string $field = 'id', string $collation = null): self
     {
-        return $this->orderBy('ASC', $collation);
+        return $this->orderBy($field .' ASC', $collation);
     }
 
     /**
      * Desc.
+     * @param  string      $field
      * @param  string|null $collation
      * @return self
      */
-    public function desc(string $collation = null): self
+    public function desc(string $field = 'id', string $collation = null): self
     {
-        return $this->orderBy('DESC', $collation);
+        return $this->orderBy($field .' DESC', $collation);
     }
 
     /**
