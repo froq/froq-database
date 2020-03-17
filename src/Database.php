@@ -358,11 +358,11 @@ final class Database
         } elseif ($inputType == 'object') {
             $inputClass = get_class($input);
             switch ($inputClass) {
-                case Sql::class:          return $input->content();
-                case Name::class:         return $this->escapeName($input->content());
-                case DateTime::class:     return $this->escapeString($input->content());
-                case Date::class:         return $this->escapeString($input->content());
-                case Query::class: return $input->toString();
+                case Sql::class:      return $input->content();
+                case Name::class:     return $this->escapeName($input->content());
+                case DateTime::class: return $this->escapeString($input->content());
+                case Date::class:     return $this->escapeString($input->content());
+                case Query::class:    return $input->toString();
                 default:
                     throw new DatabaseException('Invalid input object "%s" given, valids are: '.
                         'Query, sql\{Sql, Name, DateTime, Date}', [$inputClass]);
