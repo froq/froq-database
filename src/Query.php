@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\pager\Pager;
-use froq\database\{QueryException, Database, Result};
+use froq\database\{QueryTrait, QueryException, Database, Result};
 use froq\database\sql\{Sql, Name};
 
 /**
@@ -39,6 +39,12 @@ use froq\database\sql\{Sql, Name};
  */
 final class Query
 {
+    /**
+     * Query trait.
+     * @see froq\database\QueryTrait
+     */
+    use QueryTrait;
+
     /**
      * Db.
      * @var froq\database\Database
@@ -401,13 +407,14 @@ final class Query
     /**
      * Where in.
      * @param  string      $field
-     * @param  array       $fieldParams
+     * @param  any         $fieldParams
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereIn(string $field, array $fieldParams, string $op = null): self
+    public function whereIn(string $field, $fieldParams, string $op = null): self
     {
+        $fieldParams = (array) $fieldParams;
         if (!$fieldParams) {
             throw new QueryException('No parameters given');
         }
@@ -419,13 +426,14 @@ final class Query
     /**
      * Where not in.
      * @param  string      $field
-     * @param  array       $fieldParams
+     * @param  any         $fieldParams
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereNotIn(string $field, array $fieldParams, string $op = null): self
+    public function whereNotIn(string $field, $fieldParams, string $op = null): self
     {
+        $fieldParams = (array) $fieldParams;
         if (!$fieldParams) {
             throw new QueryException('No parameters given');
         }
@@ -665,36 +673,35 @@ final class Query
     }
 
     /**
-     * Order.
+     * Order by.
      * @param  string|int|bool|null $field
      * @param  string               $op
      * @param  string|null          $collation
      * @return self
+     * @throws froq\database\QueryException
      */
-    public function order(string $field, $op = null, string $collation = null): self
-    {
-        $op = $op ?? 'ASC';
-        if (is_int($op) || is_bool($op)) {
-            $op = ($op == 1) ? 'ASC' : 'DESC';
-        }
-
-        return $this->orderBy($field .' '. $op, $collation);
-    }
-
-    /**
-     * Order by.
-     * @param  string      $field
-     * @param  string|null $collation
-     * @return self
-     */
-    public function orderBy(string $field, string $collation = null): self
+    public function orderBy(string $field, $op = null, string $collation = null): self
     {
         $field = trim($field);
+        if (!$field) {
+            throw new QueryException('No field given');
+        }
+
+        // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
+        if ($op) {
+            if (is_string($op)) {
+                $field =  $field .' '. trim($op);
+            } elseif (is_int($op) || is_bool($op)) {
+                $field =  $field .' '. (($op >= 1) ? 'ASC' : 'DESC');
+            }
+        }
+
+        // Eg: (.., "tr_TR") or (.., "tr_TR.utf8").
         if ($collation) {
             $collation = ' COLLATE '. $this->prepareCollation($collation);
         }
 
-        // Eg: "id ASC" or "id ASC, name DESC".
+        // Eg: ("id ASC") or ("id ASC, name DESC").
         if (strpos($field, ' ')) {
             $fields = [];
             foreach (explode(',', $field) as $i => $field) {
@@ -787,33 +794,6 @@ final class Query
     }
 
     /**
-     * Equal.
-     * @aliasOf whereEqual()
-     */
-    public function equal(...$arguments)
-    {
-        return $this->whereEqual(...$arguments);
-    }
-
-    /**
-     * Between.
-     * @aliasOf whereBetween()
-     */
-    public function between(...$arguments)
-    {
-        return $this->whereBetween(...$arguments);
-    }
-
-    /**
-     * Like.
-     * @aliasOf whereLike()
-     */
-    public function like(...$arguments)
-    {
-        return $this->whereLike(...$arguments);
-    }
-
-    /**
      * Asc.
      * @param  string      $field
      * @param  string|null $collation
@@ -821,7 +801,7 @@ final class Query
      */
     public function asc(string $field = 'id', string $collation = null): self
     {
-        return $this->orderBy($field .' ASC', $collation);
+        return $this->orderBy($field, 'ASC', $collation);
     }
 
     /**
@@ -832,7 +812,7 @@ final class Query
      */
     public function desc(string $field = 'id', string $collation = null): self
     {
-        return $this->orderBy($field .' DESC', $collation);
+        return $this->orderBy($field, 'DESC', $collation);
     }
 
     /**
@@ -1249,6 +1229,14 @@ final class Query
         if ($count < 3) {
             throw new QueryException('Like parameters count must be 1 or 3, %s given', [$count]);
         }
+
+        // Note to me..
+        // 'foo%'  Anything starts with "foo"
+        // '%foo'  Anything ends with "foo"
+        // '%foo%' Anything have "foo" in any position
+        // 'f_o%'  Anything have "o" in the second position
+        // 'f_%_%' Anything starts with "f" and are at least 3 characters in length
+        // 'f%o'   Anything starts with "f" and ends with "o"
 
         [$end, $search, $start] = $fieldParams;
 
