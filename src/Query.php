@@ -135,6 +135,27 @@ final class Query
     }
 
     /**
+     * Select raw.
+     * @param  string      $select
+     * @param  string|null $as
+     * @return self
+     * @throws froq\database\QueryException
+     */
+    public function selectRaw(string $select, string $as = null): self
+    {
+        $select = trim($select);
+        if ($select == '') {
+            throw new QueryException('Empty select given');
+        }
+
+        if ($as) {
+            $as = ' AS '. $this->prepareField($as);
+        }
+
+        return $this->select($select . $as, false);
+    }
+
+    /**
      * Select query.
      * @param  string|self $query
      * @param  string      $as
@@ -150,7 +171,7 @@ final class Query
 
         $select = trim((string) $query);
         if ($select == '') {
-            throw new QueryException('Empty select query given');
+            throw new QueryException('Empty select given');
         }
 
         return $this->select('('. $select .') AS '. $this->prepareField($as), false);
@@ -161,6 +182,7 @@ final class Query
      * @param  array  $fields
      * @param  string $as
      * @return self
+     * @throws froq\database\QueryException
      */
     public function selectJson(array $fields, string $as): self
     {
@@ -185,6 +207,11 @@ final class Query
                 $select[] = sprintf("'%s', %s", $fieldKey, $this->prepareField($fieldName));
             }
             $select = join(', ', $select);
+        }
+
+        $select = trim((string) $select);
+        if ($select == '') {
+            throw new QueryException('Empty select given');
         }
 
         return $this->select($func .'('. $select .') AS '. $this->prepareField($as), false);
