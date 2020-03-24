@@ -788,20 +788,29 @@ final class Query
 
     /**
      * Equal.
-     * @aliasOf whereEqual().
+     * @aliasOf whereEqual()
      */
-    public function equal(...$arguments): self
+    public function equal(...$arguments)
     {
         return $this->whereEqual(...$arguments);
     }
 
     /**
      * Between.
-     * @aliasOf whereBetween().
+     * @aliasOf whereBetween()
      */
-    public function between(...$arguments): self
+    public function between(...$arguments)
     {
         return $this->whereBetween(...$arguments);
+    }
+
+    /**
+     * Like.
+     * @aliasOf whereLike()
+     */
+    public function like(...$arguments)
+    {
+        return $this->whereLike(...$arguments);
     }
 
     /**
