@@ -157,6 +157,40 @@ final class Query
     }
 
     /**
+     * Select json.
+     * @param  array  $fields
+     * @param  string $as
+     * @return self
+     */
+    public function selectJson(array $fields, string $as): self
+    {
+        $select = null;
+        $selectType = isset($fields[0]) ? 1 : 2; // Simple check set/map array.
+
+        switch ($this->db->getLink()->getPdoDriver()) {
+            case 'pgsql':
+                $func = ($selectType == 1) ? 'json_build_array' : 'json_build_object';
+                break;
+            case 'mysql';
+                $func = ($selectType == 1) ? 'json_array' : 'json_object';
+                break;
+            default:
+                throw new QueryException('Method "%s()" available for PgSQL & MsSQL only', [__method__]);
+        }
+
+        if ($selectType == 1) {
+            $select = $this->prepareFields(join(',', $fields));
+        } else {
+            foreach ($fields as $fieldKey => $fieldName) {
+                $select[] = sprintf("'%s', %s", $fieldKey, $this->prepareField($fieldName));
+            }
+            $select = join(', ', $select);
+        }
+
+        return $this->select($func .'('. $select .') AS '. $this->prepareField($as), false);
+    }
+
+    /**
      * Insert.
      * @param  array $data
      * @param  bool  $multi
