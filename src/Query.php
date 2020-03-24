@@ -152,7 +152,7 @@ final class Query
             $as = ' AS '. $this->prepareField($as);
         }
 
-        return $this->select($select . $as, false);
+        return $this->select('('. $select .')'. $as, false);
     }
 
     /**
