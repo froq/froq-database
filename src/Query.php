@@ -707,7 +707,7 @@ final class Query
         }
 
         // For raw Sql fields.
-        if ($check) {
+        if (!empty($check)) {
             return $this->add('orderBy', $field . $collation);
         }
 
