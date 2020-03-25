@@ -693,9 +693,9 @@ final class Query
         }
 
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
-        if ($op) {
+        if ($op !== null) {
             if (is_string($op)) {
-                $field =  $field .' '. $this->prepareOp($op);
+                $field =  $field .' '. $this->prepareOp($op, true);
             } elseif (is_int($op) || is_bool($op)) {
                 $field =  $field .' '. (($op >= 1) ? 'ASC' : 'DESC');
             }
@@ -718,7 +718,7 @@ final class Query
                 @ [$field, $op] = explode(' ', trim($field));
                 $fields[$i] = $this->prepareField($field) . $collation;
                 if ($op) {
-                    $fields[$i] .= ' '. $this->prepareOp($op);
+                    $fields[$i] .= ' '. $this->prepareOp($op, true);
                 }
             }
 
@@ -1194,16 +1194,19 @@ final class Query
     /**
      * Prepare op.
      * @param  string $op
+     * @param  bool   $numerics
      * @return string
      * @throws froq\database\QueryException
      */
-    public function prepareOp(string $op): string
+    public function prepareOp(string $op, bool $numerics = false): string
     {
         static $ops = ['OR', 'AND', 'ASC', 'DESC'];
 
         $op = strtoupper(trim($op));
         if (in_array($op, $ops)) {
             return $op;
+        } elseif ($numerics && in_array($op, ['1', '0', '-1'])) {
+            return ($op == '1') ? 'ASC' : 'DESC';
         }
 
         throw new QueryException('Invalid op "%s", valids are: %s', [$op, join(', ', $ops)]);
