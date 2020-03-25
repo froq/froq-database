@@ -892,11 +892,14 @@ final class Query
 
     /**
      * Name.
-     * @param  string $input
+     * @param  string     $input
+     * @param  array|null $inputParams
      * @return froq\database\sql\Sql
      */
-    public function sql(string $input): Sql
+    public function sql(string $input, array $inputParams = null): Sql
     {
+        $input = $this->prepare($input, $inputParams);
+
         return new Sql($input);
     }
 

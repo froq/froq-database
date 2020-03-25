@@ -497,7 +497,7 @@ final class Database
         static $pattern = '~
               \?[sifbnra](?![\w]) # Scalars/(n)ame/(r)aw. Eg: ("id = ?i", ["1"]) or ("?n = ?i", ["id", "1"]).
             | \?\?                # Names (identifier).   Eg: ("?? = ?", ["id", 1]).
-            | \?(?![\w|&])        # Any type.             Eg: ("id = ?", [1]), but not "id ?| array[..]" for PgSQL.
+            | \?(?![\w&|])        # Any type.             Eg: ("id = ?", [1]), but not "id ?| array[..]" for PgSQL.
             | (?<!:):\w+          # Named parameters.     Eg: ("id = :id", [1]), but not "id::int" casts for PgSQL.
         ~xu';
 
