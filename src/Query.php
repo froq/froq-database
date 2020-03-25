@@ -848,11 +848,18 @@ final class Query
     /**
      * Get all.
      * @param  string|array<string>|null $fetchOptions
+     * @param  bool                      $paginate
      * @return ?array
      */
-    public function getAll($fetchOptions = null): ?array
+    public function getAll($fetchOptions = null, bool $paginate = false): ?array
     {
-        return $this->db->getAll($this->toString(), null, $fetchOptions);
+        if (!$paginate) {
+            return $this->db->getAll($this->toString(), null, $fetchOptions);
+        }
+
+        $this->paginate($pager);
+
+        return [$this->db->getAll($this->toString(), null, $fetchOptions), $pager];
     }
 
     /**
