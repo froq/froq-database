@@ -697,7 +697,7 @@ final class Query
             if (is_string($op)) {
                 $field =  $field .' '. $this->prepareOp($op, true);
             } elseif (is_int($op) || is_bool($op)) {
-                $field =  $field .' '. (($op >= 1) ? 'ASC' : 'DESC');
+                $field =  $field .' '. $this->prepareOp(strval($op ?: '0'), true);
             }
         }
 
