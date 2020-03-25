@@ -29,7 +29,7 @@ namespace froq\database\sql;
 use froq\database\sql\AbstractSqlDate;
 
 /**
- * DateTime.
+ * Date Time.
  * @package froq\database\sql
  * @object  froq\database\sql\DateTime
  * @author  Kerem Güneş <k-gun@mail.com>

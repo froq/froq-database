@@ -28,7 +28,7 @@ namespace froq\database;
 
 use froq\database\{DatabaseException, DatabaseConnectionException, DatabaseQueryException,
     Link, LinkException, Result, Profiler, Query};
-use froq\database\sql\{Sql, Name, DateTime, Date};
+use froq\database\sql\{Sql, Name, Date, DateTime};
 use froq\pager\Pager;
 use PDO, PDOStatement, PDOException, Exception;
 
@@ -362,8 +362,8 @@ final class Database
             switch ($inputClass) {
                 case Sql::class:      return $input->content();
                 case Name::class:     return $this->escapeName($input->content());
+                case Date::class:
                 case DateTime::class: return $this->escapeString($input->content());
-                case Date::class:     return $this->escapeString($input->content());
                 case Query::class:    return $input->toString();
                 default:
                     throw new DatabaseException('Invalid input object "%s" given, valids are: '.
