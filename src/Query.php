@@ -163,21 +163,21 @@ final class Query
 
     /**
      * Select query.
-     * @param  string|self $query
-     * @param  string      $as
+     * @param  string|Query $query
+     * @param  string       $as
      * @return self
      * @throws froq\database\QueryException
      */
     public function selectQuery($query, string $as): self
     {
-        if (!is_string($query) && !($query instanceof self)) {
+        if (!is_string($query) && !($query instanceof Query)) {
             throw new QueryException('Invalid query type "%s", valids are: string, %s',
-                [gettype($query), self::class]);
+                [gettype($query), Query::class]);
         }
 
         $select = trim((string) $query);
         if ($select == '') {
-            throw new QueryException('Empty select given');
+            throw new QueryException('Empty select query given');
         }
 
         return $this->select('('. $select .') AS '. $this->prepareField($as), false);
@@ -217,7 +217,7 @@ final class Query
 
         $select = trim((string) $select);
         if ($select == '') {
-            throw new QueryException('Empty select given');
+            throw new QueryException('Empty select fields given');
         }
 
         return $this->select($func .'('. $select .') AS '. $this->prepareField($as), false);
@@ -674,15 +674,20 @@ final class Query
 
     /**
      * Order by.
-     * @param  string|int|bool|null $field
-     * @param  string               $op
+     * @param  string|Sql           $field
+     * @param  string|int|bool|null $op
      * @param  string|null          $collation
      * @return self
      * @throws froq\database\QueryException
      */
-    public function orderBy(string $field, $op = null, string $collation = null): self
+    public function orderBy($field, $op = null, string $collation = null): self
     {
-        $field = trim($field);
+        if (!is_string($field) && !$check = ($field instanceof Sql)) {
+            throw new QueryException('Invalid field type "%s", valids are: string, %s',
+                [gettype($field), Sql::class]);
+        }
+
+        $field = trim((string) $field);
         if (!$field) {
             throw new QueryException('No field given');
         }
@@ -690,7 +695,7 @@ final class Query
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
         if ($op) {
             if (is_string($op)) {
-                $field =  $field .' '. trim($op);
+                $field =  $field .' '. $this->prepareOp($op);
             } elseif (is_int($op) || is_bool($op)) {
                 $field =  $field .' '. (($op >= 1) ? 'ASC' : 'DESC');
             }
@@ -699,6 +704,11 @@ final class Query
         // Eg: (.., "tr_TR") or (.., "tr_TR.utf8").
         if ($collation) {
             $collation = ' COLLATE '. $this->prepareCollation($collation);
+        }
+
+        // For raw Sql fields.
+        if ($check) {
+            return $this->add('orderBy', $field . $collation);
         }
 
         // Eg: ("id ASC") or ("id ASC, name DESC").
@@ -1179,7 +1189,7 @@ final class Query
     {
         static $ops = ['OR', 'AND', 'ASC', 'DESC'];
 
-        $op = strtoupper($op);
+        $op = strtoupper(trim($op));
         if (in_array($op, $ops)) {
             return $op;
         }
