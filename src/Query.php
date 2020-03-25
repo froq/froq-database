@@ -817,30 +817,30 @@ final class Query
 
     /**
      * Run.
-     * @param  array|null $fetchOptions
+     * @param  string|array<string>|null $fetchOptions
      * @return froq\database\Result
      */
-    public function run(array $fetchOptions = null): Result
+    public function run($fetchOptions = null): Result
     {
         return $this->db->query($this->toString(), null, $fetchOptions);
     }
 
     /**
      * Get.
-     * @param  array|null $fetchOptions
+     * @param  string|array<string>|null $fetchOptions
      * @return ?array|?object
      */
-    public function get(array $fetchOptions = null)
+    public function get($fetchOptions = null)
     {
         return $this->db->get($this->toString(), null, $fetchOptions);
     }
 
     /**
      * Get all.
-     * @param  array|null $fetchOptions
+     * @param  string|array<string>|null $fetchOptions
      * @return ?array
      */
-    public function getAll(array $fetchOptions = null): ?array
+    public function getAll($fetchOptions = null): ?array
     {
         return $this->db->getAll($this->toString(), null, $fetchOptions);
     }

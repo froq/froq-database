@@ -101,13 +101,13 @@ final class Database
 
     /**
      * Query.
-     * @param  string     $query
-     * @param  array|null $queryParams
-     * @param  array|null $fetchOptions
+     * @param  string                    $query
+     * @param  array|null                $queryParams
+     * @param  string|array<string>|null $fetchOptions
      * @return froq\database\Result
      * @throws froq\database\DatabaseException, froq\database\DatabaseQueryException
      */
-    public function query(string $query, array $queryParams = null, array $fetchOptions = null): Result
+    public function query(string $query, array $queryParams = null, $fetchOptions = null): Result
     {
         $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
         if (!$query) {
@@ -127,40 +127,40 @@ final class Database
 
     /**
      * Get.
-     * @param  string     $query
-     * @param  array|null $queryParams
-     * @param  array|null $fetchOptions
+     * @param  string                    $query
+     * @param  array|null                $queryParams
+     * @param  string|array<string>|null $fetchOptions
      * @return ?array|?object
      */
-    public function get(string $query, array $queryParams = null, array $fetchOptions = null)
+    public function get(string $query, array $queryParams = null, $fetchOptions = null)
     {
         return $this->query($query, $queryParams, $fetchOptions)->row(0);
     }
 
     /**
      * Get all.
-     * @param  string     $query
-     * @param  array|null $queryParams
-     * @param  array|null $fetchOptions
+     * @param  string                    $query
+     * @param  array|null                $queryParams
+     * @param  string|array<string>|null $fetchOptions
      * @return ?array
      */
-    public function getAll(string $query, array $queryParams = null, array $fetchOptions = null): ?array
+    public function getAll(string $query, array $queryParams = null, $fetchOptions = null): ?array
     {
         return $this->query($query, $queryParams, $fetchOptions)->rows();
     }
 
     /**
      * Select.
-     * @param  string      $table
-     * @param  string      $fields
-     * @param  string|null $where
-     * @param  array|null  $whereParams
-     * @param  string|null $order
-     * @param  array|null  $fetchOptions
+     * @param  string                    $table
+     * @param  string                    $fields
+     * @param  string|null               $where
+     * @param  array|null                $whereParams
+     * @param  string|null               $order
+     * @param  string|array<string>|null $fetchOptions
      * @return ?array|?object
      */
     public function select(string $table, string $fields, string $where = null, array $whereParams = null,
-        string $order = null, array $fetchOptions = null)
+        string $order = null, $fetchOptions = null)
     {
         $query = $this->initQuery($table)->select($fields);
         $where && $query->where($where, $whereParams);
@@ -172,17 +172,17 @@ final class Database
 
     /**
      * Select all.
-     * @param  string      $table
-     * @param  string      $fields
-     * @param  string|null $where
-     * @param  array|null  $whereParams
-     * @param  string|null $order
-     * @param  array|null  $limit
-     * @param  array|null  $fetchOptions
+     * @param  string                    $table
+     * @param  string                    $fields
+     * @param  string|null               $where
+     * @param  array|null                $whereParams
+     * @param  string|null               $order
+     * @param  array|null                $limit
+     * @param  string|array<string>|null $fetchOptions
      * @return ?array
      */
     public function selectAll(string $table, string $fields, string $where = null, array $whereParams = null,
-        string $order = null, array $limit = null, array $fetchOptions = null): ?array
+        string $order = null, array $limit = null, $fetchOptions = null): ?array
     {
         $query = $this->initQuery($table)->select($fields);
         $where && $query->where($where, $whereParams);

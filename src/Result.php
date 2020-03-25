@@ -58,11 +58,11 @@ final class Result implements Countable, IteratorAggregate
 
     /**
      * Constructor.
-     * @param PDO                $pdo
-     * @param PDOStatement       $pdoStatement
-     * @param array<string>|null $fetchOptions
+     * @param PDO                       $pdo
+     * @param PDOStatement              $pdoStatement
+     * @param string|array<string>|null $fetchOptions
      */
-    public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $fetchOptions = null)
+    public function __construct(PDO $pdo, PDOStatement $pdoStatement, $fetchOptions = null)
     {
         if ($pdoStatement->errorCode() == '00000') {
             // Assign count (affected rows etc).
@@ -70,7 +70,7 @@ final class Result implements Countable, IteratorAggregate
 
             // Select queries.
             if (stripos($pdoStatement->queryString, 'SELECT') === 0) {
-                @ [$fetchType, $fetchClass] = $fetchOptions;
+                @ [$fetchType, $fetchClass] = (array) $fetchOptions;
 
                 switch ($fetchType) {
                     case  'array': $fetchType = PDO::FETCH_ASSOC; break;
