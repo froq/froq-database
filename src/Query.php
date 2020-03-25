@@ -898,7 +898,9 @@ final class Query
      */
     public function sql(string $input, array $inputParams = null): Sql
     {
-        $input = $this->prepare($input, $inputParams);
+        if ($inputParams) {
+            $input = $this->prepare($input, $inputParams);
+        }
 
         return new Sql($input);
     }
