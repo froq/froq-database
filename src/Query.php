@@ -693,7 +693,7 @@ final class Query
         }
 
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
-        if ($op !== null) {
+        if ($op !== null && $op !== '') {
             if (is_string($op)) {
                 $field =  $field .' '. $this->prepareOp($op, true);
             } elseif (is_int($op) || is_bool($op)) {
