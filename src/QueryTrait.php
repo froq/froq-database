@@ -169,7 +169,7 @@ trait QueryTrait
      */
     public function likeStart(...$arguments)
     {
-        $arguments[1] = ['', $arguments[0], '%'];
+        $arguments[1] = ['', $arguments[1], '%'];
 
         return $this->whereLike(...$arguments);
     }
@@ -180,7 +180,7 @@ trait QueryTrait
      */
     public function notLikeStart(...$arguments)
     {
-        $arguments[1] = ['', $arguments[0], '%'];
+        $arguments[1] = ['', $arguments[1], '%'];
 
         return $this->whereNotLike(...$arguments);
     }
@@ -191,7 +191,7 @@ trait QueryTrait
      */
     public function likeEnd(...$arguments)
     {
-        $arguments[1] = ['%', $arguments[0], ''];
+        $arguments[1] = ['%', $arguments[1], ''];
 
         return $this->whereLike(...$arguments);
     }
@@ -202,7 +202,7 @@ trait QueryTrait
      */
     public function notLikeEnd(...$arguments)
     {
-        $arguments[1] = ['%', $arguments[0], ''];
+        $arguments[1] = ['%', $arguments[1], ''];
 
         return $this->whereNotLike(...$arguments);
     }
@@ -213,7 +213,7 @@ trait QueryTrait
      */
     public function likeBoth(...$arguments)
     {
-        $arguments[1] = ['%', $arguments[0], '%'];
+        $arguments[1] = ['%', $arguments[1], '%'];
 
         return $this->whereLike(...$arguments);
     }
@@ -224,7 +224,7 @@ trait QueryTrait
      */
     public function notLikeBoth(...$arguments)
     {
-        $arguments[1] = ['%', $arguments[0], '%'];
+        $arguments[1] = ['%', $arguments[1], '%'];
 
         return $this->whereNotLike(...$arguments);
     }
