@@ -321,6 +321,10 @@ final class Database
             return $input;
         }
 
+        if ($input && $input[0] == '@') {
+            $input = substr($input, 1);
+        }
+
         // Dot notations (eg: foo.id => "foo"."id").
         $pos = strpos($input, '.');
         if ($pos) {
