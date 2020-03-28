@@ -548,15 +548,16 @@ final class Query
 
     /**
      * Where like.
-     * @param  string      $field
-     * @param  array       $fieldParams
-     * @param  bool        $ilike
-     * @param  string|null $op
+     * @param  string       $field
+     * @param  string|array $fieldParams
+     * @param  bool         $ilike
+     * @param  string|null  $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereLike(string $field, array $fieldParams, bool $ilike = false, string $op = null): self
+    public function whereLike(string $field, $fieldParams, bool $ilike = false, string $op = null): self
     {
+        $fieldParams = (array) $fieldParams;
         if (!$fieldParams) {
             throw new QueryException('No parameters given');
         }
@@ -576,15 +577,16 @@ final class Query
 
     /**
      * Where not like.
-     * @param  string      $field
-     * @param  array       $fieldParams
-     * @param  bool        $ilike
-     * @param  string|null $op
+     * @param  string       $field
+     * @param  string|array $fieldParams
+     * @param  bool         $ilike
+     * @param  string|null  $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereNotLike(string $field, array $fieldParams, bool $ilike = false, string $op = null): self
+    public function whereNotLike(string $field, $fieldParams, bool $ilike = false, string $op = null): self
     {
+        $fieldParams = (array) $fieldParams;
         if (!$fieldParams) {
             throw new QueryException('No parameters given');
         }
