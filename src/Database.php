@@ -177,17 +177,17 @@ final class Database
      * @param  string|null               $where
      * @param  array|null                $whereParams
      * @param  string|null               $order
-     * @param  array|null                $limit
+     * @param  int|array<int>|null       $limit
      * @param  string|array<string>|null $fetchOptions
      * @return ?array
      */
     public function selectAll(string $table, string $fields, string $where = null, array $whereParams = null,
-        string $order = null, array $limit = null, $fetchOptions = null): ?array
+        string $order = null, $limit = null, $fetchOptions = null): ?array
     {
         $query = $this->initQuery($table)->select($fields);
         $where && $query->where($where, $whereParams);
         $order && $query->orderBy($order);
-        $limit && $query->limit(...$limit);
+        $limit && $query->limit(...(array) $limit);
 
         return $query->run($fetchOptions)->rows();
     }
