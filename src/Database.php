@@ -360,7 +360,10 @@ final class Database
         $inputType = gettype($input);
 
         if ($inputType == 'array' && $inputFormat != '?a') {
-            return array_map([$this, 'escape'], $input);
+            return array_map(
+                fn($input) => $this->escape($input, $inputFormat),
+                $input
+            );
         } elseif ($inputType == 'object') {
             $inputClass = get_class($input);
             switch ($inputClass) {
@@ -371,7 +374,7 @@ final class Database
                 case Query::class:    return $input->toString();
                 default:
                     throw new DatabaseException('Invalid input object "%s" given, valids are: '.
-                        'Query, sql\{Sql, Name, DateTime, Date}', [$inputClass]);
+                        'Query, sql\{Sql, Name, Date, DateTime}', [$inputClass]);
             }
         }
 
@@ -518,23 +521,33 @@ final class Database
 
             foreach ($holders as $holder) {
                 $pos = strpos($holder, ':');
-                if ($pos > -1) {
+                if ($pos > -1) { // Named.
                     $key = trim($holder, ':');
                     if (!array_key_exists($key, $inputParams)) {
                         throw new DatabaseException('Replacement key "%s" not found in given '.
                             'parameters', [$key]);
                     }
 
+                    $value = $this->escape($inputParams[$key]);
+                    if (is_array($value)) {
+                        $value = join(', ', $value);
+                    }
+
                     $keys[] = '~:'. $key .'~';
-                    $values[] = $this->escape($inputParams[$key]);
-                } else {
+                    $values[] = $value;
+                } else { // Question-mark.
                     if (!array_key_exists($i, $inputParams)) {
                         throw new DatabaseException('Replacement index "%s" not found in given '.
                             'parameters', [$i]);
                     }
 
+                    $value = $this->escape($inputParams[$i++], $holder);
+                    if (is_array($value)) {
+                        $value = join(', ', $value);
+                    }
+
                     $keys[] = '~\\'. $holder .'(?![|&])~';
-                    $values[] = $this->escape($inputParams[$i++], $holder);
+                    $values[] = $value;
                 }
             }
 
