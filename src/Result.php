@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\{ResultException};
-use PDO, PDOStatement, Countable, IteratorAggregate, ArrayIterator;
+use PDO, PDOStatement, PDOException, Countable, IteratorAggregate, ArrayIterator;
 
 /**
  * Result.
@@ -104,7 +104,14 @@ final class Result implements Countable, IteratorAggregate
             }
             // Insert queries.
             elseif (stripos($pdoStatement->queryString, 'INSERT') === 0) {
-                $id = (int) $pdo->lastInsertId();
+                $id = null;
+
+                // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that
+                // occurs when a user-provided ID given to insert data.
+                try {
+                    $id = (int) $pdo->lastInsertId();
+                } catch (PDOException $e) {}
+
                 if ($id) {
                     $ids = [$id];
 
