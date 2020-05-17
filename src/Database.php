@@ -546,7 +546,7 @@ final class Database
                         $value = join(', ', $value);
                     }
 
-                    $keys[] = '~\\'. $holder .'(?![|&])~';
+                    $keys[] = '~'. preg_quote($holder) .'(?![|&])~';
                     $values[] = $value;
                 }
             }
