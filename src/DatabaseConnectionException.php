@@ -24,44 +24,16 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\model;
+namespace froq\database;
+
+use froq\database\DatabaseException;
 
 /**
- * Model interface.
- * @package froq\database\model
- * @object  froq\database\model\ModelInterface
+ * Database Connection Exception.
+ * @package froq\database
+ * @object  froq\database\DatabaseConnectionException
  * @author  Kerem Güneş <k-gun@mail.com>
- * @since   1.0
+ * @since   4.0
  */
-interface ModelInterface
-{
-    /**
-     * Query.
-     */
-    public function query();
-
-    /**
-     * Find.
-     */
-    public function find();
-
-    /**
-     * Find all.
-     */
-    public function findAll();
-
-    /**
-     * Save.
-     */
-    public function save();
-
-    /**
-     * Remove.
-     */
-    public function remove();
-
-    /**
-     * Count.
-     */
-    public function count();
-}
+final class DatabaseConnectionException extends DatabaseException
+{}

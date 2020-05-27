@@ -1,19 +1,17 @@
 {
     "name": "froq/froq-database",
     "homepage": "https://github.com/froq/froq-database",
-    "description": "Database module for Froq!",
+    "description": "Froq! Database.",
     "keywords": ["froq", "database"],
     "license": "MIT",
     "authors": [
         {"name": "Kerem Güneş", "email": "k-gun@mail.com"}
     ],
     "require": {
-        "php": "^7.2",
-        "froq/froq-common": "^3.0",
-        "froq/froq-util": "^3.0",
-        "froq/froq-pager": "^3.0",
-        "froq/froq-service": "^3.0",
-        "k-gun/oppa": "^3.0"
+        "php": "^7.4",
+        "ext-pdo": "*",
+        "froq/froq-common": "^4.0",
+        "froq/froq-pager": "^4.0"
     },
     "autoload": {
         "classmap": ["src/"]

@@ -24,36 +24,17 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\vendor;
-
-use froq\util\traits\SingletonTrait;
+namespace froq\database\sql;
 
 /**
- * Vendor.
- * @package froq\database\vendor
- * @object  froq\database\vendor\Vendor
+ * Sql.
+ *
+ * Used as raw SQL literal in escape & prepare stuff.
+ *
+ * @package froq\database\sql
+ * @object  froq\database\sql\Sql
  * @author  Kerem Güneş <k-gun@mail.com>
- * @since   1.0
+ * @since   4.0
  */
-abstract class Vendor
-{
-    /**
-     * Singleton trait.
-     * @object froq\util\traits\SingletonTrait
-     */
-    use SingletonTrait;
-
-    /**
-     * Database.
-     * @var froq\Database
-     */
-    protected $database;
-
-    /**
-     * @inheritDoc froq\database\vendor\VendorInterface
-     */
-    public final function getDatabase(): ?object
-    {
-        return $this->database;
-    }
-}
+class Sql extends AbstractSql
+{}
