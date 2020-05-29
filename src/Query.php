@@ -678,11 +678,11 @@ final class Query
      * Order by.
      * @param  string|Sql           $field
      * @param  string|int|bool|null $op
-     * @param  string|null          $collation
+     * @param  array|null           $options
      * @return self
      * @throws froq\database\QueryException
      */
-    public function orderBy($field, $op = null, string $collation = null): self
+    public function orderBy($field, $op = null, array $options = null): self
     {
         if (!is_string($field) && !$check = ($field instanceof Sql)) {
             throw new QueryException('Invalid field type "%s", valids are: string, %s',
@@ -703,14 +703,25 @@ final class Query
             }
         }
 
-        // Eg: (.., "tr_TR") or (.., "tr_TR.utf8").
-        if ($collation) {
-            $collation = ' COLLATE '. $this->prepareCollation($collation);
+        // Extract options (with defaults).
+        [$collate, $nulls] = [
+            $options['collate'] ?? null,
+            $options['nulls']   ?? null,
+        ];
+
+        // Eg: "tr_TR" or "tr_TR.utf8".
+        if ($collate) {
+            $collate = ' COLLATE '. $this->prepareCollation($collate);
+        }
+
+        // Eg: "FIRST" or "LAST".
+        if ($nulls) {
+            $nulls = ' NULLS '. strtoupper($nulls);
         }
 
         // For raw Sql fields.
         if (!empty($check)) {
-            return $this->add('orderBy', $field . $collation);
+            return $this->add('orderBy', $field . $collate . $nulls);
         }
 
         // Eg: ("id ASC") or ("id ASC, name DESC").
@@ -718,16 +729,16 @@ final class Query
             $fields = [];
             foreach (explode(',', $field) as $i => $field) {
                 @ [$field, $op] = explode(' ', trim($field));
-                $fields[$i] = $this->prepareField($field) . $collation;
+                $fields[$i] = $this->prepareField($field) . $collate;
                 if ($op) {
                     $fields[$i] .= ' '. $this->prepareOp($op, true);
                 }
             }
 
-            return $this->add('orderBy', implode(', ', $fields));
+            return $this->add('orderBy', implode(', ', $fields) . $nulls);
         }
 
-        return $this->add('orderBy', $this->prepareField($field) . $collation);
+        return $this->add('orderBy', $this->prepareField($field) . $collate . $nulls);
     }
 
     /**
@@ -807,24 +818,24 @@ final class Query
 
     /**
      * Asc.
-     * @param  string      $field
-     * @param  string|null $collation
+     * @param  string     $field
+     * @param  array|null $options
      * @return self
      */
-    public function asc(string $field = 'id', string $collation = null): self
+    public function asc(string $field = 'id', string $options = null): self
     {
-        return $this->orderBy($field, 'ASC', $collation);
+        return $this->orderBy($field, 'ASC', $options);
     }
 
     /**
      * Desc.
-     * @param  string      $field
-     * @param  string|null $collation
+     * @param  string     $field
+     * @param  array|null $options
      * @return self
      */
-    public function desc(string $field = 'id', string $collation = null): self
+    public function desc(string $field = 'id', string $options = null): self
     {
-        return $this->orderBy($field, 'DESC', $collation);
+        return $this->orderBy($field, 'DESC', $options);
     }
 
     /**
