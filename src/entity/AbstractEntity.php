@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\EntityException;
-use Countable, IteratorAggregate, ArrayAccess, ArrayIterator;
+use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
 
 /**
  * Abstract Entity.
@@ -36,7 +36,7 @@ use Countable, IteratorAggregate, ArrayAccess, ArrayIterator;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.2
  */
-abstract class AbstractEntity implements Countable, IteratorAggregate, ArrayAccess
+abstract class AbstractEntity implements Countable, ArrayAccess, IteratorAggregate
 {
     /**
      * Drop.
@@ -309,7 +309,7 @@ abstract class AbstractEntity implements Countable, IteratorAggregate, ArrayAcce
      * @inheritDoc ArrayAccess
      * @throws     froq\database\entity\EntityException
      */
-    public final function offsetSet($i, $iv)
+    public final function offsetSet($var, $varval)
     {
         throw new EntityException('No set() allowed for "%s"', [static::class]);
     }
@@ -318,7 +318,7 @@ abstract class AbstractEntity implements Countable, IteratorAggregate, ArrayAcce
      * @inheritDoc ArrayAccess
      * @throws     froq\database\entity\EntityException
      */
-    public final function offsetUnset($i): void
+    public final function offsetUnset($var)
     {
         throw new EntityException('No unset() allowed for "%s"', [static::class]);
     }
