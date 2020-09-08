@@ -849,6 +849,16 @@ final class Query
     }
 
     /**
+     * Run exec.
+     * @return ?int
+     * @since  4.3
+     */
+    public function runExec(): ?int
+    {
+        return $this->db->execute($this->toString());
+    }
+
+    /**
      * Get.
      * @param  string|array<string>|null $fetchOptions
      * @return ?array|?object
@@ -1299,7 +1309,7 @@ final class Query
      */
     private function add(string $key, $value, bool $merge = true): self
     {
-        $this->stack[$key] = $merge ? [...$this->stack[$key] ?? [], $value] : $value;
+        $this->stack[$key] = $merge ? [...($this->stack[$key] ?? []), $value] : $value;
 
         return $this;
     }

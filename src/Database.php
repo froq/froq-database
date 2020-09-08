@@ -110,7 +110,7 @@ final class Database
     public function query(string $query, array $queryParams = null, $fetchOptions = null): Result
     {
         $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
-        if (!$query) {
+        if ($query == '') {
             throw new DatabaseException('Empty query given to "%s()", non-empty query required',
                 [__method__]);
         }
@@ -120,6 +120,31 @@ final class Database
             $pdoStatement = empty($this->profiler) ? $pdo->query($query)
                                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
             return new Result($pdo, $pdoStatement, $fetchOptions);
+        } catch (PDOException $e) {
+            throw new DatabaseQueryException($e->getMessage());
+        }
+    }
+
+    /**
+     * Execute.
+     * @param  string     $query
+     * @param  array|null $queryParams
+     * @return ?int
+     * @since  4.3
+     */
+    public function execute(string $query, array $queryParams = null): ?int
+    {
+        $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
+        if ($query == '') {
+            throw new DatabaseException('Empty query given to "%s()", non-empty query required',
+                [__method__]);
+        }
+
+        try {
+            $pdo = $this->link->getPdo();
+            $pdoResult = empty($this->profiler) ? $pdo->exec($query)
+                             : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
+            return ($pdoResult !== false) ? $pdoResult : null;
         } catch (PDOException $e) {
             throw new DatabaseQueryException($e->getMessage());
         }
@@ -495,7 +520,7 @@ final class Database
     public function prepare(string $input, array $inputParams = null): string
     {
         $input = $this->preparePrepareInput($input);
-        if (!$input) {
+        if ($input == '') {
             throw new DatabaseException('Empty input given to "%s()", non-empty input required',
                 [__method__]);
         }
@@ -509,7 +534,7 @@ final class Database
         ~xu';
 
         if (preg_match_all($pattern, $input, $match)) {
-            if (!$inputParams) {
+            if ($inputParams == null) {
                 throw new DatabaseException('Empty input parameters given to "%s()", non-empty '.
                     'input parameters required when input contains parameter placeholders like '.
                     '"?", "??" or ":foo"', [__method__]);
@@ -566,7 +591,7 @@ final class Database
     public function prepareStatement(string $input): PDOStatement
     {
         $input = $this->preparePrepareInput($input);
-        if (!$input) {
+        if ($input == '') {
             throw new DatabaseException('Empty input given to "%s()", non-empty input required',
                 [__method__]);
         }
@@ -587,7 +612,7 @@ final class Database
     {
         $input = trim($input);
 
-        if ($input) {
+        if ($input != '') {
             // Prepare names (eg: '@id = ?', 1 or '@[id,..]') .
             $pos = strpos($input, '@');
             if ($pos > -1) {

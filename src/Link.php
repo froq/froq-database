@@ -130,7 +130,7 @@ final class Link
             }
 
             try {
-                $this->pdo       = new PDO($dsn, $user, $pass, $options);
+                $this->pdo = new PDO($dsn, $user, $pass, $options);
                 $this->pdoDriver = $driver;
             } catch (PDOException $e) {
                 // Which driver the FUCK?
@@ -145,7 +145,7 @@ final class Link
                 $this->options['pass'] = '<****>';
             }
 
-            $charset  && $this->setCharset($charset);
+            $charset && $this->setCharset($charset);
             $timezone && $this->setTimezone($timezone);
         }
     }

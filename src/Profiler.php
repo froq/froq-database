@@ -78,7 +78,7 @@ final class Profiler
      * @param  string   $type
      * @param  callable $call
      * @param  ...      $callArgs
-     * @return void|PDOStatement
+     * @return PDOStatement|int
      */
     public function profile(string $type, callable $call, ...$callArgs)
     {
@@ -86,9 +86,7 @@ final class Profiler
         $ret = $call(...$callArgs);
         $this->end($type);
 
-        if ($ret) {
-            return $ret;
-        }
+        return $ret;
     }
 
     /**
@@ -97,7 +95,7 @@ final class Profiler
      * @param  ...      $callArgs
      * @return void
      */
-    public function profileConnection(callable $call, ...$callArgs)
+    public function profileConnection(callable $call, ...$callArgs): void
     {
         $this->profile('connection', $call, ...$callArgs);
     }
@@ -107,7 +105,7 @@ final class Profiler
      * @param  string   $query
      * @param  callable $call
      * @param  ...      $callArgs
-     * @return PDOStatement
+     * @return PDOStatement|int
      */
     public function profileQuery(string $query, callable $call, ...$callArgs)
     {
