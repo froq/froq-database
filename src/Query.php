@@ -203,7 +203,7 @@ final class Query
                 $func = ($selectType == 1) ? 'json_array' : 'json_object';
                 break;
             default:
-                throw new QueryException('Method "%s()" available for PgSQL & MsSQL only', [__method__]);
+                throw new QueryException('Method "%s()" available for PgSQL & MySQL only', [__method__]);
         }
 
         if ($selectType == 1) {
@@ -221,6 +221,46 @@ final class Query
         }
 
         return $this->select($func .'('. $select .') AS '. $this->prepareField($as), false);
+    }
+
+    /**
+     * Select min.
+     * @alias aggregate() for min()
+     * @since 4.4
+     */
+    public function selectMin(...$arguments): self
+    {
+        return $this->aggregate('min', ...$arguments);
+    }
+
+    /**
+     * Select max.
+     * @alias aggregate() for max()
+     * @since 4.4
+     */
+    public function selectMax(...$arguments): self
+    {
+        return $this->aggregate('max', ...$arguments);
+    }
+
+    /**
+     * Select avg.
+     * @alias aggregate() for avg()
+     * @since 4.4
+     */
+    public function selectAvg(...$arguments): self
+    {
+        return $this->aggregate('avg', ...$arguments);
+    }
+
+    /**
+     * Select sum.
+     * @alias aggregate() for sum()
+     * @since 4.4
+     */
+    public function selectSum(...$arguments): self
+    {
+        return $this->aggregate('sum', ...$arguments);
     }
 
     /**
@@ -895,6 +935,21 @@ final class Query
         $this->has('select') || $this->add('select', 1);
 
         return $this->db->countQuery($this->toString());
+    }
+
+    /**
+     * Aggregate.
+     * @param  string      $func
+     * @param  string      $field
+     * @param  string|null $as
+     * @param  bool        $distinct
+     * @return self
+     * @since  4.4
+     */
+    public function aggregate(string $func, string $field, string $as = null, bool $distinct = false): self
+    {
+        return $this->select($func .'('. ($distinct ? 'DISTINCT ' : '') . $this->prepareField($field) .')'
+            .' AS '. $this->prepareField($as ?: $func), false);
     }
 
     /**

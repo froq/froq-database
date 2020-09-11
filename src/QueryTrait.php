@@ -347,6 +347,46 @@ trait QueryTrait
     }
 
     /**
+     * Min.
+     * @aliasOf selectMin()
+     * @since   4.4
+     */
+    public function min(...$arguments)
+    {
+        return $this->selectMin(...$arguments);
+    }
+
+    /**
+     * Max.
+     * @aliasOf selectMax()
+     * @since   4.4
+     */
+    public function max(...$arguments)
+    {
+        return $this->selectMax(...$arguments);
+    }
+
+    /**
+     * Avg.
+     * @aliasOf selectAvg()
+     * @since   4.4
+     */
+    public function avg(...$arguments)
+    {
+        return $this->selectAvg(...$arguments);
+    }
+
+    /**
+     * Sum.
+     * @aliasOf selectSum()
+     * @since   4.4
+     */
+    public function sum(...$arguments)
+    {
+        return $this->selectSum(...$arguments);
+    }
+
+    /**
      * Esc.
      * @aliasOf db.escape()
      */
