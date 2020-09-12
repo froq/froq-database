@@ -292,7 +292,7 @@ final class Database
     public function countQuery(string $query, array $queryParams = null): int
     {
         $query  = 'SELECT count(*) AS c FROM ('. $query .') AS t';
-        $result = $this->get($query, $queryParams, ['array']);
+        $result = $this->get($query, $queryParams, 'array');
 
         return (int) ($result['c'] ?? 0);
     }
