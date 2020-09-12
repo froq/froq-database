@@ -332,7 +332,7 @@ final class Database
      */
     public function quote(string $input): string
     {
-        return '\'' . $input . '\'';
+        return '\''. $input .'\'';
     }
 
     /**
@@ -359,9 +359,12 @@ final class Database
 
         $pdoDriver = $this->link->getPdoDriver();
         if ($pdoDriver == 'pgsql') {
-            // Array notations.
-            $pos = strpos($input, '[');
-            if ($pos) {
+            // Cast notations (eg: foo::int).
+            if ($pos = strpos($input, '::')) {
+                return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
+            }
+            // Array notations (eg: foo[1]).
+            if ($pos = strpos($input, '[')) {
                 return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
             }
         }
