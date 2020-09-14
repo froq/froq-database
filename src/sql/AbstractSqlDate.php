@@ -52,7 +52,7 @@ abstract class AbstractSqlDate extends AbstractSql
 
     /**
      * Constructor.
-     * @param  string|int|null $content
+     * @param  string|int|null $datetime
      * @param  string|null     $timezone
      * @throws froq\database\sql\SqlException
      */
