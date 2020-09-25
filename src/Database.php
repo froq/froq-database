@@ -319,7 +319,7 @@ final class Database
             $ret = call_user_func($call, $this);
             $pdo->commit();
             return $ret;
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             $pdo->rollBack();
             throw new DatabaseException($e->getMessage());
         }
