@@ -912,7 +912,7 @@ final class Query
      * Get all.
      * @param  string|array<string>|null $fetchOptions
      * @param  int|null                  $limit
-     * @return ?array
+     * @return ?array|?array<?array|?object, froq\pager\Pager>
      */
     public function getAll($fetchOptions = null, int $limit = null): ?array
     {
@@ -967,7 +967,7 @@ final class Query
 
     /**
      * Paginate.
-     * @param  froq\pager\Pager|null $pager
+     * @param  froq\pager\Pager $pager
      * @return self
      */
     public function paginateWith(Pager $pager): self
