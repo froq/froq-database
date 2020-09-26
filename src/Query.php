@@ -905,6 +905,9 @@ final class Query
      */
     public function get($fetchOptions = null)
     {
+        // Optimize one-record query.
+        $this->has('limit') || $this->limit(1);
+
         return $this->db->get($this->toString(), null, $fetchOptions);
     }
 
