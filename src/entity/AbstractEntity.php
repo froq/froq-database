@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\EntityException;
+use froq\common\interfaces\{Arrayable, Jsonable};
 use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
 
 /**
@@ -36,7 +37,7 @@ use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.2
  */
-abstract class AbstractEntity implements Countable, ArrayAccess, IteratorAggregate
+abstract class AbstractEntity implements Arrayable, Jsonable, Countable, ArrayAccess, IteratorAggregate
 {
     /**
      * Drop.
@@ -227,51 +228,39 @@ abstract class AbstractEntity implements Countable, ArrayAccess, IteratorAggrega
     }
 
     /**
-     * To array.
-     * @param  bool $deep
-     * @return array
-     */
-    public final function toArray(bool $deep = false): array
-    {
-        return !$deep ? $this->getVarValues()
-                      : $this->toArrayDeep($this->getVarValues());
-    }
-
-    /**
-     * To array deep.
-     * @param  any $in
-     * @return array
-     */
-    public final function toArrayDeep($in = null): array
-    {
-        $in = $in ?? $this->getVarValues();
-        if ($in && is_object($in)) {
-            $out = (array) (
-                is_iterable($in) ? iterator_to_array($in) : (
-                    method_exists($in, 'toArray') ? $in->toArray() : (
-                        get_object_vars($in)
-                    )
-                )
-            );
-        } else {
-            $out = (array) $in;
-        }
-
-        foreach ($out as $key => $value) {
-            $out[$key] = is_iterable($value) || is_object($in)
-                ? $this->toArrayDeep($value) : $value;
-        }
-
-        return $out;
-    }
-
-    /**
-     * Id.
+     * Id (shortcut for IDs).
      * @return int|string|null
      */
     public function id()
     {
         return $this->id ?? null;
+    }
+
+    /**
+     * @inheritDoc froq\common\interfaces\Arrayable
+     * @since 4.5
+     */
+    public function toArray(bool $deep = false): array
+    {
+        $ret = $this->getVarValues();
+
+        if ($deep) {
+            foreach ($ret as $key => $value) {
+                $ret[$key] = is_iterable($value) || is_subclass_of($value, self::class)
+                    ? $value->toArray(true) : $value;
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * @inheritDoc froq\common\interfaces\Jsonable
+     * @since 4.5
+     */
+    public function toJson(int $flags = 0, bool $deep = false): string
+    {
+        return json_encode($this->toArray($deep), $flags);
     }
 
     /**

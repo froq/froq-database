@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\{EntityException, AbstractEntity};
+use froq\common\interfaces\{Arrayable, Jsonable};
 use froq\pager\Pager;
 use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
 
@@ -37,7 +38,7 @@ use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.2
  */
-abstract class AbstractEntityArray implements Countable, ArrayAccess, IteratorAggregate
+abstract class AbstractEntityArray implements Arrayable, Jsonable, Countable, ArrayAccess, IteratorAggregate
 {
     /**
      * Items.
@@ -148,12 +149,10 @@ abstract class AbstractEntityArray implements Countable, ArrayAccess, IteratorAg
     }
 
     /**
-     * To array.
-     * @param  bool $deep
-     * @return array
-     * @since  4.5
+     * @inheritDoc froq\common\interfaces\Arrayable
+     * @since 4.5
      */
-    public final function toArray(bool $deep = false): array
+    public function toArray(bool $deep = false): array
     {
         $ret = [];
 
@@ -165,19 +164,12 @@ abstract class AbstractEntityArray implements Countable, ArrayAccess, IteratorAg
     }
 
     /**
-     * To array deep.
-     * @return array
-     * @since  4.5
+     * @inheritDoc froq\common\interfaces\Jsonable
+     * @since 4.5
      */
-    public final function toArrayDeep(): array
+    public function toJson(int $flags = 0, bool $deep = false): string
     {
-        $ret = [];
-
-        foreach ($this->items as $item) {
-            $ret[] = $item->toArrayDeep();
-        }
-
-        return $ret;
+        return json_encode($this->toArray($deep), $flags);
     }
 
     /**
