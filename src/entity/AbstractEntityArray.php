@@ -148,6 +148,39 @@ abstract class AbstractEntityArray implements Countable, ArrayAccess, IteratorAg
     }
 
     /**
+     * To array.
+     * @param  bool $deep
+     * @return array
+     * @since  4.5
+     */
+    public final function toArray(bool $deep = false): array
+    {
+        $ret = [];
+
+        foreach ($this->items as $item) {
+            $ret[] = $item->toArray($deep);
+        }
+
+        return $ret;
+    }
+
+    /**
+     * To array deep.
+     * @return array
+     * @since  4.5
+     */
+    public final function toArrayDeep(): array
+    {
+        $ret = [];
+
+        foreach ($this->items as $item) {
+            $ret[] = $item->toArrayDeep();
+        }
+
+        return $ret;
+    }
+
+    /**
      * @inheritDoc Countable
      */
     public final function count(): int

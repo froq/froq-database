@@ -203,6 +203,7 @@ abstract class AbstractEntity implements Countable, ArrayAccess, IteratorAggrega
     {
         // Note: returns non-defined vars also.
         $ret = get_class_vars(static::class);
+        unset($ret['__drop']);
 
         return array_keys($ret);
     }
@@ -216,6 +217,7 @@ abstract class AbstractEntity implements Countable, ArrayAccess, IteratorAggrega
     {
         // Note: returns defined vars only.
         $ret = get_object_vars($this);
+        unset($ret['__drop']);
 
         if (!$privates) {
             $ret = array_filter($ret, fn($v) => ($v[0] !== '_'), 2);
