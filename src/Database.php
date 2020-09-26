@@ -30,7 +30,7 @@ use froq\database\{DatabaseException, DatabaseConnectionException, DatabaseQuery
     Link, LinkException, Result, Profiler, Query};
 use froq\database\sql\{Sql, Name, Date, DateTime};
 use froq\pager\Pager;
-use PDO, PDOStatement, PDOException, Exception;
+use PDO, PDOStatement, PDOException, Throwable;
 
 /**
  * Database.
@@ -300,10 +300,11 @@ final class Database
     /**
      * Transaction.
      * @param  callable $call
+     * @param  callable $callError
      * @return any
-     * @throws froq\database\DatabaseException
+     * @throws froq\database\DatabaseException If no call error.
      */
-    public function transaction(callable $call)
+    public function transaction(callable $call, callable $callError = null)
     {
         $pdo = $this->link->getPdo();
         try {
@@ -311,16 +312,23 @@ final class Database
                 throw new DatabaseException('Failed to start transaction');
             }
             // And for all others.
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             throw new DatabaseException($e->getMessage());
         }
 
         try {
-            $ret = call_user_func($call, $this);
+            $ret = $call($this);
             $pdo->commit();
+
             return $ret;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $pdo->rollBack();
+
+            // This will block exception below.
+            if ($callError) {
+                return $callError($e);
+            }
+
             throw new DatabaseException($e->getMessage());
         }
     }
