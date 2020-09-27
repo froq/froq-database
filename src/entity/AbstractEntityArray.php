@@ -26,10 +26,9 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{EntityException, AbstractEntity};
-use froq\common\interfaces\{Arrayable, Jsonable};
+use froq\database\entity\{EntityException, EntityInterface, AbstractEntity};
 use froq\pager\Pager;
-use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
+use ArrayIterator;
 
 /**
  * Abstract Entity Array.
@@ -38,7 +37,7 @@ use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.2
  */
-abstract class AbstractEntityArray implements Arrayable, Jsonable, Countable, ArrayAccess, IteratorAggregate
+abstract class AbstractEntityArray implements EntityInterface
 {
     /**
      * Items.

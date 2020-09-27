@@ -26,9 +26,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\EntityException;
-use froq\common\interfaces\{Arrayable, Jsonable};
-use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
+use froq\database\entity\{EntityException, EntityInterface};
+use ArrayIterator;
 
 /**
  * Abstract Entity.
@@ -37,7 +36,7 @@ use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.2
  */
-abstract class AbstractEntity implements Arrayable, Jsonable, Countable, ArrayAccess, IteratorAggregate
+abstract class AbstractEntity implements EntityInterface
 {
     /**
      * Drop.
