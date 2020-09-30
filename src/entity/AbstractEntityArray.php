@@ -41,7 +41,7 @@ abstract class AbstractEntityArray implements EntityInterface
 {
     /**
      * Items.
-     * @var array
+     * @var array<froq\database\entity\AbstractEntity>
      */
     protected array $items = [];
 
@@ -53,20 +53,22 @@ abstract class AbstractEntityArray implements EntityInterface
 
     /**
      * Constructor.
-     * @param array<froq\database\entity\AbstractEntity>|null $items
-     * @param froq\pager\Pager|null                           $pager
+     * @param array|null            $items
+     * @param froq\pager\Pager|null $pager
+     * @param array|bool|null       $drop
      */
-    public function __construct(array $items = null, Pager $pager = null)
+    public function __construct(array $items = null, Pager $pager = null, $drop = null)
     {
-        if ($items) {
-            foreach ($items as $item) {
-                if (!$item instanceof AbstractEntity) {
-                    throw new EntityException('Each item must be an entity extending "%s" class',
-                        [AbstractEntity::class]);
-                }
+        // Check entity class (eg: FooEntityArray => FooEntity)
+        $class = substr(static::class, 0, -5);
+        if (!class_exists($class)) {
+            throw new EntityException('Entity class "%s" not exists, be sure it is defined in the '.
+                'same namespace & directory', [$class]);
+        }
 
-                $this->items[] = $item;
-            }
+        // Convert items to related entity.
+        if ($items) foreach ($items as $item) {
+            $this->items[] = new $class($item, $drop);
         }
 
         $this->pager = $pager;
