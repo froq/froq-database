@@ -941,7 +941,7 @@ final class Query
 
     /**
      * Get object.
-     * @return ?array
+     * @return ?object
      * @since  4.7
      */
     public function getObject(): ?object
