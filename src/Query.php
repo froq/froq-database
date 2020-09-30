@@ -913,11 +913,12 @@ final class Query
 
     /**
      * Get all.
-     * @param  string|array<string>|null $fetchOptions
-     * @param  int|null                  $limit
-     * @return ?array|?array<?array|?object, froq\pager\Pager>
+     * @param  string|array<string>|null  $fetchOptions
+     * @param  froq\pager\Pager|null     &$pager
+     * @param  int|null                   $limit
+     * @return ?array
      */
-    public function getAll($fetchOptions = null, int $limit = null): ?array
+    public function getAll($fetchOptions = null, Pager &$pager = null, int $limit = null): ?array
     {
         if ($limit === null) {
             return $this->db->getAll($this->toString(), null, $fetchOptions);
@@ -925,7 +926,51 @@ final class Query
 
         $this->paginate($pager, $limit);
 
-        return [$this->db->getAll($this->toString(), null, $fetchOptions), $pager];
+        return $this->db->getAll($this->toString(), null, $fetchOptions);
+    }
+
+    /**
+     * Get array.
+     * @return ?array
+     * @since  4.7
+     */
+    public function getArray(): ?array
+    {
+        return $this->get('array');
+    }
+
+    /**
+     * Get object.
+     * @return ?array
+     * @since  4.7
+     */
+    public function getObject(): ?object
+    {
+        return $this->get('object');
+    }
+
+    /**
+     * Get array all.
+     * @param  froq\pager\Pager|null &$pager
+     * @param  int|null               $limit
+     * @return ?array
+     * @since  4.7
+     */
+    public function getArrayAll(Pager &$pager = null, int $limit = null): ?array
+    {
+        return $this->getAll('array', $pager, $limit);
+    }
+
+    /**
+     * Get object all.
+     * @param  froq\pager\Pager|null &$pager
+     * @param  int|null               $limit
+     * @return ?array
+     * @since  4.7
+     */
+    public function getObjectAll(Pager &$pager = null, int $limit = null): ?array
+    {
+        return $this->getAll('object', $pager, $limit);
     }
 
     /**
