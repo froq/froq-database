@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\{EntityException, EntityInterface};
-use ArrayIterator;
+use ArrayIterator, Traversable;
 
 /**
  * Abstract Entity.
@@ -244,10 +244,37 @@ abstract class AbstractEntity implements EntityInterface
         $ret = $this->getVarValues();
 
         if ($deep) {
-            foreach ($ret as $key => $value) {
-                $ret[$key] = is_iterable($value) || is_subclass_of($value, self::class)
-                    ? $value->toArray(true) : $value;
-            }
+            // Memoize array maker.
+            static $toArray; $toArray || $toArray = function ($in, $deep) use (&$toArray) {
+                if ($in && is_object($in)) {
+                    $out = (array) (
+                        ($in instanceof Traversable) ? iterator_to_array($in) : (
+                            method_exists($in, 'toArray') ? $in->toArray() : (
+                                get_object_vars($in)
+                            )
+                        )
+                    );
+                } else {
+                    $out = (array) $in;
+                }
+
+                if ($deep) {
+                    // Overwrite.
+                    foreach ($out as $key => $value) {
+                        if ($value instanceof EntityInterface) {
+                            $out[$key] = $value->toArray(true);
+                            continue;
+                        }
+
+                        $out[$key] = is_iterable($value) || is_object($value)
+                            ? $toArray($value, true) : $value;
+                    }
+                }
+
+                return $out;
+            };
+
+            $ret = $toArray($ret, $deep);
         }
 
         return $ret;
@@ -275,7 +302,7 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function getIterator(): iterable
     {
-        // Note: this method goes to toArrayDeep() for is_iterable() check.
+        // Note: this method goes to toArray() for iterable check.
         return new ArrayIterator($this->getVarValues());
     }
 
