@@ -172,7 +172,7 @@ abstract class AbstractEntity implements EntityInterface
                 break;
         }
 
-        throw new EntityException('Bad method call to "%s" on %s', [$call, static::class]);
+        throw new EntityException('Bad method call as "%s()" on "%s" object', [$call, static::class]);
     }
 
     /**
