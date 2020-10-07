@@ -645,7 +645,7 @@ final class Database
      * @param  int|null $limit
      * @return froq\pager\Pager
      */
-    public final function initPager(int $totalRecords = null, int $limit = null): Pager
+    public function initPager(int $totalRecords = null, int $limit = null): Pager
     {
         $pager = new Pager();
         $pager->run($totalRecords, $limit);
