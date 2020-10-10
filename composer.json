@@ -11,6 +11,7 @@
         "php": "^7.4",
         "ext-pdo": "*",
         "froq/froq-common": "^4.0",
+        "froq/froq-collection": "^4.0",
         "froq/froq-pager": "^4.0"
     },
     "autoload": {

@@ -30,11 +30,11 @@ use froq\common\interfaces\{Arrayable, Jsonable};
 use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
 
 /**
- * Entity Interface.
+ * Entity Array Interface.
  * @package froq\database\entity
- * @object  froq\database\entity\EntityInterface
+ * @object  froq\database\entity\EntityArrayInterface
  * @author  Kerem Güneş <k-gun@mail.com>
- * @since   4.6, 4.8 Separated from EntityInterface.
+ * @since   4.8 Separated from EntityInterface.
  */
-interface EntityInterface extends Arrayable, Jsonable, Countable, ArrayAccess, IteratorAggregate
+interface EntityArrayInterface extends Arrayable, Jsonable, Countable, ArrayAccess, IteratorAggregate
 {}

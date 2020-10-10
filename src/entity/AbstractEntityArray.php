@@ -26,7 +26,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{EntityException, EntityInterface, AbstractEntity};
+use froq\database\entity\{EntityException, EntityArrayInterface, AbstractEntity};
+use froq\collection\Collection;
 use froq\pager\Pager;
 use ArrayIterator;
 
@@ -37,13 +38,20 @@ use ArrayIterator;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.2
  */
-abstract class AbstractEntityArray implements EntityInterface
+abstract class AbstractEntityArray implements EntityArrayInterface
 {
     /**
      * Items.
      * @var array<froq\database\entity\AbstractEntity>
      */
     protected array $items = [];
+
+    /**
+     * Items class.
+     * @var string
+     * @since 4.8
+     */
+    private string $itemsClass;
 
     /**
      * Pager.
@@ -60,16 +68,17 @@ abstract class AbstractEntityArray implements EntityInterface
     public function __construct(array $items = null, Pager $pager = null, $drop = null)
     {
         // Check entity class (eg: FooEntityArray => FooEntity)
-        $class = substr(static::class, 0, -5);
-        if (!class_exists($class)) {
+        $itemsClass = substr(static::class, 0, -5);
+        if (!class_exists($itemsClass)) {
             throw new EntityException('Entity class "%s" not exists, be sure it is defined in the '.
-                'same namespace & directory', [$class]);
+                'same namespace & directory', [$itemsClass]);
         }
 
         // Convert items to related entity.
         if ($items) foreach ($items as $item) {
-            $this->items[] = new $class($item, $drop);
+            $this->items[] = new $itemsClass($item, $drop);
         }
+        $this->itemsClass = $itemsClass;
 
         $this->pager = $pager;
     }
@@ -123,6 +132,16 @@ abstract class AbstractEntityArray implements EntityInterface
     }
 
     /**
+     * Items class.
+     * @return string
+     * @since  4.8
+     */
+    public function itemsClass(): string
+    {
+        return $this->itemsClass;
+    }
+
+    /**
      * First.
      * @return ?froq\database\entity\AbstractEntity
      */
@@ -171,6 +190,80 @@ abstract class AbstractEntityArray implements EntityInterface
     public function toJson(int $flags = 0, bool $deep = false): string
     {
         return json_encode($this->toArray($deep), $flags);
+    }
+
+    /**
+     * To collection.
+     * @return froq\collection\Collection
+     * @since  4.8
+     */
+    public function toCollection(): Collection
+    {
+        return new Collection($this->items);
+    }
+
+    /**
+     * Apply.
+     * @param  callable $func
+     * @return self (static)
+     * @since  4.8
+     */
+    public function apply(callable $func): self
+    {
+        // Stay in entity array.
+        $func = $func->bindTo($this, $this);
+
+        $this->items = $this->toCollection()->apply($func)->toArray();
+
+        return $this;
+    }
+
+    /**
+     * Map.
+     * @param  callable $func
+     * @return self (static)
+     * @since  4.8
+     */
+    public function map(callable $func): self
+    {
+        // Stay in entity array.
+        $func = $func->bindTo($this, $this);
+
+        $this->items = $this->toCollection()->map($func)->toArray();
+
+        return $this;
+    }
+
+    /**
+     * Filter.
+     * @param  callable $func
+     * @param  bool     $keepKeys
+     * @return self (static)
+     * @since  4.8
+     */
+    public function filter(callable $func, bool $keepKeys = false): self
+    {
+        // Stay in entity array.
+        $func = $func->bindTo($this, $this);
+
+        $this->items = $this->toCollection()->filter($func, $keepKeys)->toArray();
+
+        return $this;
+    }
+
+    /**
+     * Reduce.
+     * @param  any      $accumulator
+     * @param  callable $func
+     * @return any
+     * @since  4.8
+     */
+    public function reduce($accumulator = null, callable $func)
+    {
+        // Stay in entity array.
+        $func = $func->bindTo($this, $this);
+
+        return $this->toCollection()->reduce($accumulator, $func);
     }
 
     /**
