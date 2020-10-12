@@ -105,7 +105,7 @@ final class Link
      */
     public static function init(array $options): self
     {
-        return self::$instance ?? (self::$instance = new self($options));
+        return self::$instance ??= new self($options);
     }
 
     /**
