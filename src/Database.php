@@ -30,6 +30,7 @@ use froq\database\{DatabaseException, DatabaseConnectionException, DatabaseQuery
     Link, LinkException, Result, Profiler, Query};
 use froq\database\sql\{Sql, Name, Date, DateTime};
 use froq\pager\Pager;
+use froq\logger\Logger;
 use PDO, PDOStatement, PDOException, Throwable;
 
 /**
@@ -48,8 +49,15 @@ final class Database
     private Link $link;
 
     /**
+     * Logger.
+     * @var froq\logger\Logger|null
+     * @since 4.9
+     */
+    private Logger $logger;
+
+    /**
      * Profiler.
-     * @var froq\database\Profiler.
+     * @var froq\database\Profiler|null.
      */
     private Profiler $profiler;
 
@@ -60,9 +68,14 @@ final class Database
      */
     public function __construct(array $options)
     {
+        $logging = $options['logging'] ?? null;
+        if ($logging) {
+            $this->logger = new Logger($logging);
+        }
+
         // Default is false (no profiling).
-        $profile = $options['profile'] ?? false;
-        if ($profile) {
+        $profiling = $options['profiling'] ?? false;
+        if ($profiling) {
             $this->profiler = new Profiler();
         }
 
@@ -85,6 +98,22 @@ final class Database
     }
 
     /**
+     * Get logger.
+     * @return froq\logger\Logger
+     * @throws froq\database\DatabaseException
+     * @since  4.9
+     */
+    public function getLogger(): Logger
+    {
+        if (empty($this->logger)) {
+            throw new DatabaseException('Database object has no logger, be sure "logging" '.
+                'field is not empty in options');
+        }
+
+        return $this->logger;
+    }
+
+    /**
      * Get profiler.
      * @return froq\database\Profiler
      * @throws froq\database\DatabaseException
@@ -92,8 +121,8 @@ final class Database
     public function getProfiler(): Profiler
     {
         if (empty($this->profiler)) {
-            throw new DatabaseException('Database object has no profiler, be sure "profile" '.
-                'option is "true" in configuration');
+            throw new DatabaseException('Database object has no profiler, be sure "profiling" '.
+                'field is not empty or false in options');
         }
 
         return $this->profiler;
