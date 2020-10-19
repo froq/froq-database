@@ -760,7 +760,7 @@ final class Query
         }
 
         // For raw Sql fields.
-        if (!empty($check)) {
+        if ($check) {
             return $this->add('orderBy', $field . $collate . $nulls);
         }
 
