@@ -1331,11 +1331,11 @@ final class Query
         $op = strtoupper(trim($op));
         if (in_array($op, $ops)) {
             return $op;
-        } elseif ($numerics && in_array($op, ['1', '0', '-1'])) {
+        } elseif ($numerics && in_array($op, ['1', '-1', '0'])) { // @internal=0
             return ($op == '1') ? 'ASC' : 'DESC';
         }
 
-        throw new QueryException('Invalid op "%s", valids are: %s', [$op, join(', ', $ops)]);
+        throw new QueryException('Invalid op "%s", valids are: %s, 1, -1', [$op, join(', ', $ops)]);
     }
 
     /**
