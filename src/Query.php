@@ -273,6 +273,7 @@ final class Query
     public function insert(array $data, bool $multi = false): self
     {
         $fields = $values = [];
+
         if (!$multi) {
             // Eg: ["name" => "Kerem", ..].
             $fields = array_keys($data);
@@ -288,7 +289,6 @@ final class Query
         }
 
         $fieldsCount = count($fields);
-        $fields      = $this->prepareFields(join(', ', $fields));
         foreach ($values as $i => $value) {
             $value = (array) $value;
             if (count($value) != $fieldsCount) {
@@ -296,6 +296,8 @@ final class Query
             }
             $values[$i] = '('. join(', ', $this->db->escape($value)) .')';
         }
+
+        $fields = $this->prepareFields(join(', ', $fields));
 
         return $this->add('insert', [$fields, $values], false);
     }
