@@ -253,17 +253,32 @@ abstract class AbstractEntityArray implements EntityArrayInterface
 
     /**
      * Reduce.
-     * @param  any      $accumulator
+     * @param  any      $carry
      * @param  callable $func
      * @return any
      * @since  4.8
      */
-    public function reduce($accumulator = null, callable $func)
+    public function reduce($carry = null, callable $func)
     {
         // Stay in entity array.
         $func = $func->bindTo($this, $this);
 
-        return $this->toCollection()->reduce($accumulator, $func);
+        return $this->toCollection()->reduce($carry, $func);
+    }
+
+    /**
+     * Aggregate.
+     * @param  callable   $func
+     * @param  array|null $carry
+     * @return array
+     * @since  4.10
+     */
+    public function aggregate(callable $func, array $carry = null): array
+    {
+        // Stay in entity array.
+        $func = $func->bindTo($this, $this);
+
+        return $this->toCollection()->aggregate($func, $carry);
     }
 
     /**

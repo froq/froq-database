@@ -245,7 +245,7 @@ abstract class AbstractEntity implements EntityInterface
 
         if ($deep) {
             // Memoize array maker.
-            static $toArray; $toArray || $toArray = function ($in, $deep) use (&$toArray) {
+            static $toArray; $toArray ??= function ($in, $deep) use (&$toArray) {
                 if ($in && is_object($in)) {
                     $out = (array) (
                         ($in instanceof Traversable) ? iterator_to_array($in) : (
