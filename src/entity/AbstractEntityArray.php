@@ -188,26 +188,10 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public function apply(callable $func): self
     {
-        // Stay in entity array.
+        // Stay in here.
         $func = $func->bindTo($this, $this);
 
         $this->items = $this->toCollection()->apply($func)->toArray();
-
-        return $this;
-    }
-
-    /**
-     * Map.
-     * @param  callable $func
-     * @return self (static)
-     * @since  4.8
-     */
-    public function map(callable $func): self
-    {
-        // Stay in entity array.
-        $func = $func->bindTo($this, $this);
-
-        $this->items = $this->toCollection()->map($func)->toArray();
 
         return $this;
     }
@@ -221,10 +205,26 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public function filter(callable $func, bool $keepKeys = false): self
     {
-        // Stay in entity array.
+        // Stay in here.
         $func = $func->bindTo($this, $this);
 
         $this->items = $this->toCollection()->filter($func, $keepKeys)->toArray();
+
+        return $this;
+    }
+
+    /**
+     * Map.
+     * @param  callable $func
+     * @return self (static)
+     * @since  4.8
+     */
+    public function map(callable $func): self
+    {
+        // Stay in here.
+        $func = $func->bindTo($this, $this);
+
+        $this->items = $this->toCollection()->map($func)->toArray();
 
         return $this;
     }
@@ -238,7 +238,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public function reduce($carry = null, callable $func)
     {
-        // Stay in entity array.
+        // Stay in here.
         $func = $func->bindTo($this, $this);
 
         return $this->toCollection()->reduce($carry, $func);
@@ -253,7 +253,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public function aggregate(callable $func, array $carry = null): array
     {
-        // Stay in entity array.
+        // Stay in here.
         $func = $func->bindTo($this, $this);
 
         return $this->toCollection()->aggregate($func, $carry);

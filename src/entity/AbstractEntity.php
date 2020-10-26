@@ -112,7 +112,7 @@ abstract class AbstractEntity implements EntityInterface
      * Set.
      * @param  string $var
      * @param  any    $value
-     * @return self (self)
+     * @return self (static)
      */
     public function __set($var, $value)
     {
@@ -267,6 +267,29 @@ abstract class AbstractEntity implements EntityInterface
     public function isEmpty(): bool
     {
         return empty($this->getVars());
+    }
+
+    /**
+     * Filter.
+     * @return self (static)
+     * @since  4.12
+     */
+    public function filter(callable $func = null): self
+    {
+        $filtered = array_filter(
+            $vars = $this->getVars(),
+            $func ?? fn($v) => $v !== null, // Filter nulls only.
+        );
+
+        foreach (array_keys($vars) as $var) {
+            try {
+                if (!isset($filtered[$var])) {
+                    unset($this->{$var});
+                }
+            } catch (Error $e) {}
+        }
+
+        return $this;
     }
 
     /**
