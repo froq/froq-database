@@ -67,18 +67,18 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public function __construct(array $items = null, Pager $pager = null, $drop = null)
     {
-        // Check entity class (eg: FooEntityArray => FooEntity)
-        $itemsClass = substr(static::class, 0, -5);
-        if (!class_exists($itemsClass)) {
+        // Create entity class (eg: FooEntityArray => FooEntity)
+        $this->itemsClass = substr(static::class, 0, -5);
+
+        if (!class_exists($this->itemsClass)) {
             throw new EntityException('Entity class "%s" not exists, be sure it is defined in the '.
-                'same namespace & directory', [$itemsClass]);
+                'same namespace & directory', [$this->itemsClass]);
         }
 
         // Convert items to related entity.
         if ($items) foreach ($items as $item) {
-            $this->items[] = new $itemsClass($item, $drop);
+            $this->items[] = new $this->itemsClass($item, $drop);
         }
-        $this->itemsClass = $itemsClass;
 
         $this->pager = $pager;
     }
@@ -89,7 +89,8 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public function __serialize()
     {
-        return ['items' => $this->items, 'pager' => $this->pager];
+        return ['items' => $this->items, 'itemsClass' => $this->itemsClass,
+                'pager' => $this->pager];
     }
 
     /**
@@ -99,7 +100,8 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public function __unserialize($data)
     {
-        $this->items = $data['items']; $this->pager = $data['pager'];
+        ['items' => $this->items, 'itemsClass' => $this->itemsClass,
+         'pager' => $this->pager] = $data;
     }
 
     /**
@@ -113,13 +115,23 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
-     * Items
+     * Get.
      * @param  int $i
      * @return ?froq\database\entity\AbstractEntity
+     * @since  4.11
+     */
+    public final function get(int $i): ?AbstractEntity
+    {
+        return $this->items[$i] ?? null;
+    }
+
+    /**
+     * Item.
+     * @aliasOf get()
      */
     public final function item(int $i): ?AbstractEntity
     {
-        return $this->items[$i] ?? null;
+        return $this->get($i);
     }
 
     /**
@@ -136,7 +148,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      * @return string
      * @since  4.8
      */
-    public function itemsClass(): string
+    public final function itemsClass(): string
     {
         return $this->itemsClass;
     }
@@ -166,40 +178,6 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     public final function pager(): ?Pager
     {
         return $this->pager;
-    }
-
-    /**
-     * @inheritDoc froq\common\interfaces\Arrayable
-     * @since 4.5
-     */
-    public function toArray(bool $deep = false): array
-    {
-        $ret = [];
-
-        foreach ($this->items as $item) {
-            $ret[] = $item->toArray($deep);
-        }
-
-        return $ret;
-    }
-
-    /**
-     * @inheritDoc froq\common\interfaces\Jsonable
-     * @since 4.5
-     */
-    public function toJson(int $flags = 0, bool $deep = false): string
-    {
-        return json_encode($this->toArray($deep), $flags);
-    }
-
-    /**
-     * To collection.
-     * @return froq\collection\Collection
-     * @since  4.8
-     */
-    public function toCollection(): Collection
-    {
-        return new Collection($this->items);
     }
 
     /**
@@ -282,6 +260,31 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
+     * To collection.
+     * @return froq\collection\Collection
+     * @since  4.8
+     */
+    public function toCollection(): Collection
+    {
+        return new Collection($this->items);
+    }
+
+    /**
+     * @inheritDoc froq\common\interfaces\Arrayable
+     * @since      4.5
+     */
+    public function toArray(bool $deep = false): array
+    {
+        $ret = [];
+
+        foreach ($this->items as $item) {
+            $ret[] = $item->toArray($deep);
+        }
+
+        return $ret;
+    }
+
+    /**
      * @inheritDoc Countable
      */
     public final function count(): int
@@ -292,9 +295,18 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     /**
      * @inheritDoc IteratorAggregate
      */
-    public final function getIterator(): iterable
+    public final function getIterator(): ArrayIterator
     {
         return new ArrayIterator($this->items);
+    }
+
+    /**
+     * @inheritDoc JsonSerializable
+     * @since      4.11
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray(true);
     }
 
     /**
@@ -310,14 +322,14 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public final function offsetGet($i)
     {
-        return $this->item($i);
+        return $this->get($i);
     }
 
     /**
      * @inheritDoc ArrayAccess
      * @throws     froq\database\entity\EntityException
      */
-    public final function offsetSet($var, $varval)
+    public final function offsetSet($i, $item)
     {
         throw new EntityException('No set() allowed for "%s"', [static::class]);
     }
@@ -326,7 +338,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      * @inheritDoc ArrayAccess
      * @throws     froq\database\entity\EntityException
      */
-    public final function offsetUnset($var)
+    public final function offsetUnset($i)
     {
         throw new EntityException('No unset() allowed for "%s"', [static::class]);
     }

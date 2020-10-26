@@ -27,7 +27,8 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\{EntityException, EntityInterface};
-use ArrayIterator, Traversable;
+use froq\collection\Collection;
+use ArrayIterator, Traversable, Error;
 
 /**
  * Abstract Entity.
@@ -39,12 +40,6 @@ use ArrayIterator, Traversable;
 abstract class AbstractEntity implements EntityInterface
 {
     /**
-     * Drop.
-     * @var array|bool|null
-     */
-    private $__drop;
-
-    /**
      * Constructor.
      * @param array|null      $data
      * @param array|bool|null $drop
@@ -53,30 +48,35 @@ abstract class AbstractEntity implements EntityInterface
     {
         $data = $data ?? [];
 
-        if ($data) {
-            foreach ($data as $name => $value) {
-                $this->{$name} = $value;
-            }
+        foreach ($data as $var => $value) {
+            $this->{$var} = $value;
         }
 
+        // Drop unused/unwanted vars.
         if ($drop) {
-            $vars = $this->getVarNames(); $varsDiff = [];
+            $vars = $this->getVarNames();
+            $diff = [];
+
+            // Unused vars (all nulls).
             if ($drop === true) {
-                $varsDiff = (count($vars) > count($data))
-                    ? array_diff($vars, array_keys($data))
-                    : array_diff(array_keys($data), $vars);
-            } elseif (is_array($drop)) {
-                $varsDiff = $drop;
+                $diff = count($vars) > count($data)
+                          ? array_diff($vars, array_keys($data))
+                          : array_diff(array_keys($data), $vars);
+            }
+            // Unwanted vars.
+            elseif (is_array($drop)) {
+                $diff = $drop;
             }
 
-            foreach ($varsDiff as $var) {
-                if (!isset($this->{$var}) || !!$drop) {
-                     unset($this->{$var});
+            // Clear unused/unwanted vars.
+            foreach ($diff as $var) {
+                if (!isset($this->{$var}) /* eg: id=null */ or
+                    !!$drop               /* eg: drop=['id'] */) {
+                    try {
+                        unset($this->{$var});
+                    } catch (Error $e) {}
                 }
             }
-
-            // Add tick.
-            $this->__drop = $drop;
         }
     }
 
@@ -86,7 +86,7 @@ abstract class AbstractEntity implements EntityInterface
      */
     public function __serialize()
     {
-        return $this->getVarValues(false);
+        return $this->getVars();
     }
 
     /**
@@ -96,46 +96,45 @@ abstract class AbstractEntity implements EntityInterface
      */
     public function __unserialize($data)
     {
-        // Needed set all first, cos PHP creates new entity object with all vars.
-        foreach ($data as $name => $value) {
-            $this->{$name} = $value;
+        // First: set all vars (cos PHP creates new entity object with all vars).
+        foreach ($data as $var => $value) {
+            $this->{$var} = $value;
         }
 
-        // Then check drop.
-        if ($this->__drop) {
-            $vars = is_array($this->__drop) ? $this->__drop : $this->getVarNames();
-            foreach ($vars as $var) {
-                if (!isset($this->{$var})) {
-                     unset($this->{$var});
-                }
-            }
+        // Then drop unused vars.
+        $diff = array_diff($this->getVarNames(), array_keys($data));
+        foreach ($diff as $var) {
+            unset($this->{$var});
         }
-
-        // Then remove "drop" var.
-        unset($this->__drop);
     }
 
     /**
      * Set.
-     * @param  string $name
+     * @param  string $var
      * @param  any    $value
-     * @return void
+     * @return self (self)
      */
-    public function __set($name, $value)
+    public function __set($var, $value)
     {
-        // Note: used for undefined (or/and dropped) vars.
-        $this->{$name} = $value;
+        // Prevent "access private property".
+        try {
+            $this->{$var} = $value;
+        } catch (Error $e) {}
+
+        return $this;
     }
 
     /**
      * Get.
-     * @param  string $name
-     * @return any
+     * @param  string $var
+     * @return any|null
      */
-    public function __get($name)
+    public function __get($var)
     {
-        // Note: used for undefined (or/and dropped) vars.
-        return $this->{$name} ?? null;
+        // Prevent "access private property".
+        try {
+            return $this->{$var} ?? null;
+        } catch (Error $e) {}
     }
 
     /**
@@ -149,81 +148,106 @@ abstract class AbstractEntity implements EntityInterface
     {
         // Eg: id().
         if (property_exists($this, $call)) {
-            return $callArgs
-                ? $this->__set($call, $callArgs[0])
-                : $this->__get($call);
+            return $callArgs ? $this->__set($call, $callArgs[0])
+                             : $this->__get($call);
         }
-
-        $cmd = substr($call, 0, 3);
 
         // Eg: setId(), getId().
+        $cmd = substr($call, 0, 3);
         switch ($cmd) {
             case 'set':
-                $name = lcfirst(substr($call, 3));
-                if (property_exists($this, $name)) {
-                    return $this->__set($name, $callArgs[0]);
+                $var = lcfirst(substr($call, 3));
+                if (property_exists($this, $var)) {
+                    if (!$callArgs) {
+                        throw new EntityException('No call argument given for "%s()" call on "%s" object',
+                            [$call, static::class]);
+                    }
+                    return $this->__set($var, $callArgs[0]);
                 }
                 break;
-            case 'get';
-                $name = lcfirst(substr($call, 3));
-                if (property_exists($this, $name)) {
-                    return $this->__get($name);
+            case 'get':
+                $var = lcfirst(substr($call, 3));
+                if (property_exists($this, $var)) {
+                    return $this->__get($var);
                 }
                 break;
+            default:
+                throw new EntityException('Invalid call as "%s()" on "%s" object',
+                    [$call, static::class]);
         }
-
-        throw new EntityException('Bad method call as "%s()" on "%s" object', [$call, static::class]);
     }
 
     /**
      * Has.
-     * @param  int $var
+     * @param  string $var
      * @return bool
      */
-    public final function has(int $var): bool
+    public final function has(string $var): bool
     {
         return isset($this->{$var});
     }
 
     /**
      * Has var.
-     * @param  int $var
+     * @param  string $var
      * @return bool
+     * @since  4.11
      */
-    public final function hasVar(int $var): bool
+    public final function hasVar(string $var): bool
     {
         return property_exists($this, $var);
     }
 
     /**
+     * Get.
+     * @param  string $var
+     * @return any|null
+     * @since  4.11
+     */
+    public final function get(string $var)
+    {
+        return isset($this->{$var}) ? $this->{$var} : null;
+    }
+
+    /**
+     * Get vars.
+     * @param  bool $all
+     * @return array
+     * @since  4.11 Replaced with getVarValues().
+     */
+    public final function getVars(bool $all = true): array
+    {
+        // Note: returns defined vars only.
+        $vars = get_object_vars($this);
+
+        // Filter private/protected vars.
+        if (!$all) {
+            $vars = array_filter($vars, fn($v) => $v[0] != '_', 2);
+        }
+
+        return $vars;
+    }
+
+    /**
      * Get var names.
+     * @param  bool $all
      * @return array
      */
-    public final function getVarNames(): array
+    public final function getVarNames(bool $all = true): array
     {
         // Note: returns non-defined vars also.
-        $ret = get_class_vars(static::class);
-        unset($ret['__drop']);
-
-        return array_keys($ret);
+        return array_keys($this->getVars($all));
     }
 
     /**
      * Get var values.
-     * @param  bool $privates
+     * @param  bool $all
      * @return array
      */
-    public final function getVarValues(bool $privates = true): array
+    public final function getVarValues(bool $all = true): array
     {
         // Note: returns defined vars only.
-        $ret = get_object_vars($this);
-        unset($ret['__drop']);
-
-        if (!$privates) {
-            $ret = array_filter($ret, fn($v) => ($v[0] !== '_'), 2);
-        }
-
-        return $ret;
+        return array_values($this->getVars($all));
     }
 
     /**
@@ -232,61 +256,38 @@ abstract class AbstractEntity implements EntityInterface
      */
     public function id()
     {
-        return $this->id ?? null;
+        return $this->get('id');
+    }
+
+    /**
+     * Is empty.
+     * @return bool
+     * @since  4.11
+     */
+    public function isEmpty(): bool
+    {
+        return empty($this->getVars());
+    }
+
+    /**
+     * To collection.
+     * @param  bool $deep
+     * @return froq\collection\Collection
+     * @since  4.8
+     */
+    public function toCollection(bool $deep = false): Collection
+    {
+        return new Collection($this->toArray($deep));
     }
 
     /**
      * @inheritDoc froq\common\interfaces\Arrayable
-     * @since 4.5
+     * @since      4.5
      */
     public function toArray(bool $deep = false): array
     {
-        $ret = $this->getVarValues();
-
-        if ($deep) {
-            // Memoize array maker.
-            static $toArray; $toArray ??= function ($in, $deep) use (&$toArray) {
-                if ($in && is_object($in)) {
-                    $out = (array) (
-                        ($in instanceof Traversable) ? iterator_to_array($in) : (
-                            method_exists($in, 'toArray') ? $in->toArray() : (
-                                get_object_vars($in)
-                            )
-                        )
-                    );
-                } else {
-                    $out = (array) $in;
-                }
-
-                if ($deep) {
-                    // Overwrite.
-                    foreach ($out as $key => $value) {
-                        if ($value instanceof EntityInterface) {
-                            $out[$key] = $value->toArray(true);
-                            continue;
-                        }
-
-                        $out[$key] = is_iterable($value) || is_object($value)
-                            ? $toArray($value, true) : $value;
-                    }
-                }
-
-                return $out;
-            };
-
-            $ret = $toArray($ret, $deep);
-        }
-
-        return $ret;
-    }
-
-    /**
-     * @inheritDoc froq\common\interfaces\Jsonable
-     * @since 4.5
-     */
-    public function toJson(int $flags = 0, bool $deep = false): string
-    {
-        return json_encode($this->toArray($deep), $flags);
+        return !$deep ? $this->getVars()
+                      : self::toArrayDeep($this->getVars());
     }
 
     /**
@@ -294,16 +295,25 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function count(): int
     {
-        return count($this->getVarValues());
+        return count($this->getVars());
     }
 
     /**
      * @inheritDoc IteratorAggregate
      */
-    public final function getIterator(): iterable
+    public final function getIterator(bool $deep = false): ArrayIterator
     {
         // Note: this method goes to toArray() for iterable check.
-        return new ArrayIterator($this->getVarValues());
+        return new ArrayIterator($this->toArray($deep));
+    }
+
+    /**
+     * @inheritDoc JsonSerializable
+     * @since      4.11
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray(true);
     }
 
     /**
@@ -311,7 +321,7 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function offsetExists($var)
     {
-        return ($this->{$var} ?? null) !== null;
+        return $this->has($var);
     }
 
     /**
@@ -319,14 +329,14 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function offsetGet($var)
     {
-        return ($this->{$var} ?? null);
+        return $this->get($var);
     }
 
     /**
      * @inheritDoc ArrayAccess
      * @throws     froq\database\entity\EntityException
      */
-    public final function offsetSet($var, $varval)
+    public final function offsetSet($var, $value)
     {
         throw new EntityException('No set() allowed for "%s"', [static::class]);
     }
@@ -338,5 +348,35 @@ abstract class AbstractEntity implements EntityInterface
     public final function offsetUnset($var)
     {
         throw new EntityException('No unset() allowed for "%s"', [static::class]);
+    }
+
+    /**
+     * To array deep.
+     * @param  any $in
+     * @return array
+     * @since  4.11
+     */
+    private static function toArrayDeep($in): array
+    {
+        if ($in && is_object($in)) {
+            $out = (array) ($in instanceof Traversable ? iterator_to_array($in) : (
+                method_exists($in, 'toArray') ? $in->toArray() : get_object_vars($in)
+            ));
+        } else {
+            $out = (array) $in;
+        }
+
+        // Overwrite.
+        foreach ($out as $var => $value) {
+            if ($value && $value instanceof EntityInterface) {
+                $out[$var] = $value->toArray();
+                continue;
+            }
+
+            $out[$var] = $value && (is_object($value) || is_iterable($value))
+                ? self::toArrayDeep($value) : $value;
+        }
+
+        return $out;
     }
 }

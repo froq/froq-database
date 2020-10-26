@@ -26,8 +26,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\common\interfaces\{Arrayable, Jsonable};
-use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
+use froq\common\interfaces\Arrayable;
+use Countable, JsonSerializable, ArrayAccess, IteratorAggregate, ArrayIterator;
 
 /**
  * Entity Interface.
@@ -36,5 +36,6 @@ use Countable, ArrayAccess, IteratorAggregate, ArrayIterator;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.6, 4.8 Separated from EntityInterface.
  */
-interface EntityInterface extends Arrayable, Jsonable, Countable, ArrayAccess, IteratorAggregate
+interface EntityInterface extends Arrayable, Countable, JsonSerializable,
+    ArrayAccess, IteratorAggregate
 {}
