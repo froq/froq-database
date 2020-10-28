@@ -374,6 +374,20 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
+     * From json.
+     * @param  ?string        $json
+     * @param array|bool|null $drop
+     * @return self (static)
+     * @since  4.13
+     */
+    public static final function fromJson(?string $json, $drop): self
+    {
+        $data = json_decode((string) $json, true);
+
+        return new static($data, $drop);
+    }
+
+    /**
      * To array deep.
      * @param  any $in
      * @return array
