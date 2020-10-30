@@ -224,9 +224,29 @@ final class Query
     }
 
     /**
+     * Select agg.
+     * @aliasOf aggregate()
+     * @since   4.14
+     */
+    public function selectAgg(...$arguments): self
+    {
+        return $this->aggregate(...$arguments);
+    }
+
+    /**
+     * Select count.
+     * @aliasOf aggregate() (for count())
+     * @since  4.14
+     */
+    public function selectCount(...$arguments): self
+    {
+        return $this->aggregate('count', ...$arguments);
+    }
+
+    /**
      * Select min.
-     * @alias aggregate() for min()
-     * @since 4.4
+     * @aliasOf aggregate() (for min())
+     * @since  4.4
      */
     public function selectMin(...$arguments): self
     {
@@ -235,8 +255,8 @@ final class Query
 
     /**
      * Select max.
-     * @alias aggregate() for max()
-     * @since 4.4
+     * @aliasOf aggregate() (for max())
+     * @since  4.4
      */
     public function selectMax(...$arguments): self
     {
@@ -245,8 +265,8 @@ final class Query
 
     /**
      * Select avg.
-     * @alias aggregate() for avg()
-     * @since 4.4
+     * @aliasOf aggregate() (for avg())
+     * @since  4.4
      */
     public function selectAvg(...$arguments): self
     {
@@ -255,8 +275,8 @@ final class Query
 
     /**
      * Select sum.
-     * @alias aggregate() for sum()
-     * @since 4.4
+     * @aliasOf aggregate() (for sum())
+     * @since  4.4
      */
     public function selectSum(...$arguments): self
     {
@@ -708,12 +728,25 @@ final class Query
 
     /**
      * Group by.
-     * @param  string $field
+     * @param  string      $field
+     * @param  string|bool $rollup
      * @return self
      */
-    public function groupBy(string $field): self
+    public function groupBy(string $field, $rollup = null): self
     {
-        return $this->add('groupBy', $this->prepareFields($field));
+        $field = $this->prepareFields($field);
+
+        if ($rollup) {
+            if ($this->db->getLink()->getPdoDriver() == 'mysql') {
+                $field .= ' WITH ROLLUP';
+            } else {
+                $field .= ' ROLLUP ('. (
+                    is_string($rollup) ? $this->prepareFields($rollup) : $field
+                ) .')';
+            }
+        }
+
+        return $this->add('groupBy', $field);
     }
 
     /**
@@ -739,16 +772,16 @@ final class Query
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
         if ($op !== null && $op !== '') {
             if (is_string($op)) {
-                $field =  $field .' '. $this->prepareOp($op, true);
+                $field .= ' '. $this->prepareOp($op, true);
             } elseif (is_int($op) || is_bool($op)) {
-                $field =  $field .' '. $this->prepareOp(strval($op ?: '0'), true);
+                $field .= ' '. $this->prepareOp(strval($op ?: '0'), true);
             }
         }
 
         // Extract options (with defaults).
         [$collate, $nulls] = [
             $options['collate'] ?? null,
-            $options['nulls']   ?? null,
+            $options['nulls'] ?? null,
         ];
 
         // Eg: "tr_TR" or "tr_TR.utf8".
@@ -992,14 +1025,35 @@ final class Query
      * @param  string      $func
      * @param  string      $field
      * @param  string|null $as
-     * @param  bool        $distinct
+     * @param  array       $options
      * @return self
+     * @throws froq\database\QueryException
      * @since  4.4
      */
-    public function aggregate(string $func, string $field, string $as = null, bool $distinct = false): self
+    public function aggregate(string $func, string $field, string $as = null, array $options = null): self
     {
-        return $this->select($func .'('. ($distinct ? 'DISTINCT ' : '') . $this->prepareField($field) .')'
-            .' AS '. $this->prepareField($as ?: $func), false);
+        // Extract options (with defaults).
+        [$distinct, $prepare] = [
+            $options['distinct'] ?? false,
+            $options['prepare'] ?? true,
+        ];
+
+        $distinct = $distinct ? 'DISTINCT ' : '';
+        $field = $prepare ? $this->prepareField($field) : $field;
+        $as = $this->prepareField($as ?: $func);
+
+        // Base functions.
+        if (in_array($func, ['min', 'max', 'avg', 'sum', 'count'])) {
+            return $this->select($func .'('. $distinct . $field .') AS '. $as, false);
+        }
+
+        // PostgreSQL functions (no "_agg" suffix needed).
+        if (in_array($func, ['array', 'string', 'json', 'json_object'])) {
+            return $this->select($func .'_agg('. $distinct . $field .') AS '. $as, false);
+        }
+
+        throw new QueryException('Invalid aggregate function "%s", valids are: min, max, avg, '.
+            'sum, count, array, string, json, json_object', [$func]);
     }
 
     /**

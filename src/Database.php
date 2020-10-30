@@ -387,11 +387,24 @@ final class Database
             $input = substr($input, 1);
         }
 
+        // For row(..) or other parenthesis stuff.
+        if (strpos($input, '(') === 0) {
+            $rpos = strpos($input, ')');
+            if (!$rpos) { // Not parsed array[(foo, ..)] stuff, sorry.
+                throw new DatabaseException('Unclosed parenthesis in "%s" input', [$input]);
+            }
+
+            $name = substr($input, 1, $rpos - 1); // Eg: part foo of (foo).
+            $rest = substr($input, $rpos + 1) ?: ''; // Eg: part ::int of (foo)::int.
+
+            return '('. $this->quoteNames($name) .')'. $rest;
+        }
+
         // Dot notations (eg: foo.id => "foo"."id").
         $pos = strpos($input, '.');
         if ($pos) {
-            return $this->quoteName(substr($input, 0, $pos)) .'.'.
-                   $this->quoteName(substr($input, $pos + 1));
+            return $this->quoteNames(substr($input, 0, $pos)) .'.'.
+                   $this->quoteNames(substr($input, $pos + 1));
         }
 
         $pdoDriver = $this->link->getPdoDriver();
@@ -400,9 +413,15 @@ final class Database
             if ($pos = strpos($input, '::')) {
                 return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
             }
-            // Array notations (eg: foo[1]).
+
+            // Array notations (eg: foo[], foo[1] or array[foo, bar]).
             if ($pos = strpos($input, '[')) {
-                return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
+                $name = substr($input, 0, $pos);
+                $rest = substr($input, $pos + 1);
+
+                return (strtolower($name) == 'array')
+                     ? $name .'['. $this->quoteNames($rest)
+                     : $this->quoteName($name) .'['. $rest;
             }
         }
 
@@ -411,6 +430,29 @@ final class Database
             case 'mssql': return '['. $input .']';
                  default: return '"'. $input .'"';
         }
+    }
+
+    /**
+     * Quote names.
+     * @param  string $input
+     * @return string
+     * @since  4.14
+     */
+    public function quoteNames(string $input): string
+    {
+        // Eg: "id, name ..." or "id as ID, ...".
+        preg_match_all('~([^\s,]+)~i', $input, $match);
+
+        $names = array_filter($match[1], 'strlen');
+        if (!$names) {
+            return $input;
+        }
+
+        foreach ($names as $i => $name) {
+            $names[$i] = $this->quoteName($name);
+        }
+
+        return join(', ', $names);
     }
 
     /**
@@ -536,7 +578,7 @@ final class Database
 
         $names = array_filter($match[1], 'strlen');
         $aliases = array_filter($match[3], 'strlen');
-        if (empty($names)) {
+        if (!$names) {
             return $input;
         }
 
