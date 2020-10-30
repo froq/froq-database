@@ -393,7 +393,7 @@ abstract class AbstractEntity implements EntityInterface
      * @return array
      * @since  4.11
      */
-    private static function toArrayDeep($in): array
+    protected static function toArrayDeep($in): array
     {
         if ($in && is_object($in)) {
             $out = (array) ($in instanceof Traversable ? iterator_to_array($in) : (

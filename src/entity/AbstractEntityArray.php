@@ -44,7 +44,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      * Items.
      * @var array<froq\database\entity\AbstractEntity>
      */
-    protected array $items = [];
+    private array $items = [];
 
     /**
      * Items class.
