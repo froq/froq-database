@@ -1256,8 +1256,8 @@ final class Query
             case 'update':
                 if (isset($stack['update'])) {
                     if (!isset($stack['where'])) {
-                        throw new QueryException('No "where" for %s yet, it must be provided for '.
-                            'security reasons at least "1=1" that proves you’re aware of what’s going on', [$key]);
+                        throw new QueryException('No "where" for "update" yet, it must be provided for '.
+                            'security reasons at least "1=1" that proves you’re aware of what’s going on');
                     }
 
                     $ret = trim(
@@ -1271,8 +1271,8 @@ final class Query
             case 'delete':
                 if (isset($stack['delete'])) {
                     if (!isset($stack['where'])) {
-                        throw new QueryException('No "where" for %s yet, it must be provided for '.
-                            'security reasons at least "1=1" that proves you’re aware of what’s going on', [$key]);
+                        throw new QueryException('No "where" for "delete" yet, it must be provided for '.
+                            'security reasons at least "1=1" that proves you’re aware of what’s going on');
                     }
 
                     $ret = trim(
