@@ -342,19 +342,4 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     {
         throw new EntityException('No unset() allowed for "%s"', [static::class]);
     }
-
-    /**
-     * From json.
-     * @param  ?string $json
-     * @param  froq\pager\Pager|null $pager
-     * @param  array|bool|null       $drop
-     * @return self (static)
-     * @since  4.13
-     */
-    public static final function fromJson(?string $json, Pager $pager = null, $drop = null): self
-    {
-        $items = json_decode((string) $json, true);
-
-        return new static($items, $pager, $drop);
-    }
 }
