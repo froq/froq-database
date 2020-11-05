@@ -748,8 +748,17 @@ final class Database
             // will not be prepared and prepare() method will throw exception about replacement index. So
             // use ("foo = ? AND bar = ?", [1, 2]) convention instead for multiple conditions.
             if (is_array($where)) {
-                $where = join(($op ? ' '. $op .' ' : ''), array_keys($input));
-                $whereParams = array_values($input);
+                $temp = [];
+                foreach ($where as $key => $value) {
+                    // Check whether a placeholder given or not (eg: ["foo" => 1]).
+                    if (strpbrk($key, '?:') === false) {
+                        $key = $key .' = ?';
+                    }
+                    $temp[$key] = $value;
+                }
+
+                $where = join(($op ? ' '. $op .' ' : ''), array_keys($temp));
+                $whereParams = array_values($temp);
             } elseif (is_string($where)) {
                 $where = trim($where);
                 $whereParams = (array) $whereParams;
