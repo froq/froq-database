@@ -166,7 +166,7 @@ final class Result implements Countable, IteratorAggregate
      * @param  array  $ctorArgs
      * @return array<int, class>
      */
-    public function toClass(string $class, bool $ctor = false, array $ctorArgs): array
+    public function toClass(string $class, bool $ctor = false, array $ctorArgs = []): array
     {
         $rows = [];
         if (!$ctor) {
