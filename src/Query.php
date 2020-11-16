@@ -112,11 +112,28 @@ final class Query
 
     /**
      * From.
-     * @aliasOf table()
+     * @param  string|Query $from
+     * @param  string|null  $as
+     * @param  bool         $prepare
+     * @return self
+     * @throws froq\database\QueryException
      */
-    public function from(...$arguments): self
+    public function from($from, string $as = null, bool $prepare = true): self
     {
-        return $this->table(...$arguments);
+        if (is_string($from)) {
+            return $this->table($from, $prepare);
+        }
+
+        if ($from instanceof Query) {
+            $from = '('. $from->toString() .')';
+            if ($as != '') {
+                $from .= ' AS '. $this->prepareField($as);
+            }
+            return $this->table($from, false);
+        }
+
+        throw new QueryException('Invalid from type "%s", valids are: string, %s',
+                [gettype($query), Query::class]);
     }
 
     /**
@@ -154,11 +171,12 @@ final class Query
             throw new QueryException('Empty select given');
         }
 
-        if ($as) {
-            $as = ' AS '. $this->prepareField($as);
+        $select = '('. $select .')';
+        if ($as != '') {
+            $select .= ' AS '. $this->prepareField($as);
         }
 
-        return $this->select('('. $select .')'. $as, false);
+        return $this->add('select', $select);
     }
 
     /**
@@ -170,17 +188,16 @@ final class Query
      */
     public function selectQuery($query, string $as): self
     {
-        if (!is_string($query) && !($query instanceof Query)) {
-            throw new QueryException('Invalid query type "%s", valids are: string, %s',
-                [gettype($query), Query::class]);
+        if (is_string($query)) {
+            return $this->selectRaw($query, $as);
         }
 
-        $select = trim((string) $query);
-        if ($select == '') {
-            throw new QueryException('Empty select query given');
+        if ($query instanceof Query) {
+            return $this->selectRaw($query->toString(), $as);
         }
 
-        return $this->select('('. $select .') AS '. $this->prepareField($as), false);
+        throw new QueryException('Invalid query type "%s", valids are: string, %s',
+            [gettype($query), Query::class]);
     }
 
     /**
@@ -856,14 +873,40 @@ final class Query
     }
 
     /**
+     * As.
+     * @param  string $as
+     * @param  bool   $prepare
+     * @return self
+     * @throws froq\database\QueryException
+     * @since  4.16
+     */
+    public function as(string $as, bool $prepare = true): self
+    {
+        if (empty($this->stack['select'])) {
+            throw new QueryException('No "select" statement in query stack to apply AS operator');
+        }
+
+        if ($prepare) {
+            $as = $this->prepareField($as);
+        }
+
+        $this->stack['select'][count($this->stack['select']) - 1] .= ' AS '. $as;
+
+        return $this;
+    }
+
+    /**
      * Or.
      * @return self
+     * @throws froq\database\QueryException
      */
     public function or(): self
     {
-        if (isset($this->stack['where'])) {
-            $this->stack['where'][count($this->stack['where']) - 1][1] = 'OR';
+        if (empty($this->stack['where'])) {
+            throw new QueryException('No "where" statement in query stack to apply OR operator');
         }
+
+        $this->stack['where'][count($this->stack['where']) - 1][1] = 'OR';
 
         return $this;
     }
@@ -871,12 +914,15 @@ final class Query
     /**
      * And.
      * @return self
+     * @throws froq\database\QueryException
      */
     public function and(): self
     {
-        if (isset($this->stack['where'])) {
-            $this->stack['where'][count($this->stack['where']) - 1][1] = 'AND';
+        if (empty($this->stack['where'])) {
+            throw new QueryException('No "where" statement in query stack to apply AND operator');
         }
+
+        $this->stack['where'][count($this->stack['where']) - 1][1] = 'AND';
 
         return $this;
     }
@@ -1025,7 +1071,7 @@ final class Query
      * @param  string      $func
      * @param  string      $field
      * @param  string|null $as
-     * @param  array       $options
+     * @param  array|null  $options
      * @return self
      * @throws froq\database\QueryException
      * @since  4.4
