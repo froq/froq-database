@@ -121,6 +121,9 @@ final class Query
     public function from($from, string $as = null, bool $prepare = true): self
     {
         if (is_string($from)) {
+            if ($as != '') {
+                $from .= ' AS '. $this->prepareField($as);
+            }
             return $this->table($from, $prepare);
         }
 
@@ -1079,27 +1082,38 @@ final class Query
     public function aggregate(string $func, string $field, string $as = null, array $options = null): self
     {
         // Extract options (with defaults).
-        [$distinct, $prepare] = [
+        [$distinct, $prepare, $order] = [
             $options['distinct'] ?? false,
             $options['prepare'] ?? true,
+            $options['order'] ?? null
         ];
 
         $distinct = $distinct ? 'DISTINCT ' : '';
         $field = $prepare ? $this->prepareField($field) : $field;
-        $as = $this->prepareField($as ?: $func);
+
+        // Dirty hijack..
+        if ($order) {
+            $order = current((clone $this)->reset()
+                   ->orderBy($order)->stack['orderBy']);
+            $order = ' ORDER BY '. $order;
+        }
+
+        if ($as != '') {
+            $as = ' AS '. $this->prepareField($as);
+        }
 
         // Base functions.
-        if (in_array($func, ['min', 'max', 'avg', 'sum', 'count'])) {
-            return $this->select($func .'('. $distinct . $field .') AS '. $as, false);
+        if (in_array($func, ['count', 'sum', 'min', 'max', 'avg'])) {
+            return $this->select($func .'('. $distinct . $field . $order .')'. $as, false);
         }
 
         // PostgreSQL functions (no "_agg" suffix needed).
-        if (in_array($func, ['array', 'string', 'json', 'json_object'])) {
-            return $this->select($func .'_agg('. $distinct . $field .') AS '. $as, false);
+        if (in_array($func, ['array', 'string', 'json', 'json_object', 'jsonb', 'jsonb_object'])) {
+            return $this->select($func .'_agg('. $distinct . $field . $order .')'. $as, false);
         }
 
-        throw new QueryException('Invalid aggregate function "%s", valids are: min, max, avg, '.
-            'sum, count, array, string, json, json_object', [$func]);
+        throw new QueryException('Invalid aggregate function "%s", valids are: count, sum, min, max, avg, '.
+            'array, string, json, json_object, jsonb, jsonb_object', [$func]);
     }
 
     /**
@@ -1191,7 +1205,7 @@ final class Query
             $ret = $this->toQueryString('delete', $pretty, $sub);
         } else {
             throw new QueryException('No query ready to build, use select(), insert(), '.
-                'update(), or delete() first');
+                'update(), delete(), aggregate() etc. first');
         }
 
         return $ret;
