@@ -248,10 +248,10 @@ trait QueryTrait
     }
 
     /**
-     * Rand.
+     * Random.
      * @aliasOf whereRandom()
      */
-    public function rand(...$arguments)
+    public function random(...$arguments)
     {
         return $this->whereRandom(...$arguments);
     }
@@ -284,12 +284,12 @@ trait QueryTrait
     }
 
     /**
-     * Sort rand.
+     * Sort random.
      * @aliasOf orderByRandom()
      */
-    public function sortRand(...$arguments)
+    public function sortRandom()
     {
-        return $this->orderByRandom(...$arguments);
+        return $this->orderByRandom();
     }
 
     /**
