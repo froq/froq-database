@@ -68,8 +68,7 @@ final class Result implements Countable, IteratorAggregate
             // Assign count (affected rows etc).
             $this->count = $pdoStatement->rowCount();
 
-            // Select queries.
-            if (stripos($pdoStatement->queryString, 'SELECT') === 0) {
+            if ($fetchOptions != null) {
                 @ [$fetchType, $fetchClass] = (array) $fetchOptions;
 
                 switch ($fetchType) {
@@ -95,15 +94,12 @@ final class Result implements Countable, IteratorAggregate
 
                         $fetchType = $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
                 }
-
-                $rows = ($fetchType == PDO::FETCH_CLASS)
-                    ? $pdoStatement->fetchAll($fetchType, $fetchClass)
-                    : $pdoStatement->fetchAll($fetchType);
-
-                $this->rows = $rows ?: null;
             }
+
+            $query = trim($pdoStatement->queryString);
+
             // Insert queries.
-            elseif (stripos($pdoStatement->queryString, 'INSERT') === 0) {
+            if (stripos($query, 'INSERT') === 0) {
                 $id = null;
 
                 // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that
@@ -133,8 +129,24 @@ final class Result implements Countable, IteratorAggregate
                 }
             }
 
-            unset($pdoStatement);
+            // Select queries & Returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
+            if (stripos($query, 'SELECT') === 0 || (
+                stripos($query, 'RETURNING')
+                    && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
+            )) {
+                // Set as default.
+                $fetchType ??= PDO::FETCH_ASSOC;
+
+                $rows = ($fetchType == PDO::FETCH_CLASS)
+                    ? $pdoStatement->fetchAll($fetchType, $fetchClass)
+                    : $pdoStatement->fetchAll($fetchType);
+
+                $this->rows = $rows ?: null;
+            }
         }
+
+        // Flush.
+        $pdoStatement = null;
     }
 
     /**
