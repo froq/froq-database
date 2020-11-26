@@ -302,9 +302,22 @@ final class Database
 
         $result = $query->run();
 
+        // If rows wanted as return.
         if ($return) {
-            return !$multi ? $result->row(0) : $result->rows();
+            // If single row wanted as return.
+            if (!$multi) {
+                $result = $result->row(0);
+                $resultArray = (array) $result;
+                if (isset($resultArray[$return])) {
+                    $result = $resultArray[$return];
+                }
+            } else {
+                $result = $result->rows();
+            }
+
+            return $result;
         }
+
         return !$multi ? $result->id() : $result->ids();
     }
 
@@ -337,9 +350,22 @@ final class Database
 
         $result = $query->run();
 
+        // If rows wanted as return.
         if ($return) {
-            return !$multi ? $result->row(0) : $result->rows();
+            // If single row wanted as return.
+            if (!$multi) {
+                $result = $result->row(0);
+                $resultArray = (array) $result;
+                if (isset($resultArray[$return])) {
+                    $result = $resultArray[$return];
+                }
+            } else {
+                $result = $result->rows();
+            }
+
+            return $result;
         }
+
         return $result->count();
     }
 
@@ -371,9 +397,22 @@ final class Database
 
         $result = $query->run();
 
+        // If rows wanted as return.
         if ($return) {
-            return !$multi ? $result->row(0) : $result->rows();
+            // If single row wanted as return.
+            if (!$multi) {
+                $result = $result->row(0);
+                $resultArray = (array) $result;
+                if (isset($resultArray[$return])) {
+                    $result = $resultArray[$return];
+                }
+            } else {
+                $result = $result->rows();
+            }
+
+            return $result;
         }
+
         return $result->count();
     }
 
