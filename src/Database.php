@@ -132,11 +132,11 @@ final class Database
      * Query.
      * @param  string                    $query
      * @param  array|null                $queryParams
-     * @param  string|array<string>|null $fetchOptions
+     * @param  string|array<string>|null $fetch
      * @return froq\database\Result
      * @throws froq\database\DatabaseException, froq\database\DatabaseQueryException
      */
-    public function query(string $query, array $queryParams = null, $fetchOptions = null): Result
+    public function query(string $query, array $queryParams = null, $fetch = null): Result
     {
         $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
         if ($query == '') {
@@ -148,7 +148,7 @@ final class Database
             $pdo = $this->link->getPdo();
             $pdoStatement = empty($this->profiler) ? $pdo->query($query)
                                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
-            return new Result($pdo, $pdoStatement, $fetchOptions);
+            return new Result($pdo, $pdoStatement, $fetch);
         } catch (PDOException $e) {
             throw new DatabaseQueryException($e->getMessage());
         }
@@ -183,24 +183,24 @@ final class Database
      * Get.
      * @param  string                    $query
      * @param  array|null                $queryParams
-     * @param  string|array<string>|null $fetchOptions
+     * @param  string|array<string>|null $fetch
      * @return ?array|?object
      */
-    public function get(string $query, array $queryParams = null, $fetchOptions = null)
+    public function get(string $query, array $queryParams = null, $fetch = null)
     {
-        return $this->query($query, $queryParams, $fetchOptions)->row(0);
+        return $this->query($query, $queryParams, $fetch)->row(0);
     }
 
     /**
      * Get all.
      * @param  string                    $query
      * @param  array|null                $queryParams
-     * @param  string|array<string>|null $fetchOptions
+     * @param  string|array<string>|null $fetch
      * @return ?array
      */
-    public function getAll(string $query, array $queryParams = null, $fetchOptions = null): ?array
+    public function getAll(string $query, array $queryParams = null, $fetch = null): ?array
     {
-        return $this->query($query, $queryParams, $fetchOptions)->rows();
+        return $this->query($query, $queryParams, $fetch)->rows();
     }
 
     /**
@@ -210,11 +210,11 @@ final class Database
      * @param  string|array|null         $where
      * @param  any|null                  $whereParams
      * @param  string|null               $order
-     * @param  string|array<string>|null $fetchOptions
+     * @param  string|array<string>|null $fetch
      * @return ?array|?object
      */
     public function select(string $table, string $fields = '*', $where = null, $whereParams = null,
-        string $order = null, $fetchOptions = null)
+        string $order = null, $fetch = null)
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -226,7 +226,7 @@ final class Database
         $order && $query->orderBy($order);
         $query->limit(1);
 
-        return $query->run($fetchOptions)->row(0);
+        return $query->run($fetch)->row(0);
     }
 
     /**
@@ -237,11 +237,11 @@ final class Database
      * @param  any|null                  $whereParams
      * @param  string|null               $order
      * @param  int|array<int>|null       $limit
-     * @param  string|array<string>|null $fetchOptions
+     * @param  string|array<string>|null $fetch
      * @return ?array
      */
     public function selectAll(string $table, string $fields = '*', $where = null, $whereParams = null,
-        string $order = null, $limit = null, $fetchOptions = null): ?array
+        string $order = null, $limit = null, $fetch = null): ?array
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -253,35 +253,78 @@ final class Database
         $order && $query->orderBy($order);
         $limit && $query->limit(...(array) $limit);
 
-        return $query->run($fetchOptions)->rows();
+        return $query->run($fetch)->rows();
     }
 
     /**
      * Insert.
      * @param  string $table
      * @param  array  $data
-     * @param  bool   $multi
-     * @return ?int|?array<int>
+     * @param  array  $options
+     * @return int|array|object|null
      */
-    public function insert(string $table, array $data, bool $multi = false)
+    public function insert(string $table, array $data, array $options = null)
     {
-        $query = $this->initQuery($table)->insert($data, $multi);
+        $return = $fetch = $multi = $conflict = null;
+        if ($options != null) {
+            @ ['return' => $return, 'fetch' => $fetch, 'multi' => $multi,
+                'conflict' => $conflict] = $options;
+        }
 
-        return !$multi ? $query->run()->id() : $query->run()->ids();
+        $query = $this->initQuery($table)->insert($data, !!$multi);
+
+        if ($conflict) {
+            if (isset($conflict['fields']) || isset($conflict['action'])) {
+                @ ['fields' => $fields, 'action' => $action] = $conflict;
+            } else {
+                @ [$fields, $action, $update, $where] = $conflict;
+            }
+
+            // Eg: 'conflict' => ['id', 'action' => 'nothing'] or ['id', 'update' => [..], 'where' => [..]].
+            $fields ??= $conflict[0] ?? null;
+            $update ??= $conflict['update'] ?? null;
+            $where ??= $conflict['where'] ?? null;
+
+            // Can be skipped with update.
+            $update && $action = 'update';
+
+            if (!$action) {
+                throw new DatabaseException('Conflict action is not given');
+            }
+            if (!$update && strtolower($action) == 'update') {
+                throw new DatabaseException('Conflict action is "update", but no update data given');
+            }
+
+            $query->conflict($fields, $action, $update, $where);
+        }
+
+        $return && $query->return($return, $fetch);
+
+        $result = $query->run();
+
+        if ($return) {
+            return !$multi ? $result->row(0) : $result->rows();
+        }
+        return !$multi ? $result->id() : $result->ids();
     }
 
     /**
-     * Update.
+      * Update.
      * @param  string            $table
      * @param  array             $data
      * @param  string|array|null $where
      * @param  any|null          $whereParams
-     * @param  int|null          $limit
-     * @return int
+     * @param  array|null        $options
+     * @return int|array|object|null
      */
-    public function update(string $table, array $data, $where = null, $whereParams = null,
-        int $limit = null): int
+    public function update(string $table, array $data, $where = null, $whereParams = null, array $options = null)
     {
+        $return = $fetch = $multi = $limit = null;
+        if ($options != null) {
+            @ ['return' => $return, 'fetch' => $fetch, 'multi' => $multi,
+                'limit' => $limit] = $options;
+        }
+
         $query = $this->initQuery($table)->update($data);
 
         if ($where) {
@@ -289,9 +332,15 @@ final class Database
             $query->where($where, $whereParams);
         }
 
+        $return && $query->return($return, $fetch);
         $limit && $query->limit($limit);
 
-        return $query->run()->count();
+        $result = $query->run();
+
+        if ($return) {
+            return !$multi ? $result->row(0) : $result->rows();
+        }
+        return $result->count();
     }
 
     /**
@@ -299,11 +348,17 @@ final class Database
      * @param  string            $table
      * @param  string|array|null $where
      * @param  array|null        $whereParams
-     * @param  int|null          $limit
-     * @return int
+     * @param  array|null        $options
+     * @return int|array|object|null
      */
-    public function delete(string $table, $where = null, $whereParams = null, int $limit = null): int
+    public function delete(string $table, $where = null, $whereParams = null, array $options = null)
     {
+        $return = $fetch = $multi = $limit = null;
+        if ($options != null) {
+            @ ['return' => $return, 'fetch' => $fetch, 'multi' => $multi,
+                'limit' => $limit] = $options;
+        }
+
         $query = $this->initQuery($table)->delete();
 
         if ($where) {
@@ -311,9 +366,15 @@ final class Database
             $query->where($where, $whereParams);
         }
 
+        $return && $query->return($return, $fetch);
         $limit && $query->limit($limit);
 
-        return $query->run()->count();
+        $result = $query->run();
+
+        if ($return) {
+            return !$multi ? $result->row(0) : $result->rows();
+        }
+        return $result->count();
     }
 
     /**
@@ -721,6 +782,43 @@ final class Database
     }
 
     /**
+     * Init sql.
+     * @param  string     $input
+     * @param  array|null $inputParams
+     * @return froq\database\sql\Sql
+     */
+    public function initSql(string $input, array $inputParams = null): Sql
+    {
+        if ($inputParams) {
+            $input = $this->prepare($input, $inputParams);
+        }
+
+        return new Sql($input);
+    }
+
+    /**
+     * Init date.
+     * @param  string|int|null $date
+     * @param  string|null     $timezone
+     * @return froq\database\sql\Date
+     */
+    public function initDate($date = null, string $timezone = null): Date
+    {
+        return new Date($date, $timezone);
+    }
+
+    /**
+     * Init date time.
+     * @param  string|int|null $datetime
+     * @param  string|null     $timezone
+     * @return froq\database\sql\DateTime
+     */
+    public function initDateTime($datetime = null, string $timezone = null): DateTime
+    {
+        return new DateTime($datetime, $timezone);
+    }
+
+    /**
      * Init query.
      * @param  string|null $table
      * @return froq\database\Query
@@ -734,30 +832,35 @@ final class Database
      * Prepare where input.
      * @param  string|array $input
      * @param  any|null     $inputParams
-     * @param  string       $op
      * @return array
      * @since  4.15
      * @throws froq\database\DatabaseException
      */
-    private function prepareWhereInput($input, $inputParams = null, string $op = 'AND'): array
+    private function prepareWhereInput($input, $inputParams = null): array
     {
         [$where, $whereParams] = [$input, $inputParams];
 
         if ($where != null) {
-            // Note: "where" must not be combined when array given, eg: (["foo = ? AND bar = ?" => [1, 2]])
+            // Note: "where" must not be combined when array given, eg: (["a = ? AND b = ?" => [1, 2]])
             // will not be prepared and prepare() method will throw exception about replacement index. So
-            // use ("foo = ? AND bar = ?", [1, 2]) convention instead for multiple conditions.
+            // use ("a = ? AND b = ?", [1, 2]) convention instead for multiple conditions.
             if (is_array($where)) {
                 $temp = [];
                 foreach ($where as $key => $value) {
-                    // Check whether a placeholder given or not (eg: ["foo" => 1]).
+                    if (!is_string($key)) {
+                        throw new DatabaseException('Invalid $where input, use ("a = ? AND b = ?", [1, 2])'
+                            .' convention');
+                    }
+
+                    // Check whether a placeholder given or not (eg: ["a" => 1]).
                     if (strpbrk($key, '?:') === false) {
                         $key = $key .' = ?';
                     }
+
                     $temp[$key] = $value;
                 }
 
-                $where = join(($op ? ' '. $op .' ' : ''), array_keys($temp));
+                $where = join(' AND ', array_keys($temp));
                 $whereParams = array_values($temp);
             } elseif (is_string($where)) {
                 $where = trim($where);

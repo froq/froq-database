@@ -47,11 +47,11 @@ class DatabaseException extends Exception
     /**
      * Constructor.
      * @param string|PDOException $message
-     * @param array|null          $messageParams
+     * @param string|array|null   $messageParams
      * @param int|null            $code
      * @param Throwable|null      $previous
      */
-    public function __construct($message = null, array $messageParams = null, int $code = null,
+    public function __construct($message = null, $messageParams = null, int $code = null,
         ?Throwable $previous = null)
     {
         if ($message) {

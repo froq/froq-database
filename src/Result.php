@@ -46,13 +46,13 @@ final class Result implements Countable, IteratorAggregate
 
     /**
      * Ids.
-     * @var ?array
+     * @var ?array<int>
      */
     private ?array $ids = null;
 
     /**
      * Rows.
-     * @var ?array
+     * @var ?array<array|object>
      */
     private ?array $rows = null;
 
@@ -60,16 +60,16 @@ final class Result implements Countable, IteratorAggregate
      * Constructor.
      * @param PDO                       $pdo
      * @param PDOStatement              $pdoStatement
-     * @param string|array<string>|null $fetchOptions
+     * @param string|array<string>|null $fetch
      */
-    public function __construct(PDO $pdo, PDOStatement $pdoStatement, $fetchOptions = null)
+    public function __construct(PDO $pdo, PDOStatement $pdoStatement, $fetch = null)
     {
         if ($pdoStatement->errorCode() == '00000') {
             // Assign count (affected rows etc).
             $this->count = $pdoStatement->rowCount();
 
-            if ($fetchOptions != null) {
-                @ [$fetchType, $fetchClass] = (array) $fetchOptions;
+            if ($fetch != null) {
+                @ [$fetchType, $fetchClass] = (array) $fetch;
 
                 switch ($fetchType) {
                     case  'array': $fetchType = PDO::FETCH_ASSOC; break;
@@ -134,12 +134,12 @@ final class Result implements Countable, IteratorAggregate
                 stripos($query, 'RETURNING')
                     && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
             )) {
-                // Set as default.
-                $fetchType ??= PDO::FETCH_ASSOC;
+                // Set or get default.
+                $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
                 $rows = ($fetchType == PDO::FETCH_CLASS)
-                    ? $pdoStatement->fetchAll($fetchType, $fetchClass)
-                    : $pdoStatement->fetchAll($fetchType);
+                      ? $pdoStatement->fetchAll($fetchType, $fetchClass)
+                      : $pdoStatement->fetchAll($fetchType);
 
                 $this->rows = $rows ?: null;
             }
@@ -198,30 +198,6 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * Row.
-     * @param  int $i
-     * @return ?array|?object
-     */
-    public function row(int $i)
-    {
-        // Reverse, eg: -1 for last.
-        if ($i < 0) {
-            $i = $this->count + $i;
-        }
-
-        return $this->rows[$i] ?? null;
-    }
-
-    /**
-     * Rows.
-     * @return ?array<int, array|object>
-     */
-    public function rows(): ?array
-    {
-        return $this->rows ?? null;
-    }
-
-    /**
      * Id.
      * @return ?int
      */
@@ -239,6 +215,48 @@ final class Result implements Countable, IteratorAggregate
     public function ids(): ?array
     {
         return $this->ids ?? null;
+    }
+
+    /**
+     * Row.
+     * @param  int $i
+     * @return ?array|?object
+     */
+    public function row(int $i)
+    {
+        // Reverse, eg: -1 for last.
+        if ($i < 0) {
+            $i = $this->count + $i;
+        }
+
+        return $this->rows[$i] ?? null;
+    }
+
+    /**
+     * Rows.
+     * @return ?array<array|object>
+     */
+    public function rows(): ?array
+    {
+        return $this->rows ?? null;
+    }
+
+    /**
+     * First.
+     * @return ?array|?object
+     */
+    public function first()
+    {
+        return $this->row(0);
+    }
+
+    /**
+     * Last.
+     * @return ?array|?object
+     */
+    public function last()
+    {
+        return $this->row(-1);
     }
 
     /**

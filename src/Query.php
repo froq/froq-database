@@ -219,7 +219,7 @@ final class Query
             case 'pgsql':
                 $func = ($selectType == 1) ? 'json_build_array' : 'json_build_object';
                 break;
-            case 'mysql';
+            case 'mysql':
                 $func = ($selectType == 1) ? 'json_array' : 'json_object';
                 break;
             default:
@@ -369,6 +369,44 @@ final class Query
     public function delete(): self
     {
         return $this->add('delete', '', false);
+    }
+
+    /**
+     * Return (for "RETURNING" clause).
+     * @param  string                    $fields
+     * @param  string|array<string>|null $fetch
+     * @return self
+     * @since  4.18
+     */
+    public function return(string $fields, $fetch = null): self
+    {
+        $fields = $this->prepareFields($fields);
+
+        return $this->add('return', ['fields' => $fields, 'fetch' => $fetch], false);
+    }
+
+    /**
+     * Conflict (for "CONFLICT" clause).
+     * @param  string     $fields
+     * @param  string     $action
+     * @param  array|null $update
+     * @param  array|null $where
+     * @return self
+     * @throws froq\database\QueryException
+     * @since  4.18
+     */
+    public function conflict(string $fields, string $action, array $update = null, array $where = null): self
+    {
+        $action = strtoupper($action);
+        if (!in_array($action, ['NOTHING', 'UPDATE'])) {
+            throw new QueryException('Invalid action "%s" for conflict, valids are: NOTHING, UPDATE',
+                [$action]);
+        }
+
+        $fields = $this->prepareFields($fields);
+
+        return $this->add('conflict', ['fields' => $fields, 'action' => $action,
+                                       'update' => $update, 'where' => $where], false);
     }
 
     /**
@@ -964,12 +1002,15 @@ final class Query
 
     /**
      * Run.
-     * @param  string|array<string>|null $fetchOptions
+     * @param  string|array<string>|null $fetch
      * @return froq\database\Result
      */
-    public function run($fetchOptions = null): Result
+    public function run($fetch = null): Result
     {
-        return $this->db->query($this->toString(), null, $fetchOptions);
+        // Get from stack if given with return().
+        $fetch ??= $this->stack['return']['fetch'] ?? null;
+
+        return $this->db->query($this->toString(), null, $fetch);
     }
 
     /**
@@ -984,33 +1025,33 @@ final class Query
 
     /**
      * Get.
-     * @param  string|array<string>|null $fetchOptions
+     * @param  string|array<string>|null $fetch
      * @return ?array|?object
      */
-    public function get($fetchOptions = null)
+    public function get($fetch = null)
     {
         // Optimize one-record query.
         $this->has('limit') || $this->limit(1);
 
-        return $this->db->get($this->toString(), null, $fetchOptions);
+        return $this->db->get($this->toString(), null, $fetch);
     }
 
     /**
      * Get all.
-     * @param  string|array<string>|null  $fetchOptions
+     * @param  string|array<string>|null  $fetch
      * @param  froq\pager\Pager|null     &$pager
      * @param  int|null                   $limit
      * @return ?array
      */
-    public function getAll($fetchOptions = null, Pager &$pager = null, int $limit = null): ?array
+    public function getAll($fetch = null, Pager &$pager = null, int $limit = null): ?array
     {
         if ($limit === null) {
-            return $this->db->getAll($this->toString(), null, $fetchOptions);
+            return $this->db->getAll($this->toString(), null, $fetch);
         }
 
         $this->paginate($pager, $limit);
 
-        return $this->db->getAll($this->toString(), null, $fetchOptions);
+        return $this->db->getAll($this->toString(), null, $fetch);
     }
 
     /**
@@ -1140,18 +1181,14 @@ final class Query
     }
 
     /**
-     * Name.
+     * Sql.
      * @param  string     $input
      * @param  array|null $inputParams
      * @return froq\database\sql\Sql
      */
     public function sql(string $input, array $inputParams = null): Sql
     {
-        if ($inputParams) {
-            $input = $this->prepare($input, $inputParams);
-        }
-
-        return new Sql($input);
+        return $this->db->initSql($input, $inputParams);
     }
 
     /**
@@ -1309,8 +1346,39 @@ final class Query
                 if (isset($stack['insert'])) {
                     [$fields, $values] = $stack['insert'];
 
-                    $ret = "INSERT INTO {$stack['table']} {$nt}({$fields}) {$n}VALUES {$nt}"
-                        . join(','. ($nt ?: $ns), $values);
+                    $ret = "INSERT INTO {$stack['table']}{$nt}({$fields}){$n}VALUES{$nt}"
+                         . join(','. ($nt ?: $ns), $values);
+
+                    if (isset($stack['conflict'])) {
+                        ['fields' => $fields, 'action' => $action,
+                         'update' => $update, 'where' => $where] = $stack['conflict'];
+
+                        switch ($driver = $this->db->getLink()->getPdoDriver()) {
+                            case 'pgsql': $ret .= $n .'ON CONFLICT ('. $fields .') DO '. $action; break;
+                            case 'mysql': $ret .= $n .'ON DUPLICATE KEY '. ($action = 'UPDATE'); break;
+                                 default: throw new QueryException('Method "conflict()" available for PgSQL & MySQL only');
+                        }
+
+                        if ($action == 'UPDATE') {
+                            $temp = (clone $this)->reset()->table('@');
+
+                            $ret .= ($driver == 'pgsql')
+                                ? $nt .'SET '. $temp->update($update)->stack['update']
+                                : $nt . $temp->update($update)->stack['update'];
+
+                            if ($where != null) {
+                                @ [$where, $whereParams] = (array) $where;
+                                $ret .= $nt . trim($temp->where((string) $where, (array) $whereParams)
+                                    ->toQueryString('where'));
+                            }
+
+                            unset($temp);
+                        }
+                    }
+
+                    if (isset($stack['return'])) {
+                        $ret .= $n .'RETURNING '. $stack['return']['fields'];
+                    }
                 }
                 break;
             case 'update':
@@ -1321,11 +1389,15 @@ final class Query
                     }
 
                     $ret = trim(
-                        "UPDATE {$stack['table']} SET {$nt}". $stack['update']
+                        "UPDATE {$stack['table']} SET{$nt}{$stack['update']}"
                         . $this->toQueryString('where', $pretty, $sub)
                         . $this->toQueryString('orderBy', $pretty, $sub)
                         . $this->toQueryString('limit', $pretty, $sub)
                     );
+
+                    if (isset($stack['return'])) {
+                        $ret .= $n .'RETURNING '. $stack['return']['fields'];
+                    }
                 }
                 break;
             case 'delete':
@@ -1341,6 +1413,10 @@ final class Query
                         . $this->toQueryString('orderBy', $pretty, $sub)
                         . $this->toQueryString('limit', $pretty, $sub)
                     );
+
+                    if (isset($stack['return'])) {
+                        $ret .= $n .'RETURNING '. $stack['return']['fields'];
+                    }
                 }
                 break;
             case 'groupBy':
