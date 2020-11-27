@@ -58,18 +58,22 @@ final class Result implements Countable, IteratorAggregate
 
     /**
      * Constructor.
-     * @param PDO                       $pdo
-     * @param PDOStatement              $pdoStatement
-     * @param string|array<string>|null $fetch
+     * @param PDO           $pdo
+     * @param PDOStatement  $pdoStatement
+     * @param array|null    $options
      */
-    public function __construct(PDO $pdo, PDOStatement $pdoStatement, $fetch = null)
+    public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null)
     {
         if ($pdoStatement->errorCode() == '00000') {
             // Assign count (affected rows etc).
             $this->count = $pdoStatement->rowCount();
 
-            if ($fetch != null) {
-                @ [$fetchType, $fetchClass] = (array) $fetch;
+            // Defaults.
+            [$fetch, $sequence] = [null, true];
+
+            // Update fetch option if given.
+            if (isset($options['fetch'])) {
+                @ [$fetchType, $fetchClass] = (array) $options['fetch'];
 
                 switch ($fetchType) {
                     case  'array': $fetchType = PDO::FETCH_ASSOC; break;
@@ -96,14 +100,35 @@ final class Result implements Countable, IteratorAggregate
                 }
             }
 
+            // Update sequence option to prevent transaction errors that comes from lastInsertId()
+            // calls but while commit() returning true when sequence field not exists.
+            if (isset($options['sequence'])) {
+                $sequence = (bool) $options['sequence'];
+            }
+
             $query = trim($pdoStatement->queryString);
 
+            // Select queries & Returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
+            if (stripos($query, 'SELECT') === 0 || (
+                stripos($query, 'RETURNING') && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
+            )) {
+                // Set or get default.
+                $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
+
+                $rows = ($fetchType == PDO::FETCH_CLASS)
+                      ? $pdoStatement->fetchAll($fetchType, $fetchClass)
+                      : $pdoStatement->fetchAll($fetchType);
+
+                $this->rows = $rows ?: null;
+            }
+
             // Insert queries.
-            if (stripos($query, 'INSERT') === 0) {
+            if ($sequence && stripos($query, 'INSERT') === 0) {
                 $id = null;
 
-                // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that
-                // occurs when a user-provided ID given to insert data.
+                // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that mostly
+                // occurs when a user-provided ID given to insert data. Sequence option for this but cannot
+                // prevent transaction commits when no sequence field exists.
                 try {
                     $id = (int) $pdo->lastInsertId();
                 } catch (PDOException $e) {}
@@ -127,21 +152,6 @@ final class Result implements Countable, IteratorAggregate
 
                     $this->ids = $ids;
                 }
-            }
-
-            // Select queries & Returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
-            if (stripos($query, 'SELECT') === 0 || (
-                stripos($query, 'RETURNING')
-                    && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
-            )) {
-                // Set or get default.
-                $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
-
-                $rows = ($fetchType == PDO::FETCH_CLASS)
-                      ? $pdoStatement->fetchAll($fetchType, $fetchClass)
-                      : $pdoStatement->fetchAll($fetchType);
-
-                $this->rows = $rows ?: null;
             }
         }
 

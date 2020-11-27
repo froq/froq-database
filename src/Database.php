@@ -130,13 +130,13 @@ final class Database
 
     /**
      * Query.
-     * @param  string                    $query
-     * @param  array|null                $queryParams
-     * @param  string|array<string>|null $fetch
+     * @param  string     $query
+     * @param  array|null $queryParams
+     * @param  array|null $options
      * @return froq\database\Result
      * @throws froq\database\DatabaseException, froq\database\DatabaseQueryException
      */
-    public function query(string $query, array $queryParams = null, $fetch = null): Result
+    public function query(string $query, array $queryParams = null, array $options = null): Result
     {
         $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
         if ($query == '') {
@@ -147,8 +147,9 @@ final class Database
         try {
             $pdo = $this->link->getPdo();
             $pdoStatement = empty($this->profiler) ? $pdo->query($query)
-                                : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
-            return new Result($pdo, $pdoStatement, $fetch);
+                : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
+
+            return new Result($pdo, $pdoStatement, $options);
         } catch (PDOException $e) {
             throw new DatabaseQueryException($e->getMessage());
         }
@@ -172,7 +173,8 @@ final class Database
         try {
             $pdo = $this->link->getPdo();
             $pdoResult = empty($this->profiler) ? $pdo->exec($query)
-                             : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
+                : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
+
             return ($pdoResult !== false) ? $pdoResult : null;
         } catch (PDOException $e) {
             throw new DatabaseQueryException($e->getMessage());
@@ -188,7 +190,7 @@ final class Database
      */
     public function get(string $query, array $queryParams = null, $fetch = null)
     {
-        return $this->query($query, $queryParams, $fetch)->row(0);
+        return $this->query($query, $queryParams, ['fetch' => $fetch])->row(0);
     }
 
     /**
@@ -200,7 +202,7 @@ final class Database
      */
     public function getAll(string $query, array $queryParams = null, $fetch = null): ?array
     {
-        return $this->query($query, $queryParams, $fetch)->rows();
+        return $this->query($query, $queryParams, ['fetch' => $fetch])->rows();
     }
 
     /**
@@ -265,13 +267,13 @@ final class Database
      */
     public function insert(string $table, array $data, array $options = null)
     {
-        $return = $fetch = $multi = $conflict = null;
+        $return = $fetch = $batch = $conflict = null;
         if ($options != null) {
-            @ ['return' => $return, 'fetch' => $fetch, 'multi' => $multi,
-                'conflict' => $conflict] = $options;
+            @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
+                'conflict' => $conflict, 'sequence' => $sequence] = $options;
         }
 
-        $query = $this->initQuery($table)->insert($data, !!$multi);
+        $query = $this->initQuery($table)->insert($data, $batch, $sequence);
 
         if ($conflict) {
             if (isset($conflict['fields']) || isset($conflict['action'])) {
@@ -304,21 +306,21 @@ final class Database
 
         // If rows wanted as return.
         if ($return) {
-            // If single row wanted as return.
-            if (!$multi) {
+            if ($batch) {
+                $result = $result->rows();
+            } else {
+                // If single row wanted as return.
                 $result = $result->row(0);
                 $resultArray = (array) $result;
                 if (isset($resultArray[$return])) {
                     $result = $resultArray[$return];
                 }
-            } else {
-                $result = $result->rows();
             }
 
             return $result;
         }
 
-        return !$multi ? $result->id() : $result->ids();
+        return $batch ? $result->ids() : $result->id();
     }
 
     /**
@@ -332,9 +334,9 @@ final class Database
      */
     public function update(string $table, array $data, $where = null, $whereParams = null, array $options = null)
     {
-        $return = $fetch = $multi = $limit = null;
+        $return = $fetch = $batch = $limit = null;
         if ($options != null) {
-            @ ['return' => $return, 'fetch' => $fetch, 'multi' => $multi,
+            @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
                 'limit' => $limit] = $options;
         }
 
@@ -352,15 +354,15 @@ final class Database
 
         // If rows wanted as return.
         if ($return) {
-            // If single row wanted as return.
-            if (!$multi) {
+            if ($batch) {
+                $result = $result->rows();
+            } else {
+                // If single row wanted as return.
                 $result = $result->row(0);
                 $resultArray = (array) $result;
                 if (isset($resultArray[$return])) {
                     $result = $resultArray[$return];
                 }
-            } else {
-                $result = $result->rows();
             }
 
             return $result;
@@ -379,9 +381,9 @@ final class Database
      */
     public function delete(string $table, $where = null, $whereParams = null, array $options = null)
     {
-        $return = $fetch = $multi = $limit = null;
+        $return = $fetch = $batch = $limit = null;
         if ($options != null) {
-            @ ['return' => $return, 'fetch' => $fetch, 'multi' => $multi,
+            @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
                 'limit' => $limit] = $options;
         }
 
@@ -399,15 +401,15 @@ final class Database
 
         // If rows wanted as return.
         if ($return) {
-            // If single row wanted as return.
-            if (!$multi) {
+            if ($batch) {
+                $result = $result->rows();
+            } else {
+                // If single row wanted as return.
                 $result = $result->row(0);
                 $resultArray = (array) $result;
                 if (isset($resultArray[$return])) {
                     $result = $resultArray[$return];
                 }
-            } else {
-                $result = $result->rows();
             }
 
             return $result;
@@ -451,14 +453,15 @@ final class Database
 
     /**
      * Transaction.
-     * @param  callable $call
-     * @param  callable $callError
+     * @param  callable      $call
+     * @param  callable|null $callError
      * @return any
-     * @throws froq\database\DatabaseException If no call error.
+     * @throws froq\database\DatabaseException
      */
     public function transaction(callable $call, callable $callError = null)
     {
         $pdo = $this->link->getPdo();
+
         try {
             if (!$pdo->beginTransaction()) {
                 throw new DatabaseException('Failed to start transaction');
@@ -474,9 +477,9 @@ final class Database
 
             return $ret;
         } catch (Throwable $e) {
-            $pdo->rollBack();
+            $pdo->rollback();
 
-            // This will block exception below.
+            // Blocks exception below.
             if ($callError) {
                 return $callError($e);
             }

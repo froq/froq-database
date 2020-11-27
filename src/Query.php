@@ -305,16 +305,17 @@ final class Query
 
     /**
      * Insert.
-     * @param  array $data
-     * @param  bool  $multi
+     * @param  array     $data
+     * @param  bool|null $batch
+     * @param  bool|null $sequence
      * @return self
      * @throws froq\database\QueryException
      */
-    public function insert(array $data, bool $multi = false): self
+    public function insert(array $data, bool $batch = null, bool $sequence = null): self
     {
         $fields = $values = [];
 
-        if (!$multi) {
+        if (!$batch) {
             // Eg: ["name" => "Kerem", ..].
             $fields = array_keys($data);
             $values = [array_values($data)];
@@ -339,7 +340,7 @@ final class Query
 
         $fields = $this->prepareFields(join(', ', $fields));
 
-        return $this->add('insert', [$fields, $values], false);
+        return $this->add('insert', [$fields, $values, 'sequence' => $sequence], false);
     }
 
     /**
@@ -1003,14 +1004,16 @@ final class Query
     /**
      * Run.
      * @param  string|array<string>|null $fetch
+     * @param  bool|null                 $sequence
      * @return froq\database\Result
      */
-    public function run($fetch = null): Result
+    public function run($fetch = null, bool $sequence = null): Result
     {
-        // Get from stack if given with return().
+        // Get from stack if given with return() / insert().
         $fetch ??= $this->stack['return']['fetch'] ?? null;
+        $sequence ??= $this->stack['insert']['sequence'] ?? null;
 
-        return $this->db->query($this->toString(), null, $fetch);
+        return $this->db->query($this->toString(), null, ['fetch' => $fetch, 'sequence' => $sequence]);
     }
 
     /**
