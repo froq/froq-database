@@ -267,7 +267,7 @@ final class Database
      */
     public function insert(string $table, array $data, array $options = null)
     {
-        $return = $fetch = $batch = $conflict = null;
+        $return = $fetch = $batch = $conflict = $sequence = null;
         if ($options != null) {
             @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
                 'conflict' => $conflict, 'sequence' => $sequence] = $options;
