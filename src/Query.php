@@ -52,10 +52,17 @@ final class Query
     private Database $db;
 
     /**
-     * Stack.
+     * Stack, for statements.
      * @var array
      */
     private array $stack = [];
+
+    /**
+     * Key, tick for last call via add().
+     * @var string
+     * @since 5.0
+     */
+    private string $key;
 
     /**
      * Constructor.
@@ -103,9 +110,7 @@ final class Query
      */
     public function table(string $table, bool $prepare = true): self
     {
-        if ($prepare) {
-            $table = $this->prepareFields($table);
-        }
+        $prepare && $table = $this->prepareFields($table);
 
         return $this->add('table', $table, false);
     }
@@ -122,15 +127,15 @@ final class Query
     {
         if (is_string($from)) {
             if ($as != '') {
-                $from .= ' AS '. $this->prepareField($as);
+                $from .= ' AS ' . $this->prepareField($as);
             }
             return $this->table($from, $prepare);
         }
 
         if ($from instanceof Query) {
-            $from = '('. $from->toString() .')';
+            $from = '(' . $from->toString() . ')';
             if ($as != '') {
-                $from .= ' AS '. $this->prepareField($as);
+                $from .= ' AS ' . $this->prepareField($as);
             }
             return $this->table($from, false);
         }
@@ -174,9 +179,9 @@ final class Query
             throw new QueryException('Empty select given');
         }
 
-        $select = '('. $select .')';
+        $select = '(' . $select . ')';
         if ($as != '') {
-            $select .= ' AS '. $this->prepareField($as);
+            $select .= ' AS ' . $this->prepareField($as);
         }
 
         return $this->add('select', $select);
@@ -240,7 +245,7 @@ final class Query
             throw new QueryException('Empty select fields given');
         }
 
-        return $this->select($func .'('. $select .') AS '. $this->prepareField($as), false);
+        return $this->select($func . '(' . $select . ') AS ' . $this->prepareField($as), false);
     }
 
     /**
@@ -335,7 +340,7 @@ final class Query
             if (count($value) != $fieldsCount) {
                 throw new QueryException('Count of value set "%s" not matched with fields count', [$i]);
             }
-            $values[$i] = '('. join(', ', $this->db->escape($value)) .')';
+            $values[$i] = '(' . join(', ', $this->db->escape($value)) . ')';
         }
 
         $fields = $this->prepareFields(join(', ', $fields));
@@ -357,10 +362,10 @@ final class Query
 
         $set = [];
         foreach ($data as $name => $value) {
-            $set[] = $this->db->escapeName($name) .' = '. $this->db->escape($value);
+            $set[] = $this->db->escapeName($name) . ' = ' . $this->db->escape($value);
         }
 
-        return $this->add('update', join(', ', $set), false);
+        return $this->add('update', $set, false);
     }
 
     /**
@@ -369,7 +374,7 @@ final class Query
      */
     public function delete(): self
     {
-        return $this->add('delete', '', false);
+        return $this->add('delete', '1', false);
     }
 
     /**
@@ -413,18 +418,41 @@ final class Query
     /**
      * Join.
      * @param  string      $to
-     * @param  string      $on
+     * @param  string|null $on
      * @param  array|null  $onParams
      * @param  string|null $type
      * @return self
      */
-    public function join(string $to, string $on, array $onParams = null, string $type = null): self
+    public function join(string $to, string $on = null, array $onParams = null, string $type = null): self
     {
-        return $this->add('join', sprintf('%sJOIN %s ON %s',
-            $type ? strtoupper($type) .' ' : '',
-            $this->prepareFields($to),
-            $this->prepare($on, $onParams)
-        ));
+        $to = $this->prepareFields($to);
+        $type && $type = strtoupper($type) . ' ';
+        $on && $on = 'ON (' . $this->prepare($on, $onParams) . ')';
+
+        return $this->add('join', [$type . 'JOIN ' . $to, $on]);
+    }
+
+    /**
+     * On.
+     * @param  string|null $on
+     * @param  array|null  $onParams
+     * @return self
+     * @since  5.0
+     */
+    public function on(string $on = null, array $onParams = null): self
+    {
+        return $this->addTo('join', 'ON (' . $this->prepare($on, $onParams) . ')');
+    }
+
+    /**
+     * Using.
+     * @param  string $fields
+     * @return self
+     * @since  5.0
+     */
+    public function using(string $fields): self
+    {
+        return $this->addTo('join', 'USING (' . $this->prepareFields($fields) . ')');
     }
 
     /**
@@ -432,11 +460,12 @@ final class Query
      * @param  string     $to
      * @param  string     $on
      * @param  array|null $onParams
+     * @param  bool       $outer
      * @return self
      */
-    public function joinLeft(string $to, string $on, array $onParams = null): self
+    public function joinLeft(string $to, string $on, array $onParams = null, bool $outer = false): self
     {
-        return $this->join($to, $on, $onParams, 'LEFT');
+        return $this->join($to, $on, $onParams, 'LEFT' . ($outer ? ' OUTER' : ''));
     }
 
     /**
@@ -444,11 +473,12 @@ final class Query
      * @param  string     $to
      * @param  string     $on
      * @param  array|null $onParams
+     * @param  bool       $outer
      * @return self
      */
-    public function joinRight(string $to, string $on, array $onParams = null): self
+    public function joinRight(string $to, string $on, array $onParams = null, bool $outer = false): self
     {
-        return $this->join($to, $on, $onParams, 'RIGHT');
+        return $this->join($to, $on, $onParams, 'RIGHT' . ($outer ? ' OUTER' : ''));
     }
 
     /**
@@ -460,9 +490,7 @@ final class Query
      */
     public function where(string $where, array $whereParams = null, string $op = null): self
     {
-        if ($whereParams) {
-            $where = $this->prepare($where, $whereParams);
-        }
+        $whereParams && $where = $this->prepare($where, $whereParams);
 
         return $this->add('where', [$where, $this->prepareOp($op ?: 'AND')]);
     }
@@ -482,7 +510,7 @@ final class Query
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' = ?', $fieldParam, $op);
+        return $this->where($this->prepareField($field) . ' = ?', $fieldParam, $op);
     }
 
     /**
@@ -500,7 +528,7 @@ final class Query
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' != ?', $fieldParam, $op);
+        return $this->where($this->prepareField($field) . ' != ?', $fieldParam, $op);
     }
 
     /**
@@ -511,7 +539,7 @@ final class Query
      */
     public function whereNull(string $field, string $op = null): self
     {
-        return $this->where($this->prepareField($field) .' IS NULL', null, $op);
+        return $this->whereIs($field, null, $op);
     }
 
     /**
@@ -522,7 +550,35 @@ final class Query
      */
     public function whereNotNull(string $field, string $op = null): self
     {
-        return $this->where($this->prepareField($field) .' IS NOT NULL', null, $op);
+        return $this->whereIsNot($field, null, $op);
+    }
+
+    /**
+     * Where is.
+     * @param  string      $field
+     * @param  ?bool       $value
+     * @param  string|null $op
+     * @return self
+     */
+    public function whereIs(string $field, ?bool $value, string $op = null): self
+    {
+        $value = is_null($value) ? 'NULL' : ($value ? 'TRUE' : 'FALSE');
+
+        return $this->where($this->prepareField($field) . ' IS ' . $value, null, $op);
+    }
+
+    /**
+     * Where is not.
+     * @param  string      $field
+     * @param  ?bool       $value
+     * @param  string|null $op
+     * @return self
+     */
+    public function whereIsNot(string $field, ?bool $value, string $op = null): self
+    {
+        $value = is_null($value) ? 'NULL' : ($value ? 'TRUE' : 'FALSE');
+
+        return $this->where($this->prepareField($field) . ' IS NOT ' . $value, null, $op);
     }
 
     /**
@@ -541,7 +597,7 @@ final class Query
         }
 
         return $this->where($this->prepareField($field)
-            .' IN ('. $this->prepareWhereInPlaceholders($fieldParams) .')', $fieldParams, $op);
+            . ' IN (' . $this->prepareWhereInPlaceholders($fieldParams) . ')', $fieldParams, $op);
     }
 
     /**
@@ -560,7 +616,7 @@ final class Query
         }
 
         return $this->where($this->prepareField($field)
-            .' NOT IN ('. $this->prepareWhereInPlaceholders($fieldParams) .')', $fieldParams, $op);
+            . ' NOT IN (' . $this->prepareWhereInPlaceholders($fieldParams) . ')', $fieldParams, $op);
     }
 
     /**
@@ -577,7 +633,7 @@ final class Query
             throw new QueryException('No parameters given');
         }
 
-        return $this->where($this->prepareField($field) .' BETWEEN ? AND ?', $fieldParams, $op);
+        return $this->where($this->prepareField($field) . ' BETWEEN ? AND ?', $fieldParams, $op);
     }
 
     /**
@@ -594,7 +650,7 @@ final class Query
             throw new QueryException('No parameters given');
         }
 
-        return $this->where($this->prepareField($field) .' NOT BETWEEN ? AND ?', $fieldParams, $op);
+        return $this->where($this->prepareField($field) . ' NOT BETWEEN ? AND ?', $fieldParams, $op);
     }
 
     /**
@@ -612,7 +668,7 @@ final class Query
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' < ?', $fieldParam, $op);
+        return $this->where($this->prepareField($field) . ' < ?', $fieldParam, $op);
     }
 
     /**
@@ -630,7 +686,7 @@ final class Query
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' <= ?', $fieldParam, $op);
+        return $this->where($this->prepareField($field) . ' <= ?', $fieldParam, $op);
     }
 
     /**
@@ -647,7 +703,7 @@ final class Query
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' > ?', $fieldParam, $op);
+        return $this->where($this->prepareField($field) . ' > ?', $fieldParam, $op);
     }
 
     /**
@@ -664,7 +720,7 @@ final class Query
             throw new QueryException('No field parameter given');
         }
 
-        return $this->where($this->prepareField($field) .' >= ?', $fieldParam, $op);
+        return $this->where($this->prepareField($field) . ' >= ?', $fieldParam, $op);
     }
 
     /**
@@ -686,11 +742,11 @@ final class Query
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($fieldParams)];
 
         if (!$ilike) {
-            $where = $field .' LIKE '. $search;
+            $where = $field . ' LIKE ' . $search;
         } else {
             $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
-                ? sprintf('%s ILIKE %s', $field, $search)
-                : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
+                   ? sprintf('%s ILIKE %s', $field, $search)
+                   : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
         }
 
         return $this->where($where, null, $op);
@@ -715,11 +771,11 @@ final class Query
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($fieldParams)];
 
         if (!$ilike) {
-            $where = $field .' NOT LIKE '. $search;
+            $where = $field . ' NOT LIKE ' . $search;
         } else {
             $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
-                ? sprintf('%s NOT ILIKE %s', $field, $search)
-                : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
+                   ? sprintf('%s NOT ILIKE %s', $field, $search)
+                   : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
         }
 
         return $this->where($where, null, $op);
@@ -734,11 +790,9 @@ final class Query
      */
     public function whereExists(string $query, array $queryParams = null, string $op = null): self
     {
-        if ($queryParams) {
-            $query = $this->prepare($query, $queryParams);
-        }
+        $queryParams && $query = $this->prepare($query, $queryParams);
 
-        return $this->where('EXISTS ('. $query .')', null, $op);
+        return $this->where('EXISTS (' . $query . ')', null, $op);
     }
 
     /**
@@ -750,11 +804,9 @@ final class Query
      */
     public function whereNotExists(string $query, array $queryParams = null, string $op = null): self
     {
-        if ($queryParams) {
-            $query = $this->prepare($query, $queryParams);
-        }
+        $queryParams && $query = $this->prepare($query, $queryParams);
 
-        return $this->where('NOT EXISTS ('. $query .')', null, $op);
+        return $this->where('NOT EXISTS (' . $query . ')', null, $op);
     }
 
     /**
@@ -766,8 +818,8 @@ final class Query
     public function whereRandom(float $value = 0.01, string $op = null): self
     {
         return ($this->db->getLink()->getPdoDriver() == 'pgsql')
-            ? $this->where('random() < '. $value, $op)
-            : $this->where('rand() < '. $value, $op);
+             ? $this->where('random() < ' . $value, $op)
+             : $this->where('rand() < ' . $value, $op);
     }
 
     /**
@@ -796,16 +848,14 @@ final class Query
         $field = $this->prepareFields($field);
 
         if ($rollup) {
-            if ($this->db->getLink()->getPdoDriver() == 'mysql') {
-                $field .= ' WITH ROLLUP';
-            } else {
-                $field .= ' ROLLUP ('. (
-                    is_string($rollup) ? $this->prepareFields($rollup) : $field
-                ) .')';
-            }
+            $field .= ($this->db->getLink()->getPdoDriver() == 'mysql')
+                    ? ' WITH ROLLUP'
+                    : ' ROLLUP (' . (
+                        is_string($rollup) ? $this->prepareFields($rollup) : $field
+                    ) . ')';
         }
 
-        return $this->add('groupBy', $field);
+        return $this->add('group', $field);
     }
 
     /**
@@ -831,9 +881,9 @@ final class Query
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
         if ($op !== null && $op !== '') {
             if (is_string($op)) {
-                $field .= ' '. $this->prepareOp($op, true);
+                $field .= ' ' . $this->prepareOp($op, true);
             } elseif (is_int($op) || is_bool($op)) {
-                $field .= ' '. $this->prepareOp(strval($op ?: '0'), true);
+                $field .= ' ' . $this->prepareOp(strval($op ?: '0'), true);
             }
         }
 
@@ -845,17 +895,17 @@ final class Query
 
         // Eg: "tr_TR" or "tr_TR.utf8".
         if ($collate) {
-            $collate = ' COLLATE '. $this->prepareCollation($collate);
+            $collate = ' COLLATE ' . $this->prepareCollation($collate);
         }
 
         // Eg: "FIRST" or "LAST".
         if ($nulls) {
-            $nulls = ' NULLS '. strtoupper($nulls);
+            $nulls = ' NULLS ' . strtoupper($nulls);
         }
 
         // For raw Sql fields.
         if (!empty($check)) {
-            return $this->add('orderBy', $field . $collate . $nulls);
+            return $this->add('order', $field . $collate . $nulls);
         }
 
         // Eg: ("id ASC") or ("id ASC, name DESC").
@@ -865,14 +915,14 @@ final class Query
                 @ [$field, $op] = explode(' ', trim($field));
                 $fields[$i] = $this->prepareField($field) . $collate;
                 if ($op) {
-                    $fields[$i] .= ' '. $this->prepareOp($op, true);
+                    $fields[$i] .= ' ' . $this->prepareOp($op, true);
                 }
             }
 
-            return $this->add('orderBy', implode(', ', $fields) . $nulls);
+            return $this->add('order', implode(', ', $fields) . $nulls);
         }
 
-        return $this->add('orderBy', $this->prepareField($field) . $collate . $nulls);
+        return $this->add('order', $this->prepareField($field) . $collate . $nulls);
     }
 
     /**
@@ -882,8 +932,8 @@ final class Query
     public function orderByRandom(): self
     {
         return ($this->db->getLink()->getPdoDriver() == 'pgsql')
-            ? $this->add('orderBy', 'random()')
-            : $this->add('orderBy', 'rand()');
+             ? $this->add('order', 'random()')
+             : $this->add('order', 'rand()');
     }
 
     /**
@@ -920,19 +970,31 @@ final class Query
      * @param  bool   $prepare
      * @return self
      * @throws froq\database\QueryException
-     * @since  4.16
+     * @since  4.16, 5.0 Optimized for table statement.
      */
     public function as(string $as, bool $prepare = true): self
     {
-        if (empty($this->stack['select'])) {
-            throw new QueryException('No "select" statement in query stack to apply AS operator');
+        if (empty($this->key)) {
+            throw new QueryException('No table/select statement yet in query stack '
+                . 'to apply AS operator, call one of them first to apply');
         }
 
-        if ($prepare) {
-            $as = $this->prepareField($as);
-        }
+        $prepare && $as = $this->prepareField($as);
 
-        $this->stack['select'][count($this->stack['select']) - 1] .= ' AS '. $as;
+        switch ($this->key) {
+            case 'table':
+                if (!strpos($this->stack['table'], ' AS ')) {
+                    $this->stack['table'] .= ' AS ' . $as; // Concat.
+                }
+                break;
+            case 'select':
+                if (!strpos($this->stack['select'][count($this->stack['select']) - 1], ' AS ')) {
+                    $this->stack['select'][count($this->stack['select']) - 1] .= ' AS ' . $as;
+                }
+                break;
+            default:
+                throw new QueryException("Invalid key '%s' for as()", $this->key);
+        }
 
         return $this;
     }
@@ -944,13 +1006,7 @@ final class Query
      */
     public function or(): self
     {
-        if (empty($this->stack['where'])) {
-            throw new QueryException('No "where" statement in query stack to apply OR operator');
-        }
-
-        $this->stack['where'][count($this->stack['where']) - 1][1] = 'OR';
-
-        return $this;
+        return $this->addTo('where', 'OR');
     }
 
     /**
@@ -960,13 +1016,7 @@ final class Query
      */
     public function and(): self
     {
-        if (empty($this->stack['where'])) {
-            throw new QueryException('No "where" statement in query stack to apply AND operator');
-        }
-
-        $this->stack['where'][count($this->stack['where']) - 1][1] = 'AND';
-
-        return $this;
+        return $this->addTo('where', 'AND');
     }
 
     /**
@@ -1108,7 +1158,7 @@ final class Query
     public function count(): int
     {
         // Prevent empty query exception.
-        $this->has('select') || $this->add('select', 1);
+        $this->has('select') || $this->add('select', '1');
 
         return $this->db->countQuery($this->toString());
     }
@@ -1138,26 +1188,26 @@ final class Query
         // Dirty hijack..
         if ($order) {
             $order = current((clone $this)->reset()
-                   ->orderBy($order)->stack['orderBy']);
-            $order = ' ORDER BY '. $order;
+                   ->orderBy($order)->stack['order']);
+            $order = ' ORDER BY ' . $order;
         }
 
         if ($as != '') {
-            $as = ' AS '. $this->prepareField($as);
+            $as = ' AS ' . $this->prepareField($as);
         }
 
         // Base functions.
         if (in_array($func, ['count', 'sum', 'min', 'max', 'avg'])) {
-            return $this->select($func .'('. $distinct . $field . $order .')'. $as, false);
+            return $this->select($func . '(' . $distinct . $field . $order . ')' . $as, false);
         }
 
         // PostgreSQL functions (no "_agg" suffix needed).
         if (in_array($func, ['array', 'string', 'json', 'json_object', 'jsonb', 'jsonb_object'])) {
-            return $this->select($func .'_agg('. $distinct . $field . $order .')'. $as, false);
+            return $this->select($func . '_agg(' . $distinct . $field . $order . ')' . $as, false);
         }
 
-        throw new QueryException('Invalid aggregate function "%s", valids are: count, sum, min, max, avg, '.
-            'array, string, json, json_object, jsonb, jsonb_object', [$func]);
+        throw new QueryException('Invalid aggregate function "%s", valids are: count, sum, min, max, avg, '
+            . 'array, string, json, json_object, jsonb, jsonb_object', [$func]);
     }
 
     /**
@@ -1191,7 +1241,9 @@ final class Query
      */
     public function sql(string $input, array $inputParams = null): Sql
     {
-        return $this->db->initSql($input, $inputParams);
+        $inputParams && $input = $this->prepare($input, $inputParams);
+
+        return new Sql($input);
     }
 
     /**
@@ -1226,26 +1278,25 @@ final class Query
 
     /**
      * To string.
-     * @param  bool $pretty
-     * @param  bool $sub
+     * @param  int|null $indent
      * @return string
      * @throws froq\database\QueryException
      */
-    public function toString(bool $pretty = false, bool $sub = false): string
+    public function toString(int $indent = null): string
     {
         $ret = '';
 
         if ($this->has('select')) {
-            $ret = $this->toQueryString('select', $pretty, $sub);
+            $ret = $this->toQueryString('select', $indent);
         } elseif ($this->has('insert')) {
-            $ret = $this->toQueryString('insert', $pretty, $sub);
+            $ret = $this->toQueryString('insert', $indent);
         } elseif ($this->has('update')) {
-            $ret = $this->toQueryString('update', $pretty, $sub);
+            $ret = $this->toQueryString('update', $indent);
         } elseif ($this->has('delete')) {
-            $ret = $this->toQueryString('delete', $pretty, $sub);
+            $ret = $this->toQueryString('delete', $indent);
         } else {
-            throw new QueryException('No query ready to build, use select(), insert(), '.
-                'update(), delete(), aggregate() etc. first');
+            throw new QueryException('No query ready to build, use select(), insert(), '
+                . 'update(), delete(), aggregate() etc. first');
         }
 
         return $ret;
@@ -1253,76 +1304,55 @@ final class Query
 
     /**
      * To query string.
-     * @param  string $key
-     * @param  bool   $pretty
-     * @param  bool   $sub
+     * @param  string   $key
+     * @param  int|null $indent
      * @return string
      * @throws froq\database\QueryException
      */
-    public function toQueryString(string $key, bool $pretty = false, bool $sub = false): string
+    public function toQueryString(string $key, int $indent = null): string
     {
-        $stack = $this->stack;
-        if (empty($stack['table'])) {
-            throw new QueryException('Table is not defined yet, call table() or from() to '.
-                'set target table first.');
-        }
-
-        $n = $t = $nt = $ns = ' ';
-        if ($pretty) {
-            $n = "\n"; $t = "\t";
-            $nt = "\n\t"; $ns = "\n";
-            if ($sub) {
-                $nt = "\n\t\t"; $ns = "\n\t";
+        $n = $t = ' '; $nt = ' '; $ts = '';
+        if ($indent) {
+            if ($indent == 1) {
+                $n = "\n"; $t = "\t";
+                $nt = "\n"; $ts = "\t";
+            } elseif ($indent > 1) {
+                $n = "\n"; $t = str_repeat("\t", $indent - 1);
+                $nt = "\n".  $t; $ts = str_repeat("\t", $indent - 1 + 1); // Sub.
             }
         }
 
+        $stack = $this->stack;
         $ret = '';
 
         switch ($key) {
             case 'select':
-                $select = $stack['select'];
-
-                $ret  = sprintf('SELECT%s%s%sFROM ', $nt, join(','. $nt, $select), $ns);
-                $ret .= trim(
-                      $this->toQueryString('table', $pretty, $sub)
-                    . $this->toQueryString('join', $pretty, $sub)
-                    . $this->toQueryString('where', $pretty, $sub)
-                    . $this->toQueryString('groupBy', $pretty, $sub)
-                    . $this->toQueryString('having', $pretty, $sub)
-                    . $this->toQueryString('orderBy', $pretty, $sub)
-                    . $this->toQueryString('limit', $pretty, $sub)
-                );
-
-                if ($sub) {
-                    $ret = $ns . $ret . $n;
+                if (empty($stack['table'])) {
+                    throw new QueryException('Table is not defined yet, call table()/from() to '
+                        . 'set target table first');
                 }
-                break;
-            case 'table':
-                $table = $stack['table'];
-                // Could not remove after writing.. :(
-                // if ($pretty && strpos($table, "\n") > -1) {
-                //     $lines = explode("\n", $table);
-                //     $lines = array_map(function ($line) use ($t) {
-                //         if ($line = trim($line)) {
-                //             switch ($line) {
-                //                 case '(': break;
-                //                 case ')': break;
-                //                  default:
-                //                     $line = ($line[0] == ')')
-                //                         ? $t . $line : $t . $t . $line;
-                //             }
-                //         }
-                //         return $line;
-                //     }, $lines);
-                //     $table = implode("\n", $lines);
-                // }
-                $ret = $table;
+
+                $ret = $t . 'SELECT';
+                foreach ($stack['select'] as $field) {
+                    $ret .= $n . $ts . $field;
+                }
+
+                $ret .= $nt . 'FROM ' . $stack['table'];
+
+                isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join', $indent);
+                isset($stack['where'])  && $ret .= $nt . $this->toQueryString('where', $indent);
+                isset($stack['group'])  && $ret .= $nt . $this->toQueryString('group', $indent);
+                isset($stack['having']) && $ret .= $nt . $this->toQueryString('having', $indent);
+                isset($stack['order'])  && $ret .= $nt . $this->toQueryString('order', $indent);
+                isset($stack['limit'])  && $ret .= $nt . $this->toQueryString('limit', $indent);
+
+                ($indent > 1) || $ret = trim($ret);
                 break;
             case 'where':
                 if (isset($stack['where'])) {
                     $wheres = $stack['where'];
                     if (count($wheres) == 1) {
-                        $ret = $ns .'WHERE '. $wheres[0][0];
+                        $ret = 'WHERE (' . $wheres[0][0] . ')';
                     } else {
                         $ws = ''; $wsi = 0;
                         foreach ($wheres as $i => [$where, $op]) {
@@ -1332,8 +1362,9 @@ final class Query
 
                             $ws .= $where;
                             if ($nx) {
-                                $ws .= ' '. $op .' ';
+                                $ws .= ' ' . $op . ' ';
                             }
+
                             if ($op != $nxop && $nxop && $nxnx) {
                                 $ws .= '(';
                                 $wsi++;
@@ -1341,33 +1372,41 @@ final class Query
                         }
 
                         $ret = $ws . str_repeat(')', $wsi); // Join & close parentheses.
-                        $ret = $ns .'WHERE ('. $nt . $ret . $ns .')';
+                        $ret = ($indent > 1) ? 'WHERE (' . $n . $ts . $ret . $n . $t . ')'
+                                             : 'WHERE (' . $ret . ')';
                     }
                 }
                 break;
             case 'insert':
+                if (empty($stack['table'])) {
+                    throw new QueryException('Table is not defined yet, call table()/from() to '
+                        . 'set target table first');
+                }
+
                 if (isset($stack['insert'])) {
                     [$fields, $values] = $stack['insert'];
 
-                    $ret = "INSERT INTO {$stack['table']}{$nt}({$fields}){$n}VALUES{$nt}"
-                         . join(','. ($nt ?: $ns), $values);
+                    $ret = 'INSERT INTO ' . $stack['table']
+                        . $nt . '(' . $fields . ')' . $n . 'VALUES'
+                        . $nt . join(',' . $nt, $values);
 
                     if (isset($stack['conflict'])) {
                         ['fields' => $fields, 'action' => $action,
                          'update' => $update, 'where' => $where] = $stack['conflict'];
 
                         switch ($driver = $this->db->getLink()->getPdoDriver()) {
-                            case 'pgsql': $ret .= $n .'ON CONFLICT ('. $fields .') DO '. $action; break;
-                            case 'mysql': $ret .= $n .'ON DUPLICATE KEY '. ($action = 'UPDATE'); break;
+                            case 'pgsql': $ret .= $n . 'ON CONFLICT (' . $fields . ') DO ' . $action; break;
+                            case 'mysql': $ret .= $n . 'ON DUPLICATE KEY ' . ($action = 'UPDATE'); break;
                                  default: throw new QueryException('Method "conflict()" available for PgSQL & MySQL only');
                         }
 
                         if ($action == 'UPDATE') {
                             $temp = (clone $this)->reset()->table('@');
+                            $temp->update($update);
 
                             $ret .= ($driver == 'pgsql')
-                                ? $nt .'SET '. $temp->update($update)->stack['update']
-                                : $nt . $temp->update($update)->stack['update'];
+                                  ? $nt . 'SET ' . join(', ', $temp->stack['update'])
+                                  : $nt . join(', ', $temp->stack['update']);
 
                             if ($where != null) {
                                 @ [$where, $whereParams] = (array) $where;
@@ -1380,75 +1419,89 @@ final class Query
                     }
 
                     if (isset($stack['return'])) {
-                        $ret .= $n .'RETURNING '. $stack['return']['fields'];
+                        $ret .= $n . 'RETURNING ' . $stack['return']['fields'];
                     }
                 }
                 break;
             case 'update':
+                if (empty($stack['table'])) {
+                    throw new QueryException('Table is not defined yet, call table()/from() to '
+                        . 'set target table first');
+                }
+
                 if (isset($stack['update'])) {
                     if (!isset($stack['where'])) {
-                        throw new QueryException('No "where" for "update" yet, it must be provided for '.
-                            'security reasons at least "1=1" that proves you’re aware of what’s going on');
+                        throw new QueryException('No "where" for "update" yet, it must be provided for '
+                            . 'security reasons at least "1=1" that proves you’re aware of what’s going on');
                     }
 
-                    $ret = trim(
-                        "UPDATE {$stack['table']} SET{$nt}{$stack['update']}"
-                        . $this->toQueryString('where', $pretty, $sub)
-                        . $this->toQueryString('orderBy', $pretty, $sub)
-                        . $this->toQueryString('limit', $pretty, $sub)
-                    );
+                    $ret = 'UPDATE ' . $stack['table'] . $n . 'SET '
+                         . join(', ' . $nt, $stack['update']);
+
+                    isset($stack['where']) && $ret .= $n . $this->toQueryString('where', $indent);
+                    isset($stack['order']) && $ret .= $n . $this->toQueryString('order', $indent);
+                    isset($stack['limit']) && $ret .= $n . $this->toQueryString('limit', $indent);
 
                     if (isset($stack['return'])) {
-                        $ret .= $n .'RETURNING '. $stack['return']['fields'];
+                        $ret .= $n . 'RETURNING ' . $stack['return']['fields'];
                     }
                 }
                 break;
             case 'delete':
+                if (empty($stack['table'])) {
+                    throw new QueryException('Table is not defined yet, call table() or from() to '
+                        . 'set target table first');
+                }
+
                 if (isset($stack['delete'])) {
                     if (!isset($stack['where'])) {
-                        throw new QueryException('No "where" for "delete" yet, it must be provided for '.
-                            'security reasons at least "1=1" that proves you’re aware of what’s going on');
+                        throw new QueryException('No "where" for "delete" yet, it must be provided for '
+                            . 'security reasons at least "1=1" that proves you’re aware of what’s going on');
                     }
 
-                    $ret = trim(
-                        "DELETE FROM {$stack['table']}"
-                        . $this->toQueryString('where', $pretty, $sub)
-                        . $this->toQueryString('orderBy', $pretty, $sub)
-                        . $this->toQueryString('limit', $pretty, $sub)
-                    );
+                    $ret = 'DELETE FROM ' . $stack['table'];
+
+                    isset($stack['where']) && $ret .= $n . $this->toQueryString('where', $indent);
+                    isset($stack['order']) && $ret .= $n . $this->toQueryString('order', $indent);
+                    isset($stack['limit']) && $ret .= $n . $this->toQueryString('limit', $indent);
 
                     if (isset($stack['return'])) {
-                        $ret .= $n .'RETURNING '. $stack['return']['fields'];
+                        $ret .= $n . 'RETURNING ' . $stack['return']['fields'];
                     }
                 }
                 break;
-            case 'groupBy':
-                if (isset($stack['groupBy'])) {
-                    $ret = $ns .'GROUP BY '. join(', ', $stack['groupBy']);
+            case 'group':
+                if (isset($stack['group'])) {
+                    $ret = 'GROUP BY ' . join(', ', $stack['group']);
                 }
                 break;
-            case 'orderBy':
-                if (isset($stack['orderBy'])) {
-                    $ret = $ns .'ORDER BY '. join(', ', $stack['orderBy']);
+            case 'order':
+                if (isset($stack['order'])) {
+                    $ret = 'ORDER BY ' . join(', ', $stack['order']);
                 }
                 break;
             case 'limit':
                 if (isset($stack['limit'])) {
                     $ret = isset($stack['offset'])
-                        ? $ns .'LIMIT '. $stack['limit'] .' OFFSET '. $stack['offset']
-                        : $ns .'LIMIT '. $stack['limit'];
+                         ? 'LIMIT ' . $stack['limit'] . ' OFFSET ' . $stack['offset']
+                         : 'LIMIT ' . $stack['limit'];
                 }
                 break;
             case 'join':
                 if (isset($stack['join'])) {
                     foreach ($stack['join'] as $join) {
-                        $ret .= $ns . $join;
+                        @ [$content, $context] = $join;
+                        if (!$context) {
+                            throw new QueryException('No join context yet, use 2. argument of join() '
+                                . 'or call on()/using() method');
+                        }
+                        $ret .= $content . ' ' . $context;
                     }
                 }
                 break;
             case 'having':
                 if (isset($stack['having'])) {
-                    $ret = $ns .'HAVING ('. $stack['having'] .')';
+                    $ret = 'HAVING (' . $stack['having'] . ')';
                 }
                 break;
         }
@@ -1543,7 +1596,7 @@ final class Query
         $collation = trim($collation);
 
         if ($this->db->getLink()->getPdoDriver() == 'pgsql') {
-            $collation = '"'. trim($collation, '"') .'"';
+            $collation = '"' . trim($collation, '"') . '"';
         }
 
         return $collation;
@@ -1596,18 +1649,47 @@ final class Query
      */
     private function has(string $key): bool
     {
-        return isset($this->stack[$key]);
+        return !empty($this->stack[$key]);
     }
 
     /**
-     * Add.
-     * @param string $key
-     * @param any    $value
-     * @param bool   $merge
+     * Add a statement to stack.
+     *
+     * @param  string       $key
+     * @param  string|array $value
+     * @param  bool         $merge
+     * @return self
      */
     private function add(string $key, $value, bool $merge = true): self
     {
-        $this->stack[$key] = $merge ? [...($this->stack[$key] ?? []), $value] : $value;
+        if ($merge) {
+            $value = [...($this->stack[$key] ?? []), $value];
+        }
+
+        $this->key = $key; // Tick for last call.
+        $this->stack[$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Add a statement operator to stack.
+     *
+     * @param  string $key
+     * @param  string $value
+     * @return self
+     * @throws froq\database\QueryException
+     * @since  5.0
+     */
+    private function addTo(string $key, string $value): self
+    {
+        if (empty($this->stack[$key])) {
+            $op = substr(trim($value), 0, strpos(trim($value), ' '));
+            throw new QueryException('No %s statement yet in query stack to apply %s operator, '
+                . 'call %s() first to apply', [$key, $op, $key]);
+        }
+
+        $this->stack[$key][count($this->stack[$key]) - 1][1] = $value;
 
         return $this;
     }

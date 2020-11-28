@@ -65,12 +65,30 @@ trait QueryTrait
     }
 
     /**
-     * Not nuull.
+     * Not null.
      * @aliasOf whereNotNull()
      */
     public function notNull(...$arguments)
     {
         return $this->whereNotNull(...$arguments);
+    }
+
+    /**
+     * Is.
+     * @aliasOf whereIs()
+     */
+    public function is(...$arguments)
+    {
+        return $this->whereIs(...$arguments);
+    }
+
+    /**
+     * Is not.
+     * @aliasOf whereIsNot()
+     */
+    public function isNot(...$arguments)
+    {
+        return $this->whereIsNot(...$arguments);
     }
 
     /**
