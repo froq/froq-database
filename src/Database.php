@@ -28,7 +28,7 @@ namespace froq\database;
 
 use froq\database\{DatabaseException, DatabaseConnectionException, DatabaseQueryException,
     Link, LinkException, Result, Profiler, Query};
-use froq\database\sql\{Sql, Name, Date, DateTime};
+use froq\database\sql\{Sql, Name};
 use froq\pager\Pager;
 use froq\logger\Logger;
 use PDO, PDOStatement, PDOException, Throwable;
@@ -602,12 +602,10 @@ final class Database
             switch ($inputClass) {
                 case Sql::class:      return $input->content();
                 case Name::class:     return $this->escapeName($input->content());
-                case Date::class:
-                case DateTime::class: return $this->escapeString($input->content());
                 case Query::class:    return $input->toString();
                 default:
                     throw new DatabaseException('Invalid input object "%s" given, valids are: '.
-                        'Query, sql\{Sql, Name, Date, DateTime}', [$inputClass]);
+                        'Query, sql\{Sql, Name}', [$inputClass]);
             }
         }
 
@@ -810,6 +808,29 @@ final class Database
     }
 
     /**
+     * Init sql.
+     * @param  string     $input
+     * @param  array|null $inputParams
+     * @return froq\database\sql\Sql
+     */
+    public function initSql(string $input, array $inputParams = null): Sql
+    {
+        $inputParams && $input = $this->prepare($input, $inputParams);
+
+        return new Sql($input);
+    }
+
+    /**
+     * Init query.
+     * @param  string|null $table
+     * @return froq\database\Query
+     */
+    public function initQuery(string $table = null): Query
+    {
+        return new Query($this, $table);
+    }
+
+    /**
      * Init pager.
      * @param  int|null $totalRecords
      * @param  int|null $limit
@@ -821,53 +842,6 @@ final class Database
         $pager->run($totalRecords, $limit);
 
         return $pager;
-    }
-
-    /**
-     * Init sql.
-     * @param  string     $input
-     * @param  array|null $inputParams
-     * @return froq\database\sql\Sql
-     */
-    public function initSql(string $input, array $inputParams = null): Sql
-    {
-        if ($inputParams) {
-            $input = $this->prepare($input, $inputParams);
-        }
-
-        return new Sql($input);
-    }
-
-    /**
-     * Init date.
-     * @param  string|int|null $date
-     * @param  string|null     $timezone
-     * @return froq\database\sql\Date
-     */
-    public function initDate($date = null, string $timezone = null): Date
-    {
-        return new Date($date, $timezone);
-    }
-
-    /**
-     * Init date time.
-     * @param  string|int|null $datetime
-     * @param  string|null     $timezone
-     * @return froq\database\sql\DateTime
-     */
-    public function initDateTime($datetime = null, string $timezone = null): DateTime
-    {
-        return new DateTime($datetime, $timezone);
-    }
-
-    /**
-     * Init query.
-     * @param  string|null $table
-     * @return froq\database\Query
-     */
-    public function initQuery(string $table = null): Query
-    {
-        return new Query($this, $table);
     }
 
     /**
