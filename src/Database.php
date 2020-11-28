@@ -453,38 +453,34 @@ final class Database
 
     /**
      * Transaction.
-     * @param  callable      $call
+     * @param  callable|null $call
      * @param  callable|null $callError
      * @return any
-     * @throws froq\database\DatabaseException
+     * @throws Throwable
      */
-    public function transaction(callable $call, callable $callError = null)
+    public function transaction(callable $call = null, callable $callError = null)
     {
-        $pdo = $this->link->getPdo();
+        $transaction = new Transaction($this->link->getPdo());
 
-        try {
-            if (!$pdo->beginTransaction()) {
-                throw new DatabaseException('Failed to start transaction');
-            }
-            // And for all others.
-        } catch (Throwable $e) {
-            throw new DatabaseException($e->getMessage());
+        if (!$call) {
+            return $transaction;
         }
 
         try {
+            $transaction->begin();
             $ret = $call($this);
-            $pdo->commit();
+            $transaction->commit();
 
             return $ret;
         } catch (Throwable $e) {
-            $pdo->rollback();
+            $transaction->rollback();
 
-            // Blocks exception below.
+            // Block throw.
             if ($callError) {
-                return $callError($e);
+                return $callError($e, $this);
             }
 
-            throw new DatabaseException($e->getMessage());
+            throw $e;
         }
     }
 

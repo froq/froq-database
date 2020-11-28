@@ -46,22 +46,24 @@ class DatabaseException extends Exception
 
     /**
      * Constructor.
-     * @param string|PDOException $message
-     * @param string|array|null   $messageParams
-     * @param int|null            $code
-     * @param Throwable|null      $previous
+     * @param string|Throwable  $message
+     * @param string|array|null $messageParams
+     * @param int|null          $code
+     * @param Throwable|null    $previous
      */
     public function __construct($message = null, $messageParams = null, int $code = null,
-        ?Throwable $previous = null)
+        Throwable $previous = null)
     {
         if ($message) {
             if (is_string($message)) {
                 $errorInfo = $this->parseMessageInfo($message);
-            } elseif (is_object($message) && $message instanceof PDOException) {
-                $errorInfo = $message->errorInfo ?: $this->parseMessageInfo($message->getMessage());
+            } elseif (is_object($message) && $message instanceof Throwable) {
+                $errorInfo = isset($message->errorInfo)
+                    ? ($message->errorInfo ?: $this->parseMessageInfo($message->getMessage()))
+                    : $this->parseMessageInfo($message->getMessage());
             } else {
                 throw new Exception(
-                    'Invalid message type "%s" given to "%s", valids are: string, PDOException',
+                    'Invalid message type "%s" given to "%s", valids are: string, Throwable',
                     [is_object($message) ? get_class($message) : gettype($message), static::class]
                 );
             }
