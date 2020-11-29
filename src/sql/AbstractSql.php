@@ -34,8 +34,7 @@ abstract class AbstractSql
     {
         $content = trim($content);
         if ($content == '') {
-            throw new SqlException('Empty content given to "%s", non-empty content required',
-                [static::class]);
+            throw new SqlException("Empty content given to '%s' object", static::class);
         }
 
         $this->content = $content;

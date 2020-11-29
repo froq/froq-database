@@ -119,7 +119,7 @@ final class Link
             } catch (PDOException $e) {
                 // Which driver the FUCK?
                 if ($e->getMessage() == 'could not find driver') {
-                    throw new LinkException('Could not find driver "%s"', [$driver]);
+                    throw new LinkException("Could not find driver '%s'", $driver);
                 }
                 throw new LinkException($e);
             } finally {
@@ -185,7 +185,7 @@ final class Link
     private static function prepareOptions(array $options): array
     {
         if (empty($options['dsn'])) {
-            throw new LinkException('Empty "dsn" option given');
+            throw new LinkException("Empty 'dsn' option given");
         }
 
         $dsn = trim((string) $options['dsn'], ';');
@@ -195,7 +195,7 @@ final class Link
 
         if (empty($driver)) {
             // Throw a proper exeption instead of PDOException("could not find driver").
-            throw new LinkException('Invalid scheme given in "dsn" option, no driver specified');
+            throw new LinkException("Invalid scheme given in 'dsn' option, no driver specified");
         }
 
         if (empty($options['timezone'])) {

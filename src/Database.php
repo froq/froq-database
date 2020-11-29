@@ -69,7 +69,7 @@ final class Database
             empty($this->profiler) ? $this->link->connect()
                 : $this->profiler->profileConnection(fn() => $this->link->connect());
         } catch (LinkException $e) {
-            throw new DatabaseConnectionException($e->getMessage());
+            throw new DatabaseConnectionException($e);
         }
     }
 
@@ -91,8 +91,8 @@ final class Database
     public function getLogger(): Logger
     {
         if (empty($this->logger)) {
-            throw new DatabaseException('Database object has no logger, be sure "logging" '.
-                'field is not empty in options');
+            throw new DatabaseException("Database object has no logger, be sure 'logging' "
+                . "field is not empty in options");
         }
 
         return $this->logger;
@@ -106,8 +106,8 @@ final class Database
     public function getProfiler(): Profiler
     {
         if (empty($this->profiler)) {
-            throw new DatabaseException('Database object has no profiler, be sure "profiling" '.
-                'field is not empty or false in options');
+            throw new DatabaseException("Database object has no profiler, be sure 'profiling' "
+                . "field is not empty or false in options");
         }
 
         return $this->profiler;
@@ -125,8 +125,7 @@ final class Database
     {
         $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
         if ($query == '') {
-            throw new DatabaseException('Empty query given to "%s()", non-empty query required',
-                [__method__]);
+            throw new DatabaseException("Empty query given to '%s()'", __method__);
         }
 
         try {
@@ -136,7 +135,7 @@ final class Database
 
             return new Result($pdo, $pdoStatement, $options);
         } catch (PDOException $e) {
-            throw new DatabaseQueryException($e->getMessage());
+            throw new DatabaseQueryException($e);
         }
     }
 
@@ -151,8 +150,7 @@ final class Database
     {
         $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
         if ($query == '') {
-            throw new DatabaseException('Empty query given to "%s()", non-empty query required',
-                [__method__]);
+            throw new DatabaseException("Empty query given to '%s()'", __method__);
         }
 
         try {
@@ -162,7 +160,7 @@ final class Database
 
             return ($pdoResult !== false) ? $pdoResult : null;
         } catch (PDOException $e) {
-            throw new DatabaseQueryException($e->getMessage());
+            throw new DatabaseQueryException($e);
         }
     }
 
@@ -276,10 +274,10 @@ final class Database
             $update && $action = 'update';
 
             if (!$action) {
-                throw new DatabaseException('Conflict action is not given');
+                throw new DatabaseException("Conflict action is not given");
             }
             if (!$update && strtolower($action) == 'update') {
-                throw new DatabaseException('Conflict action is "update", but no update data given');
+                throw new DatabaseException("Conflict action is 'update', but no update data given");
             }
 
             $query->conflict($fields, $action, $update, $where);
@@ -430,8 +428,7 @@ final class Database
      */
     public function countQuery(string $query, array $queryParams = null): int
     {
-        $result = $this->get('SELECT count(*) AS c FROM ('. $query .') AS t',
-            $queryParams, 'array');
+        $result = $this->get('SELECT count(*) AS c FROM (' . $query . ') AS t', $queryParams, 'array');
 
         return (int) ($result['c'] ?? 0);
     }
@@ -447,7 +444,7 @@ final class Database
     {
         $transaction = new Transaction($this->link->getPdo());
 
-        if (!$call) {
+        if ($call == null) {
             return $transaction;
         }
 
@@ -461,7 +458,7 @@ final class Database
             $transaction->rollback();
 
             // Block throw.
-            if ($callError) {
+            if ($callError != null) {
                 return $callError($e, $this);
             }
 
@@ -476,7 +473,7 @@ final class Database
      */
     public function quote(string $input): string
     {
-        return '\''. $input .'\'';
+        return "'" . $input . "'";
     }
 
     /**
@@ -498,7 +495,7 @@ final class Database
         if (strpos($input, '(') === 0) {
             $rpos = strpos($input, ')');
             if (!$rpos) { // Not parsed array[(foo, ..)] stuff, sorry.
-                throw new DatabaseException('Unclosed parenthesis in "%s" input', [$input]);
+                throw new DatabaseException("Unclosed parenthesis in '%s' input", $input);
             }
 
             $name = substr($input, 1, $rpos - 1); // Eg: part foo of (foo).
@@ -585,16 +582,15 @@ final class Database
                 case Name::class:     return $this->escapeName($input->content());
                 case Query::class:    return $input->toString();
                 default:
-                    throw new DatabaseException('Invalid input object "%s" given, valids are: '.
-                        'Query, sql\{Sql, Name}', [$inputClass]);
+                    throw new DatabaseException("Invalid input object '%s' given, valids are: "
+                        . "Query, sql\{Sql, Name}", $inputClass);
             }
         }
 
         // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a".
         if ($inputFormat) {
             if ($inputFormat == '?' || $inputFormat == '??') {
-                return ($inputFormat == '?') ? $this->escape($input)
-                                             : $this->escapeName($input);
+                return ($inputFormat == '?') ? $this->escape($input) : $this->escapeName($input);
             }
 
             switch ($inputFormat) {
@@ -607,8 +603,7 @@ final class Database
                 case '?a': return join(', ', (array) $this->escape($input)); // Array.
             }
 
-            throw new DatabaseException('Unimplemented input format "%s" encountered',
-                [$inputFormat]);
+            throw new DatabaseException("Unimplemented input format '%s'", $inputFormat);
         }
 
         switch ($inputType) {
@@ -618,8 +613,7 @@ final class Database
             case 'double':  return $input;
             case 'boolean': return $input ? 'true' : 'false';
             default:
-                throw new DatabaseException('Unimplemented input type "%s" encountered',
-                    [$inputType]);
+                throw new DatabaseException("Unimplemented input type '%s'", $inputType);
         }
     }
 
@@ -708,7 +702,7 @@ final class Database
     {
         $input = $this->preparePrepareInput($input);
         if ($input == '') {
-            throw new DatabaseException('Empty input given to "%s()" for preparation', [__method__]);
+            throw new DatabaseException("Empty input given to '%s()' for preparation", __method__);
         }
 
         // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a / :foo, :foo_bar".
@@ -721,9 +715,8 @@ final class Database
 
         if (preg_match_all($pattern, $input, $match)) {
             if ($inputParams == null) {
-                throw new DatabaseException('Empty input parameters given to "%s()", non-empty '.
-                    'input parameters required when input contains parameter placeholders like '.
-                    '"?", "??" or ":foo"', [__method__]);
+                throw new DatabaseException("Empty input parameters given to '%s()', non-empty input parameters "
+                    . "required when input contains parameter placeholders like ?, ?? or :foo", __method__);
             }
 
             $i = 0;
@@ -735,8 +728,7 @@ final class Database
                 if ($pos > -1) { // Named.
                     $key = trim($holder, ':');
                     if (!array_key_exists($key, $inputParams)) {
-                        throw new DatabaseException('Replacement key "%s" not found in given '.
-                            'parameters', [$key]);
+                        throw new DatabaseException("Replacement key '%s' not found in given parameters", $key);
                     }
 
                     $value = $this->escape($inputParams[$key]);
@@ -748,8 +740,7 @@ final class Database
                     $values[] = $value;
                 } else { // Question-mark.
                     if (!array_key_exists($i, $inputParams)) {
-                        throw new DatabaseException('Replacement index "%s" not found in given '.
-                            'parameters', [$i]);
+                        throw new DatabaseException("Replacement index '%s' not found in given parameters", $i);
                     }
 
                     $value = $this->escape($inputParams[$i++], $holder);
@@ -757,7 +748,7 @@ final class Database
                         $value = join(', ', $value);
                     }
 
-                    $keys[] = '~'. preg_quote($holder) .'(?![|&])~';
+                    $keys[] = '~'. preg_quote($holder) .'(?![|&])~'; // PgSQL operators.
                     $values[] = $value;
                 }
             }
@@ -778,7 +769,7 @@ final class Database
     {
         $input = $this->preparePrepareInput($input);
         if ($input == '') {
-            throw new DatabaseException('Empty input given to "%s()" for preparation', [__method__]);
+            throw new DatabaseException("Empty input given to '%s()' for preparation", __method__);
         }
 
         try {
@@ -845,8 +836,8 @@ final class Database
                 $temp = [];
                 foreach ($where as $key => $value) {
                     if (!is_string($key)) {
-                        throw new DatabaseException('Invalid $where input, use ("a = ? AND b = ?", [1, 2])'
-                            .' convention');
+                        throw new DatabaseException("Invalid where input, use ('a = ? AND b = ?', [1, 2]) "
+                            . "convention");
                     }
 
                     // Check whether a placeholder given or not (eg: ["a" => 1]).
@@ -863,7 +854,7 @@ final class Database
                 $where = trim($where);
                 $whereParams = (array) $whereParams;
             } else {
-                throw new DatabaseException('Invalid $where input "%s", valids are: string, array',
+                throw new DatabaseException("Invalid where input '%s', valids are: string, array",
                     gettype($where));
             }
         }

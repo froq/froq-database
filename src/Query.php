@@ -116,8 +116,7 @@ final class Query
             return $this->table($from, false);
         }
 
-        throw new QueryException('Invalid from type "%s", valids are: string, %s',
-                [gettype($query), Query::class]);
+        throw new QueryException("Invalid from type '%s', valids are: string, %s", [gettype($query), Query::class]);
     }
 
     /**
@@ -180,8 +179,7 @@ final class Query
             return $this->selectRaw($query->toString(), $as);
         }
 
-        throw new QueryException('Invalid query type "%s", valids are: string, %s',
-            [gettype($query), Query::class]);
+        throw new QueryException("Invalid query type '%s', valids are: string, %s", [gettype($query), Query::class]);
     }
 
     /**
@@ -204,7 +202,7 @@ final class Query
                 $func = ($selectType == 1) ? 'json_array' : 'json_object';
                 break;
             default:
-                throw new QueryException('Method "%s()" available for PgSQL & MySQL only', [__method__]);
+                throw new QueryException("Method '%s()' available for PgSQL & MySQL only", __method__);
         }
 
         if ($selectType == 1) {
@@ -314,7 +312,7 @@ final class Query
         foreach ($values as $i => $value) {
             $value = (array) $value;
             if (count($value) != $fieldsCount) {
-                throw new QueryException('Count of value set "%s" not matched with fields count', [$i]);
+                throw new QueryException("Count of value set '%s' not matched with fields count", $i);
             }
             $values[$i] = '(' . join(', ', $this->db->escape($value)) . ')';
         }
@@ -380,8 +378,9 @@ final class Query
     public function conflict(string $fields, string $action, array $update = null, array $where = null): self
     {
         $action = strtoupper($action);
+
         if (!in_array($action, ['NOTHING', 'UPDATE'])) {
-            throw new QueryException('Invalid action "%s" for conflict, valids are: NOTHING, UPDATE',
+            throw new QueryException("Invalid action '%s' for conflict, valids are: NOTHING, UPDATE",
                 [$action]);
         }
 
@@ -723,8 +722,8 @@ final class Query
             $where = $field . ' LIKE ' . $search;
         } else {
             $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
-                   ? sprintf('%s ILIKE %s', $field, $search)
-                   : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
+                ? sprintf('%s ILIKE %s', $field, $search)
+                : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
         }
 
         return $this->where($where, null, $op);
@@ -847,12 +846,12 @@ final class Query
     public function orderBy($field, $op = null, array $options = null): self
     {
         if (!is_string($field) && !$check = ($field instanceof Sql)) {
-            throw new QueryException('Invalid field type "%s", valids are: string, %s',
+            throw new QueryException("Invalid field type '%s', valids are: string, %s",
                 [gettype($field), Sql::class]);
         }
 
         $field = trim((string) $field);
-        if (!$field) {
+        if ($field == '') {
             throw new QueryException('No field given');
         }
 
@@ -872,12 +871,12 @@ final class Query
         ];
 
         // Eg: "tr_TR" or "tr_TR.utf8".
-        if ($collate) {
+        if ($collate != null) {
             $collate = ' COLLATE ' . $this->prepareCollation($collate);
         }
 
         // Eg: "FIRST" or "LAST".
-        if ($nulls) {
+        if ($nulls != null) {
             $nulls = ' NULLS ' . strtoupper($nulls);
         }
 
@@ -910,8 +909,7 @@ final class Query
     public function orderByRandom(): self
     {
         return ($this->db->getLink()->getPdoDriver() == 'pgsql')
-             ? $this->add('order', 'random()')
-             : $this->add('order', 'rand()');
+            ? $this->add('order', 'random()') : $this->add('order', 'rand()');
     }
 
     /**
@@ -922,8 +920,7 @@ final class Query
      */
     public function limit(int $limit, int $offset = null): self
     {
-        return ($offset === null)
-            ? $this->add('limit', abs($limit), false)
+        return ($offset === null) ? $this->add('limit', abs($limit), false)
             : $this->add('limit', abs($limit), false)->add('offset', abs($offset), false);
     }
 
@@ -1164,9 +1161,8 @@ final class Query
         $field = $prepare ? $this->prepareField($field) : $field;
 
         // Dirty hijack..
-        if ($order) {
-            $order = current((clone $this)->reset()
-                   ->orderBy($order)->stack['order']);
+        if ($order != null) {
+            $order = current((clone $this)->reset()->orderBy($order)->stack['order']);
             $order = ' ORDER BY ' . $order;
         }
 
@@ -1184,8 +1180,8 @@ final class Query
             return $this->select($func . '_agg(' . $distinct . $field . $order . ')' . $as, false);
         }
 
-        throw new QueryException('Invalid aggregate function "%s", valids are: count, sum, min, max, avg, '
-            . 'array, string, json, json_object, jsonb, jsonb_object', [$func]);
+        throw new QueryException("Invalid aggregate function '%s', valids are: count, sum, min, max, avg, "
+            . "array, string, json, json_object, jsonb, jsonb_object", [$func]);
     }
 
     /**
@@ -1273,8 +1269,8 @@ final class Query
         } elseif ($this->has('delete')) {
             $ret = $this->toQueryString('delete', $indent);
         } else {
-            throw new QueryException('No query ready to build, use select(), insert(), '
-                . 'update(), delete(), aggregate() etc. first');
+            throw new QueryException('No query ready to build, use select(), insert(), update(), delete(), '
+                . 'aggregate() etc. first');
         }
 
         return $ret;
@@ -1306,7 +1302,7 @@ final class Query
         switch ($key) {
             case 'select':
                 if (empty($stack['table'])) {
-                    throw new QueryException('Table is not defined yet, call table()/from() to '
+                    throw new QueryException('Table is not defined yet, call table() or from() to '
                         . 'set target table first');
                 }
 
@@ -1357,7 +1353,7 @@ final class Query
                 break;
             case 'insert':
                 if (empty($stack['table'])) {
-                    throw new QueryException('Table is not defined yet, call table()/from() to '
+                    throw new QueryException('Table is not defined yet, call table() or from() to '
                         . 'set target table first');
                 }
 
@@ -1373,9 +1369,14 @@ final class Query
                          'update' => $update, 'where' => $where] = $stack['conflict'];
 
                         switch ($driver = $this->db->getLink()->getPdoDriver()) {
-                            case 'pgsql': $ret .= $n . 'ON CONFLICT (' . $fields . ') DO ' . $action; break;
-                            case 'mysql': $ret .= $n . 'ON DUPLICATE KEY ' . ($action = 'UPDATE'); break;
-                                 default: throw new QueryException('Method "conflict()" available for PgSQL & MySQL only');
+                            case 'pgsql':
+                                $ret .= $n . 'ON CONFLICT (' . $fields . ') DO ' . $action;
+                                break;
+                            case 'mysql':
+                                $ret .= $n . 'ON DUPLICATE KEY ' . ($action = 'UPDATE');
+                                break;
+                            default:
+                                throw new QueryException('Method conflict() available for PgSQL & MySQL only');
                         }
 
                         if ($action == 'UPDATE') {
@@ -1403,14 +1404,14 @@ final class Query
                 break;
             case 'update':
                 if (empty($stack['table'])) {
-                    throw new QueryException('Table is not defined yet, call table()/from() to '
+                    throw new QueryException('Table is not defined yet, call table() or from() to '
                         . 'set target table first');
                 }
 
                 if (isset($stack['update'])) {
-                    if (!isset($stack['where'])) {
-                        throw new QueryException('No "where" for "update" yet, it must be provided for '
-                            . 'security reasons at least "1=1" that proves you’re aware of what’s going on');
+                    if (empty($stack['where'])) {
+                        throw new QueryException("No 'where' for 'update' yet, it must be provided for security "
+                            . "reasons, call at least where('1=1') proving you're aware of what's going on");
                     }
 
                     $ret = 'UPDATE ' . $stack['table'] . $n . 'SET '
@@ -1432,9 +1433,9 @@ final class Query
                 }
 
                 if (isset($stack['delete'])) {
-                    if (!isset($stack['where'])) {
-                        throw new QueryException('No "where" for "delete" yet, it must be provided for '
-                            . 'security reasons at least "1=1" that proves you’re aware of what’s going on');
+                    if (empty($stack['where'])) {
+                        throw new QueryException("No 'where' for 'update' yet, it must be provided for security "
+                            . "reasons, call at least where('1=1') proving you're aware of what's going on");
                     }
 
                     $ret = 'DELETE FROM ' . $stack['table'];
@@ -1557,11 +1558,11 @@ final class Query
         $op = strtoupper(trim($op));
         if (in_array($op, $ops)) {
             return $op;
-        } elseif ($numerics && in_array($op, ['1', '-1', '0'])) { // @internal=0
+        } elseif ($numerics && in_array($op, ['1', '-1', '0'])) { // 0 is internal.
             return ($op == '1') ? 'ASC' : 'DESC';
         }
 
-        throw new QueryException('Invalid op "%s", valids are: %s, 1, -1', [$op, join(', ', $ops)]);
+        throw new QueryException("Invalid op '%s', valids are: %s, 1, -1", [$op, join(', ', $ops)]);
     }
 
     /**
@@ -1604,7 +1605,7 @@ final class Query
         }
 
         if ($count < 3) {
-            throw new QueryException('Like parameters count must be 1 or 3, %s given', [$count]);
+            throw new QueryException("Like parameters count must be 1 or 3, '%s' given", $count);
         }
 
         // Note to me..
@@ -1663,8 +1664,8 @@ final class Query
     {
         if (empty($this->stack[$key])) {
             $op = substr(trim($value), 0, strpos(trim($value), ' '));
-            throw new QueryException('No %s statement yet in query stack to apply %s operator, '
-                . 'call %s() first to apply', [$key, $op, $key]);
+            throw new QueryException("No '%s' statement yet in query stack to apply '%s' operator, "
+                . "call %s() first to apply", [$key, $op, $key]);
         }
 
         $this->stack[$key][count($this->stack[$key]) - 1][1] = $value;

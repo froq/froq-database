@@ -134,11 +134,11 @@ final class Profiler
         if (!$this->profiles) return;
 
         $totalTime = 0.00;
-        $totalTimeString = '';
+        $totalTimes = [];
         if (isset($this->profiles['connection'])) {
             $totalTime += $this->profiles['connection']['time'];
             if (!$timeOnly) {
-                $totalTimeString .= 'connection('. $totalTime .')';
+                $totalTimes[] = 'connection(' . $totalTime . ')';
             }
         }
 
@@ -146,16 +146,16 @@ final class Profiler
             foreach ($this->profiles['query'] as $i => $profile) {
                 $totalTime += $profile['time'];
                 if (!$timeOnly) {
-                    $totalTimeString .= ' query('. $i .', '. $profile['time'] .')';
+                    $totalTimes[] = 'query(' . $i . ', ' . $profile['time'] . ')';
                 }
             }
         }
 
         if (!$timeOnly) {
-            $totalTimeString .= ' total('. $totalTime .')';
+            $totalTimes[] = 'total('. $totalTime .')';
         }
 
-        return $timeOnly ? $totalTime : $totalTimeString;
+        return $timeOnly ? $totalTime : join(' ', $totalTimes);
     }
 
     /**
@@ -178,7 +178,7 @@ final class Profiler
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid type "%s" given, valids are: connection, query', [$type]);
+                throw new ProfilerException("Invalid type '%s' given, valids are: connection, query", $type);
         }
     }
 
@@ -191,7 +191,7 @@ final class Profiler
     private function end(string $type): void
     {
         if (!isset($this->profiles[$type])) {
-            throw new ProfilerException('Could not find a profile with given "%s" type', [$type]);
+            throw new ProfilerException("Could not find a profile with given '%s' type", $type);
         }
 
         $end = microtime(true);
@@ -208,7 +208,7 @@ final class Profiler
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid type "%s" given, valids are: connection, query', [$type]);
+                throw new ProfilerException("Invalid type '%s' given, valids are: connection, query", $type);
         }
     }
 }
