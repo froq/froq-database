@@ -70,21 +70,12 @@ final class Query
     }
 
     /**
-     * Get db.
+     * Db.
      * @return froq\database\Database
      */
-    public function getDb(): Database
+    public function db(): Database
     {
         return $this->db;
-    }
-
-    /**
-     * Db.
-     * @aliasOf getDb()
-     */
-    public function db()
-    {
-        return $this->getDb();
     }
 
     /**
