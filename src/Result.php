@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\ResultException;
+use froq\collection\Collection;
 use PDO, PDOStatement, PDOException, Countable, IteratorAggregate, ArrayIterator;
 
 /**
@@ -187,6 +188,17 @@ final class Result implements Countable, IteratorAggregate
             }
         }
         return $rows;
+    }
+
+    /**
+     * To collection, for map/filter etc.
+     *
+     * @return froq\collection\Collection
+     * @since  5.0
+     */
+    public function toCollection(): Collection
+    {
+        return new Collection($this->rows);
     }
 
     /**
