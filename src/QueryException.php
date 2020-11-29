@@ -17,5 +17,5 @@ use froq\database\DatabaseException;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   4.0
  */
-final class QueryException extends DatabaseException
+class QueryException extends DatabaseException
 {}

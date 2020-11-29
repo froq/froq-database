@@ -17,5 +17,5 @@ use froq\database\DatabaseException;
  * @author  Kerem Güneş <k-gun@mail.com>
  * @since   5.0
  */
-final class TransactionException extends DatabaseException
+class TransactionException extends DatabaseException
 {}
