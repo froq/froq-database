@@ -33,8 +33,7 @@ class DatabaseException extends Exception
      * @param int|null          $code
      * @param Throwable|null    $previous
      */
-    public function __construct($message = null, $messageParams = null, int $code = null,
-        Throwable $previous = null)
+    public function __construct($message = null, $messageParams = null, int $code = null, Throwable $previous = null)
     {
         if ($message) {
             if (is_string($message)) {
@@ -45,7 +44,7 @@ class DatabaseException extends Exception
                     : $this->parseMessageInfo($message->getMessage());
             } else {
                 throw new Exception(
-                    'Invalid message type "%s" given to "%s", valids are: string, Throwable',
+                    "Invalid message type '%s' given to '%s', valids are: string, Throwable",
                     [is_object($message) ? get_class($message) : gettype($message), static::class]
                 );
             }
