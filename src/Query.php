@@ -1007,16 +1007,6 @@ final class Query
     }
 
     /**
-     * Id.
-     * @param  int|string $id
-     * @return self
-     */
-    public function id($id): self
-    {
-        return $this->whereEqual('id', $id);
-    }
-
-    /**
      * Asc.
      * @param  string     $field
      * @param  array|null $options
@@ -1036,6 +1026,16 @@ final class Query
     public function desc(string $field = 'id', string $options = null): self
     {
         return $this->orderBy($field, 'DESC', $options);
+    }
+
+    /**
+     * Id.
+     * @param  int|string $id
+     * @return self
+     */
+    public function id($id): self
+    {
+        return $this->whereEqual('id', $id);
     }
 
     /**
