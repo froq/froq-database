@@ -3,7 +3,7 @@
     "homepage": "https://github.com/froq/froq-database",
     "description": "Froq! Database.",
     "keywords": ["froq", "database"],
-    "license": "MIT",
+    "license": "Apache-2.0",
     "authors": [
         {"name": "Kerem Güneş", "email": "k-gun@mail.com"}
     ],
