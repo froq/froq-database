@@ -24,36 +24,36 @@ trait QueryTrait
      * Equal.
      * @alias of whereEqual()
      */
-    public function equal(...$arguments)
+    public function equal(...$args)
     {
-        return $this->whereEqual(...$arguments);
+        return $this->whereEqual(...$args);
     }
 
     /**
      * Not equal.
      * @alias of whereNotEqual()
      */
-    public function notEqual(...$arguments)
+    public function notEqual(...$args)
     {
-        return $this->whereNotEqual(...$arguments);
+        return $this->whereNotEqual(...$args);
     }
 
     /**
      * Null.
      * @alias of whereNull()
      */
-    public function null(...$arguments)
+    public function null(...$args)
     {
-        return $this->whereNull(...$arguments);
+        return $this->whereNull(...$args);
     }
 
     /**
      * Not null.
      * @alias of whereNotNull()
      */
-    public function notNull(...$arguments)
+    public function notNull(...$args)
     {
-        return $this->whereNotNull(...$arguments);
+        return $this->whereNotNull(...$args);
     }
 
     /**
@@ -61,9 +61,9 @@ trait QueryTrait
      * @alias of whereIs()
      * @since 5.0
      */
-    public function is(...$arguments)
+    public function is(...$args)
     {
-        return $this->whereIs(...$arguments);
+        return $this->whereIs(...$args);
     }
 
     /**
@@ -71,219 +71,219 @@ trait QueryTrait
      * @alias of whereIsNot()
      * @since 5.0
      */
-    public function isNot(...$arguments)
+    public function isNot(...$args)
     {
-        return $this->whereIsNot(...$arguments);
+        return $this->whereIsNot(...$args);
     }
 
     /**
      * In.
      * @alias of whereIn()
      */
-    public function in(...$arguments)
+    public function in(...$args)
     {
-        return $this->whereIn(...$arguments);
+        return $this->whereIn(...$args);
     }
 
     /**
      * Not in.
      * @alias of whereNotIn()
      */
-    public function notIn(...$arguments)
+    public function notIn(...$args)
     {
-        return $this->whereNotIn(...$arguments);
+        return $this->whereNotIn(...$args);
     }
 
     /**
      * Between.
      * @alias of whereBetween()
      */
-    public function between(...$arguments)
+    public function between(...$args)
     {
-        return $this->whereBetween(...$arguments);
+        return $this->whereBetween(...$args);
     }
 
     /**
      * Not between.
      * @alias of whereNotBetween()
      */
-    public function notBetween(...$arguments)
+    public function notBetween(...$args)
     {
-        return $this->whereNotBetween(...$arguments);
+        return $this->whereNotBetween(...$args);
     }
 
     /**
      * Less than.
      * @alias of whereLessThan()
      */
-    public function lessThan(...$arguments)
+    public function lessThan(...$args)
     {
-        return $this->whereLessThan(...$arguments);
+        return $this->whereLessThan(...$args);
     }
 
     /**
      * Less than equal.
      * @alias of whereLessThanEqual()
      */
-    public function lessThanEqual(...$arguments)
+    public function lessThanEqual(...$args)
     {
-        return $this->whereLessThanEqual(...$arguments);
+        return $this->whereLessThanEqual(...$args);
     }
 
     /**
      * Greater than.
      * @alias of whereGreaterThan()
      */
-    public function greaterThan(...$arguments)
+    public function greaterThan(...$args)
     {
-        return $this->whereGreaterThan(...$arguments);
+        return $this->whereGreaterThan(...$args);
     }
 
     /**
      * Greater than equal.
      * @alias of whereGreaterThanEqual()
      */
-    public function greaterThanEqual(...$arguments)
+    public function greaterThanEqual(...$args)
     {
-        return $this->whereGreaterThanEqual(...$arguments);
+        return $this->whereGreaterThanEqual(...$args);
     }
 
     /**
      * Like.
      * @alias of whereLike()
      */
-    public function like(...$arguments)
+    public function like(...$args)
     {
-        return $this->whereLike(...$arguments);
+        return $this->whereLike(...$args);
     }
 
     /**
      * Not like.
      * @alias of whereNotLike()
      */
-    public function notLike(...$arguments)
+    public function notLike(...$args)
     {
-        return $this->whereNotLike(...$arguments);
+        return $this->whereNotLike(...$args);
     }
 
     /**
      * Like start.
      * @alias of whereLike()
      */
-    public function likeStart(...$arguments)
+    public function likeStart(...$args)
     {
-        $arguments[1] = ['', $arguments[1], '%'];
+        $args[1] = ['', $args[1], '%'];
 
-        return $this->whereLike(...$arguments);
+        return $this->whereLike(...$args);
     }
 
     /**
      * Not like start.
      * @alias of whereNotLike()
      */
-    public function notLikeStart(...$arguments)
+    public function notLikeStart(...$args)
     {
-        $arguments[1] = ['', $arguments[1], '%'];
+        $args[1] = ['', $args[1], '%'];
 
-        return $this->whereNotLike(...$arguments);
+        return $this->whereNotLike(...$args);
     }
 
     /**
      * Like end.
      * @alias of whereLike()
      */
-    public function likeEnd(...$arguments)
+    public function likeEnd(...$args)
     {
-        $arguments[1] = ['%', $arguments[1], ''];
+        $args[1] = ['%', $args[1], ''];
 
-        return $this->whereLike(...$arguments);
+        return $this->whereLike(...$args);
     }
 
     /**
      * Not like end.
      * @alias of whereNotLike()
      */
-    public function notLikeEnd(...$arguments)
+    public function notLikeEnd(...$args)
     {
-        $arguments[1] = ['%', $arguments[1], ''];
+        $args[1] = ['%', $args[1], ''];
 
-        return $this->whereNotLike(...$arguments);
+        return $this->whereNotLike(...$args);
     }
 
     /**
      * Like both.
      * @alias of whereLike()
      */
-    public function likeBoth(...$arguments)
+    public function likeBoth(...$args)
     {
-        $arguments[1] = ['%', $arguments[1], '%'];
+        $args[1] = ['%', $args[1], '%'];
 
-        return $this->whereLike(...$arguments);
+        return $this->whereLike(...$args);
     }
 
     /**
      * Not like both.
      * @alias of whereNotLike()
      */
-    public function notLikeBoth(...$arguments)
+    public function notLikeBoth(...$args)
     {
-        $arguments[1] = ['%', $arguments[1], '%'];
+        $args[1] = ['%', $args[1], '%'];
 
-        return $this->whereNotLike(...$arguments);
+        return $this->whereNotLike(...$args);
     }
 
     /**
      * Exists.
      * @alias of whereExists()
      */
-    public function exists(...$arguments)
+    public function exists(...$args)
     {
-        return $this->whereExists(...$arguments);
+        return $this->whereExists(...$args);
     }
 
     /**
      * Not exists.
      * @alias of whereNotExists()
      */
-    public function notExists(...$arguments)
+    public function notExists(...$args)
     {
-        return $this->whereNotExists(...$arguments);
+        return $this->whereNotExists(...$args);
     }
 
     /**
      * Random.
      * @alias of whereRandom()
      */
-    public function random(...$arguments)
+    public function random(...$args)
     {
-        return $this->whereRandom(...$arguments);
+        return $this->whereRandom(...$args);
     }
 
     /**
      * Group.
      * @alias of groupBy()
      */
-    public function group(...$arguments)
+    public function group(...$args)
     {
-        return $this->groupBy(...$arguments);
+        return $this->groupBy(...$args);
     }
 
     /**
      * Order.
      * @alias of orderBy()
      */
-    public function order(...$arguments)
+    public function order(...$args)
     {
-        return $this->orderBy(...$arguments);
+        return $this->orderBy(...$args);
     }
 
     /**
      * Sort.
      * @alias of orderBy()
      */
-    public function sort(...$arguments)
+    public function sort(...$args)
     {
-        return $this->orderBy(...$arguments);
+        return $this->orderBy(...$args);
     }
 
     /**
@@ -299,54 +299,54 @@ trait QueryTrait
      * Eq.
      * @alias of whereEqual()
      */
-    public function eq(...$arguments)
+    public function eq(...$args)
     {
-        return $this->whereEqual(...$arguments);
+        return $this->whereEqual(...$args);
     }
 
     /**
      * Neq.
      * @alias of whereNotEqual()
      */
-    public function neq(...$arguments)
+    public function neq(...$args)
     {
-        return $this->whereNotEqual(...$arguments);
+        return $this->whereNotEqual(...$args);
     }
 
     /**
      * Lt.
      * @alias of whereLessThan()
      */
-    public function lt(...$arguments)
+    public function lt(...$args)
     {
-        return $this->whereLessThan(...$arguments);
+        return $this->whereLessThan(...$args);
     }
 
     /**
      * Lte.
      * @alias of whereLessThanEqual()
      */
-    public function lte(...$arguments)
+    public function lte(...$args)
     {
-        return $this->whereLessThanEqual(...$arguments);
+        return $this->whereLessThanEqual(...$args);
     }
 
     /**
      * Gt.
      * @alias of whereGreaterThan()
      */
-    public function gt(...$arguments)
+    public function gt(...$args)
     {
-        return $this->whereGreaterThan(...$arguments);
+        return $this->whereGreaterThan(...$args);
     }
 
     /**
      * Gte.
      * @alias of whereGreaterThanEqual()
      */
-    public function gte(...$arguments)
+    public function gte(...$args)
     {
-        return $this->whereGreaterThanEqual(...$arguments);
+        return $this->whereGreaterThanEqual(...$args);
     }
 
     /**
@@ -354,9 +354,9 @@ trait QueryTrait
      * @alias of selectMin()
      * @since 4.4
      */
-    public function min(...$arguments)
+    public function min(...$args)
     {
-        return $this->selectMin(...$arguments);
+        return $this->selectMin(...$args);
     }
 
     /**
@@ -364,9 +364,9 @@ trait QueryTrait
      * @alias of selectMax()
      * @since 4.4
      */
-    public function max(...$arguments)
+    public function max(...$args)
     {
-        return $this->selectMax(...$arguments);
+        return $this->selectMax(...$args);
     }
 
     /**
@@ -374,9 +374,9 @@ trait QueryTrait
      * @alias of selectAvg()
      * @since 4.4
      */
-    public function avg(...$arguments)
+    public function avg(...$args)
     {
-        return $this->selectAvg(...$arguments);
+        return $this->selectAvg(...$args);
     }
 
     /**
@@ -384,26 +384,26 @@ trait QueryTrait
      * @alias of selectSum()
      * @since 4.4
      */
-    public function sum(...$arguments)
+    public function sum(...$args)
     {
-        return $this->selectSum(...$arguments);
+        return $this->selectSum(...$args);
     }
 
     /**
      * Esc.
      * @alias of db.escape()
      */
-    public function esc(...$arguments)
+    public function esc(...$args)
     {
-        return $this->db->escape(...$arguments);
+        return $this->db->escape(...$args);
     }
 
     /**
      * Esc name.
      * @alias of db.escapeName()
      */
-    public function escName(...$arguments)
+    public function escName(...$args)
     {
-        return $this->db->escapeName(...$arguments);
+        return $this->db->escapeName(...$args);
     }
 }

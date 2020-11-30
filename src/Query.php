@@ -227,9 +227,9 @@ final class Query
      * @alias of aggregate()
      * @since 4.14
      */
-    public function selectAgg(...$arguments): self
+    public function selectAgg(...$args): self
     {
-        return $this->aggregate(...$arguments);
+        return $this->aggregate(...$args);
     }
 
     /**
@@ -237,9 +237,9 @@ final class Query
      * @alias of aggregate(), for count()
      * @since 4.14
      */
-    public function selectCount(...$arguments): self
+    public function selectCount(...$args): self
     {
-        return $this->aggregate('count', ...$arguments);
+        return $this->aggregate('count', ...$args);
     }
 
     /**
@@ -247,9 +247,9 @@ final class Query
      * @alias of aggregate(), for min()
      * @since 4.4
      */
-    public function selectMin(...$arguments): self
+    public function selectMin(...$args): self
     {
-        return $this->aggregate('min', ...$arguments);
+        return $this->aggregate('min', ...$args);
     }
 
     /**
@@ -257,9 +257,9 @@ final class Query
      * @alias of aggregate(), for max()
      * @since 4.4
      */
-    public function selectMax(...$arguments): self
+    public function selectMax(...$args): self
     {
-        return $this->aggregate('max', ...$arguments);
+        return $this->aggregate('max', ...$args);
     }
 
     /**
@@ -267,9 +267,9 @@ final class Query
      * @alias of aggregate(), for avg()
      * @since 4.4
      */
-    public function selectAvg(...$arguments): self
+    public function selectAvg(...$args): self
     {
-        return $this->aggregate('avg', ...$arguments);
+        return $this->aggregate('avg', ...$args);
     }
 
     /**
@@ -277,9 +277,9 @@ final class Query
      * @alias of aggregate(), for sum()
      * @since 4.4
      */
-    public function selectSum(...$arguments): self
+    public function selectSum(...$args): self
     {
-        return $this->aggregate('sum', ...$arguments);
+        return $this->aggregate('sum', ...$args);
     }
 
     /**
@@ -856,7 +856,7 @@ final class Query
         }
 
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
-        if ($op != null && (is_string($op) || is_int($op)) {
+        if ($op != null && (is_string($op) || is_int($op))) {
             $field .= ' ' . $this->prepareOp(strval($op), true);
         }
 
