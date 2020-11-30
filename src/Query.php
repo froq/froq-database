@@ -837,9 +837,9 @@ final class Query
 
     /**
      * Order by.
-     * @param  string|Sql           $field
-     * @param  string|int|bool|null $op
-     * @param  array|null           $options
+     * @param  string|Sql      $field
+     * @param  string|int|null $op
+     * @param  array|null      $options
      * @return self
      * @throws froq\database\QueryException
      */
@@ -856,12 +856,8 @@ final class Query
         }
 
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
-        if ($op !== null && $op !== '') {
-            if (is_string($op)) {
-                $field .= ' ' . $this->prepareOp($op, true);
-            } elseif (is_int($op) || is_bool($op)) {
-                $field .= ' ' . $this->prepareOp(strval($op ?: '0'), true);
-            }
+        if ($op != null && (is_string($op) || is_int($op)) {
+            $field .= ' ' . $this->prepareOp(strval($op), true);
         }
 
         // Extract options (with defaults).
@@ -1558,7 +1554,7 @@ final class Query
         $op = strtoupper(trim($op));
         if (in_array($op, $ops)) {
             return $op;
-        } elseif ($numerics && in_array($op, ['1', '-1', '0'])) { // 0 is internal.
+        } elseif ($numerics && in_array($op, ['1', '-1'])) {
             return ($op == '1') ? 'ASC' : 'DESC';
         }
 
