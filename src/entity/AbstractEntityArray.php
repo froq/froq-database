@@ -109,7 +109,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
 
     /**
      * Item.
-     * @aliasOf get()
+     * @alias of get()
      */
     public final function item(int $i): ?AbstractEntity
     {
