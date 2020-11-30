@@ -1281,14 +1281,15 @@ final class Query
      */
     public function toQueryString(string $key, int $indent = null): string
     {
-        $n = $t = ' '; $nt = ' '; $ts = '';
+        $n = $t = ' ';
+        $nt = ' '; $ts = '';
         if ($indent) {
             if ($indent == 1) {
                 $n = "\n"; $t = "\t";
                 $nt = "\n"; $ts = "\t";
             } elseif ($indent > 1) {
                 $n = "\n"; $t = str_repeat("\t", $indent - 1);
-                $nt = "\n".  $t; $ts = str_repeat("\t", $indent - 1 + 1); // Sub.
+                $nt = "\n" . $t; $ts = str_repeat("\t", $indent - 1 + 1); // Sub.
             }
         }
 
@@ -1302,21 +1303,25 @@ final class Query
                         . 'set target table first');
                 }
 
-                $ret = $t . 'SELECT';
-                foreach ($stack['select'] as $field) {
-                    $ret .= $n . $ts . $field;
+                if (isset($stack['select'])) {
+                    $select = [];
+                    foreach ($stack['select'] as $field) {
+                        $select[] = $n . $ts . $field;
+                    }
+
+                    $ret .= $t . 'SELECT' . join(',', $select);
+                    $ret .= $nt . 'FROM ' . $stack['table'];
+
+                    isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join', $indent);
+                    isset($stack['where'])  && $ret .= $nt . $this->toQueryString('where', $indent);
+                    isset($stack['group'])  && $ret .= $nt . $this->toQueryString('group', $indent);
+                    isset($stack['having']) && $ret .= $nt . $this->toQueryString('having', $indent);
+                    isset($stack['order'])  && $ret .= $nt . $this->toQueryString('order', $indent);
+                    isset($stack['limit'])  && $ret .= $nt . $this->toQueryString('limit', $indent);
+
+                    // Trim if no indent.
+                    ($indent > 1) || $ret = trim($ret);
                 }
-
-                $ret .= $nt . 'FROM ' . $stack['table'];
-
-                isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join', $indent);
-                isset($stack['where'])  && $ret .= $nt . $this->toQueryString('where', $indent);
-                isset($stack['group'])  && $ret .= $nt . $this->toQueryString('group', $indent);
-                isset($stack['having']) && $ret .= $nt . $this->toQueryString('having', $indent);
-                isset($stack['order'])  && $ret .= $nt . $this->toQueryString('order', $indent);
-                isset($stack['limit'])  && $ret .= $nt . $this->toQueryString('limit', $indent);
-
-                ($indent > 1) || $ret = trim($ret);
                 break;
             case 'where':
                 if (isset($stack['where'])) {
