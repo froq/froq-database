@@ -84,12 +84,12 @@ final class Transaction
         }
     }
 
-    /** @aliasOf begin() */
+    /** @alias of begin() */
     public function start() { $this->begin(); }
 
-    /** @aliasOf commit() */
+    /** @alias of commit() */
     public function end() { return $this->commit(); }
 
-    /** @aliasOf rollback() */
+    /** @alias of rollback() */
     public function cancel() { return $this->rollback(); }
 }

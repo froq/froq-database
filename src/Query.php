@@ -224,8 +224,8 @@ final class Query
 
     /**
      * Select agg.
-     * @aliasOf aggregate()
-     * @since   4.14
+     * @alias of aggregate()
+     * @since 4.14
      */
     public function selectAgg(...$arguments): self
     {
@@ -234,8 +234,8 @@ final class Query
 
     /**
      * Select count.
-     * @aliasOf aggregate() (for count())
-     * @since  4.14
+     * @alias of aggregate(), for count()
+     * @since 4.14
      */
     public function selectCount(...$arguments): self
     {
@@ -244,8 +244,8 @@ final class Query
 
     /**
      * Select min.
-     * @aliasOf aggregate() (for min())
-     * @since  4.4
+     * @alias of aggregate(), for min()
+     * @since 4.4
      */
     public function selectMin(...$arguments): self
     {
@@ -254,8 +254,8 @@ final class Query
 
     /**
      * Select max.
-     * @aliasOf aggregate() (for max())
-     * @since  4.4
+     * @alias of aggregate(), for max()
+     * @since 4.4
      */
     public function selectMax(...$arguments): self
     {
@@ -264,8 +264,8 @@ final class Query
 
     /**
      * Select avg.
-     * @aliasOf aggregate() (for avg())
-     * @since  4.4
+     * @alias of aggregate(), for avg()
+     * @since 4.4
      */
     public function selectAvg(...$arguments): self
     {
@@ -274,8 +274,8 @@ final class Query
 
     /**
      * Select sum.
-     * @aliasOf aggregate() (for sum())
-     * @since  4.4
+     * @alias of aggregate(), for sum()
+     * @since 4.4
      */
     public function selectSum(...$arguments): self
     {
