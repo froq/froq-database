@@ -1205,25 +1205,25 @@ final class Query
 
     /**
      * Sql.
-     * @param  string     $input
-     * @param  array|null $inputParams
+     * @param  string     $in
+     * @param  array|null $params
      * @return froq\database\sql\Sql
      */
-    public function sql(string $input, array $inputParams = null): Sql
+    public function sql(string $in, array $params = null): Sql
     {
-        $inputParams && $input = $this->prepare($input, $inputParams);
+        $params && $in = $this->prepare($in, $params);
 
-        return new Sql($input);
+        return new Sql($in);
     }
 
     /**
      * Name.
-     * @param  string $input
+     * @param  string $in
      * @return froq\database\sql\Name
      */
-    public function name(string $input): Name
+    public function name(string $in): Name
     {
-        return new Name($input);
+        return new Name($in);
     }
 
     /**
@@ -1486,20 +1486,20 @@ final class Query
 
     /**
      * Prepare.
-     * @param  string     $input
-     * @param  array|null $inputParams
+     * @param  string     $in
+     * @param  array|null $params
      * @return string
      * @throws froq\database\QueryException
      */
-    public function prepare(string $input, array $inputParams = null): string
+    public function prepare(string $in, array $params = null): string
     {
-        $input = trim($input);
+        $in = trim($in);
 
-        if ($input === '') {
+        if ($in === '') {
             throw new QueryException('Empty input given');
         }
 
-        return $this->db->prepare($input, $inputParams);
+        return $this->db->prepare($in, $params);
     }
 
     /**
