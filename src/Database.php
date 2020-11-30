@@ -841,7 +841,7 @@ final class Database
 
                     // Check whether a placeholder given or not (eg: ["a" => 1]).
                     if (strpbrk($key, '?:') === false) {
-                        $key = $key .' = ?';
+                        $key .= ' = ?';
                     }
 
                     $temp[$key] = $value;

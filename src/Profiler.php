@@ -138,7 +138,7 @@ final class Profiler
         if (isset($this->profiles['connection'])) {
             $totalTime += $this->profiles['connection']['time'];
             if (!$timeOnly) {
-                $totalTimes[] = 'connection(' . $totalTime . ')';
+                $totalTimes[] = 'connection('. $totalTime .')';
             }
         }
 
@@ -146,7 +146,7 @@ final class Profiler
             foreach ($this->profiles['query'] as $i => $profile) {
                 $totalTime += $profile['time'];
                 if (!$timeOnly) {
-                    $totalTimes[] = 'query(' . $i . ', ' . $profile['time'] . ')';
+                    $totalTimes[] = 'query('. $i .', '. $profile['time'] .')';
                 }
             }
         }
