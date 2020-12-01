@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\{DatabaseException, DatabaseConnectionException, DatabaseQueryException,
+use froq\database\{DatabaseException, DatabaseLinkException, DatabaseQueryException,
     Link, LinkException, Result, Profiler, Query};
 use froq\database\sql\{Sql, Name};
 use froq\{pager\Pager, logger\Logger};
@@ -39,10 +39,10 @@ final class Database
      * Constructor.
      *
      * Init a `Database` object initing a `Link` object and auto-connecting, or throw a
-     * `DatabaseConnectionException` if any connection error occurs.
+     * `DatabaseLinkException` if any connection error occurs.
      *
      * @param  array $options
-     * @throws froq\database\DatabaseConnectionException
+     * @throws froq\database\DatabaseLinkException
      */
     public function __construct(array $options)
     {
@@ -64,7 +64,7 @@ final class Database
             !isset($this->profiler) ? $this->link->connect()
                 : $this->profiler->profileConnection(fn() => $this->link->connect());
         } catch (LinkException $e) {
-            throw new DatabaseConnectionException($e);
+            throw new DatabaseLinkException($e);
         }
     }
 
