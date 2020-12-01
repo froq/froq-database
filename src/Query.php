@@ -79,6 +79,53 @@ final class Query
     }
 
     /**
+     * With.
+     * @param  string       $name
+     * @param  string|Query $query
+     * @param  array|null   $params
+     * @param  bool         $prepare
+     * @param  bool         $materialized
+     * @return self
+     * @since  5.0
+     */
+    public function with(string $name, $query, array $params = null, bool $prepare = true, bool $materialized = true): self
+    {
+        $name = $this->prepareField($name);
+
+        if ($prepare && is_string($query)) {
+            $query = $this->prepare($query, $params);
+        } elseif ($query instanceof Query) {
+            $query = $query->toString();
+        }
+
+        return $this->add('with', [$name, null, $query, $materialized]);
+    }
+
+    /**
+     * With recursive.
+     * @param  string       $name
+     * @param  string       $fields
+     * @param  string|Query $query
+     * @param  array|null   $params
+     * @param  bool         $prepare
+     * @return self
+     * @since  5.0
+     */
+    public function withRecursive(string $name, string $fields, $query, array $params = null, bool $prepare = true): self
+    {
+        $name = $this->prepareField($name);
+        $fields = $this->prepareFields($fields);
+
+        if ($prepare && is_string($query)) {
+            $query = $this->prepare($query, $params);
+        } elseif ($query instanceof Query) {
+            $query = $query->toString();
+        }
+
+        return $this->add('with', [$name, $fields, $query, null]);
+    }
+
+    /**
      * Table.
      * @param  string $table
      * @param  bool   $prepare
@@ -102,10 +149,12 @@ final class Query
     public function from($from, string $as = null, bool $prepare = true): self
     {
         if (is_string($from)) {
+            $prepare && $from = $this->prepareFields($from);
             if ($as != '') {
                 $from .= ' AS ' . $this->prepareField($as);
             }
-            return $this->table($from, $prepare);
+
+            return $this->add('from', $from, false);
         }
 
         if ($from instanceof Query) {
@@ -113,7 +162,8 @@ final class Query
             if ($as != '') {
                 $from .= ' AS ' . $this->prepareField($as);
             }
-            return $this->table($from, false);
+
+            return $this->add('from', $from, false);
         }
 
         throw new QueryException("Invalid from type '%s', valids are: string, %s", [gettype($query), Query::class]);
@@ -133,9 +183,7 @@ final class Query
             throw new QueryException('Empty select given');
         }
 
-        if ($prepare) {
-            $select = $this->prepareFields($select);
-        }
+        $prepare && $select = $this->prepareFields($select);
 
         return $this->add('select', $select);
     }
@@ -284,14 +332,19 @@ final class Query
 
     /**
      * Insert.
-     * @param  array     $data
-     * @param  bool|null $batch
-     * @param  bool|null $sequence
+     * @param  array|null $data
+     * @param  bool|null  $batch
+     * @param  bool|null  $sequence
      * @return self
      * @throws froq\database\QueryException
      */
-    public function insert(array $data, bool $batch = null, bool $sequence = null): self
+    public function insert(array $data = null, bool $batch = null, bool $sequence = null): self
     {
+        // For with()/into() calls.
+        if ($data === null) {
+            return $this->add('insert', '1', false);
+        }
+
         $fields = $values = [];
 
         if (!$batch) {
@@ -305,7 +358,7 @@ final class Query
         }
 
         if (!$fields || !$values) {
-            throw new QueryException('Both fields & values should not be empty for insert');
+            throw new QueryException('Both fields & values must not be empty for insert');
         }
 
         $fieldsCount = count($fields);
@@ -324,19 +377,27 @@ final class Query
 
     /**
      * Update.
-     * @param  array $data
+     * @param  array|null $data
+     * @param  bool       $escape
      * @return self
      * @throws froq\database\QueryException
      */
-    public function update(array $data): self
+    public function update(array $data = null, bool $escape = true): self
     {
+        // For with() calls.
+        if ($data === null) {
+            return $this->add('update', '1', false);
+        }
+
         if (!$data) {
             throw new QueryException('Empty data given for update');
         }
 
         $set = [];
         foreach ($data as $name => $value) {
-            $set[] = $this->db->escapeName($name) . ' = ' . $this->db->escape($value);
+            $set[] = $this->db->escapeName($name) . ' = ' . (
+                $escape ? $this->db->escape($value) : $value
+            );
         }
 
         return $this->add('update', $set, false);
@@ -349,6 +410,31 @@ final class Query
     public function delete(): self
     {
         return $this->add('delete', '1', false);
+    }
+
+    /**
+     * Into.
+     * @param  string $table
+     * @return self
+     * @since  5.0
+     */
+    public function into(string $table): self
+    {
+        $table = $this->prepareField($table);
+
+        return $this->add('into', $table, false);
+    }
+
+    /**
+     * Set.
+     * @param  array $data
+     * @param  bool  $escape
+     * @return self
+     * @since  5.0
+     */
+    public function set(array $data, bool $escape = true)
+    {
+        return $this->update($data, $escape);
     }
 
     /**
@@ -925,11 +1011,11 @@ final class Query
      */
     public function offset(int $offset): self
     {
-        if (!$this->has('limit')) {
-            throw new QueryException('Limit not set yet, call limit() first for offset');
+        if ($this->has('limit')) {
+            return $this->add('offset', abs($offset), false);
         }
 
-        return $this->add('offset', abs($offset), false);
+        throw new QueryException('Limit not set yet, call limit() first for offset');
     }
 
     /**
@@ -1222,6 +1308,38 @@ final class Query
     }
 
     /**
+     * Append.
+     * @param  string|Query|null $query
+     * @param  int|null          $indent
+     * @return self
+     * @since  5.0
+     */
+    public function append($query = null, int $indent = null): self
+    {
+        $query ??= $this;
+        $append = $this->toString($indent, false);
+        $query->reset(); // Clean behind.
+
+        return $this->add('append', $append);
+    }
+
+    /**
+     * Prepend.
+     * @param  string|Query|null $query
+     * @param  int|null          $indent
+     * @return self
+     * @since  5.0
+     */
+    public function prepend($query = null, int $indent = null): self
+    {
+        $query ??= $this;
+        $prepend = $this->toString($indent, false);
+        $query->reset(); // Clean behind.
+
+        return $this->add('prepend', $prepend);
+    }
+
+    /**
      * Reset.
      * @return self
      */
@@ -1244,25 +1362,41 @@ final class Query
     /**
      * To string.
      * @param  int|null $indent
+     * @param  bool     $trim @internal
      * @return string
      * @throws froq\database\QueryException
      */
-    public function toString(int $indent = null): string
+    public function toString(int $indent = null, bool $trim = true): string
     {
+        $n = $t = ' ';
+        if ($indent) {
+            $n = "\n"; $t = "\t";
+        }
+
         $ret = '';
 
-        if ($this->has('select')) {
-            $ret = $this->toQueryString('select', $indent);
-        } elseif ($this->has('insert')) {
-            $ret = $this->toQueryString('insert', $indent);
-        } elseif ($this->has('update')) {
-            $ret = $this->toQueryString('update', $indent);
-        } elseif ($this->has('delete')) {
-            $ret = $this->toQueryString('delete', $indent);
-        } else {
+        if ($this->has('with')) {
+            $ret = $this->toQueryString('with', $indent);
+        }
+
+        if ($this->has('append')) {
+            $ret .= $n . join($n . $t, $this->stack['append']);
+        }
+
+        foreach (['insert', 'update', 'delete', 'select'] as $skey) {
+            $this->has($skey) && $ret .= $this->toQueryString($skey, $indent);
+        }
+
+        if ($this->has('prepend')) {
+            $ret .= $n . join($n . $t, $this->stack['prepend']);
+        }
+
+        if ($ret == '') {
             throw new QueryException('No query ready to build, use select(), insert(), update(), delete(), '
                 . 'aggregate() etc. first');
         }
+
+        $trim && $ret = trim($ret);
 
         return $ret;
     }
@@ -1276,11 +1410,11 @@ final class Query
      */
     public function toQueryString(string $key, int $indent = null): string
     {
-        $n = $t = ' ';
+        $n = ' ';
         $nt = ' '; $ts = '';
         if ($indent) {
             if ($indent == 1) {
-                $n = "\n"; $t = "\t";
+                $n = "\n";
                 $nt = "\n"; $ts = "\t";
             } elseif ($indent > 1) {
                 $n = "\n"; $t = str_repeat("\t", $indent - 1);
@@ -1288,77 +1422,76 @@ final class Query
             }
         }
 
-        $stack = $this->stack;
         $ret = '';
 
+        $stack = $this->stack;
         switch ($key) {
-            case 'select':
-                if (empty($stack['table'])) {
-                    throw new QueryException('Table is not defined yet, call table() or from() to '
-                        . 'set target table first');
-                }
-
-                if (isset($stack['select'])) {
-                    $select = [];
-                    foreach ($stack['select'] as $field) {
-                        $select[] = $n . $ts . $field;
-                    }
-
-                    $ret .= $t . 'SELECT' . join(',', $select);
-                    $ret .= $nt . 'FROM ' . $stack['table'];
-
-                    isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join', $indent);
-                    isset($stack['where'])  && $ret .= $nt . $this->toQueryString('where', $indent);
-                    isset($stack['group'])  && $ret .= $nt . $this->toQueryString('group', $indent);
-                    isset($stack['having']) && $ret .= $nt . $this->toQueryString('having', $indent);
-                    isset($stack['order'])  && $ret .= $nt . $this->toQueryString('order', $indent);
-                    isset($stack['limit'])  && $ret .= $nt . $this->toQueryString('limit', $indent);
-
-                    // Trim if no indent.
-                    ($indent > 1) || $ret = trim($ret);
-                }
-                break;
-            case 'where':
-                if (isset($stack['where'])) {
-                    $wheres = $stack['where'];
-                    if (count($wheres) == 1) {
-                        $ret = 'WHERE (' . $wheres[0][0] . ')';
-                    } else {
-                        $ws = ''; $wsi = 0;
-                        foreach ($wheres as $i => [$where, $op]) {
-                            $nx   = ($wheres[$i + 1] ?? null);
-                            $nxnx = ($wheres[$i + 2] ?? null);
-                            $nxop = ($nx[1] ?? '');
-
-                            $ws .= $where;
-                            if ($nx) {
-                                $ws .= ' ' . $op . ' ';
-                            }
-
-                            if ($op != $nxop && $nxop && $nxnx) {
-                                $ws .= '(';
-                                $wsi++;
-                            }
+            case 'with':
+                if (isset($stack['with'])) {
+                    $with = [];
+                    foreach ($stack['with'] as [$name, $fields, $query, $materialized]) {
+                        if ($fields !== null) {
+                            $as = 'RECURSIVE ' . $name . ' (' . $fields . ') AS ';
+                        } else {
+                            $as = $name . ' AS ' . (!$materialized ? 'NOT MATERIALIZED ' : '');
                         }
 
-                        $ret = $ws . str_repeat(')', $wsi); // Join & close parentheses.
-                        $ret = ($indent > 1) ? 'WHERE (' . $n . $ts . $ret . $n . $t . ')'
-                                             : 'WHERE (' . $ret . ')';
+                        if ($indent >= 1) {
+                            $qs = explode("\n", $query, 2); // Find first tab space.
+                            $ts = str_repeat("\t", count($qs) < 2 ? 0 : strspn($qs[1], "\t"));
+
+                            $with[] = $as . '(' . $n . $ts . $query . $nt . ')';
+                        } else {
+                            $with[] = $as . '(' . $query . ')';
+                        }
                     }
+
+                    $ret = $nt . 'WITH ' . join(', ', $with);
+                }
+                break;
+            case 'select':
+                if (isset($stack['select'])) {
+                    $table = $stack['from'] ?? $stack['table'] ?? null;
+                    if (!$table) {
+                        throw new QueryException('Table is not defined yet, call from() or table() to continue');
+                    }
+
+                    if ($stack['select'] == ['*']) {
+                        $select = '*';
+                    } else {
+                        foreach ($stack['select'] as $field) {
+                            $select[] = $n . $ts . $field;
+                        }
+                        $select = join(',', $select);
+                    }
+
+                    $ret = $nt . 'SELECT ' . $select
+                         . $nt . 'FROM ' . $table;
+
+                    isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join');
+                    isset($stack['where'])  && $ret .= $nt . $this->toQueryString('where', $indent);
+                    isset($stack['group'])  && $ret .= $nt . $this->toQueryString('group');
+                    isset($stack['having']) && $ret .= $nt . $this->toQueryString('having');
+                    isset($stack['order'])  && $ret .= $nt . $this->toQueryString('order');
+                    isset($stack['limit'])  && $ret .= $nt . $this->toQueryString('limit');
                 }
                 break;
             case 'insert':
-                if (empty($stack['table'])) {
-                    throw new QueryException('Table is not defined yet, call table() or from() to '
-                        . 'set target table first');
-                }
-
                 if (isset($stack['insert'])) {
-                    [$fields, $values] = $stack['insert'];
+                    $table = $stack['into'] ?? $stack['table'] ?? null;
+                    if (!$table) {
+                        throw new QueryException('Table is not defined yet, call into() or table() to continue');
+                    }
 
-                    $ret = 'INSERT INTO ' . $stack['table']
-                        . $nt . '(' . $fields . ')' . $n . 'VALUES'
-                        . $nt . join(',' . $nt, $values);
+                    if ($stack['insert'] == '1') {
+                        $ret = $nt . 'INSERT INTO ' . $table;
+                    } else {
+                        [$fields, $values] = $stack['insert'];
+
+                        $ret = $nt . 'INSERT INTO ' . $table
+                             . $nt . '(' . $fields . ')'
+                             . $nt . 'VALUES' . $nt . join(',' . $nt, $values);
+                    }
 
                     if (isset($stack['conflict'])) {
                         ['fields' => $fields, 'action' => $action,
@@ -1366,10 +1499,10 @@ final class Query
 
                         switch ($driver = $this->db->link()->pdoDriver()) {
                             case 'pgsql':
-                                $ret .= $n . 'ON CONFLICT (' . $fields . ') DO ' . $action;
+                                $ret .= $nt . 'ON CONFLICT (' . $fields . ') DO ' . $action;
                                 break;
                             case 'mysql':
-                                $ret .= $n . 'ON DUPLICATE KEY ' . ($action = 'UPDATE');
+                                $ret .= $nt . 'ON DUPLICATE KEY ' . ($action = 'UPDATE');
                                 break;
                             default:
                                 throw new QueryException('Method conflict() available for PgSQL & MySQL only');
@@ -1394,54 +1527,86 @@ final class Query
                     }
 
                     if (isset($stack['return'])) {
-                        $ret .= $n . 'RETURNING ' . $stack['return']['fields'];
+                        $ret .= $nt . 'RETURNING ' . $stack['return']['fields'];
                     }
                 }
                 break;
             case 'update':
-                if (empty($stack['table'])) {
-                    throw new QueryException('Table is not defined yet, call table() or from() to '
-                        . 'set target table first');
-                }
-
                 if (isset($stack['update'])) {
-                    if (empty($stack['where'])) {
+                    $table = $stack['table'] ?? null;
+                    if (!$table) {
+                        throw new QueryException('Table is not defined yet, call table() to continue');
+                    }
+
+                    if (!isset($stack['where'])) {
                         throw new QueryException("No 'where' for 'update' yet, it must be provided for security "
                             . "reasons, call at least where('1=1') proving you're aware of what's going on");
                     }
 
-                    $ret = 'UPDATE ' . $stack['table'] . $n . 'SET '
-                         . join(', ' . $nt, $stack['update']);
+                    $ret = $nt . 'UPDATE ' . $stack['table']
+                         . $nt . 'SET ' . join(', ' . $nt, $stack['update']);
 
-                    isset($stack['where']) && $ret .= $n . $this->toQueryString('where', $indent);
-                    isset($stack['order']) && $ret .= $n . $this->toQueryString('order', $indent);
-                    isset($stack['limit']) && $ret .= $n . $this->toQueryString('limit', $indent);
+                    isset($stack['where']) && $ret .= $nt . $this->toQueryString('where', $indent);
+                    isset($stack['order']) && $ret .= $nt . $this->toQueryString('order');
+                    isset($stack['limit']) && $ret .= $nt . $this->toQueryString('limit');
 
                     if (isset($stack['return'])) {
-                        $ret .= $n . 'RETURNING ' . $stack['return']['fields'];
+                        $ret .= $nt . 'RETURNING ' . $stack['return']['fields'];
                     }
                 }
                 break;
             case 'delete':
-                if (empty($stack['table'])) {
-                    throw new QueryException('Table is not defined yet, call table() or from() to '
-                        . 'set target table first');
-                }
-
                 if (isset($stack['delete'])) {
-                    if (empty($stack['where'])) {
-                        throw new QueryException("No 'where' for 'update' yet, it must be provided for security "
+                    $table = $stack['from'] ?? $stack['table'] ?? null;
+                    if (!$table) {
+                        throw new QueryException('Table is not defined yet, call from() or table() to continue');
+                    }
+
+                    if (!isset($stack['where'])) {
+                        throw new QueryException("No 'where' for 'delete' yet, it must be provided for security "
                             . "reasons, call at least where('1=1') proving you're aware of what's going on");
                     }
 
-                    $ret = 'DELETE FROM ' . $stack['table'];
+                    $ret = $nt . 'DELETE FROM ' . $stack['table'];
 
-                    isset($stack['where']) && $ret .= $n . $this->toQueryString('where', $indent);
-                    isset($stack['order']) && $ret .= $n . $this->toQueryString('order', $indent);
-                    isset($stack['limit']) && $ret .= $n . $this->toQueryString('limit', $indent);
+                    isset($stack['where']) && $ret .= $nt . $this->toQueryString('where', $indent);
+                    isset($stack['order']) && $ret .= $nt . $this->toQueryString('order');
+                    isset($stack['limit']) && $ret .= $nt . $this->toQueryString('limit');
 
                     if (isset($stack['return'])) {
-                        $ret .= $n . 'RETURNING ' . $stack['return']['fields'];
+                        $ret .= $nt . 'RETURNING ' . $stack['return']['fields'];
+                    }
+                }
+                break;
+            case 'where':
+                if (isset($stack['where'])) {
+                    $wheres = $stack['where'];
+                    if (count($wheres) == 1) {
+                        $ret = 'WHERE ' . $wheres[0][0];
+                    } else {
+                        $ws = ''; $wsi = 0;
+                        foreach ($wheres as $i => [$where, $op]) {
+                            $nx   = ($wheres[$i + 1] ?? null);
+                            $nxnx = ($wheres[$i + 2] ?? null);
+                            $nxop = ($nx[1] ?? '');
+
+                            $ws .= $where;
+                            if ($nx) {
+                                $ws .= ' ' . $op . ' ';
+                            }
+
+                            if ($op != $nxop && $nxop && $nxnx) {
+                                $ws .= '(';
+                                $wsi++;
+                            }
+                        }
+
+                        $ret = $ws . str_repeat(')', $wsi); // Concat & close parentheses.
+                        if ($indent > 1) {
+                            $ret = 'WHERE (' . $n . $ts . $ret . $nt . ')';
+                        } else {
+                            $ret = 'WHERE (' . $ret . ')';
+                        }
                     }
                 }
                 break;
@@ -1537,11 +1702,8 @@ final class Query
             throw new QueryException('Empty fields given');
         }
 
-        if (!strpbrk($fields, ', ')) {
-            return $this->db->escapeName($fields);
-        }
-
-        return $this->db->escapeNames($fields);
+        return strpbrk($fields, ', ') ? $this->db->escapeNames($fields)
+                                      : $this->db->escapeName($fields);
     }
 
     /**
@@ -1631,7 +1793,7 @@ final class Query
      */
     private function has(string $key): bool
     {
-        return !empty($this->stack[$key]);
+        return isset($this->stack[$key]);
     }
 
     /**
@@ -1665,7 +1827,7 @@ final class Query
      */
     private function addTo(string $key, string $value): self
     {
-        if (empty($this->stack[$key])) {
+        if (!isset($this->stack[$key])) {
             $op = substr(trim($value), 0, strpos(trim($value), ' '));
             throw new QueryException("No '%s' statement yet in query stack to apply '%s' operator, "
                 . "call %s() first to apply", [$key, $op, $key]);
