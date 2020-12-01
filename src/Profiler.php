@@ -19,17 +19,14 @@ use froq\database\ProfilerException;
  */
 final class Profiler
 {
-    /**
-     * Profiles.
-     * @var array
-     */
+    /** @var array */
     private array $profiles = [];
 
-    /**
-     * Query count.
-     * @var int
-     */
+    /** @var int */
     private int $queryCount = 0;
+
+    /** @var array */
+    private static array $marks = [];
 
     /**
      * Constructor.
@@ -39,6 +36,7 @@ final class Profiler
 
     /**
      * Get profiles.
+     *
      * @return array
      */
     public function getProfiles(): array
@@ -48,6 +46,7 @@ final class Profiler
 
     /**
      * Get query count.
+     *
      * @return int
      */
     public function getQueryCount(): int
@@ -56,7 +55,18 @@ final class Profiler
     }
 
     /**
+     * Get marks.
+     *
+     * @return array
+     */
+    public static function getMarks(): array
+    {
+        return self::$marks;
+    }
+
+    /**
      * Profile.
+     *
      * @param  string   $mark
      * @param  callable $call
      * @param  ...      $callArgs
@@ -72,7 +82,8 @@ final class Profiler
     }
 
     /**
-     * Profile connection.
+     * Profile a connection.
+     *
      * @param  callable $call
      * @param  ...      $callArgs
      * @return void
@@ -83,7 +94,8 @@ final class Profiler
     }
 
     /**
-     * Profile query.
+     * Profile a query.
+     *
      * @param  string   $query
      * @param  callable $call
      * @param  ...      $callArgs
@@ -98,6 +110,7 @@ final class Profiler
 
     /**
      * Get last query.
+     *
      * @return ?float|?string|?array
      */
     public function getLastQuery(string $key = null)
@@ -108,6 +121,7 @@ final class Profiler
 
     /**
      * Get last query time.
+     *
      * @return ?float
      */
     public function getLastQueryTime(): ?float
@@ -117,6 +131,7 @@ final class Profiler
 
     /**
      * Get last query string.
+     *
      * @return ?string
      */
     public function getLastQueryString(): ?string
@@ -125,7 +140,8 @@ final class Profiler
     }
 
     /**
-     * Get total time.
+     * Get total time of existing profiles.
+     *
      * @param  bool $timeOnly
      * @return float|string
      */
@@ -133,7 +149,7 @@ final class Profiler
     {
         if (!$this->profiles) return;
 
-        $totalTime = 0.00;
+        $totalTime = 0.0;
         $totalTimes = [];
         if (isset($this->profiles['connection'])) {
             $totalTime += $this->profiles['connection']['time'];
@@ -159,7 +175,45 @@ final class Profiler
     }
 
     /**
-     * Start.
+     * Mark a profile entry returning its started time.
+     *
+     * @param  string $name
+     * @return float
+     * @throws froq\database\ProfilerException
+     * @since  5.0
+     */
+    public static function mark(string $name): float
+    {
+        if (isset(self::$marks[$name])) {
+            throw new ProfilerException("Existing mark name '%s' given, call unmark()", $name);
+        }
+
+        return self::$marks[$name] = microtime(true);
+    }
+
+    /**
+     * Unmark a profile entry returning its elapsed time.
+     *
+     * @param  string $name
+     * @return float
+     * @throws froq\database\ProfilerException
+     * @since  5.0
+     */
+    public static function unmark(string $name): float
+    {
+        if (!isset(self::$marks[$name])) {
+            throw new ProfilerException("Could not find a mark with given name '%s'", $name);
+        }
+
+        $time = round(microtime(true) - self::$marks[$name], 10);
+        unset(self::$marks[$name]);
+
+        return $time;
+    }
+
+    /**
+     * Start a profile entry for connection or query.
+     *
      * @param  string $mark
      * @return void
      * @throws froq\database\ProfilerException
@@ -169,12 +223,12 @@ final class Profiler
         $start = microtime(true);
         switch ($mark) {
             case 'connection':
-                $this->profiles[$mark] = ['start' => $start, 'end' => 0.00, 'time' => 0.00];
+                $this->profiles[$mark] = ['start' => $start, 'end' => 0.0, 'time' => 0.0];
                 break;
             case 'query':
                 $i = $this->queryCount;
                 if (isset($this->profiles[$mark][$i])) {
-                    $this->profiles[$mark][$i] += ['start' => $start, 'end' => 0.00, 'time' => 0.00];
+                    $this->profiles[$mark][$i] += ['start' => $start, 'end' => 0.0, 'time' => 0.0];
                 }
                 break;
             default:
@@ -183,7 +237,8 @@ final class Profiler
     }
 
     /**
-     * End.
+     * End a profile entry for connection or query.
+     *
      * @param  string $mark
      * @return void
      * @throws froq\database\ProfilerException
