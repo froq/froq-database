@@ -50,7 +50,7 @@ final class Database
         $logging = $options['logging'] ?? null;
         if ($logging) {
             $this->logger = new Logger($logging);
-            $this->logger->slowQuery = $options['logging']['slowQuery'] ?? null;
+            $this->logger->slowQuery = $options['logging']['slowQuery'] ?? null; // Keep.
         }
 
         // Default is false (no profiling).
@@ -61,7 +61,7 @@ final class Database
 
         $this->link = Link::init($options);
         try {
-            empty($this->profiler) ? $this->link->connect()
+            !isset($this->profiler) ? $this->link->connect()
                 : $this->profiler->profileConnection(fn() => $this->link->connect());
         } catch (LinkException $e) {
             throw new DatabaseConnectionException($e);
@@ -87,7 +87,7 @@ final class Database
      */
     public function logger(): Logger
     {
-        if (empty($this->logger)) {
+        if (!isset($this->logger)) {
             throw new DatabaseException("Database object has no logger, be sure 'logging' "
                 . "field is not empty in options");
         }
@@ -103,7 +103,7 @@ final class Database
      */
     public function profiler(): Profiler
     {
-        if (empty($this->profiler)) {
+        if (!isset($this->profiler)) {
             throw new DatabaseException("Database object has no profiler, be sure 'profiling' "
                 . "field is not empty or false in options");
         }
@@ -129,20 +129,18 @@ final class Database
         }
 
         try {
-            if (isset($this->logger->slowQuery)) {
-                $this->logger->slowQueryTick = microtime(true);
-            }
+            $slowQuery = isset($this->logger->slowQuery)
+                && Profiler::mark('@slowQuery');
 
             $pdo = $this->link->pdo();
-            $pdoStatement = empty($this->profiler) ? $pdo->query($query)
+            $pdoStatement = !isset($this->profiler) ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
 
-            if (isset($this->logger->slowQuery)) {
-                $time = microtime(true) - $this->logger->slowQueryTick;
+            if ($slowQuery) {
+                $time = Profiler::unmark('@slowQuery');
                 if ($time > $this->logger->slowQuery) {
-                    $this->logger->logWarn(sprintf('Slow query: time %.6F, %s', $time, $query));
+                    $this->logger->logWarn('Slow query: time '. $time .', '. $query);
                 }
-                $this->logger->slowQueryTick = null;
             }
 
             return new Result($pdo, $pdoStatement, $options);
@@ -169,9 +167,19 @@ final class Database
         }
 
         try {
+            $slowQuery = isset($this->logger->slowQuery)
+                && Profiler::mark('@slowQuery');
+
             $pdo = $this->link->pdo();
-            $pdoResult = empty($this->profiler) ? $pdo->exec($query)
+            $pdoResult = !isset($this->profiler) ? $pdo->exec($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
+
+            if ($slowQuery) {
+                $time = Profiler::unmark('@slowQuery');
+                if ($time > $this->logger->slowQuery) {
+                    $this->logger->logWarn('Slow query: time '. $time .', '. $query);
+                }
+            }
 
             return ($pdoResult !== false) ? $pdoResult : null;
         } catch (PDOException $e) {

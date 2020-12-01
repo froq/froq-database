@@ -185,7 +185,7 @@ final class Profiler
     public static function mark(string $name): float
     {
         if (isset(self::$marks[$name])) {
-            throw new ProfilerException("Existing mark name '%s' given, call unmark()", $name);
+            throw new ProfilerException("Existing mark name '%s' given, call unmark() to drop it", $name);
         }
 
         return self::$marks[$name] = microtime(true);
