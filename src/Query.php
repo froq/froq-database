@@ -807,9 +807,7 @@ final class Query
      */
     public function having(string $query, array $queryParams = null): self
     {
-        if ($queryParams) {
-            $query = $this->prepare($query, $queryParams);
-        }
+        $queryParams && $query = $this->prepare($query, $queryParams);
 
         return $this->add('having', $query, false);
     }
