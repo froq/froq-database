@@ -52,9 +52,11 @@ final class Database
      */
     public function __construct(array $options)
     {
+        // Default is null (no logging).
         $logging = $options['logging'] ?? null;
         if ($logging) {
             $this->logger = new Logger($logging);
+            $this->logger->slowQuery = $options['logging']['slowQuery'] ?? null;
         }
 
         // Default is false (no profiling).
@@ -128,9 +130,21 @@ final class Database
         }
 
         try {
+            if (isset($this->logger->slowQuery)) {
+                $this->logger->slowQueryTick = microtime(true);
+            }
+
             $pdo = $this->link->getPdo();
             $pdoStatement = empty($this->profiler) ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
+
+            if (isset($this->logger->slowQuery)) {
+                $time = microtime(true) - $this->logger->slowQueryTick;
+                if ($time > $this->logger->slowQuery) {
+                    $this->logger->logWarn(sprintf('Slow query: time %.6F, %s', $time, $query));
+                }
+                $this->logger->slowQueryTick = null;
+            }
 
             return new Result($pdo, $pdoStatement, $options);
         } catch (PDOException $e) {
