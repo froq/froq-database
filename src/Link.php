@@ -22,33 +22,22 @@ use PDO, PDOException;
  */
 final class Link
 {
-    /**
-     * Instance.
-     * @var self
-     */
+    /** @var self */
     private static self $instance;
 
-    /**
-     * PDO.
-     * @var ?PDO
-     */
+    /** @var ?PDO */
     private ?PDO $pdo = null;
 
-    /**
-     * PDO driver.
-     * @var ?string
-     */
+    /** @var ?string */
     private ?string $pdoDriver = null;
 
-    /**
-     * Options.
-     * @var array<string, any>
-     */
+    /** @var array */
     private array $options;
 
     /**
      * Constructor.
-     * @param array<string, any> $options
+     *
+     * @param array $options
      */
     private function __construct(array $options)
     {
@@ -56,34 +45,38 @@ final class Link
     }
 
     /**
-     * Get pdo.
+     * Get pdo property.
+     *
      * @return ?PDO
      */
-    public function getPdo(): ?PDO
+    public function pdo(): ?PDO
     {
         return $this->pdo;
     }
 
     /**
-     * Get pdo driver.
+     * Get pdo driver property.
+     *
      * @return ?string
      */
-    public function getPdoDriver(): ?string
+    public function pdoDriver(): ?string
     {
         return $this->pdoDriver;
     }
 
     /**
-     * Get options.
-     * @return array<string, any>
+     * Get options property.
+     *
+     * @return array
      */
-    public function getOptions(): array
+    public function options(): array
     {
         return $this->options;
     }
 
     /**
-     * Connect.
+     * Connect with given options and set timezone & charset if provided.
+     *
      * @return void
      */
     public function connect(): void
@@ -127,7 +120,8 @@ final class Link
     }
 
     /**
-     * Disconnect.
+     * Disconnect and set pdo property to null.
+     *
      * @return void
      */
     public function disconnect(): void
@@ -137,6 +131,7 @@ final class Link
 
     /**
      * Is connected.
+     *
      * @return bool
      */
     public function isConnected(): bool
@@ -145,7 +140,8 @@ final class Link
     }
 
     /**
-     * Set charset.
+     * Set charset for current link.
+     *
      * @param  string $charset
      * @return void
      */
@@ -155,7 +151,8 @@ final class Link
     }
 
     /**
-     * Set timezone.
+     * Set timezone for current link.
+     *
      * @param  string $timezone
      * @return void
      */
@@ -169,8 +166,9 @@ final class Link
     }
 
     /**
-     * Init.
-     * @param  array<string, any> $options
+     * Init a single link.
+     *
+     * @param  array $options
      * @return self
      */
     public static function init(array $options): self
@@ -180,8 +178,9 @@ final class Link
 
     /**
      * Prepare options.
-     * @param  array<string, any> $options
-     * @return array<string, any>
+     *
+     * @param  array $options
+     * @return array
      * @throws froq\database\LinkException
      */
     private static function prepareOptions(array $options): array

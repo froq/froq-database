@@ -194,7 +194,7 @@ final class Query
         $select = null;
         $selectType = isset($fields[0]) ? 1 : 2; // Simple check set/map array.
 
-        switch ($this->db->getLink()->getPdoDriver()) {
+        switch ($this->db->link()->pdoDriver()) {
             case 'pgsql':
                 $func = ($selectType == 1) ? 'json_build_array' : 'json_build_object';
                 break;
@@ -721,7 +721,7 @@ final class Query
         if (!$ilike) {
             $where = $field . ' LIKE ' . $search;
         } else {
-            $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
+            $where = ($this->db->link()->pdoDriver() == 'pgsql')
                 ? sprintf('%s ILIKE %s', $field, $search)
                 : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
         }
@@ -750,9 +750,9 @@ final class Query
         if (!$ilike) {
             $where = $field . ' NOT LIKE ' . $search;
         } else {
-            $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
-                   ? sprintf('%s NOT ILIKE %s', $field, $search)
-                   : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
+            $where = ($this->db->link()->pdoDriver() == 'pgsql')
+                ? sprintf('%s NOT ILIKE %s', $field, $search)
+                : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
         }
 
         return $this->where($where, null, $op);
@@ -794,7 +794,7 @@ final class Query
      */
     public function whereRandom(float $value = 0.01, string $op = null): self
     {
-        return ($this->db->getLink()->getPdoDriver() == 'pgsql')
+        return ($this->db->link()->pdoDriver() == 'pgsql')
              ? $this->where('random() < ' . $value, $op)
              : $this->where('rand() < ' . $value, $op);
     }
@@ -825,7 +825,7 @@ final class Query
         $field = $this->prepareFields($field);
 
         if ($rollup) {
-            $field .= ($this->db->getLink()->getPdoDriver() == 'mysql')
+            $field .= ($this->db->link()->pdoDriver() == 'mysql')
                     ? ' WITH ROLLUP'
                     : ' ROLLUP (' . (
                         is_string($rollup) ? $this->prepareFields($rollup) : $field
@@ -904,7 +904,7 @@ final class Query
      */
     public function orderByRandom(): self
     {
-        return ($this->db->getLink()->getPdoDriver() == 'pgsql')
+        return ($this->db->link()->pdoDriver() == 'pgsql')
             ? $this->add('order', 'random()') : $this->add('order', 'rand()');
     }
 
@@ -1369,7 +1369,7 @@ final class Query
                         ['fields' => $fields, 'action' => $action,
                          'update' => $update, 'where' => $where] = $stack['conflict'];
 
-                        switch ($driver = $this->db->getLink()->getPdoDriver()) {
+                        switch ($driver = $this->db->link()->pdoDriver()) {
                             case 'pgsql':
                                 $ret .= $n . 'ON CONFLICT (' . $fields . ') DO ' . $action;
                                 break;
@@ -1575,7 +1575,7 @@ final class Query
     {
         $collation = trim($collation);
 
-        if ($this->db->getLink()->getPdoDriver() == 'pgsql') {
+        if ($this->db->link()->pdoDriver() == 'pgsql') {
             $collation = '"' . trim($collation, '"') . '"';
         }
 

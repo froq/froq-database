@@ -26,27 +26,21 @@ use PDO, PDOStatement, PDOException, Throwable;
  */
 final class Database
 {
-    /**
-     * Link.
-     * @var froq\database\Link
-     */
+    /** @var froq\database\Link */
     private Link $link;
 
-    /**
-     * Logger.
-     * @var froq\logger\Logger|null
-     * @since 4.9
-     */
+    /** @var froq\logger\Logger|null */
     private Logger $logger;
 
-    /**
-     * Profiler.
-     * @var froq\database\Profiler|null.
-     */
+    /** @var froq\database\Profiler|null. */
     private Profiler $profiler;
 
     /**
      * Constructor.
+     *
+     * Init a `Database` object initing a `Link` object and auto-connecting, or throw a
+     * `DatabaseConnectionException` if any connection error occurs.
+     *
      * @param  array $options
      * @throws froq\database\DatabaseConnectionException
      */
@@ -75,21 +69,23 @@ final class Database
     }
 
     /**
-     * Get link.
+     * Get link property.
+     *
      * @return froq\database\Link
      */
-    public function getLink(): Link
+    public function link(): Link
     {
         return $this->link;
     }
 
     /**
-     * Get logger.
+     * Get logger property or throw a `DatabaseException` if no logger.
+     *
      * @return froq\logger\Logger
      * @throws froq\database\DatabaseException
      * @since  4.9
      */
-    public function getLogger(): Logger
+    public function logger(): Logger
     {
         if (empty($this->logger)) {
             throw new DatabaseException("Database object has no logger, be sure 'logging' "
@@ -100,11 +96,12 @@ final class Database
     }
 
     /**
-     * Get profiler.
+     * Get profiler property or throw a `DatabaseException` if no profiler.
+     *
      * @return froq\database\Profiler
      * @throws froq\database\DatabaseException
      */
-    public function getProfiler(): Profiler
+    public function profiler(): Profiler
     {
         if (empty($this->profiler)) {
             throw new DatabaseException("Database object has no profiler, be sure 'profiling' "
@@ -115,12 +112,14 @@ final class Database
     }
 
     /**
-     * Query.
+     * Run an SQL query and returning its result as `Result` object, or throw a
+     * `DatabaseQueryException` if any query error occurs.
+     *
      * @param  string     $query
      * @param  array|null $queryParams
      * @param  array|null $options
      * @return froq\database\Result
-     * @throws froq\database\DatabaseException, froq\database\DatabaseQueryException
+     * @throws froq\database\DatabaseException|DatabaseQueryException
      */
     public function query(string $query, array $queryParams = null, array $options = null): Result
     {
@@ -134,7 +133,7 @@ final class Database
                 $this->logger->slowQueryTick = microtime(true);
             }
 
-            $pdo = $this->link->getPdo();
+            $pdo = $this->link->pdo();
             $pdoStatement = empty($this->profiler) ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
 
@@ -153,10 +152,13 @@ final class Database
     }
 
     /**
-     * Execute.
+     * Run an SQL query and returning its result as `int` or `null`, or throw a
+     * `DatabaseQueryException` if any error occurs.
+     *
      * @param  string     $query
      * @param  array|null $queryParams
      * @return ?int
+     * @throws froq\database\DatabaseException|DatabaseQueryException
      * @since  4.3
      */
     public function execute(string $query, array $queryParams = null): ?int
@@ -167,7 +169,7 @@ final class Database
         }
 
         try {
-            $pdo = $this->link->getPdo();
+            $pdo = $this->link->pdo();
             $pdoResult = empty($this->profiler) ? $pdo->exec($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
 
@@ -178,7 +180,8 @@ final class Database
     }
 
     /**
-     * Get.
+     * Get a single row running given query as `array|object` or return `null` if no match.
+     *
      * @param  string                    $query
      * @param  array|null                $queryParams
      * @param  string|array<string>|null $fetch
@@ -190,7 +193,8 @@ final class Database
     }
 
     /**
-     * Get all.
+     * Get all rows running given query as `array` or return `null` if no matches.
+     *
      * @param  string                    $query
      * @param  array|null                $queryParams
      * @param  string|array<string>|null $fetch
@@ -202,7 +206,8 @@ final class Database
     }
 
     /**
-     * Select.
+     * Select a row from given table as `array|object` or return `null` if no match.
+     *
      * @param  string                    $table
      * @param  string                    $fields
      * @param  string|array|null         $where
@@ -228,7 +233,8 @@ final class Database
     }
 
     /**
-     * Select all.
+     * Select all rows from given table as `array` or return `null` if no matches.
+     *
      * @param  string                    $table
      * @param  string                    $fields
      * @param  string|array|null         $where
@@ -255,7 +261,8 @@ final class Database
     }
 
     /**
-     * Insert.
+     * Insert row/rows to given table.
+     *
      * @param  string $table
      * @param  array  $data
      * @param  array  $options
@@ -320,7 +327,8 @@ final class Database
     }
 
     /**
-      * Update.
+     * Update row/rows on given table.
+     *
      * @param  string            $table
      * @param  array             $data
      * @param  string|array|null $where
@@ -368,7 +376,8 @@ final class Database
     }
 
     /**
-     * Delete.
+     * Delete row/rows from given table.
+     *
      * @param  string            $table
      * @param  string|array|null $where
      * @param  array|null        $whereParams
@@ -415,7 +424,8 @@ final class Database
     }
 
     /**
-     * Count.
+     * Count all rows on given table with/without given conditions.
+     *
      * @param  string            $table
      * @param  string|array|null $where
      * @param  array|null        $whereParams
@@ -434,20 +444,22 @@ final class Database
     }
 
     /**
-     * Count query.
+     * Run a count query with/without given conditions.
+     *
      * @param  string     $query
      * @param  array|null $queryParams
      * @return int
      */
     public function countQuery(string $query, array $queryParams = null): int
     {
-        $result = $this->get('SELECT count(*) AS c FROM (' . $query . ') AS t', $queryParams, 'array');
+        $result = $this->get('SELECT count(*) AS c FROM ('. $query .') AS t', $queryParams, 'array');
 
         return (int) ($result['c'] ?? 0);
     }
 
     /**
-     * Transaction.
+     * Run a transaction or return a `Transaction` object.
+     *
      * @param  callable|null $call
      * @param  callable|null $callError
      * @return any
@@ -455,8 +467,9 @@ final class Database
      */
     public function transaction(callable $call = null, callable $callError = null)
     {
-        $transaction = new Transaction($this->link->getPdo());
+        $transaction = new Transaction($this->link->pdo());
 
+        // Return transaction object.
         if ($call == null) {
             return $transaction;
         }
@@ -480,17 +493,19 @@ final class Database
     }
 
     /**
-     * Quote.
+     * Quote an input.
+     *
      * @param  string $in
      * @return string
      */
     public function quote(string $in): string
     {
-        return "'" . $in . "'";
+        return "'". $in ."'";
     }
 
     /**
-     * Quote name.
+     * Quote a name input.
+     *
      * @param  string $in
      * @return string
      */
@@ -524,7 +539,7 @@ final class Database
                    $this->quoteNames(substr($in, $pos + 1));
         }
 
-        $pdoDriver = $this->link->getPdoDriver();
+        $pdoDriver = $this->link->pdoDriver();
         if ($pdoDriver == 'pgsql') {
             // Cast notations (eg: foo::int).
             if ($pos = strpos($in, '::')) {
@@ -550,7 +565,8 @@ final class Database
     }
 
     /**
-     * Quote names.
+     * Quote names in given input.
+     *
      * @param  string $in
      * @return string
      * @since  4.14
@@ -573,7 +589,8 @@ final class Database
     }
 
     /**
-     * Escape.
+     * Escape an input with/without given format.
+     *
      * @param  any         $in
      * @param  string|null $format
      * @return any
@@ -630,7 +647,8 @@ final class Database
     }
 
     /**
-     * Escape string.
+     * Escape a string input.
+     *
      * @param  string $in
      * @param  bool   $quote
      * @param  string $extra
@@ -638,7 +656,7 @@ final class Database
      */
     public function escapeString(string $in, bool $quote = true, string $extra = ''): string
     {
-        $out = $this->link->getPdo()->quote($in);
+        $out = $this->link->pdo()->quote($in);
 
         if (!$quote) {
             $out = trim($out, "'");
@@ -651,7 +669,8 @@ final class Database
     }
 
     /**
-     * Escape like string.
+     * Escape like string input.
+     *
      * @param  string $in
      * @param  bool   $quote
      * @return string
@@ -662,13 +681,14 @@ final class Database
     }
 
     /**
-     * Escape name.
+     * Escape a name input.
+     *
      * @param  string $in
      * @return string
      */
     public function escapeName(string $in): string
     {
-        switch ($this->link->getPdoDriver()) {
+        switch ($this->link->pdoDriver()) {
             case 'mysql': $in = str_replace('`', '``', $in); break;
             case 'mssql': $in = str_replace(']', ']]', $in); break;
                  default: $in = str_replace('"', '""', $in);
@@ -678,7 +698,8 @@ final class Database
     }
 
     /**
-     * Escape names.
+     * Escape names in given input.
+     *
      * @param  string $in
      * @return string
      */
@@ -704,7 +725,8 @@ final class Database
     }
 
     /**
-     * Prepare.
+     * Prepare given input returning a `string`.
+     *
      * @param  string     $in
      * @param  array|null $params
      * @return string
@@ -772,7 +794,8 @@ final class Database
     }
 
     /**
-     * Prepare statement.
+     * Prepare statement input returning a `PDOStatement` object.
+     *
      * @param  string $in
      * @return PDOStatement
      * @throws froq\database\DatabaseException
@@ -785,14 +808,15 @@ final class Database
         }
 
         try {
-            return $this->link->getPdo()->prepare($out);
+            return $this->link->pdo()->prepare($out);
         } catch (PDOException $e) {
             throw new DatabaseException($e);
         }
     }
 
     /**
-     * Init sql.
+     * Init an `Sql` object with/without given params.
+     *
      * @param  string     $in
      * @param  array|null $params
      * @return froq\database\sql\Sql
@@ -805,7 +829,8 @@ final class Database
     }
 
     /**
-     * Init query.
+     * Init a `Query` object.
+     *
      * @param  string|null $table
      * @return froq\database\Query
      */
@@ -815,21 +840,23 @@ final class Database
     }
 
     /**
-     * Init pager.
-     * @param  int|null $totalRecords
+     * Init a `Pager` object.
+     *
+     * @param  int|null $count
      * @param  int|null $limit
      * @return froq\pager\Pager
      */
-    public function initPager(int $totalRecords = null, int $limit = null): Pager
+    public function initPager(int $count = null, int $limit = null): Pager
     {
         $pager = new Pager();
-        $pager->run($totalRecords, $limit);
+        $pager->run($count, $limit);
 
         return $pager;
     }
 
     /**
-     * Prepare where input.
+     * Prepare a where input.
+     *
      * @param  string|array $in
      * @param  any|null     $params
      * @return array
@@ -875,7 +902,8 @@ final class Database
     }
 
     /**
-     * Prepare prepare input.
+     * Prepare a prepare input escaping names only eg. `@id`.
+     *
      * @param  string $in
      * @return string
      */
