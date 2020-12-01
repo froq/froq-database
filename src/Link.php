@@ -83,16 +83,6 @@ final class Link
     }
 
     /**
-     * Init.
-     * @param  array<string, any> $options
-     * @return self
-     */
-    public static function init(array $options): self
-    {
-        return self::$instance ??= new self($options);
-    }
-
-    /**
      * Connect.
      * @return void
      */
@@ -123,8 +113,10 @@ final class Link
                 }
                 throw new LinkException($e);
             } finally {
-                // Safety (for dumping etc.)..
-                $this->options['dsn']  = preg_replace('~dbname=[^;]+~', 'dbname=<****>', $this->options['dsn']);
+                // Safety, for dumping etc.
+                $this->options['dsn'] = preg_replace(
+                    '~dbname=[^;]+~', 'dbname=<****>', $this->options['dsn']
+                );
                 $this->options['user'] = '<****>';
                 $this->options['pass'] = '<****>';
             }
@@ -159,7 +151,7 @@ final class Link
      */
     public function setCharset(string $charset): void
     {
-        $this->pdo->exec('SET NAMES '. $this->pdo->quote($charset));
+        $this->pdo->exec('SET NAMES ' . $this->pdo->quote($charset));
     }
 
     /**
@@ -170,10 +162,20 @@ final class Link
     public function setTimezone(string $timezone): void
     {
         if ($this->pdoDriver == 'mysql') {
-            $this->pdo->exec('SET time_zone = '. $this->pdo->quote($timezone));
+            $this->pdo->exec('SET time_zone = ' . $this->pdo->quote($timezone));
         } else {
-            $this->pdo->exec('SET TIME ZONE '. $this->pdo->quote($timezone));
+            $this->pdo->exec('SET TIME ZONE ' . $this->pdo->quote($timezone));
         }
+    }
+
+    /**
+     * Init.
+     * @param  array<string, any> $options
+     * @return self
+     */
+    public static function init(array $options): self
+    {
+        return self::$instance ??= new self($options);
     }
 
     /**
