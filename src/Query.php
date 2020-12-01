@@ -551,8 +551,10 @@ final class Query
      */
     public function where(string $where, array $params = null, string $op = null): self
     {
-        return $this->add('where', [$this->prepare($where, $params),
-            $this->prepareOp($op ?: 'AND')]); // @default=AND
+        $where = $this->prepare($where, $params);
+        $op = $this->prepareOp($op ?: 'AND'); // @default=AND
+
+        return $this->add('where', [$where, $op]);
     }
 
     /**

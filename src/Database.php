@@ -116,14 +116,14 @@ final class Database
      * `DatabaseQueryException` if any query error occurs.
      *
      * @param  string     $query
-     * @param  array|null $queryParams
+     * @param  array|null $params
      * @param  array|null $options
      * @return froq\database\Result
      * @throws froq\database\DatabaseException|DatabaseQueryException
      */
-    public function query(string $query, array $queryParams = null, array $options = null): Result
+    public function query(string $query, array $params = null, array $options = null): Result
     {
-        $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
+        $query = $params ? $this->prepare($query, $params) : trim($query);
         if ($query == '') {
             throw new DatabaseException("Empty query given to '%s()'", __method__);
         }
@@ -154,14 +154,14 @@ final class Database
      * `DatabaseQueryException` if any error occurs.
      *
      * @param  string     $query
-     * @param  array|null $queryParams
+     * @param  array|null $params
      * @return ?int
      * @throws froq\database\DatabaseException|DatabaseQueryException
      * @since  4.3
      */
-    public function execute(string $query, array $queryParams = null): ?int
+    public function execute(string $query, array $params = null): ?int
     {
-        $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
+        $query = $params ? $this->prepare($query, $params) : trim($query);
         if ($query == '') {
             throw new DatabaseException("Empty query given to '%s()'", __method__);
         }
@@ -191,26 +191,26 @@ final class Database
      * Get a single row running given query as `array|object` or return `null` if no match.
      *
      * @param  string                    $query
-     * @param  array|null                $queryParams
+     * @param  array|null                $params
      * @param  string|array<string>|null $fetch
      * @return ?array|?object
      */
-    public function get(string $query, array $queryParams = null, $fetch = null)
+    public function get(string $query, array $params = null, $fetch = null)
     {
-        return $this->query($query, $queryParams, ['fetch' => $fetch])->row(0);
+        return $this->query($query, $params, ['fetch' => $fetch])->row(0);
     }
 
     /**
      * Get all rows running given query as `array` or return `null` if no matches.
      *
      * @param  string                    $query
-     * @param  array|null                $queryParams
+     * @param  array|null                $params
      * @param  string|array<string>|null $fetch
      * @return ?array
      */
-    public function getAll(string $query, array $queryParams = null, $fetch = null): ?array
+    public function getAll(string $query, array $params = null, $fetch = null): ?array
     {
-        return $this->query($query, $queryParams, ['fetch' => $fetch])->rows();
+        return $this->query($query, $params, ['fetch' => $fetch])->rows();
     }
 
     /**
@@ -219,19 +219,19 @@ final class Database
      * @param  string                    $table
      * @param  string                    $fields
      * @param  string|array|null         $where
-     * @param  any|null                  $whereParams
+     * @param  any|null                  $params
      * @param  string|null               $order
      * @param  string|array<string>|null $fetch
      * @return ?array|?object
      */
-    public function select(string $table, string $fields = '*', $where = null, $whereParams = null,
+    public function select(string $table, string $fields = '*', $where = null, $params = null,
         string $order = null, $fetch = null)
     {
         $query = $this->initQuery($table)->select($fields);
 
         if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
+            [$where, $params] = $this->prepareWhereInput($where, $params);
+            $query->where($where, $params);
         }
 
         $order && $query->orderBy($order);
@@ -246,20 +246,20 @@ final class Database
      * @param  string                    $table
      * @param  string                    $fields
      * @param  string|array|null         $where
-     * @param  any|null                  $whereParams
+     * @param  any|null                  $params
      * @param  string|null               $order
      * @param  int|array<int>|null       $limit
      * @param  string|array<string>|null $fetch
      * @return ?array
      */
-    public function selectAll(string $table, string $fields = '*', $where = null, $whereParams = null,
+    public function selectAll(string $table, string $fields = '*', $where = null, $params = null,
         string $order = null, $limit = null, $fetch = null): ?array
     {
         $query = $this->initQuery($table)->select($fields);
 
         if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
+            [$where, $params] = $this->prepareWhereInput($where, $params);
+            $query->where($where, $params);
         }
 
         $order && $query->orderBy($order);
@@ -340,11 +340,11 @@ final class Database
      * @param  string            $table
      * @param  array             $data
      * @param  string|array|null $where
-     * @param  any|null          $whereParams
+     * @param  any|null          $params
      * @param  array|null        $options
      * @return int|array|object|null
      */
-    public function update(string $table, array $data, $where = null, $whereParams = null, array $options = null)
+    public function update(string $table, array $data, $where = null, $params = null, array $options = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
@@ -355,8 +355,8 @@ final class Database
         $query = $this->initQuery($table)->update($data);
 
         if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
+            [$where, $params] = $this->prepareWhereInput($where, $params);
+            $query->where($where, $params);
         }
 
         $return && $query->return($return, $fetch);
@@ -388,11 +388,11 @@ final class Database
      *
      * @param  string            $table
      * @param  string|array|null $where
-     * @param  array|null        $whereParams
+     * @param  array|null        $params
      * @param  array|null        $options
      * @return int|array|object|null
      */
-    public function delete(string $table, $where = null, $whereParams = null, array $options = null)
+    public function delete(string $table, $where = null, $params = null, array $options = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
@@ -403,8 +403,8 @@ final class Database
         $query = $this->initQuery($table)->delete();
 
         if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
+            [$where, $params] = $this->prepareWhereInput($where, $params);
+            $query->where($where, $params);
         }
 
         $return && $query->return($return, $fetch);
@@ -436,16 +436,16 @@ final class Database
      *
      * @param  string            $table
      * @param  string|array|null $where
-     * @param  array|null        $whereParams
+     * @param  array|null        $params
      * @return int
      */
-    public function count(string $table, $where = null, $whereParams = null): int
+    public function count(string $table, $where = null, $params = null): int
     {
         $query = $this->initQuery($table);
 
         if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
+            [$where, $params] = $this->prepareWhereInput($where, $params);
+            $query->where($where, $params);
         }
 
         return $query->count();
@@ -455,12 +455,12 @@ final class Database
      * Run a count query with/without given conditions.
      *
      * @param  string     $query
-     * @param  array|null $queryParams
+     * @param  array|null $params
      * @return int
      */
-    public function countQuery(string $query, array $queryParams = null): int
+    public function countQuery(string $query, array $params = null): int
     {
-        $result = $this->get('SELECT count(*) AS c FROM ('. $query .') AS t', $queryParams, 'array');
+        $result = $this->get('SELECT count(*) AS c FROM ('. $query .') AS t', $params, 'array');
 
         return (int) ($result['c'] ?? 0);
     }
@@ -873,7 +873,7 @@ final class Database
      */
     private function prepareWhereInput($in, $params = null): array
     {
-        [$where, $whereParams] = [$in, $params];
+        $where = $in;
 
         if ($where != null) {
             // Note: "where" must not be combined when array given, eg: (["a = ? AND b = ?" => [1, 2]])
@@ -896,17 +896,16 @@ final class Database
                 }
 
                 $where = join(' AND ', array_keys($temp));
-                $whereParams = array_values($temp);
+                $params = array_values($temp);
             } elseif (is_string($where)) {
                 $where = trim($where);
-                $whereParams = (array) $whereParams;
+                $params = (array) $params;
             } else {
-                throw new DatabaseException("Invalid where input '%s', valids are: string, array",
-                    gettype($where));
+                throw new DatabaseException("Invalid where input '%s', valids are: string, array", gettype($where));
             }
         }
 
-        return [$where, $whereParams];
+        return [$where, $params];
     }
 
     /**
