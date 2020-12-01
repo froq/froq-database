@@ -57,16 +57,16 @@ final class Profiler
 
     /**
      * Profile.
-     * @param  string   $type
+     * @param  string   $mark
      * @param  callable $call
      * @param  ...      $callArgs
      * @return PDOStatement|int
      */
-    public function profile(string $type, callable $call, ...$callArgs)
+    public function profile(string $mark, callable $call, ...$callArgs)
     {
-        $this->start($type);
+        $this->start($mark);
         $ret = $call(...$callArgs);
-        $this->end($type);
+        $this->end($mark);
 
         return $ret;
     }
@@ -160,55 +160,55 @@ final class Profiler
 
     /**
      * Start.
-     * @param  string $type
+     * @param  string $mark
      * @return void
      * @throws froq\database\ProfilerException
      */
-    private function start(string $type): void
+    private function start(string $mark): void
     {
         $start = microtime(true);
-        switch ($type) {
+        switch ($mark) {
             case 'connection':
-                $this->profiles[$type] = ['start' => $start, 'end' => 0.00, 'time' => 0.00];
+                $this->profiles[$mark] = ['start' => $start, 'end' => 0.00, 'time' => 0.00];
                 break;
             case 'query':
                 $i = $this->queryCount;
-                if (isset($this->profiles[$type][$i])) {
-                    $this->profiles[$type][$i] += ['start' => $start, 'end' => 0.00, 'time' => 0.00];
+                if (isset($this->profiles[$mark][$i])) {
+                    $this->profiles[$mark][$i] += ['start' => $start, 'end' => 0.00, 'time' => 0.00];
                 }
                 break;
             default:
-                throw new ProfilerException("Invalid type '%s' given, valids are: connection, query", $type);
+                throw new ProfilerException("Invalid mark '%s' given, valids are: connection, query", $mark);
         }
     }
 
     /**
      * End.
-     * @param  string $type
+     * @param  string $mark
      * @return void
      * @throws froq\database\ProfilerException
      */
-    private function end(string $type): void
+    private function end(string $mark): void
     {
-        if (!isset($this->profiles[$type])) {
-            throw new ProfilerException("Could not find a profile with given '%s' type", $type);
+        if (!isset($this->profiles[$mark])) {
+            throw new ProfilerException("Could not find a profile with given '%s' mark", $mark);
         }
 
         $end = microtime(true);
-        switch ($type) {
+        switch ($mark) {
             case 'connection':
-                $this->profiles[$type]['end'] = $end;
-                $this->profiles[$type]['time'] = round($end - $this->profiles[$type]['start'], 10);
+                $this->profiles[$mark]['end'] = $end;
+                $this->profiles[$mark]['time'] = round($end - $this->profiles[$mark]['start'], 10);
                 break;
             case 'query':
                 $i = $this->queryCount;
-                if (isset($this->profiles[$type][$i])) {
-                    $this->profiles[$type][$i]['end'] = $end;
-                    $this->profiles[$type][$i]['time'] = round($end - $this->profiles[$type][$i]['start'], 10);
+                if (isset($this->profiles[$mark][$i])) {
+                    $this->profiles[$mark][$i]['end'] = $end;
+                    $this->profiles[$mark][$i]['time'] = round($end - $this->profiles[$mark][$i]['start'], 10);
                 }
                 break;
             default:
-                throw new ProfilerException("Invalid type '%s' given, valids are: connection, query", $type);
+                throw new ProfilerException("Invalid mark '%s' given, valids are: connection, query", $mark);
         }
     }
 }
