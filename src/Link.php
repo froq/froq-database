@@ -28,11 +28,11 @@ final class Link
     /** @var ?PDO */
     private ?PDO $pdo = null;
 
-    /** @var ?string */
-    private ?string $pdoDriver = null;
+    /** @var string */
+    private string $pdoDriver;
 
     /** @var array */
-    private array $options;
+    private static array $options;
 
     /**
      * Constructor.
@@ -41,7 +41,7 @@ final class Link
      */
     private function __construct(array $options)
     {
-        $this->options = self::prepareOptions($options);
+        self::$options = self::prepareOptions($options);
     }
 
     /**
@@ -61,7 +61,7 @@ final class Link
      */
     public function pdoDriver(): ?string
     {
-        return $this->pdoDriver;
+        return $this->pdoDriver ?? null;
     }
 
     /**
@@ -71,21 +71,21 @@ final class Link
      */
     public function options(): array
     {
-        return $this->options;
+        return self::$options;
     }
 
     /**
-     * Connect with given options and set timezone & charset if provided.
+     * Connect with given options, set timezone & charset if provided.
      *
      * @return void
      */
     public function connect(): void
     {
         if (!$this->isConnected()) {
-            ['dsn'     => $dsn,     'driver'   => $driver,
-             'user'    => $user,    'pass'     => $pass,
-             'charset' => $charset, 'timezone' => $timezone,
-             'options' => $options] = $this->options;
+            @ ['dsn'     => $dsn,     'driver'   => $driver,
+               'user'    => $user,    'pass'     => $pass,
+               'charset' => $charset, 'timezone' => $timezone,
+               'options' => $options] = self::$options;
 
             $options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
             $options[PDO::ATTR_EMULATE_PREPARES] ??= true;
@@ -105,13 +105,6 @@ final class Link
                     throw new LinkException("Could not find driver '%s'", $driver);
                 }
                 throw new LinkException($e);
-            } finally {
-                // Safety, for dumping etc.
-                $this->options['dsn'] = preg_replace(
-                    '~dbname=[^;]+~', 'dbname=<****>', $this->options['dsn']
-                );
-                $this->options['user'] = '<****>';
-                $this->options['pass'] = '<****>';
             }
 
             $charset && $this->setCharset($charset);
@@ -194,23 +187,11 @@ final class Link
             $driver = $match[1];
         }
 
+        // Throw a proper exeption instead of PDOException("could not find driver").
         if (empty($driver)) {
-            // Throw a proper exeption instead of PDOException("could not find driver").
             throw new LinkException("Invalid scheme given in 'dsn' option, no driver specified");
         }
 
-        if (empty($options['timezone'])) {
-            // Timezone could already be given in "dsn" option (but not like ...;options=\'--timezone="+00:00"\').
-            if (preg_match('~;timezone=([^;]+)~', $dsn, $match)) {
-                $options['timezone'] = $match[1];
-            }
-        }
-
-        return [
-            'dsn'     => $dsn,                      'driver'   => $driver,
-            'user'    => $options['user'] ?? '',    'pass'     => $options['pass'] ?? '',
-            'charset' => $options['charset'] ?? '', 'timezone' => $options['timezone'] ?? '',
-            'options' => $options['options'] ?? []
-        ];
+        return ['dsn' => $dsn, 'driver' => $driver] + $options;
     }
 }
