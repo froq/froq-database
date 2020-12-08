@@ -56,7 +56,7 @@ abstract class AbstractEntity implements EntityInterface
                     !!$drop               /* eg: drop=['id'] */) {
                     try {
                         unset($this->{$var});
-                    } catch (Error $e) {}
+                    } catch (Error) {}
                 }
             }
         }
@@ -101,7 +101,7 @@ abstract class AbstractEntity implements EntityInterface
         // Prevent "access private property".
         try {
             $this->{$var} = $value;
-        } catch (Error $e) {}
+        } catch (Error) {}
 
         return $this;
     }
@@ -116,7 +116,7 @@ abstract class AbstractEntity implements EntityInterface
         // Prevent "access private property".
         try {
             return $this->{$var} ?? null;
-        } catch (Error $e) {}
+        } catch (Error) {}
     }
 
     /**
@@ -267,7 +267,7 @@ abstract class AbstractEntity implements EntityInterface
                 if (!isset($filtered[$var])) {
                     unset($this->{$var});
                 }
-            } catch (Error $e) {}
+            } catch (Error) {}
         }
 
         return $this;
