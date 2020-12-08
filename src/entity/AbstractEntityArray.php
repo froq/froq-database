@@ -163,22 +163,6 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
-     * Apply.
-     * @param  callable $func
-     * @return self (static)
-     * @since  4.8
-     */
-    public function apply(callable $func): self
-    {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        $this->items = $this->toCollection()->apply($func)->toArray();
-
-        return $this;
-    }
-
-    /**
      * Filter.
      * @param  callable $func
      * @param  bool     $keepKeys
