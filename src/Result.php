@@ -114,7 +114,7 @@ final class Result implements Countable, IteratorAggregate
                 // prevent transaction commits when no sequence field exists.
                 try {
                     $id = (int) $pdo->lastInsertId();
-                } catch (PDOException $e) {}
+                } catch (PDOException) {}
 
                 if ($id) {
                     $ids = [$id];

@@ -46,11 +46,10 @@ final class Transaction
     public function begin(): void
     {
         try {
-            if (!$this->pdo->beginTransaction()) {
-                throw new TransactionException('Failed to begin transaction');
-            }
+            $this->pdo->beginTransaction()
+                || throw new TransactionException('Failed to begin transaction');
         } catch (PDOException $e) {
-            throw new TransactionException($e->getMessage(), null, null, $e);
+            throw new TransactionException($e, previous: $e);
         }
     }
 
@@ -65,7 +64,7 @@ final class Transaction
         try {
             return $this->pdo->commit();
         } catch (PDOException $e) {
-            throw new TransactionException($e->getMessage(), null, null, $e);
+            throw new TransactionException($e, previous: $e);
         }
     }
 
@@ -80,7 +79,7 @@ final class Transaction
         try {
             return $this->pdo->rollback();
         } catch (PDOException $e) {
-            throw new TransactionException($e->getMessage(), null, null, $e);
+            throw new TransactionException($e, previous: $e);
         }
     }
 
