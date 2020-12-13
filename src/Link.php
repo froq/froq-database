@@ -26,13 +26,18 @@ final class Link
     private static self $instance;
 
     /** @var ?PDO */
-    private ?PDO $pdo = null;
+    private ?PDO $pdo;
 
     /** @var string */
     private string $pdoDriver;
 
     /** @var array */
-    private static array $options;
+    private array $options = [
+        'dsn'     => null, 'driver'   => null,
+        'user'    => null, 'pass'     => null,
+        'charset' => null, 'timezone' => null,
+        'options' => null
+    ];
 
     /**
      * Constructor.
@@ -41,25 +46,33 @@ final class Link
      */
     private function __construct(array $options)
     {
-        self::$options = self::prepareOptions($options);
+        $this->options = array_merge($this->options, self::prepareOptions($options));
     }
+
+    /**
+     * Hide all info.
+     *
+     * @return void
+     */
+    public function __debugInfo()
+    {}
 
     /**
      * Get pdo property.
      *
-     * @return ?PDO
+     * @return PDO|null
      */
-    public function pdo(): ?PDO
+    public function pdo(): PDO|null
     {
-        return $this->pdo;
+        return $this->pdo ?? null;
     }
 
     /**
      * Get pdo driver property.
      *
-     * @return ?string
+     * @return string|null
      */
-    public function pdoDriver(): ?string
+    public function pdoDriver(): string|null
     {
         return $this->pdoDriver ?? null;
     }
@@ -71,7 +84,7 @@ final class Link
      */
     public function options(): array
     {
-        return self::$options;
+        return $this->options;
     }
 
     /**
@@ -82,16 +95,16 @@ final class Link
     public function connect(): void
     {
         if (!$this->isConnected()) {
-            @ ['dsn'     => $dsn,     'driver'   => $driver,
-               'user'    => $user,    'pass'     => $pass,
-               'charset' => $charset, 'timezone' => $timezone,
-               'options' => $options] = self::$options;
+            ['dsn'     => $dsn,     'driver'   => $driver,
+             'user'    => $user,    'pass'     => $pass,
+             'charset' => $charset, 'timezone' => $timezone,
+             'options' => $options] = $this->options;
 
             $options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
             $options[PDO::ATTR_EMULATE_PREPARES] ??= true;
             $options[PDO::ATTR_DEFAULT_FETCH_MODE] ??= PDO::FETCH_ASSOC;
 
-            // For a proper return that gives "1" always even with identical values in UPDATE queries.
+            // For a proper return that gives '1' always even with identical values in UPDATE queries.
             if ($driver == 'mysql') {
                 $options[PDO::MYSQL_ATTR_FOUND_ROWS] ??= true;
             }
@@ -102,7 +115,7 @@ final class Link
             } catch (PDOException $e) {
                 // Which driver the FUCK?
                 if ($e->getMessage() == 'could not find driver') {
-                    throw new LinkException("Could not find driver '%s'", $driver);
+                    throw new LinkException('Could not find driver `%s`', $driver);
                 }
                 throw new LinkException($e);
             }
@@ -129,7 +142,7 @@ final class Link
      */
     public function isConnected(): bool
     {
-        return $this->pdo != null;
+        return isset($this->pdo);
     }
 
     /**
@@ -179,7 +192,7 @@ final class Link
     private static function prepareOptions(array $options): array
     {
         if (empty($options['dsn'])) {
-            throw new LinkException("Empty 'dsn' option given");
+            throw new LinkException('Empty `dsn` option given');
         }
 
         $dsn = trim((string) $options['dsn'], ';');
@@ -187,9 +200,9 @@ final class Link
             $driver = $match[1];
         }
 
-        // Throw a proper exeption instead of PDOException("could not find driver").
+        // Throw a proper exeption instead of PDOException('could not find driver').
         if (empty($driver)) {
-            throw new LinkException("Invalid scheme given in 'dsn' option, no driver specified");
+            throw new LinkException('Invalid scheme given in `dsn` option, no driver specified');
         }
 
         return ['dsn' => $dsn, 'driver' => $driver] + $options;
