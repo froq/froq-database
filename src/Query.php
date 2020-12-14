@@ -1562,7 +1562,7 @@ final class Query
                             . "reasons, call at least where('1=1') proving you're aware of what's going on");
                     }
 
-                    $ret = $nt . 'UPDATE ' . $stack['table']
+                    $ret = $nt . 'UPDATE ' . $table
                          . $nt . 'SET ' . join(', ' . $nt, $stack['update']);
 
                     isset($stack['where']) && $ret .= $nt . $this->toQueryString('where', $indent);
@@ -1586,7 +1586,7 @@ final class Query
                             . "reasons, call at least where('1=1') proving you're aware of what's going on");
                     }
 
-                    $ret = $nt . 'DELETE FROM ' . $stack['table'];
+                    $ret = $nt . 'DELETE FROM ' . $table;
 
                     isset($stack['where']) && $ret .= $nt . $this->toQueryString('where', $indent);
                     isset($stack['order']) && $ret .= $nt . $this->toQueryString('order');
