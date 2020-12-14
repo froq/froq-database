@@ -305,7 +305,7 @@ abstract class AbstractEntity implements EntityInterface
     /**
      * @inheritDoc IteratorAggregate
      */
-    public final function getIterator(bool $deep = false): ArrayIterator
+    public final function getIterator(bool $deep = false): iterable
     {
         // Note: this method goes to toArray() for iterable check.
         return new ArrayIterator($this->toArray($deep));
@@ -315,7 +315,7 @@ abstract class AbstractEntity implements EntityInterface
      * @inheritDoc JsonSerializable
      * @since      4.11
      */
-    public function jsonSerialize(): array
+    public final function jsonSerialize(): array
     {
         return $this->toArray(true);
     }

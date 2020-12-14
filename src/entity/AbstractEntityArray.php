@@ -202,7 +202,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      * @return any
      * @since  4.8
      */
-    public function reduce($carry = null, callable $func)
+    public function reduce($carry, callable $func)
     {
         // Stay in here.
         $func = $func->bindTo($this, $this);
@@ -261,7 +261,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     /**
      * @inheritDoc IteratorAggregate
      */
-    public final function getIterator(): ArrayIterator
+    public final function getIterator(): iterable
     {
         return new ArrayIterator($this->items);
     }
@@ -270,7 +270,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      * @inheritDoc JsonSerializable
      * @since      4.11
      */
-    public function jsonSerialize(): array
+    public final function jsonSerialize(): array
     {
         return $this->toArray(true);
     }
