@@ -544,17 +544,25 @@ final class Query
 
     /**
      * Where.
-     * @param  string      $where
-     * @param  array|null  $params
-     * @param  string|null $op
+     * @param  string|array $where
+     * @param  array|null   $params
+     * @param  string|null  $op
      * @return self
      */
-    public function where(string $where, array $params = null, string $op = null): self
+    public function where(string|array $where, array $params = null, string $op = null): self
     {
-        $where = $this->prepare($where, $params);
         $op = $this->prepareOp($op ?: 'AND'); // @default=AND
 
-        return $this->add('where', [$where, $op]);
+        if (is_string($where)) {
+            $this->add('where', [$this->prepare($where, $params), $op]);
+        } else {
+            // Eg: [id => 1, status => ok, ..].
+            foreach ($where as $field => $param) {
+                $this->add('where', [$this->prepareField($field) . ' = ?', $param, $op]);
+            }
+        }
+
+        return $this;
     }
 
     /**
