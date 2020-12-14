@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\pager\Pager;
 use froq\database\{QueryTrait, QueryException, Database, Result};
 use froq\database\sql\{Sql, Name};
+use froq\pager\Pager;
 
 /**
  * Query.
@@ -567,6 +567,10 @@ final class Query
      */
     public function whereEqual(string $field, $param, string $op = null): self
     {
+        if (is_array($param)) {
+            return $this->whereIn($field, $param);
+        }
+
         $param = (array) $param;
         if (!$param) {
             throw new QueryException('No field parameter given');
@@ -585,6 +589,10 @@ final class Query
      */
     public function whereNotEqual(string $field, $param, string $op = null): self
     {
+        if (is_array($param)) {
+            return $this->whereNotIn($field, $param);
+        }
+
         $param = (array) $param;
         if (!$param) {
             throw new QueryException('No field parameter given');
