@@ -138,7 +138,7 @@ final class Database
 
             if ($slowQuery) {
                 $time = Profiler::unmark('@slowQuery');
-                if ($time > $this->logger->slowQuery) {
+                if ($time >= $this->logger->slowQuery) {
                     $this->logger->logWarn('Slow query: time '. $time .', '. $query);
                 }
             }
@@ -176,7 +176,7 @@ final class Database
 
             if ($slowQuery) {
                 $time = Profiler::unmark('@slowQuery');
-                if ($time > $this->logger->slowQuery) {
+                if ($time >= $this->logger->slowQuery) {
                     $this->logger->logWarn('Slow query: time '. $time .', '. $query);
                 }
             }
@@ -274,7 +274,7 @@ final class Database
      * @param  string $table
      * @param  array  $data
      * @param  array  $options
-     * @return int|array|object|null
+     * @return int|string|array|object|null
      */
     public function insert(string $table, array $data, array $options = null)
     {
@@ -342,7 +342,7 @@ final class Database
      * @param  string|array|null $where
      * @param  any|null          $params
      * @param  array|null        $options
-     * @return int|array|object|null
+     * @return int|string|array|object|null
      */
     public function update(string $table, array $data, $where = null, $params = null, array $options = null)
     {
@@ -390,7 +390,7 @@ final class Database
      * @param  string|array|null $where
      * @param  array|null        $params
      * @param  array|null        $options
-     * @return int|array|object|null
+     * @return int|string|array|object|null
      */
     public function delete(string $table, $where = null, $params = null, array $options = null)
     {
