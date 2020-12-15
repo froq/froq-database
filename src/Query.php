@@ -9,6 +9,7 @@ namespace froq\database;
 
 use froq\database\{QueryTrait, QueryException, Database, Result};
 use froq\database\sql\{Sql, Name};
+use froq\database\trait\DbTrait;
 use froq\pager\Pager;
 
 /**
@@ -24,17 +25,11 @@ use froq\pager\Pager;
  */
 final class Query
 {
-    /**
-     * Query trait.
-     * @see froq\database\QueryTrait
-     */
+    /** @see froq\database\QueryTrait */
     use QueryTrait;
 
-    /**
-     * Db.
-     * @var froq\database\Database
-     */
-    private Database $db;
+    /** @see froq\database\trait\DbTrait */
+    use DbTrait;
 
     /**
      * Stack, for statements.
@@ -67,15 +62,6 @@ final class Query
     public function __toString()
     {
         return $this->toString();
-    }
-
-    /**
-     * Db.
-     * @return froq\database\Database
-     */
-    public function db(): Database
-    {
-        return $this->db;
     }
 
     /**
