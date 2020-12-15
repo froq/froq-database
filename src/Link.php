@@ -50,7 +50,7 @@ final class Link
     }
 
     /**
-     * Hide all info.
+     * Hide all debug info.
      *
      * @return void
      */
