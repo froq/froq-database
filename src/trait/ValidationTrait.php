@@ -175,6 +175,7 @@ trait ValidationTrait
         $validation = new Validation($rules, $options);
 
         $this->validated = $validation->validate($data, $errors);
+
         if ($errors !== null) {
             $this->validationErrors = $errors;
         }

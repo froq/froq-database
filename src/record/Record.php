@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace froq\database\record;
 
 use froq\database\record\{RecordException, Form, FormException};
-use froq\database\{Database, Query, trait\DbTrait, trait\TableTrait};
+use froq\database\{Database, Query, trait\DbTrait, trait\TableTrait, trait\ValidationTrait};
 use froq\common\traits\{DataTrait, DataLoadTrait, DataMagicTrait};
 use froq\common\interfaces\{Arrayable, Sizable};
 use froq\validation\ValidationException;
@@ -30,11 +30,12 @@ class Record implements Arrayable, Sizable
     /**
      * @see froq\database\trait\DbTrait
      * @see froq\database\trait\TableTrait
+     * @see froq\database\trait\ValidationTrait
      * @see froq\common\traits\DataTrait
      * @see froq\common\traits\DataLoadTrait
      * @see froq\common\traits\DataMagicTrait
      */
-    use DbTrait, TableTrait, DataTrait, DataLoadTrait, DataMagicTrait;
+    use DbTrait, TableTrait, ValidationTrait, DataTrait, DataLoadTrait, DataMagicTrait;
 
     /** @var froq\database\Query */
     protected Query $query;
@@ -48,8 +49,8 @@ class Record implements Arrayable, Sizable
     /** @var int|string */
     private int|string $id;
 
-    /** @var int|string|bool */
-    private int|string|bool $saved;
+    /** @var bool */
+    private bool $saved;
 
     /** @var int, int */
     private int $finded, $removed;
@@ -57,14 +58,17 @@ class Record implements Arrayable, Sizable
     /**
      * Constructor.
      *
-     * @param froq\database\Database|null           $db
-     * @param string|null                           $table
-     * @param string|null                           $tablePrimary
-     * @param array|null                            $data
-     * @param string|froq\database\record\Form|null $form
+     * @param  froq\database\Database|null           $db
+     * @param  string|null                           $table
+     * @param  string|null                           $tablePrimary
+     * @param  array|null                            $data
+     * @param  string|froq\database\record\Form|null $form
+     * @param  array|null                            $validationRules
+     * @param  array|null                            $validationOptions
+     * @throws froq\database\record\FormException
      */
     public function __construct(Database $db = null, string $table = null, string $tablePrimary = null, array $data = null,
-        string|Form $form = null)
+        string|Form $form = null, array $validationRules = null, array $validationOptions = null)
     {
         // Try to use active app database object.
         $db = (!$db && function_exists('app')) ?  app()->database() : $db;
@@ -82,14 +86,17 @@ class Record implements Arrayable, Sizable
         if ($form != null) {
             if ($form instanceof Form) {
                 $this->form = $form;
+                $this->formClass = $form::class;
             } else {
                 $this->formClass = $form;
             }
         }
 
-        // Set table stuff.
-        $table        && $this->table        = $table;
-        $tablePrimary && $this->tablePrimary = $tablePrimary;
+        // Set table stuff & validation stuff.
+        $table             && $this->table             = $table;
+        $tablePrimary      && $this->tablePrimary      = $tablePrimary;
+        $validationRules   && $this->validationRules   = $validationRules;
+        $validationOptions && $this->validationOptions = $validationOptions;
     }
 
     /**
@@ -159,7 +166,7 @@ class Record implements Arrayable, Sizable
      */
     public final function getFormData(): array|null
     {
-        return ($form = $this->getForm()) ? $form->getData() : null;
+        return $this->getForm()?->getData();
     }
 
     /**
@@ -171,13 +178,11 @@ class Record implements Arrayable, Sizable
      */
     public final function getFormInstance(): Form|null
     {
-        if (empty($this->form) && empty($this->formClass)) {
-            throw new RecordException('Cannot get form instance, either $form or $formClass must be'
-                . ' defined on %s class', static::class);
-        }
-
-        // Use owned (current) form if available.
-        $form = $this->form ?? $this->formClass;
+        // Use internal or owned (current) form/form class if available.
+        $form = $this->form ?? $this->formClass ?? new Form(
+            $this->db, $this->getTable(), $this->getTablePrimary(), $this->getData(), $this,
+            validationRules: $this->getValidationRules(), validationOptions: $this->getValidationOptions()
+        );
 
         // If class given.
         if (is_string($form)) {
@@ -187,7 +192,6 @@ class Record implements Arrayable, Sizable
             // Init & update owned form.
             $this->setForm($form = new $form());
         }
-
 
         return $form;
     }
@@ -235,16 +239,16 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Check saved state/result, fill given state argument.
+     * Check saved state/result, fill given id argument when primary exists on record.
      *
-     * @param  int|string|bool|null &$saved
+     * @param  int|string|null &$id
      * @return bool
      */
-    public final function isSaved(int|string|bool &$saved = null): bool
+    public final function isSaved(int|string &$id = null): bool
     {
-        $saved = $this->saved ?? null;
+        $id = $this->id ?? null;
 
-        return !!$saved;
+        return !empty($this->saved);
     }
 
     /**
@@ -329,9 +333,9 @@ class Record implements Arrayable, Sizable
                 . ' try calling save($data)');
         }
 
-        // Run validation if form or form classes provided, child classes may define owned form classes.
-        if ($validate && (!empty($this->form) || !empty($this->formClass))) {
-            $this->isValid($data, $errors, $options)
+        // Run validation.
+        if ($validate) {
+            ($this->validated = $this->isValid($data, $errors, $options))
                 || throw new ValidationException('Cannot save record, validation failed [tip: run save()'
                     . ' in a try/catch block and use errors() to see error details]', errors: $errors);
         }
@@ -354,6 +358,8 @@ class Record implements Arrayable, Sizable
 
                 // Set primary value with new id.
                 $id = $result->id();
+
+                $this->saved = !!$result->count();
 
                 // Swap data with returning data.
                 if ($return) {
@@ -411,12 +417,11 @@ class Record implements Arrayable, Sizable
 
                 $this->id($id);
 
+                $this->saved = !!$result->count();
+
                 return $data;
             });
         }
-
-        // Set with primary or true, so no error until here.
-        $this->saved = $data[$primary] ?? true;
 
         // Update stacks both record & form.
         $this->setData($data);

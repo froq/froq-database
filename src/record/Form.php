@@ -78,15 +78,15 @@ class Form implements Arrayable, Sizable
         if ($record != null) {
             if ($record instanceof Record) {
                 $this->record = $record;
+                $this->recordClass = $record::class;
             } else {
                 $this->recordClass = $record;
             }
         }
 
-        // Set table stuff.
+        // Set table stuff & validation stuff.
         $table             && $this->table             = $table;
         $tablePrimary      && $this->tablePrimary      = $tablePrimary;
-        // Set validation stuff.
         $validationRules   && $this->validationRules   = $validationRules;
         $validationOptions && $this->validationOptions = $validationOptions;
     }
@@ -182,7 +182,7 @@ class Form implements Arrayable, Sizable
      */
     public final function getRecordData(): array|null
     {
-        return ($record = $this->getRecord()) ? $record->getData() : null;
+        return $this->getRecord()?->getData();
     }
 
     /**
@@ -194,13 +194,11 @@ class Form implements Arrayable, Sizable
      */
     public final function getRecordInstance(): Record|null
     {
-        if (empty($this->record) && empty($this->recordClass)) {
-            throw new FormException('Cannot get record instance, either $record or $recordClass must be'
-                . ' defined on %s class', static::class);
-        }
-
-        // Use owned (current) record if available.
-        $record = $this->record ?? $this->recordClass;
+        // Use internal or owned (current) record/record class if available.
+        $record = $this->record ?? $this->recordClass ?? new Record(
+            $this->db, $this->getTable(), $this->getTablePrimary(), $this->getData(), $this,
+            validationRules: $this->getValidationRules(), validationOptions: $this->getValidationOptions()
+        );
 
         // If class given.
         if (is_string($record)) {
@@ -241,8 +239,8 @@ class Form implements Arrayable, Sizable
                 . ' $data argument to isValid()');
         }
 
-        $rules = $this->getValidationRules();
-        $options ??= $this->getValidationOptions();
+        $rules = $this->getValidationRules() ?? $this->getRecord()?->getValidationRules();
+        $options ??= $this->getValidationOptions() ?? $this->getRecord()?->getValidationOptions();
 
         if (empty($rules)) {
             throw new FormException('No validation rules set yet, call setValidationRules() or define'
@@ -303,13 +301,9 @@ class Form implements Arrayable, Sizable
                 . ' in a try/catch block and use errors() to see error details]', errors: $this->errors());
         }
 
-        $record = null;
-        try {
-            // Try, if child class defined $record or $recordClass property.
-            $record = $this->getRecordInstance();
-        } catch (FormException) {}
+        $record = $this->getRecordInstance();
 
-        if (empty($this->table) && empty($table = $record?->getTable())) {
+        if (empty($this->table) && empty($table = $record->getTable())) {
             throw new FormException('No table set yet, call setTable() first or define $table property on %s'
                 . ' class to run save()', static::class);
         }
@@ -320,9 +314,9 @@ class Form implements Arrayable, Sizable
         // Require new validation.
         $this->validated = null;
 
-        $this->record = $record ?? new Record($this->db, $this->table ?? $table, $this->tablePrimary ?? null);
-        $this->record->save($this->data, $options, validate: false /* 'cos must validated until here */)
-                     ->setForm($this);
+        ($this->record = $record)
+            ->save($this->data, $options, validate: false /* 'cos must be validated until here */)
+            ->setForm($this);
 
         return $this->record;
     }
