@@ -43,7 +43,7 @@ trait ValidationTrait
     }
 
     /**
-     * Get validation errors, alias of getValidationErrors().
+     * Get errors, alias of getValidationErrors().
      *
      * @return array|null
      */
@@ -96,6 +96,19 @@ trait ValidationTrait
     public final function getValidationOptions(): array|null
     {
         return $this->validationOptions ?? null;
+    }
+
+    /**
+     * Set validation errors.
+     *
+     * @param  array $validationErrors
+     * @return self
+     */
+    public final function setValidationErrors(array $validationErrors): self
+    {
+        $this->validationErrors = $validationErrors;
+
+        return $this;
     }
 
     /**

@@ -252,6 +252,14 @@ class Form implements Arrayable, Sizable
         // Update with modified stuff (returned by refs).
         $this->data = $data;
 
+        // Update record too.
+        if ($record = $this->getRecord()) {
+            $record->setData($data);
+            if ($errors !== null) {
+                $record->setValidationErrors($errors);
+            }
+        }
+
         return $this->validated;
     }
 
