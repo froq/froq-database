@@ -288,9 +288,9 @@ class Record implements Arrayable, Sizable
      * presented yet.
      *
      * @param  int|string|null $id
-     * @return int|string|self
+     * @return int|string|self|null
      */
-    public final function id(int|string $id = null): int|string|self
+    public final function id(int|string $id = null): int|string|self|null
     {
         [, $primary] = $this->pack(primary: true);
 
