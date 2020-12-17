@@ -87,12 +87,11 @@ final class Database
      */
     public function logger(): Logger
     {
-        if (isset($this->logger)) {
-            return $this->logger;
-        }
+        isset($this->logger) || throw new DatabaseException(
+            'Database object has no logger, be sure `logging` field is not empty in options');
 
-        throw new DatabaseException('Database object has no logger, be sure `logging`'
-            . ' field is not empty in options');
+        return $this->logger;
+
     }
 
     /**
@@ -103,12 +102,10 @@ final class Database
      */
     public function profiler(): Profiler
     {
-        if (isset($this->profiler)) {
-            return $this->profiler;
-        }
+        isset($this->profiler) || throw new DatabaseException(
+            'Database object has no profiler, be sure `profiling` field is not empty or false in options');
 
-        throw new DatabaseException('Database object has no profiler, be sure `profiling`'
-            . ' field is not empty or false in options');
+        return $this->profiler;
     }
 
     /**
@@ -124,9 +121,7 @@ final class Database
     public function query(string $query, array $params = null, array $options = null): Result
     {
         $query = $params ? $this->prepare($query, $params) : trim($query);
-        if ($query == '') {
-            throw new DatabaseException('Empty query given to %s()', __method__);
-        }
+        $query || throw new DatabaseException('Empty query given to %s()', __method__);
 
         try {
             $slowQuery = isset($this->logger->slowQuery)
@@ -162,9 +157,7 @@ final class Database
     public function execute(string $query, array $params = null): ?int
     {
         $query = $params ? $this->prepare($query, $params) : trim($query);
-        if ($query == '') {
-            throw new DatabaseException('Empty query given to %s()', __method__);
-        }
+        $query || throw new DatabaseException('Empty query given to %s()', __method__);
 
         try {
             $slowQuery = isset($this->logger->slowQuery)
@@ -529,10 +522,8 @@ final class Database
 
         // For row(..) or other parenthesis stuff.
         if (strpos($in, '(') === 0) {
-            $rpos = strpos($in, ')');
-            if (!$rpos) { // Not parsed array[(foo, ..)] stuff, sorry.
-                throw new DatabaseException('Unclosed parenthesis in `%s` input', $in);
-            }
+            $rpos = strpos($in, ')'); // Not parsed array[(foo, ..)] stuff, sorry.
+            $rpos || throw new DatabaseException('Unclosed parenthesis in `%s` input', $in);
 
             $name = substr($in, 1, $rpos - 1); // Eg: part foo of (foo).
             $rest = substr($in, $rpos + 1) ?: ''; // Eg: part ::int of (foo)::int.
@@ -734,9 +725,7 @@ final class Database
     public function prepare(string $in, array $params = null): string
     {
         $out = $this->preparePrepareInput($in);
-        if ($out == '') {
-            throw new DatabaseException("Empty input given to '%s()' for preparation", __method__);
-        }
+        $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
 
         // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a / :foo, :foo_bar".
         static $pattern = '~
@@ -748,8 +737,8 @@ final class Database
 
         if (preg_match_all($pattern, $out, $match)) {
             if ($params == null) {
-                throw new DatabaseException("Empty input parameters given to '%s()', non-empty input parameters "
-                    . "required when input contains parameter placeholders like ?, ?? or :foo", __method__);
+                throw new DatabaseException('Empty input parameters given to %s(), non-empty input parameters'
+                    . ' required when input contains parameter placeholders like ?, ?? or :foo', __method__);
             }
 
             $i = 0;
@@ -761,7 +750,7 @@ final class Database
                 if ($pos > -1) { // Named.
                     $key = trim($holder, ':');
                     if (!array_key_exists($key, $params)) {
-                        throw new DatabaseException("Replacement key '%s' not found in given parameters", $key);
+                        throw new DatabaseException('Replacement key `%s` not found in given parameters', $key);
                     }
 
                     $value = $this->escape($params[$key]);
@@ -773,7 +762,7 @@ final class Database
                     $values[] = $value;
                 } else { // Question-mark.
                     if (!array_key_exists($i, $params)) {
-                        throw new DatabaseException("Replacement index '%s' not found in given parameters", $i);
+                        throw new DatabaseException('Replacement index `%s` not found in given parameters', $i);
                     }
 
                     $value = $this->escape($params[$i++], $holder);
@@ -802,9 +791,7 @@ final class Database
     public function prepareStatement(string $in): PDOStatement
     {
         $out = $this->preparePrepareInput($in);
-        if ($out == '') {
-            throw new DatabaseException("Empty input given to '%s()' for preparation", __method__);
-        }
+        $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
 
         try {
             return $this->link->pdo()->prepare($out);
@@ -892,7 +879,7 @@ final class Database
                 $where = trim($where);
                 $params = (array) $params;
             } else {
-                throw new DatabaseException('Invalid where input %s, valids are: string, array',
+                throw new DatabaseException('Invalid where input type %s, valids are: string, array',
                     get_type($where));
             }
         }
