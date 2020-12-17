@@ -87,12 +87,12 @@ final class Database
      */
     public function logger(): Logger
     {
-        if (!isset($this->logger)) {
-            throw new DatabaseException("Database object has no logger, be sure 'logging' "
-                . "field is not empty in options");
+        if (isset($this->logger)) {
+            return $this->logger;
         }
 
-        return $this->logger;
+        throw new DatabaseException('Database object has no logger, be sure `logging`'
+            . ' field is not empty in options');
     }
 
     /**
@@ -103,12 +103,12 @@ final class Database
      */
     public function profiler(): Profiler
     {
-        if (!isset($this->profiler)) {
-            throw new DatabaseException("Database object has no profiler, be sure 'profiling' "
-                . "field is not empty or false in options");
+        if (isset($this->profiler)) {
+            return $this->profiler;
         }
 
-        return $this->profiler;
+        throw new DatabaseException('Database object has no profiler, be sure `profiling`'
+            . ' field is not empty or false in options');
     }
 
     /**
@@ -125,7 +125,7 @@ final class Database
     {
         $query = $params ? $this->prepare($query, $params) : trim($query);
         if ($query == '') {
-            throw new DatabaseException("Empty query given to '%s()'", __method__);
+            throw new DatabaseException('Empty query given to %s()', __method__);
         }
 
         try {
@@ -163,7 +163,7 @@ final class Database
     {
         $query = $params ? $this->prepare($query, $params) : trim($query);
         if ($query == '') {
-            throw new DatabaseException("Empty query given to '%s()'", __method__);
+            throw new DatabaseException('Empty query given to %s()', __method__);
         }
 
         try {
@@ -302,10 +302,10 @@ final class Database
             $update && $action = 'update';
 
             if (!$action) {
-                throw new DatabaseException("Conflict action is not given");
+                throw new DatabaseException('Conflict action is not given');
             }
             if (!$update && strtolower($action) == 'update') {
-                throw new DatabaseException("Conflict action is 'update', but no update data given");
+                throw new DatabaseException('Conflict action is update, but no update data given');
             }
 
             $query->conflict($fields, $action, $update, $where);
@@ -531,7 +531,7 @@ final class Database
         if (strpos($in, '(') === 0) {
             $rpos = strpos($in, ')');
             if (!$rpos) { // Not parsed array[(foo, ..)] stuff, sorry.
-                throw new DatabaseException("Unclosed parenthesis in '%s' input", $in);
+                throw new DatabaseException('Unclosed parenthesis in `%s` input', $in);
             }
 
             $name = substr($in, 1, $rpos - 1); // Eg: part foo of (foo).
@@ -874,8 +874,8 @@ final class Database
                 $temp = [];
                 foreach ($where as $key => $value) {
                     if (!is_string($key)) {
-                        throw new DatabaseException("Invalid where input, use ('a = ? AND b = ?', [1, 2]) "
-                            . "convention");
+                        throw new DatabaseException('Invalid where input, use ("a = ? AND b = ?", [1, 2])'
+                            . ' convention');
                     }
 
                     // Check whether a placeholder given or not (eg: ["a" => 1]).
@@ -892,7 +892,8 @@ final class Database
                 $where = trim($where);
                 $params = (array) $params;
             } else {
-                throw new DatabaseException("Invalid where input '%s', valids are: string, array", gettype($where));
+                throw new DatabaseException('Invalid where input %s, valids are: string, array',
+                    get_type($where));
             }
         }
 
