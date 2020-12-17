@@ -606,52 +606,43 @@ final class Database
      */
     public function escape($in, string $format = null)
     {
-        $type = gettype($in);
-
-        if ($type == 'array' && $format != '?a') {
-            return array_map(
-                fn($in) => $this->escape($in, $format),
-                $in
-            );
-        } elseif ($type == 'object') {
-            switch ($class = get_class($in)) {
-                case Sql::class:   return $in->content();
-                case Name::class:  return $this->escapeName($in->content());
-                case Query::class: return $in->toString();
-                default:
-                    throw new DatabaseException("Invalid input object '%s' given, valids are: "
-                        . "Query, sql\{Sql, Name}", $class);
-            }
+        if (is_array($in) && $format != '?a') {
+            return array_map(fn($in) => $this->escape($in, $format), $in);
+        } elseif (is_object($in)) {
+            return match (true) {
+                ($in instanceof Sql)   => $in->content(),
+                ($in instanceof Name)  => $this->escapeName($in->content()),
+                ($in instanceof Query) => $in->toString(),
+                default                => throw new DatabaseException('Invalid input object `%s`,'
+                    . ' valids are: Query, sql\{Sql, Name}', $in::class)
+            };
         }
 
-        // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a".
-        if ($format) {
-            if ($format == '?' || $format == '??') {
-                return ($format == '?') ? $this->escape($in) : $this->escapeName($in);
-            }
-
-            switch ($format) {
-                case '?s': return $this->escapeString((string) $in);
-                case '?i': return (int) $in;
-                case '?f': return (float) $in;
-                case '?b': return $in ? 'true' : 'false';
-                case '?r': return $in; // Raw.
-                case '?n': return $this->escapeName($in);
-                case '?a': return join(', ', (array) $this->escape($in)); // Array.
-            }
-
-            throw new DatabaseException("Unimplemented input format '%s'", $format);
+        // Available placeholders: ?, ??, ?s, ?i, ?f, ?b, ?r, ?n, ?a.
+        if ($format != null) {
+            return match ($format) {
+                '?'     => $this->escape($in),
+                '??'    => $this->escapeName($in),
+                '?s'    => $this->escapeString((string) $in),
+                '?i'    => (int) $in,
+                '?f'    => (float) $in,
+                '?b'    => $in ? 'true' : 'false',
+                '?r'    => $in, // Raw input.
+                '?n'    => $this->escapeName($in),
+                '?a'    => join(', ', (array) $this->escape($in)), // Array input.
+                default => throw new DatabaseException('Unimplemented input format `%s`', $format)
+            };
         }
 
-        switch ($type) {
-            case 'NULL':    return 'NULL';
-            case 'string':  return $this->escapeString($in);
-            case 'integer': return $in;
-            case 'double':  return $in;
-            case 'boolean': return $in ? 'true' : 'false';
-            default:
-                throw new DatabaseException("Unimplemented input type '%s'", $type);
-        }
+        $type = get_type($in);
+
+        return match ($type) {
+            'null'         => 'NULL',
+            'string'       => $this->escapeString($in),
+            'int', 'float' => $in,
+            'bool'         => $in ? 'true' : 'false',
+            default        => throw new DatabaseException('Unimplemented input type `%s`', $type)
+        };
     }
 
     /**
