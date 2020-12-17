@@ -556,11 +556,11 @@ final class Database
             }
         }
 
-        switch ($pdoDriver) {
-            case 'mysql': return '`'. $in .'`';
-            case 'mssql': return '['. $in .']';
-                 default: return '"'. $in .'"';
-        }
+        return match ($pdoDriver) {
+            'mysql' => '`'. $in .'`',
+            'mssql' => '['. $in .']',
+            default => '"'. $in .'"'
+        };
     }
 
     /**
@@ -678,11 +678,11 @@ final class Database
      */
     public function escapeName(string $in): string
     {
-        switch ($this->link->pdoDriver()) {
-            case 'mysql': $in = str_replace('`', '``', $in); break;
-            case 'mssql': $in = str_replace(']', ']]', $in); break;
-                 default: $in = str_replace('"', '""', $in);
-        }
+        $in = match ($this->link->pdoDriver()) {
+            'mysql' => str_replace('`', '``', $in),
+            'mssql' => str_replace(']', ']]', $in),
+            default => str_replace('"', '""', $in)
+        };
 
         return $this->quoteName($in);
     }
