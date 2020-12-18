@@ -19,29 +19,28 @@ use froq\database\sql\SqlException;
  */
 abstract class AbstractSql
 {
-    /**
-     * Content.
-     * @var string
-     */
+    /** @var string */
     protected string $content;
 
     /**
      * Constructor.
+     *
      * @param  string $content
      * @throws froq\database\sql\SqlException
      */
     public function __construct(string $content)
     {
         $content = trim($content);
-        if ($content == '') {
-            throw new SqlException("Empty content given to '%s' object", static::class);
+
+        if ($content === '') {
+            throw new SqlException('Empty content given to `%s` object', static::class);
         }
 
         $this->content = $content;
     }
 
     /**
-     * String magic.
+     * Magic - string.
      */
     public function __toString()
     {
@@ -49,7 +48,8 @@ abstract class AbstractSql
     }
 
     /**
-     * Content.
+     * Get content.
+     *
      * @return string
      */
     public function content(): string
