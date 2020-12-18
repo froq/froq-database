@@ -150,11 +150,11 @@ final class Database
      *
      * @param  string     $query
      * @param  array|null $params
-     * @return ?int
+     * @return int|null
      * @throws froq\database\DatabaseException|DatabaseQueryException
      * @since  4.3
      */
-    public function execute(string $query, array $params = null): ?int
+    public function execute(string $query, array $params = null): int|null
     {
         $query = $params ? $this->prepare($query, $params) : trim($query);
         $query || throw new DatabaseException('Empty query given to %s()', __method__);
