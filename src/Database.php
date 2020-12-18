@@ -186,9 +186,9 @@ final class Database
      * @param  string                    $query
      * @param  array|null                $params
      * @param  string|array<string>|null $fetch
-     * @return ?array|?object
+     * @return array|object|null
      */
-    public function get(string $query, array $params = null, $fetch = null)
+    public function get(string $query, array $params = null, string|array $fetch = null): array|object|null
     {
         return $this->query($query, $params, ['fetch' => $fetch])->row(0);
     }
@@ -199,9 +199,9 @@ final class Database
      * @param  string                    $query
      * @param  array|null                $params
      * @param  string|array<string>|null $fetch
-     * @return ?array
+     * @return array|null
      */
-    public function getAll(string $query, array $params = null, $fetch = null): ?array
+    public function getAll(string $query, array $params = null, string|array $fetch = null): array|null
     {
         return $this->query($query, $params, ['fetch' => $fetch])->rows();
     }
@@ -215,10 +215,10 @@ final class Database
      * @param  any|null                  $params
      * @param  string|null               $order
      * @param  string|array<string>|null $fetch
-     * @return ?array|?object
+     * @return array|object|null
      */
-    public function select(string $table, string $fields = '*', $where = null, $params = null,
-        string $order = null, $fetch = null)
+    public function select(string $table, string $fields = '*', string|array $where = null, $params = null,
+        string $order = null, string|array $fetch = null): array|object|null
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -243,10 +243,10 @@ final class Database
      * @param  string|null               $order
      * @param  int|array<int>|null       $limit
      * @param  string|array<string>|null $fetch
-     * @return ?array
+     * @return array|null
      */
-    public function selectAll(string $table, string $fields = '*', $where = null, $params = null,
-        string $order = null, $limit = null, $fetch = null): ?array
+    public function selectAll(string $table, string $fields = '*', string|array $where = null, $params = null,
+        string $order = null, int|array $limit = null, string|array $fetch = null): array|null
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -337,7 +337,7 @@ final class Database
      * @param  array|null        $options
      * @return int|string|array|object|null
      */
-    public function update(string $table, array $data, $where = null, $params = null, array $options = null)
+    public function update(string $table, array $data, string|array $where = null, $params = null, array $options = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
@@ -385,7 +385,7 @@ final class Database
      * @param  array|null        $options
      * @return int|string|array|object|null
      */
-    public function delete(string $table, $where = null, $params = null, array $options = null)
+    public function delete(string $table, string|array $where = null, $params = null, array $options = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
@@ -432,7 +432,7 @@ final class Database
      * @param  array|null        $params
      * @return int
      */
-    public function count(string $table, $where = null, $params = null): int
+    public function count(string $table, string|array $where = null, $params = null): int
     {
         $query = $this->initQuery($table);
 
@@ -849,15 +849,18 @@ final class Database
      * @since  4.15
      * @throws froq\database\DatabaseException
      */
-    private function prepareWhereInput($in, $params = null): array
+    private function prepareWhereInput(string|array $in, $params = null): array
     {
         $where = $in;
 
         if ($where != null) {
-            // Note: "where" must not be combined when array given, eg: (["a = ? AND b = ?" => [1, 2]])
-            // will not be prepared and prepare() method will throw exception about replacement index. So
-            // use ("a = ? AND b = ?", [1, 2]) convention instead for multiple conditions.
-            if (is_array($where)) {
+            if (is_string($where)) {
+                $where = trim($where);
+                $params = (array) $params;
+            } else {
+                // Note: "where" must not be combined when array given, eg: (["a = ? AND b = ?" => [1, 2]])
+                // will not be prepared and prepare() method will throw exception about replacement index. So
+                // use ("a = ? AND b = ?", [1, 2]) convention instead for multiple conditions.
                 $temp = [];
                 foreach ($where as $key => $value) {
                     if (!is_string($key)) {
@@ -875,12 +878,6 @@ final class Database
 
                 $where = join(' AND ', array_keys($temp));
                 $params = array_values($temp);
-            } elseif (is_string($where)) {
-                $where = trim($where);
-                $params = (array) $params;
-            } else {
-                throw new DatabaseException('Invalid where input type %s, valids are: string, array',
-                    get_type($where));
             }
         }
 
