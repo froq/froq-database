@@ -155,9 +155,7 @@ trait ValidationTrait
     {
         $validations = self::loadValidations($file);
 
-        if (empty($validations[$key])) {
-            throw new Exception('No rules found for key `%s`', $key);
-        }
+        empty($validations[$key]) && throw new Exception('No rules found for key `%s`', $key);
 
         return $validations[$key];
     }
