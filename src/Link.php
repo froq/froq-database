@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\LinkException;
+use froq\common\trait\SingletonTrait;
 use PDO, PDOException;
 
 /**
@@ -22,8 +23,11 @@ use PDO, PDOException;
  */
 final class Link
 {
-    /** @var self */
-    private static self $instance;
+    /**
+     * @see froq\common\trait\SingletonTrait
+     * @since 5.0
+     */
+    use SingletonTrait;
 
     /** @var ?PDO */
     private ?PDO $pdo;
@@ -169,17 +173,6 @@ final class Link
         } else {
             $this->pdo->exec('SET TIME ZONE ' . $this->pdo->quote($timezone));
         }
-    }
-
-    /**
-     * Init a single link.
-     *
-     * @param  array $options
-     * @return self
-     */
-    public static function init(array $options): self
-    {
-        return self::$instance ??= new self($options);
     }
 
     /**
