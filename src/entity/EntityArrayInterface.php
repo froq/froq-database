@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\common\interfaces\Arrayable;
+use froq\common\interface\Arrayable;
 use Countable, JsonSerializable, ArrayAccess, IteratorAggregate;
 
 /**

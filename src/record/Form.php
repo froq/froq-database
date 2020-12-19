@@ -10,7 +10,7 @@ namespace froq\database\record;
 use froq\database\record\{FormException, Record};
 use froq\database\{Database, trait\DbTrait, trait\TableTrait, trait\ValidationTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait};
-use froq\common\interfaces\{Arrayable, Sizable};
+use froq\common\interface\{Arrayable, Sizable};
 use froq\validation\ValidationException;
 
 /**

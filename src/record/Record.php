@@ -10,7 +10,7 @@ namespace froq\database\record;
 use froq\database\record\{RecordException, Form, FormException};
 use froq\database\{Database, Query, trait\DbTrait, trait\TableTrait, trait\ValidationTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait, DataMagicTrait};
-use froq\common\interfaces\{Arrayable, Sizable};
+use froq\common\interface\{Arrayable, Sizable};
 use froq\validation\ValidationException;
 use froq\pager\Pager;
 

@@ -236,7 +236,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
-     * @inheritDoc froq\common\interfaces\Arrayable
+     * @inheritDoc froq\common\interface\Arrayable
      * @since      4.5
      */
     public function toArray(bool $deep = false): array
