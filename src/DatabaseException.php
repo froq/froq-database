@@ -41,7 +41,7 @@ class DatabaseException extends Exception
                 $errorInfo = $this->parseMessageInfo($message);
             } else {
                 $errorInfo = isset($message->errorInfo)
-                    ? $message->errorInfo ?: $this->parseMessageInfo($message->getMessage())
+                    ? ($message->errorInfo ?: $this->parseMessageInfo($message->getMessage()))
                     : $this->parseMessageInfo($message->getMessage());
             }
 
