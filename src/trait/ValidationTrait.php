@@ -134,15 +134,11 @@ trait ValidationTrait
 
         // Try to load default file from config directory (or directory, eg: config/validations/user).
         $file = APP_DIR . '/app/config/' . ($file ?: 'validations') . '.php';
-        if (!is_file($file)) {
-            throw new Exception('No validations file exists such `%s`', $file);
-        }
+        is_file($file) || throw new Exception('No validations file exists such `%s`', $file);
 
         $validations = include $file;
-        if (!is_array($validations)) {
-            throw new Exception('Validation files must return an array, %s returned',
-                get_type($validations));
-        }
+        is_array($validations) || throw new Exception('Validation files must return an array, %s returned',
+            get_type($validations));
 
         return $validations;
     }
@@ -180,14 +176,10 @@ trait ValidationTrait
      */
     protected final function runValidation(?array &$data, ?array $rules, ?array $options, ?array &$errors): bool
     {
-        if (empty($rules)) {
-            throw new Exception('No validation rules set yet, call setValidationRules() or define'
-                . ' $validationRules property on %s class', static::class);
-        }
+        $rules || throw new Exception('No validation rules set yet, call setValidationRules() or define'
+            . ' $validationRules property on %s class', static::class);
 
-        $validation = new Validation($rules, $options);
-
-        $this->validated = $validation->validate($data, $errors);
+        $this->validated = (new Validation($rules, $options))->validate($data, $errors);
 
         if ($errors !== null) {
             $this->validationErrors = $errors;
