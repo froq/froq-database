@@ -87,11 +87,8 @@ final class Database
      */
     public function logger(): Logger
     {
-        isset($this->logger) || throw new DatabaseException(
+        return isset($this->logger) ? $this->logger : throw new DatabaseException(
             'Database object has no logger, be sure `logging` field is not empty in options');
-
-        return $this->logger;
-
     }
 
     /**
@@ -102,10 +99,8 @@ final class Database
      */
     public function profiler(): Profiler
     {
-        isset($this->profiler) || throw new DatabaseException(
+        return isset($this->profiler) ? $this->profiler : throw new DatabaseException(
             'Database object has no profiler, be sure `profiling` field is not empty or false in options');
-
-        return $this->profiler;
     }
 
     /**

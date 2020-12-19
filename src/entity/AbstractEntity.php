@@ -125,6 +125,7 @@ abstract class AbstractEntity implements EntityInterface
      * @param  array  $callArgs
      * @return any
      * @throws froq\database\entity\EntityException
+     * @todo   Drop?
      */
     public function __call($call, $callArgs)
     {
@@ -140,10 +141,9 @@ abstract class AbstractEntity implements EntityInterface
             case 'set':
                 $var = lcfirst(substr($call, 3));
                 if (property_exists($this, $var)) {
-                    if (!$callArgs) {
-                        throw new EntityException("No call argument given for '%s()' call on '%s' entity",
-                            [$call, static::class]);
-                    }
+                    $callArgs || throw new EntityException('No call argument given for %s() call on entity %s',
+                        [$call, static::class]
+                    );
                     return $this->__set($var, $callArgs[0]);
                 }
                 break;
@@ -154,7 +154,7 @@ abstract class AbstractEntity implements EntityInterface
                 }
                 break;
             default:
-                throw new EntityException("Invalid call as '%s()' on '%s' entity", [$call, static::class]);
+                throw new EntityException('Invalid call as %s() on entity %s', [$call, static::class]);
         }
     }
 
@@ -342,7 +342,7 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function offsetSet($var, $value)
     {
-        throw new EntityException("No set() allowed for '%s' object", [static::class]);
+        throw new EntityException('No set() allowed for ' . static::class);
     }
 
     /**
@@ -351,7 +351,7 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function offsetUnset($var)
     {
-        throw new EntityException("No unset() allowed for '%s' object", [static::class]);
+        throw new EntityException('No unset() allowed for ' . static::class);
     }
 
     /**

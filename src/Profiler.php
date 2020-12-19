@@ -193,7 +193,7 @@ final class Profiler
     public static function mark(string $name): float
     {
         if (isset(self::$marks[$name])) {
-            throw new ProfilerException("Existing mark name '%s' given, call unmark() to drop it", $name);
+            throw new ProfilerException('Existing mark name `%s` given, call unmark() to drop it', $name);
         }
 
         return self::$marks[$name] = microtime(true);
@@ -210,7 +210,7 @@ final class Profiler
     public static function unmark(string $name): float
     {
         if (!isset(self::$marks[$name])) {
-            throw new ProfilerException("Could not find a mark with given name '%s'", $name);
+            throw new ProfilerException('Could not find a mark with given name `%s`', $name);
         }
 
         $time = round(microtime(true) - self::$marks[$name], 10);
@@ -240,7 +240,7 @@ final class Profiler
                 }
                 break;
             default:
-                throw new ProfilerException("Invalid mark '%s' given, valids are: connection, query", $mark);
+                throw new ProfilerException('Invalid mark `%s`, valids are: connection, query', $mark);
         }
     }
 
@@ -254,7 +254,7 @@ final class Profiler
     private function end(string $mark): void
     {
         if (!isset($this->profiles[$mark])) {
-            throw new ProfilerException("Could not find a profile with given '%s' mark", $mark);
+            throw new ProfilerException('Could not find a profile with given `%s` mark', $mark);
         }
 
         $end = microtime(true);
@@ -271,7 +271,7 @@ final class Profiler
                 }
                 break;
             default:
-                throw new ProfilerException("Invalid mark '%s' given, valids are: connection, query", $mark);
+                throw new ProfilerException('Invalid mark `%s`, valids are: connection, query', $mark);
         }
     }
 }

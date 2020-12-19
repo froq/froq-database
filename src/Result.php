@@ -62,12 +62,9 @@ final class Result implements Countable, IteratorAggregate
                     case  'array': $fetchType = PDO::FETCH_ASSOC; break;
                     case 'object': $fetchType = PDO::FETCH_OBJ;   break;
                     case  'class':
-                        if (!$fetchClass) {
-                            throw new ResultException("No fetch class given, fetch class is required".
-                                " when fetch type is 'class'");
-                        } elseif (!class_exists($fetchClass)) {
-                            throw new ResultException("No fetch class found such '%s'", $fetchClass);
-                        }
+                        $fetchClass || throw new ResultException(
+                            'No fetch class given, it is required when fetch type is `class`'
+                        );
 
                         $fetchType = PDO::FETCH_CLASS;
                         break;
@@ -75,8 +72,9 @@ final class Result implements Countable, IteratorAggregate
                         static $fetchTypes = ['array', 'object', 'class'];
 
                         if ($fetchType && !in_array($fetchType, $fetchTypes)) {
-                            throw new ResultException("Invalid fetch type '%s' given, valids are: %s",
-                                [$fetchType, join(', ', $fetchTypes)]);
+                            throw new ResultException('Invalid fetch type `%s`, valids are: %s',
+                                [$fetchType, join(', ', $fetchTypes)]
+                            );
                         }
 
                         $fetchType = $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);

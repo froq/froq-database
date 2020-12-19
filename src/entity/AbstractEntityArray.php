@@ -52,10 +52,10 @@ abstract class AbstractEntityArray implements EntityArrayInterface
         // Create entity class (eg: FooEntityArray => FooEntity)
         $this->itemsClass = substr(static::class, 0, -5);
 
-        if (!class_exists($this->itemsClass)) {
-            throw new EntityException("Entity class '%s' not exists, be sure it is defined under the ".
-                "same namespace & directory", $this->itemsClass);
-        }
+        class_exists($this->itemsClass) || throw new EntityException(
+            'Entity class %s not exists, be sure it is defined under the same namespace & directory',
+            $this->itemsClass
+        );
 
         // Convert items to related entity.
         if ($items) foreach ($items as $item) {
@@ -297,7 +297,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public final function offsetSet($i, $item)
     {
-        throw new EntityException("No set() allowed for '%s' object", [static::class]);
+        throw new EntityException('No set() allowed for ' . static::class);
     }
 
     /**
@@ -306,6 +306,6 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public final function offsetUnset($i)
     {
-        throw new EntityException("No unset() allowed for '%s' object", [static::class]);
+        throw new EntityException('No unset() allowed for ' . static::class);
     }
 }

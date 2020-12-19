@@ -28,33 +28,28 @@ class DatabaseException extends Exception
 
     /**
      * Constructor.
-     * @param string|Throwable  $message
-     * @param string|array|null $messageParams
-     * @param int|null          $code
-     * @param Throwable|null    $previous
+     * @param string|Throwable $message
+     * @param any|null         $messageParams
+     * @param int|null         $code
+     * @param Throwable|null   $previous
      */
-    public function __construct($message = null, $messageParams = null, int $code = null, Throwable $previous = null)
+    public function __construct(string|Throwable $message = null, $messageParams = null, int $code = null,
+        Throwable $previous = null)
     {
-        if ($message) {
+        if ($message != null) {
             if (is_string($message)) {
                 $errorInfo = $this->parseMessageInfo($message);
-            } elseif (is_object($message) && $message instanceof Throwable) {
-                $errorInfo = isset($message->errorInfo)
-                    ? ($message->errorInfo ?: $this->parseMessageInfo($message->getMessage()))
-                    : $this->parseMessageInfo($message->getMessage());
             } else {
-                throw new Exception(
-                    "Invalid message type '%s' given to '%s', valids are: string, Throwable",
-                    [get_type($message), static::class]
-                );
+                $errorInfo = isset($message->errorInfo)
+                    ? $message->errorInfo ?: $this->parseMessageInfo($message->getMessage())
+                    : $this->parseMessageInfo($message->getMessage());
             }
 
+            // Assign sql-state.
             $this->sqlState = (string) $errorInfo[0];
 
-            // Override.
-            if (is_null($code)) {
-                $code = (int) $errorInfo[1];
-            }
+            // Override if null.
+            $code ??= (int) $errorInfo[1];
         }
 
         parent::__construct($message, $messageParams, $code, $previous);
