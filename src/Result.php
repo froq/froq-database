@@ -56,7 +56,7 @@ final class Result implements Countable, IteratorAggregate
 
             // Update fetch option if given.
             if (isset($options['fetch'])) {
-                @ [$fetchType, $fetchClass] = (array) $options['fetch'];
+                [$fetchType, $fetchClass] = array_select((array) $options['fetch'], [0, 1]);
 
                 switch ($fetchType) {
                     case  'array': $fetchType = PDO::FETCH_ASSOC; break;
