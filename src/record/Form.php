@@ -9,7 +9,7 @@ namespace froq\database\record;
 
 use froq\database\record\{FormException, Record};
 use froq\database\{Database, trait\DbTrait, trait\TableTrait, trait\ValidationTrait};
-use froq\common\traits\{DataTrait, DataLoadTrait};
+use froq\common\trait\{DataTrait, DataLoadTrait};
 use froq\common\interfaces\{Arrayable, Sizable};
 use froq\validation\ValidationException;
 
@@ -30,8 +30,8 @@ class Form implements Arrayable, Sizable
      * @see froq\database\trait\DbTrait
      * @see froq\database\trait\TableTrait
      * @see froq\database\trait\ValidationTrait
-     * @see froq\common\traits\DataTrait
-     * @see froq\common\traits\DataLoadTrait
+     * @see froq\common\trait\DataTrait
+     * @see froq\common\trait\DataLoadTrait
      */
     use DbTrait, TableTrait, ValidationTrait, DataTrait, DataLoadTrait;
 

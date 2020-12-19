@@ -9,7 +9,7 @@ namespace froq\database\record;
 
 use froq\database\record\{RecordException, Form, FormException};
 use froq\database\{Database, Query, trait\DbTrait, trait\TableTrait, trait\ValidationTrait};
-use froq\common\traits\{DataTrait, DataLoadTrait, DataMagicTrait};
+use froq\common\trait\{DataTrait, DataLoadTrait, DataMagicTrait};
 use froq\common\interfaces\{Arrayable, Sizable};
 use froq\validation\ValidationException;
 use froq\pager\Pager;
@@ -31,9 +31,9 @@ class Record implements Arrayable, Sizable
      * @see froq\database\trait\DbTrait
      * @see froq\database\trait\TableTrait
      * @see froq\database\trait\ValidationTrait
-     * @see froq\common\traits\DataTrait
-     * @see froq\common\traits\DataLoadTrait
-     * @see froq\common\traits\DataMagicTrait
+     * @see froq\common\trait\DataTrait
+     * @see froq\common\trait\DataLoadTrait
+     * @see froq\common\trait\DataMagicTrait
      */
     use DbTrait, TableTrait, ValidationTrait, DataTrait, DataLoadTrait, DataMagicTrait;
 
