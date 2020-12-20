@@ -217,11 +217,7 @@ final class Database
     {
         $query = $this->initQuery($table)->select($fields);
 
-        if ($where) {
-            [$where, $params] = $this->prepareWhereInput($where, $params);
-            $query->where($where, $params);
-        }
-
+        $where && $query->where(...$this->prepareWhereInput($where, $params));
         $order && $query->orderBy($order);
         $query->limit(1);
 
@@ -245,11 +241,7 @@ final class Database
     {
         $query = $this->initQuery($table)->select($fields);
 
-        if ($where) {
-            [$where, $params] = $this->prepareWhereInput($where, $params);
-            $query->where($where, $params);
-        }
-
+        $where && $query->where(...$this->prepareWhereInput($where, $params));
         $order && $query->orderBy($order);
         $limit && $query->limit(...(array) $limit);
 
@@ -268,23 +260,26 @@ final class Database
     {
         $return = $fetch = $batch = $conflict = $sequence = null;
         if ($options != null) {
-            @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
-                'conflict' => $conflict, 'sequence' => $sequence] = $options;
+            [$return, $fetch, $batch, $conflict, $sequence] = array_select(
+                $options, ['return', 'fetch', 'batch', 'conflict', 'sequence']
+            );
         }
 
         $query = $this->initQuery($table)->insert($data, $batch, $sequence);
 
         if ($conflict) {
+            $conflict = (array) $conflict;
+
             if (isset($conflict['fields']) || isset($conflict['action'])) {
-                @ ['fields' => $fields, 'action' => $action] = $conflict;
+                [$fields, $action] = array_select($conflict, ['fields', 'action']);
             } else {
-                @ [$fields, $action, $update, $where] = $conflict;
+                [$fields, $action, $update, $where] = array_select($conflict, [0, 1, 2, 3]);
             }
 
             // Eg: 'conflict' => ['id', 'action' => 'nothing'] or ['id', 'update' => [..], 'where' => [..]].
-            $fields ??= $conflict[0] ?? null;
+            $fields ??= $conflict[0]        ?? null;
             $update ??= $conflict['update'] ?? null;
-            $where ??= $conflict['where'] ?? null;
+            $where  ??= $conflict['where']  ?? null;
 
             // Can be skipped with update.
             $update && $action = 'update';
@@ -309,7 +304,7 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result = $result->row(0);
+                $result      = $result->row(0);
                 $resultArray = (array) $result;
                 if (isset($resultArray[$return])) {
                     $result = $resultArray[$return];
@@ -336,19 +331,16 @@ final class Database
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
-            @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
-                'limit' => $limit] = $options;
+            [$return, $fetch, $batch, $limit] = array_select(
+                $options, ['return', 'fetch', 'batch', 'limit']
+            );
         }
 
         $query = $this->initQuery($table)->update($data);
 
-        if ($where) {
-            [$where, $params] = $this->prepareWhereInput($where, $params);
-            $query->where($where, $params);
-        }
-
+        $where  && $query->where(...$this->prepareWhereInput($where, $params));
         $return && $query->return($return, $fetch);
-        $limit && $query->limit($limit);
+        $limit  && $query->limit($limit);
 
         $result = $query->run();
 
@@ -358,7 +350,7 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result = $result->row(0);
+                $result      = $result->row(0);
                 $resultArray = (array) $result;
                 if (isset($resultArray[$return])) {
                     $result = $resultArray[$return];
@@ -384,19 +376,16 @@ final class Database
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
-            @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
-                'limit' => $limit] = $options;
+            [$return, $fetch, $batch, $limit] = array_select(
+                $options, ['return', 'fetch', 'batch', 'limit']
+            );
         }
 
         $query = $this->initQuery($table)->delete();
 
-        if ($where) {
-            [$where, $params] = $this->prepareWhereInput($where, $params);
-            $query->where($where, $params);
-        }
-
+        $where  && $query->where(...$this->prepareWhereInput($where, $params));
         $return && $query->return($return, $fetch);
-        $limit && $query->limit($limit);
+        $limit  && $query->limit($limit);
 
         $result = $query->run();
 
@@ -406,7 +395,7 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result = $result->row(0);
+                $result      = $result->row(0);
                 $resultArray = (array) $result;
                 if (isset($resultArray[$return])) {
                     $result = $resultArray[$return];
@@ -431,10 +420,7 @@ final class Database
     {
         $query = $this->initQuery($table);
 
-        if ($where) {
-            [$where, $params] = $this->prepareWhereInput($where, $params);
-            $query->where($where, $params);
-        }
+        $where && $query->where(...$this->prepareWhereInput($where, $params));
 
         return $query->count();
     }
@@ -850,7 +836,7 @@ final class Database
 
         if ($where != null) {
             if (is_string($where)) {
-                $where = trim($where);
+                $where  = trim($where);
                 $params = (array) $params;
             } else {
                 // Note: "where" must not be combined when array given, eg: (["a = ? AND b = ?" => [1, 2]])
@@ -871,7 +857,7 @@ final class Database
                     $temp[$key] = $value;
                 }
 
-                $where = join(' AND ', array_keys($temp));
+                $where  = join(' AND ', array_keys($temp));
                 $params = array_values($temp);
             }
         }
