@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\LinkException;
-use froq\common\trait\SingletonTrait;
+use froq\common\trait\InstanceTrait;
 use PDO, PDOException;
 
 /**
@@ -24,10 +24,10 @@ use PDO, PDOException;
 final class Link
 {
     /**
-     * @see froq\common\trait\SingletonTrait
+     * @see froq\common\trait\InstanceTrait
      * @since 5.0
      */
-    use SingletonTrait;
+    use InstanceTrait;
 
     /** @var ?PDO */
     private ?PDO $pdo;
