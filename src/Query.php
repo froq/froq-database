@@ -958,7 +958,7 @@ final class Query
         }
 
         // Eg: ("id ASC") or ("id ASC, name DESC").
-        if (strsrc($field, ' ')) {
+        if (strpos($field, ' ')) {
             $fields = [];
             foreach (split(',', $field) as $i => $field) {
                 [$field, $op] = split(' ', trim($field), 2);
@@ -1033,9 +1033,9 @@ final class Query
         $prepare && $as = $this->prepareField($as);
 
         match ($this->key) {
-            'table'  => strsrc($this->stack['table'], ' AS ')
+            'table'  => strpos($this->stack['table'], ' AS ')
                             || $this->stack['table'] .= ' AS ' . $as, // Concat.
-            'select' => strsrc($this->stack['select'][count($this->stack['select']) - 1], ' AS ')
+            'select' => strpos($this->stack['select'][count($this->stack['select']) - 1], ' AS ')
                             || $this->stack['select'][count($this->stack['select']) - 1] .= ' AS ' . $as,
             default  => throw new QueryException('Invalid key `%s` for as()', $this->key)
         };
