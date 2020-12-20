@@ -166,10 +166,10 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      * Filter.
      * @param  callable $func
      * @param  bool     $keepKeys
-     * @return self (static)
+     * @return static
      * @since  4.8
      */
-    public function filter(callable $func, bool $keepKeys = false): self
+    public function filter(callable $func, bool $keepKeys = false): static
     {
         // Stay in here.
         $func = $func->bindTo($this, $this);
@@ -182,10 +182,10 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     /**
      * Map.
      * @param  callable $func
-     * @return self (static)
+     * @return static
      * @since  4.8
      */
-    public function map(callable $func): self
+    public function map(callable $func): static
     {
         // Stay in here.
         $func = $func->bindTo($this, $this);

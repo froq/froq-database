@@ -252,10 +252,10 @@ abstract class AbstractEntity implements EntityInterface
 
     /**
      * Filter.
-     * @return self (static)
+     * @return static
      * @since  4.12
      */
-    public function filter(callable $func = null): self
+    public function filter(callable $func = null): static
     {
         $filtered = array_filter(
             $vars = $this->getVars(),
