@@ -94,7 +94,7 @@ abstract class AbstractEntity implements EntityInterface
      * Set.
      * @param  string $var
      * @param  any    $value
-     * @return self (static)
+     * @return self
      */
     public function __set($var, $value)
     {
