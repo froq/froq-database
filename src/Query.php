@@ -25,7 +25,6 @@ use froq\pager\Pager;
 final class Query
 {
     /**
-     * Query & Db traits.
      * @see froq\database\QueryTrait
      * @see froq\database\trait\DbTrait
      */

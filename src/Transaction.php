@@ -22,14 +22,12 @@ use PDO, PDOException;
  */
 final class Transaction
 {
-    /**
-     * Pdo.
-     * @var PDO
-     */
+    /** @var PDO */
     private PDO $pdo;
 
     /**
      * Constructor.
+     *
      * @param PDO $pdo
      */
     public function __construct(PDO $pdo)

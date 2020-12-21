@@ -20,14 +20,12 @@ use Throwable, PDOException;
  */
 class DatabaseException extends Exception
 {
-    /**
-     * SQL State.
-     * @var string
-     */
+    /** @var string */
     private string $sqlState = '';
 
     /**
      * Constructor.
+     *
      * @param string|Throwable $message
      * @param any|null         $messageParams
      * @param int|null         $code
@@ -57,6 +55,7 @@ class DatabaseException extends Exception
 
     /**
      * Get sql state.
+     *
      * @return string.
      */
     public function getSqlState(): string
@@ -66,6 +65,7 @@ class DatabaseException extends Exception
 
     /**
      * Parse message info.
+     *
      * @param  string $message
      * @return array<string, string>
      */

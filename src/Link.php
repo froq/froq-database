@@ -30,7 +30,7 @@ final class Link
     use InstanceTrait;
 
     /** @var ?PDO */
-    private ?PDO $pdo;
+    private ?PDO $pdo = null;
 
     /** @var string */
     private string $pdoDriver;
@@ -114,7 +114,7 @@ final class Link
             }
 
             try {
-                $this->pdo = new PDO($dsn, $user, $pass, $options);
+                $this->pdo       = new PDO($dsn, $user, $pass, $options);
                 $this->pdoDriver = $driver;
             } catch (PDOException $e) {
                 // Which driver the FUCK?
@@ -124,7 +124,7 @@ final class Link
                 throw new LinkException($e);
             }
 
-            $charset && $this->setCharset($charset);
+            $charset  && $this->setCharset($charset);
             $timezone && $this->setTimezone($timezone);
         }
     }
@@ -146,7 +146,7 @@ final class Link
      */
     public function isConnected(): bool
     {
-        return isset($this->pdo);
+        return $this->pdo != null;
     }
 
     /**

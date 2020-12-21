@@ -26,7 +26,7 @@ final class Profiler
     /** @var int */
     private int $queryCount = 0;
 
-    /** @var array */
+    /** @var array @since 5.0 */
     private static array $marks = [];
 
     /**
