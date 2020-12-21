@@ -44,8 +44,8 @@ class Form implements Arrayable, Sizable
     /** @var string */
     protected string $recordClass;
 
-    /** @var int|string|bool */
-    private int|string|bool $saved;
+    /** @var bool */
+    private bool $saved;
 
     /**
      * Constructor.
@@ -266,14 +266,14 @@ class Form implements Arrayable, Sizable
     /**
      * Proxy method to owned record saved state/result.
      *
-     * @param  int|string|bool|null &$saved
+     * @param  int|string|null &$id
      * @return bool
      */
-    public final function isSaved(int|string|bool &$saved = null): bool
+    public final function isSaved(int|string &$id = null): bool
     {
-        $this->getRecord()?->isSaved($saved);
+        $this->getRecord()?->isSaved($id);
 
-        return !!$saved;
+        return !!$id;
     }
 
     /**
