@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{EntityException, EntityArrayInterface, AbstractEntity};
+use froq\database\entity\{EntityException, EntityArrayInterface, EntityInterface};
 use froq\collection\Collection;
 use froq\pager\Pager;
 use ArrayIterator;
@@ -22,32 +22,23 @@ use ArrayIterator;
  */
 abstract class AbstractEntityArray implements EntityArrayInterface
 {
-    /**
-     * Items.
-     * @var array<froq\database\entity\AbstractEntity>
-     */
+    /** @var array<froq\database\entity\EntityInterface> */
     private array $items = [];
 
-    /**
-     * Items class.
-     * @var string
-     * @since 4.8
-     */
+    /** @var string @since 4.8 */
     private string $itemsClass;
 
-    /**
-     * Pager.
-     * @var ?froq\pager\Pager
-     */
-    protected ?Pager $pager;
+    /** @var froq\pager\Pager|null */
+    protected Pager|null $pager;
 
     /**
      * Constructor.
+     *
      * @param array|null            $items
      * @param froq\pager\Pager|null $pager
      * @param array|bool|null       $drop
      */
-    public function __construct(array $items = null, Pager $pager = null, $drop = null)
+    public function __construct(array $items = null, Pager $pager = null, array|bool $drop = null)
     {
         // Create entity class (eg: FooEntityArray => FooEntity)
         $this->itemsClass = substr(static::class, 0, -5);
@@ -66,7 +57,8 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
-     * Serialize.
+     * Magic - serialize.
+     *
      * @return array
      */
     public function __serialize()
@@ -76,18 +68,20 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
-     * Unserialize.
+     * Magic - unserialize.
+     *
      * @param  array $data
      * @return void
      */
-    public function __unserialize($data)
+    public function __unserialize(array $data)
     {
         ['items' => $this->items, 'itemsClass' => $this->itemsClass,
          'pager' => $this->pager] = $data;
     }
 
     /**
-     * Has.
+     * Check whether an item set on data stack with given index.
+     *
      * @param  int $i
      * @return bool
      */
@@ -97,28 +91,31 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
-     * Get.
+     * Get an item from data stack with given index.
+     *
      * @param  int $i
-     * @return ?froq\database\entity\AbstractEntity
+     * @return froq\database\entity\EntityInterface|null
      * @since  4.11
      */
-    public final function get(int $i): ?AbstractEntity
+    public final function get(int $i): EntityInterface|null
     {
         return $this->items[$i] ?? null;
     }
 
     /**
-     * Item.
+     * Get an item.
+     *
      * @alias of get()
      */
-    public final function item(int $i): ?AbstractEntity
+    public final function item(int $i)
     {
         return $this->get($i);
     }
 
     /**
-     * Items.
-     * @return array<froq\database\entity\AbstractEntity|null>
+     * Get all items.
+     *
+     * @return array<froq\database\entity\EntityInterface|null>
      */
     public final function items(): array
     {
@@ -126,7 +123,8 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
-     * Items class.
+     * Get items class.
+     *
      * @return string
      * @since  4.8
      */
@@ -136,34 +134,38 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
-     * First.
-     * @return ?froq\database\entity\AbstractEntity
+     * Get first item or return null if no items.
+     *
+     * @return froq\database\entity\EntityInterface|null
      */
-    public final function first(): ?AbstractEntity
+    public final function first(): EntityInterface|null
     {
-        return $this->item(0);
+        return $this->get(0);
     }
 
     /**
-     * Last.
-     * @return ?froq\database\entity\AbstractEntity
+     * Get last item or return null if no items.
+     *
+     * @return froq\database\entity\EntityInterface|null
      */
-    public final function last(): ?AbstractEntity
+    public final function last(): EntityInterface|null
     {
-        return $this->item(count($this->items) - 1);
+        return $this->get(count($this->items) - 1);
     }
 
     /**
-     * Pager.
-     * @return ?froq\pager\Pager
+     * Get pager property.
+     *
+     * @return froq\pager\Pager|null
      */
-    public final function pager(): ?Pager
+    public final function pager(): Pager|null
     {
         return $this->pager;
     }
 
     /**
      * Filter.
+     *
      * @param  callable $func
      * @param  bool     $keepKeys
      * @return static
@@ -181,6 +183,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
 
     /**
      * Map.
+     *
      * @param  callable $func
      * @return static
      * @since  4.8
@@ -197,6 +200,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
 
     /**
      * Reduce.
+     *
      * @param  any      $carry
      * @param  callable $func
      * @return any
@@ -212,6 +216,7 @@ abstract class AbstractEntityArray implements EntityArrayInterface
 
     /**
      * Aggregate.
+     *
      * @param  callable   $func
      * @param  array|null $carry
      * @return array
@@ -226,7 +231,8 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     }
 
     /**
-     * To collection.
+     * Create a collection from entity vars.
+     *
      * @return froq\collection\Collection
      * @since  4.8
      */

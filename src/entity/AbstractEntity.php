@@ -23,10 +23,11 @@ abstract class AbstractEntity implements EntityInterface
 {
     /**
      * Constructor.
+     *
      * @param array|null      $data
      * @param array|bool|null $drop
      */
-    public function __construct(array $data = null, $drop = null)
+    public function __construct(array $data = null, array|bool $drop = null)
     {
         $data = $data ?? [];
 
@@ -46,7 +47,7 @@ abstract class AbstractEntity implements EntityInterface
                           : array_diff(array_keys($data), $vars);
             }
             // Unwanted vars.
-            elseif (is_array($drop)) {
+            else {
                 $diff = $drop;
             }
 
@@ -63,7 +64,8 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Serialize.
+     * Magic - serialize.
+     *
      * @return array
      */
     public function __serialize()
@@ -72,11 +74,12 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Unserialize.
+     * Magic - unserialize.
+     *
      * @param  array $data
      * @return void
      */
-    public function __unserialize($data)
+    public function __unserialize(array $data)
     {
         // First: set all vars (cos PHP creates new entity object with all vars).
         foreach ($data as $var => $value) {
@@ -91,12 +94,13 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Set.
+     * Magic - set.
+     *
      * @param  string $var
      * @param  any    $value
      * @return self
      */
-    public function __set($var, $value)
+    public function __set(string $var, $value)
     {
         // Prevent "access private property".
         try {
@@ -107,11 +111,12 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Get.
+     * Magic - get.
+     *
      * @param  string $var
      * @return any|null
      */
-    public function __get($var)
+    public function __get(string $var)
     {
         // Prevent "access private property".
         try {
@@ -120,14 +125,16 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Call.
+     * Magic - call: provides ability such calls `setId()`, `getId()` etc. on extender classes, throws an
+     * `EntityException` if an invalid call comes.
+     *
      * @param  string $call
      * @param  array  $callArgs
      * @return any
      * @throws froq\database\entity\EntityException
      * @todo   Drop?
      */
-    public function __call($call, $callArgs)
+    public function __call(string $call, array $callArgs)
     {
         // Eg: id().
         if (property_exists($this, $call)) {
@@ -135,31 +142,23 @@ abstract class AbstractEntity implements EntityInterface
                              : $this->__get($call);
         }
 
+        $var = lcfirst(substr($call, 3));
+
         // Eg: setId(), getId().
-        $cmd = substr($call, 0, 3);
-        switch ($cmd) {
-            case 'set':
-                $var = lcfirst(substr($call, 3));
-                if (property_exists($this, $var)) {
-                    $callArgs || throw new EntityException('No call argument given for %s() call on entity %s',
-                        [$call, static::class]
-                    );
-                    return $this->__set($var, $callArgs[0]);
-                }
-                break;
-            case 'get':
-                $var = lcfirst(substr($call, 3));
-                if (property_exists($this, $var)) {
-                    return $this->__get($var);
-                }
-                break;
-            default:
-                throw new EntityException('Invalid call as %s() on entity %s', [$call, static::class]);
+        if (str_starts_with($call, 'set')) {
+            return property_exists($this, $var) && $callArgs ? $this->__set($var, $callArgs[0])
+                : throw new EntityException('No call argument given for %s() call on entity %s',
+                    [$call, static::class]);
+        } elseif (str_ends_with($call, 'get')) {
+            return property_exists($this, $var) ? $this->__get($var) : null;
         }
+
+        throw new EntityException('Invalid call as %s() on entity %s', [$call, static::class]);
     }
 
     /**
-     * Has.
+     * Check whether a var set on entity.
+     *
      * @param  string $var
      * @return bool
      */
@@ -169,7 +168,8 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Has var.
+     * Check whether a var defined on entity.
+     *
      * @param  string $var
      * @return bool
      * @since  4.11
@@ -180,7 +180,8 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Get.
+     * Get a var value if it set.
+     *
      * @param  string $var
      * @return any|null
      * @since  4.11
@@ -192,6 +193,7 @@ abstract class AbstractEntity implements EntityInterface
 
     /**
      * Get vars.
+     *
      * @param  bool $all
      * @return array
      * @since  4.11 Replaced with getVarValues().
@@ -211,6 +213,7 @@ abstract class AbstractEntity implements EntityInterface
 
     /**
      * Get var names.
+     *
      * @param  bool $all
      * @return array
      */
@@ -222,6 +225,7 @@ abstract class AbstractEntity implements EntityInterface
 
     /**
      * Get var values.
+     *
      * @param  bool $all
      * @return array
      */
@@ -232,16 +236,18 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Id (shortcut for IDs).
+     * Id, shortcut for IDs.
+     *
      * @return int|string|null
      */
-    public function id()
+    public function id(): int|string|null
     {
         return $this->get('id');
     }
 
     /**
-     * Is empty.
+     * Check whether entity is empty.
+     *
      * @return bool
      * @since  4.11
      */
@@ -252,6 +258,7 @@ abstract class AbstractEntity implements EntityInterface
 
     /**
      * Filter.
+     *
      * @return static
      * @since  4.12
      */
@@ -274,7 +281,8 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * To collection.
+     * Create a collection from entity vars.
+     *
      * @param  bool $deep
      * @return froq\collection\Collection
      * @since  4.8
@@ -355,7 +363,8 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * To array deep.
+     * Make a deep array from given input.
+     *
      * @param  any $in
      * @return array
      * @since  4.11
