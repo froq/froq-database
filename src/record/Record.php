@@ -78,7 +78,7 @@ class Record implements Arrayable, Sizable
                 . ' module and be sure `database` option exists in app config or pass $db argument');
         }
 
-        $this->db = $db;
+        $this->db    = $db;
         $this->query = new Query($db, table: $table);
 
         $data && $this->data = $data;
@@ -107,7 +107,7 @@ class Record implements Arrayable, Sizable
      */
     public final function setForm(Form $form): self
     {
-        $this->form = $form;
+        $this->form      = $form;
         $this->formClass = $form::class;
 
         // Prevent recursion, 'cos setRecord() calls setForm() back.
@@ -170,13 +170,12 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Get a form instance setting and returning owned or creating new one, throw a `RecordException` if no `$form`
-     * and `$formClass` was defined on extender class.
+     * Get a form instance setting and returning owned or creating new one from provided form class or
+     * default.
      *
-     * @return froq\database\record\Form|null
-     * @throws froq\database\record\RecordException
+     * @return froq\database\record\Form
      */
-    public final function getFormInstance(): Form|null
+    public final function getFormInstance(): Form
     {
         // Use internal or owned (current) form/form class if available.
         $form = $this->form ?? $this->formClass ?? new Form(
@@ -343,14 +342,10 @@ class Record implements Arrayable, Sizable
         // Insert action.
         if (!isset($primary) || !isset($data[$primary])) {
             $data = $this->db->transaction(function () use ($data, $table, $primary, $options) {
-                // Whether returning any field(s) or current data.
-                $return = $options['return'] ?? false;
-                // Whether table has sequence or not.
-                $sequence = $options['sequence'] ?? $primary;
+                $return   = $options['return']   ?? false;    // Whether returning any field(s) or current data.
+                $sequence = $options['sequence'] ?? $primary; // Whether table has sequence or not.
 
-                $query = $this->query()
-                       ->insert($data, sequence: !!$sequence);
-
+                $query = $this->query()->insert($data, sequence: !!$sequence);
                 $return && $query->return($return, 'array');
                 $result = $query->run();
 
@@ -388,16 +383,11 @@ class Record implements Arrayable, Sizable
             }
 
             $data = $this->db->transaction(function () use ($data, $table, $primary, $options, $id) {
-                // Whether returning any field(s) or current data.
-                $return = $options['return'] ?? false;
+                $return = $options['return'] ?? false; // Whether returning any field(s) or current data.
 
-                // Not needed in data set.
-                unset($data[$primary]);
+                unset($data[$primary]); // Not needed in data set.
 
-                $query = $this->query()
-                       ->update($data)
-                       ->equal($primary, $id);
-
+                $query = $this->query()->update($data)->equal($primary, $id);
                 $return && $query->return($return, 'array');
                 $result = $query->run();
 
@@ -450,10 +440,8 @@ class Record implements Arrayable, Sizable
             throw new RecordException('Empty primary value given for find()');
         }
 
-        $data = $this->query()
-              ->select('*')->from($table)
-              ->equal($primary, $id)
-              ->getArray();
+        $data = $this->query()->select('*')->from($table)
+                     ->equal($primary, $id)->getArray();
 
         $this->finded = $data ? 1 : 0;
 
@@ -481,10 +469,8 @@ class Record implements Arrayable, Sizable
             throw new RecordException('Empty primary values given for findAll()');
         }
 
-        $data = $this->query()
-              ->select('*')->from($table)
-              ->equal($primary, [$ids])
-              ->getArrayAll($pager, $limit);
+        $data = $this->query()->select('*')->from($table)
+                     ->equal($primary, [$ids])->getArrayAll($pager, $limit);
 
         $this->finded = $data ? count($data) : 0;
 
@@ -516,10 +502,8 @@ class Record implements Arrayable, Sizable
             throw new RecordException('Empty primary value given for remove()');
         }
 
-        $this->removed = $this->query()
-             ->delete()->from($table)
-             ->equal($primary, $id)
-             ->run()->count(); // Run & get affected rows count.
+        $this->removed = $this->query()->delete()->from($table)
+                              ->equal($primary, $id)->run()->count(); // Run & get affected rows count.
 
         return $this->removed;
     }
@@ -540,10 +524,8 @@ class Record implements Arrayable, Sizable
             throw new RecordException('Empty primary values given for removeAll()');
         }
 
-        $this->removed = $this->query()
-             ->delete()->from($table)
-             ->equal($primary, [$ids])
-             ->run()->count(); // Run & get affected rows count.
+        $this->removed = $this->query()->delete()->from($table)
+                              ->equal($primary, [$ids])->run()->count(); // Run & get affected rows count.
 
         return $this->removed;
     }

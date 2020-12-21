@@ -122,7 +122,7 @@ class Form implements Arrayable, Sizable
      */
     public final function setRecord(Record $record): self
     {
-        $this->record = $record;
+        $this->record      = $record;
         $this->recordClass = $record::class;
 
         // Prevent recursion, 'cos setForm() calls setRecord() back.
@@ -186,13 +186,12 @@ class Form implements Arrayable, Sizable
     }
 
     /**
-     * Get a record instance setting and returning owned or creating new one, throw a `FormException` if no `$record`
-     * and `$recordClass` was defined on extender class.
+     * Get a record instance setting and returning owned or creating new one from provided record class or
+     * default.
      *
-     * @return froq\database\record\Record|null
-     * @throws froq\database\record\FormException
+     * @return froq\database\record\Record
      */
-    public final function getRecordInstance(): Record|null
+    public final function getRecordInstance(): Record
     {
         // Use internal or owned (current) record/record class if available.
         $record = $this->record ?? $this->recordClass ?? new Record(
@@ -239,7 +238,7 @@ class Form implements Arrayable, Sizable
                 . ' $data argument to isValid()');
         }
 
-        $rules = $this->getValidationRules() ?? $this->getRecord()?->getValidationRules();
+        $rules     = $this->getValidationRules() ?? $this->getRecord()?->getValidationRules();
         $options ??= $this->getValidationOptions() ?? $this->getRecord()?->getValidationOptions();
 
         if (empty($rules)) {
@@ -309,9 +308,9 @@ class Form implements Arrayable, Sizable
                 . ' in a try/catch block and use errors() to see error details]', errors: $this->errors());
         }
 
-        $record = $this->getRecordInstance();
+        $this->record = $this->getRecordInstance();
 
-        if (empty($this->table) && empty($table = $record->getTable())) {
+        if (empty($this->table) && empty($table = $this->record->getTable())) {
             throw new FormException('No table set yet, call setTable() first or define $table property on %s'
                 . ' class to run save()', static::class);
         }
@@ -319,12 +318,11 @@ class Form implements Arrayable, Sizable
             throw new FormException('No data set yet for save(), call setData() or isValid($data) first');
         }
 
+        $this->record->save($this->data, $options, validate: false /* Must be validated until here.. */)
+                     ->setForm($this);
+
         // Require new validation.
         $this->validated = null;
-
-        ($this->record = $record)
-            ->save($this->data, $options, validate: false /* 'cos must be validated until here */)
-            ->setForm($this);
 
         return $this->record;
     }

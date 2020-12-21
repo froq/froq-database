@@ -28,8 +28,8 @@ abstract class AbstractEntityArray implements EntityArrayInterface
     /** @var string @since 4.8 */
     private string $itemsClass;
 
-    /** @var froq\pager\Pager|null */
-    protected Pager|null $pager;
+    /** @var ?froq\pager\Pager */
+    protected ?Pager $pager;
 
     /**
      * Constructor.
