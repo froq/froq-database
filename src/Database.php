@@ -122,7 +122,7 @@ final class Database
             $slowQuery = isset($this->logger->slowQuery)
                 && Profiler::mark('@slowQuery');
 
-            $pdo = $this->link->pdo();
+            $pdo          = $this->link->pdo();
             $pdoStatement = !isset($this->profiler) ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
 
@@ -158,7 +158,7 @@ final class Database
             $slowQuery = isset($this->logger->slowQuery)
                 && Profiler::mark('@slowQuery');
 
-            $pdo = $this->link->pdo();
+            $pdo       = $this->link->pdo();
             $pdoResult = !isset($this->profiler) ? $pdo->exec($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
 
@@ -178,9 +178,9 @@ final class Database
     /**
      * Get a single row running given query as `array|object` or return `null` if no match.
      *
-     * @param  string                    $query
-     * @param  array|null                $params
-     * @param  string|array<string>|null $fetch
+     * @param  string            $query
+     * @param  array|null        $params
+     * @param  string|array|null $fetch
      * @return array|object|null
      */
     public function get(string $query, array $params = null, string|array $fetch = null): array|object|null
@@ -191,9 +191,9 @@ final class Database
     /**
      * Get all rows running given query as `array` or return `null` if no matches.
      *
-     * @param  string                    $query
-     * @param  array|null                $params
-     * @param  string|array<string>|null $fetch
+     * @param  string            $query
+     * @param  array|null        $params
+     * @param  string|array|null $fetch
      * @return array|null
      */
     public function getAll(string $query, array $params = null, string|array $fetch = null): array|null
@@ -204,12 +204,12 @@ final class Database
     /**
      * Select a row from given table as `array|object` or return `null` if no match.
      *
-     * @param  string                    $table
-     * @param  string                    $fields
-     * @param  string|array|null         $where
-     * @param  any|null                  $params
-     * @param  string|null               $order
-     * @param  string|array<string>|null $fetch
+     * @param  string            $table
+     * @param  string            $fields
+     * @param  string|array|null $where
+     * @param  any|null          $params
+     * @param  string|null       $order
+     * @param  string|array|null $fetch
      * @return array|object|null
      */
     public function select(string $table, string $fields = '*', string|array $where = null, $params = null,
@@ -227,13 +227,13 @@ final class Database
     /**
      * Select all rows from given table as `array` or return `null` if no matches.
      *
-     * @param  string                    $table
-     * @param  string                    $fields
-     * @param  string|array|null         $where
-     * @param  any|null                  $params
-     * @param  string|null               $order
-     * @param  int|array<int>|null       $limit
-     * @param  string|array<string>|null $fetch
+     * @param  string            $table
+     * @param  string            $fields
+     * @param  string|array|null $where
+     * @param  any|null          $params
+     * @param  string|null       $order
+     * @param  int|array|null    $limit
+     * @param  string|array|null $fetch
      * @return array|null
      */
     public function selectAll(string $table, string $fields = '*', string|array $where = null, $params = null,
@@ -440,7 +440,7 @@ final class Database
     }
 
     /**
-     * Run a transaction or return a `Transaction` object.
+     * Run a transaction in a try/catch block or return a `Transaction` object.
      *
      * @param  callable|null $call
      * @param  callable|null $callError
@@ -679,7 +679,7 @@ final class Database
         // Eg: "id, name ..." or "id as ID, ...".
         preg_match_all('~([^\s,]+)(?:\s+(?:(AS)\s+)?([^\s,]+))?~i', $in, $match);
 
-        $names = array_filter($match[1], 'strlen');
+        $names   = array_filter($match[1], 'strlen');
         $aliases = array_filter($match[3], 'strlen');
         if (!$names) {
             return $in;
@@ -696,7 +696,7 @@ final class Database
     }
 
     /**
-     * Prepare given input returning a `string`.
+     * Prepare given input returning a string output.
      *
      * @param  string     $in
      * @param  array|null $params
@@ -722,8 +722,8 @@ final class Database
                     . ' required when input contains parameter placeholders like ?, ?? or :foo', __method__);
             }
 
-            $i = 0;
-            $keys = $values = [];
+            $i       = 0;
+            $keys    = $values = [];
             $holders = array_filter($match[0]);
 
             foreach ($holders as $holder) {
@@ -739,7 +739,7 @@ final class Database
                         $value = join(', ', $value);
                     }
 
-                    $keys[] = '~:'. $key .'~';
+                    $keys[]   = '~:'. $key .'~';
                     $values[] = $value;
                 } else { // Question-mark.
                     if (!array_key_exists($i, $params)) {
@@ -751,7 +751,7 @@ final class Database
                         $value = join(', ', $value);
                     }
 
-                    $keys[] = '~'. preg_quote($holder) .'(?![|&])~'; // PgSQL operators.
+                    $keys[]   = '~'. preg_quote($holder) .'(?![|&])~'; // PgSQL operators.
                     $values[] = $value;
                 }
             }
