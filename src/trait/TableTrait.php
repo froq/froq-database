@@ -10,7 +10,7 @@ namespace froq\database\trait;
 /**
  * Table Trait.
  *
- * Represents a trait entity that holds table & table primary properties and methods.
+ * Represents a trait entity that holds `$table` and `$tablePrimary` properties and related methods.
  *
  * @package froq\database\trait
  * @object  froq\database\trait\TableTrait
