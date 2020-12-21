@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\ProfilerException;
+use PDOStatement;
 
 /**
  * Profiler.
@@ -78,9 +79,9 @@ final class Profiler
      * @param  string   $mark
      * @param  callable $call
      * @param  ...      $callArgs
-     * @return PDOStatement|int
+     * @return PDOStatement|int|null
      */
-    public function profile(string $mark, callable $call, ...$callArgs)
+    public function profile(string $mark, callable $call, ...$callArgs): PDOStatement|int|null
     {
         $this->start($mark);
         $ret = $call(...$callArgs);
@@ -107,9 +108,9 @@ final class Profiler
      * @param  string   $query
      * @param  callable $call
      * @param  ...      $callArgs
-     * @return PDOStatement|int
+     * @return PDOStatement|int|null
      */
-    public function profileQuery(string $query, callable $call, ...$callArgs)
+    public function profileQuery(string $query, callable $call, ...$callArgs): PDOStatement|int|null
     {
         $this->profiles['query'][++$this->queryCount]['string'] = $query;
 
@@ -119,9 +120,9 @@ final class Profiler
     /**
      * Get last query.
      *
-     * @return ?float|?string|?array
+     * @return float|string|array|null
      */
-    public function getLastQuery(string $key = null)
+    public function getLastQuery(string $key = null): float|string|array|null
     {
         return $key ? $this->profiles['query'][$this->queryCount][$key] ?? null
             : $this->profiles['query'][$this->queryCount] ?? null;
@@ -130,9 +131,9 @@ final class Profiler
     /**
      * Get last query time.
      *
-     * @return ?float
+     * @return float|null
      */
-    public function getLastQueryTime(): ?float
+    public function getLastQueryTime(): float|null
     {
         return $this->getLastQuery('time');
     }
@@ -140,9 +141,9 @@ final class Profiler
     /**
      * Get last query string.
      *
-     * @return ?string
+     * @return string|null
      */
-    public function getLastQueryString(): ?string
+    public function getLastQueryString(): string|null
     {
         return $this->getLastQuery('string');
     }
@@ -153,12 +154,15 @@ final class Profiler
      * @param  bool $timeOnly
      * @return float|string
      */
-    public function getTotalTime(bool $timeOnly = true)
+    public function getTotalTime(bool $timeOnly = true): float|string
     {
-        if (!$this->profiles) return;
+        if (empty($this->profiles)) {
+            return null;
+        }
 
-        $totalTime = 0.0;
+        $totalTime  = 0.0;
         $totalTimes = [];
+
         if (isset($this->profiles['connection'])) {
             $totalTime += $this->profiles['connection']['time'];
             if (!$timeOnly) {
@@ -170,7 +174,7 @@ final class Profiler
             foreach ($this->profiles['query'] as $i => $profile) {
                 $totalTime += $profile['time'];
                 if (!$timeOnly) {
-                    $totalTimes[] = 'query('. $i .', '. $profile['time'] .')';
+                    $totalTimes[] = 'query('. $i .': '. $profile['time'] .')';
                 }
             }
         }
@@ -220,7 +224,7 @@ final class Profiler
     }
 
     /**
-     * Start a profile entry for connection or query.
+     * Start a profile entry for a connection or query.
      *
      * @param  string $mark
      * @return void
@@ -245,7 +249,7 @@ final class Profiler
     }
 
     /**
-     * End a profile entry for connection or query.
+     * End a profile entry for a connection or query.
      *
      * @param  string $mark
      * @return void
@@ -260,13 +264,13 @@ final class Profiler
         $end = microtime(true);
         switch ($mark) {
             case 'connection':
-                $this->profiles[$mark]['end'] = $end;
+                $this->profiles[$mark]['end']  = $end;
                 $this->profiles[$mark]['time'] = round($end - $this->profiles[$mark]['start'], 10);
                 break;
             case 'query':
                 $i = $this->queryCount;
                 if (isset($this->profiles[$mark][$i])) {
-                    $this->profiles[$mark][$i]['end'] = $end;
+                    $this->profiles[$mark][$i]['end']  = $end;
                     $this->profiles[$mark][$i]['time'] = round($end - $this->profiles[$mark][$i]['start'], 10);
                 }
                 break;
