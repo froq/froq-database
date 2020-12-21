@@ -21,29 +21,23 @@ use PDO, PDOStatement, PDOException, Countable, IteratorAggregate, ArrayIterator
  */
 final class Result implements Countable, IteratorAggregate
 {
-    /**
-     * Count.
-     * @var int
-     */
+    /** @var int */
     private int $count = 0;
 
-    /**
-     * Ids.
-     * @var ?array<int>
-     */
+    /** @var ?array<int> */
     private ?array $ids = null;
 
-    /**
-     * Rows.
-     * @var ?array<array|object>
-     */
+    /** @var ?array<array|object> */
     private ?array $rows = null;
+
+    /** @var array @since 5.0 */
+    private static array $fetchTypes = ['array', 'object', 'class'];
 
     /**
      * Constructor.
-     * @param PDO           $pdo
-     * @param PDOStatement  $pdoStatement
-     * @param array|null    $options
+     * @param PDO          $pdo
+     * @param PDOStatement $pdoStatement
+     * @param array|null   $options
      */
     public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null)
     {
@@ -51,12 +45,11 @@ final class Result implements Countable, IteratorAggregate
             // Assign count (affected rows etc).
             $this->count = $pdoStatement->rowCount();
 
-            // Defaults.
-            [$fetch, $sequence] = [null, true];
-
-            // Update fetch option if given.
+            // Check fetch option.
             if (isset($options['fetch'])) {
-                [$fetchType, $fetchClass] = array_select((array) $options['fetch'], [0, 1]);
+                $fetch      = (array) $options['fetch'];
+                $fetchType  = $fetch[0] ?? null;
+                $fetchClass = $fetch[1] ?? null;
 
                 switch ($fetchType) {
                     case  'array': $fetchType = PDO::FETCH_ASSOC; break;
@@ -69,25 +62,24 @@ final class Result implements Countable, IteratorAggregate
                         $fetchType = PDO::FETCH_CLASS;
                         break;
                     default:
-                        static $fetchTypes = ['array', 'object', 'class'];
-
-                        if ($fetchType && !in_array($fetchType, $fetchTypes)) {
+                        if ($fetchType && !in_array($fetchType, self::$fetchTypes)) {
                             throw new ResultException('Invalid fetch type `%s`, valids are: %s',
-                                [$fetchType, join(', ', $fetchTypes)]
+                                [$fetchType, join(', ', self::$fetchTypes)]
                             );
                         }
 
-                        $fetchType = $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
+                        unset($fetchType);
                 }
             }
 
-            // Update sequence option to prevent transaction errors that comes from lastInsertId()
+            // Set/update sequence option to prevent transaction errors that comes from lastInsertId()
             // calls but while commit() returning true when sequence field not exists.
+            $sequence = true;
             if (isset($options['sequence'])) {
                 $sequence = (bool) $options['sequence'];
             }
 
-            $query = trim($pdoStatement->queryString);
+            $query = ltrim($pdoStatement->queryString);
 
             // Select queries & Returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
             if (stripos($query, 'SELECT') === 0 || (
@@ -96,11 +88,11 @@ final class Result implements Countable, IteratorAggregate
                 // Set or get default.
                 $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
-                $rows = ($fetchType == PDO::FETCH_CLASS)
+                $this->rows = (
+                    ($fetchType == PDO::FETCH_CLASS)
                       ? $pdoStatement->fetchAll($fetchType, $fetchClass)
-                      : $pdoStatement->fetchAll($fetchType);
-
-                $this->rows = $rows ?: null;
+                      : $pdoStatement->fetchAll($fetchType)
+                ) ?: null;
             }
 
             // Insert queries.
@@ -141,8 +133,9 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * To array.
-     * @return array<int, array>
+     * Get rows as array.
+     *
+     * @return array<array|object>
      */
     public function toArray(): array
     {
@@ -150,8 +143,9 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * To object.
-     * @return array<int, object>
+     * Get rows as object.
+     *
+     * @return array<object>
      */
     public function toObject(): array
     {
@@ -163,11 +157,12 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * To class.
+     * Get rows as given class instance.
+     *
      * @param  string $class
      * @param  bool   $ctor
      * @param  array  $ctorArgs
-     * @return array<int, class>
+     * @return array<object>
      */
     public function toClass(string $class, bool $ctor = false, array $ctorArgs = []): array
     {
@@ -189,7 +184,7 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * To collection, for map/filter etc.
+     * Create a collection with rows, for map/filter etc.
      *
      * @return froq\collection\Collection
      * @since  5.0
@@ -200,10 +195,11 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * Id.
-     * @return ?int
+     * Get last insert id when available.
+     *
+     * @return int|null
      */
-    public function id(): ?int
+    public function id(): int|null
     {
         $ids = $this->ids ?? [];
 
@@ -211,18 +207,20 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * Ids.
-     * @return ?array<int>
+     * Get all insert ids when available.
+     *
+     * @return array<int>|null
      */
-    public function ids(): ?array
+    public function ids(): array|null
     {
         return $this->ids ?? null;
     }
 
     /**
-     * Row.
+     * Get a single row.
+     *
      * @param  int $i
-     * @return ?array|?object
+     * @return array|object|null
      */
     public function row(int $i)
     {
@@ -235,17 +233,19 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * Rows.
-     * @return ?array<array|object>
+     * Get all rows.
+     *
+     * @return array<array|object>|null
      */
-    public function rows(): ?array
+    public function rows(): array|null
     {
         return $this->rows ?? null;
     }
 
     /**
-     * First.
-     * @return ?array|?object
+     * Get first row.
+     *
+     * @return array|object|null
      */
     public function first()
     {
@@ -253,8 +253,9 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * Last.
-     * @return ?array|?object
+     * Get last row.
+     *
+     * @return array|object|null
      */
     public function last()
     {
