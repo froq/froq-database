@@ -146,11 +146,10 @@ abstract class AbstractEntity implements EntityInterface
 
         // Eg: setId(), getId().
         if (str_starts_with($call, 'set')) {
-            return property_exists($this, $var) && $callArgs ? $this->__set($var, $callArgs[0])
-                : throw new EntityException('No call argument given for %s() call on entity %s',
-                    [$call, static::class]);
+            return $callArgs ? $this->__set($var, $callArgs[0]) : throw new EntityException(
+                'No call argument given for %s() call on entity %s', [$call, static::class]);
         } elseif (str_ends_with($call, 'get')) {
-            return property_exists($this, $var) ? $this->__get($var) : null;
+            return $this->__get($var);
         }
 
         throw new EntityException('Invalid call as %s() on entity %s', [$call, static::class]);
