@@ -27,13 +27,15 @@ final class Profiler
     private int $queryCount = 0;
 
     /** @var array @since 5.0 */
-    private static array $marks = [];
+    private static array $marks;
 
     /**
      * Constructor.
      */
     public function __construct()
-    {}
+    {
+        self::$marks = [];
+    }
 
     /**
      * Hide all debug info.
@@ -48,7 +50,7 @@ final class Profiler
      *
      * @return array
      */
-    public function getProfiles(): array
+    public function profiles(): array
     {
         return $this->profiles;
     }
@@ -58,7 +60,7 @@ final class Profiler
      *
      * @return int
      */
-    public function getQueryCount(): int
+    public function queryCount(): int
     {
         return $this->queryCount;
     }
@@ -68,7 +70,7 @@ final class Profiler
      *
      * @return array
      */
-    public static function getMarks(): array
+    public static function marks(): array
     {
         return self::$marks;
     }
@@ -122,10 +124,10 @@ final class Profiler
      *
      * @return float|string|array|null
      */
-    public function getLastQuery(string $key = null): float|string|array|null
+    public function lastQuery(string $key = null): float|string|array|null
     {
         return $key ? $this->profiles['query'][$this->queryCount][$key] ?? null
-            : $this->profiles['query'][$this->queryCount] ?? null;
+             : $this->profiles['query'][$this->queryCount] ?? null;
     }
 
     /**
@@ -133,9 +135,9 @@ final class Profiler
      *
      * @return float|null
      */
-    public function getLastQueryTime(): float|null
+    public function lastQueryTime(): float|null
     {
-        return $this->getLastQuery('time');
+        return $this->lastQuery('time');
     }
 
     /**
@@ -143,18 +145,18 @@ final class Profiler
      *
      * @return string|null
      */
-    public function getLastQueryString(): string|null
+    public function lastQueryString(): string|null
     {
-        return $this->getLastQuery('string');
+        return $this->lastQuery('string');
     }
 
     /**
      * Get total time of existing profiles.
      *
      * @param  bool $timeOnly
-     * @return float|string
+     * @return float|string|null
      */
-    public function getTotalTime(bool $timeOnly = true): float|string
+    public function totalTime(bool $timeOnly = true): float|string|null
     {
         if (empty($this->profiles)) {
             return null;
