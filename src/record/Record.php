@@ -455,7 +455,7 @@ class Record implements Arrayable, Sizable
      * Find and get all records from target table by given ids, set `$finded` property, throw a `RecordException`
      * if ids are empty or cause a `RecordException` if no table primary presented.
      *
-     * @param  array                     $ids
+     * @param  array<int|string>         $ids
      * @param  froq\database\Pager|null &$pager
      * @param  int|null                  $limit
      * @return froq\database\record\Records
@@ -512,7 +512,7 @@ class Record implements Arrayable, Sizable
      * Remove all records from target table by given ids, set `$removed` property, throw a `RecordException`
      * if ids is empty or cause a `RecordException` if no table primary presented.
      *
-     * @param  array $ids
+     * @param  array<int|string> $ids
      * @return int
      * @throws froq\database\record\RecordException
      */
@@ -534,8 +534,8 @@ class Record implements Arrayable, Sizable
      * Pack table, table primary and id/ids stuff, throw a `RecordException` if no table presented or no table
      * primary presented when primary check requested as `$primary = true`.
      *
-     * @param  array|null $id
-     * @param  bool       $primary
+     * @param  int|string|array<int|string>|null $id
+     * @param  bool                              $primary
      * @return array
      * @throws froq\database\record\RecordException
      * @internal
