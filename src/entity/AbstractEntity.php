@@ -188,7 +188,7 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function get(string $var)
     {
-        return isset($this->{$var}) ? $this->{$var} : null;
+        return property_exists($this, $var) ? $this->{$var} : null;
     }
 
     /**
