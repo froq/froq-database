@@ -1,20 +1,18 @@
 {
     "name": "froq/froq-database",
-    "homepage": "https://github.com/froq/froq-database",
+    "homepage": "http://github.com/froq/froq-database",
     "description": "Froq! Database.",
     "keywords": ["froq", "database"],
     "license": "Apache-2.0",
-    "authors": [
-        {"name": "Kerem Güneş", "email": "k-gun@mail.com"}
-    ],
+    "authors": [{"name": "Kerem Güneş"}],
     "require": {
-        "php": "^7.4",
+        "php": "^8.0",
         "ext-pdo": "*",
-        "froq/froq-common": "^4.0",
-        "froq/froq-collection": "^4.0",
-        "froq/froq-validation": "^4.0",
-        "froq/froq-pager": "^4.0",
-        "froq/froq-logger": "^4.0"
+        "froq/froq-common": "^5.0",
+        "froq/froq-collection": "^5.0",
+        "froq/froq-validation": "^5.0",
+        "froq/froq-pager": "^5.0",
+        "froq/froq-logger": "^5.0"
     },
     "autoload": {
         "classmap": ["src/"]
