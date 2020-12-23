@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) 2015 · Kerem Güneş
- * Apache License 2.0 <https://opensource.org/licenses/apache-2.0>
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
@@ -16,7 +16,7 @@ use PDO, PDOStatement, PDOException, Countable, IteratorAggregate, ArrayIterator
  *
  * @package froq\database
  * @object  froq\database\Result
- * @author  Kerem Güneş <k-gun@mail.com>
+ * @author  Kerem Güneş
  * @since   4.0
  */
 final class Result implements Countable, IteratorAggregate

@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright (c) 2015 · Kerem Güneş
- * Apache License 2.0 <https://opensource.org/licenses/apache-2.0>
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
@@ -13,11 +13,11 @@ use PDO, PDOException;
 /**
  * Transaction.
  *
- * A transaction wrapper that wraps all exceptions into TransactionException.
+ * A transaction wrapper that wraps all exceptions with `TransactionException` exception.
  *
  * @package froq\database
  * @object  froq\database\Transaction
- * @author  Kerem Güneş <k-gun@mail.com>
+ * @author  Kerem Güneş
  * @since   5.0
  */
 final class Transaction
