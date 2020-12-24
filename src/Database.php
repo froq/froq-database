@@ -876,7 +876,7 @@ final class Database
         $out = trim($in);
 
         if ($out != '') {
-            // Prepare names (eg: '@id = ?', 1 or '@[id,..]') .
+            // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
             $pos = strpos($out, '@');
             if ($pos > -1) {
                 $out = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {

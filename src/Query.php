@@ -537,7 +537,7 @@ final class Query
         } else {
             // Eg: [id => 1, status => ok, ..].
             foreach ($where as $field => $param) {
-                $this->add('where', [$this->prepareField($field) . ' = ?', $param, $op]);
+                $this->add('where', [$this->prepare($field . ' = ?', [$param]), $op]);
             }
         }
 
@@ -1462,7 +1462,7 @@ final class Query
                     $ret = $nt . 'SELECT ' . trim($select)
                          . $nt . 'FROM ' . $table;
 
-                    isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join');
+                    isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join', $indent);
                     isset($stack['where'])  && $ret .= $nt . $this->toQueryString('where', $indent);
                     isset($stack['group'])  && $ret .= $nt . $this->toQueryString('group');
                     isset($stack['having']) && $ret .= $nt . $this->toQueryString('having');
@@ -1612,14 +1612,18 @@ final class Query
                 break;
             case 'join':
                 if (isset($stack['join'])) {
+                    $joins = [];
+
                     foreach ($stack['join'] as $join) {
                         @ [$content, $context] = $join;
                         if (!$context) {
                             throw new QueryException('No join context yet, use 2. argument of join() or call'
                                 . ' on()/using() method');
                         }
-                        $ret .= $content . ' ' . $context;
+                        $joins[] = trim($content . ' ' . $context);
                     }
+
+                    $ret .= join($n, $joins);
                 }
                 break;
             case 'having':
@@ -1646,6 +1650,11 @@ final class Query
 
         if ($out === '') {
             throw new QueryException('Empty input given');
+        }
+
+        // Check names (eg: '@id ..', 1 or '@[id, ..]').
+        if (str_contains($in, '@')) {
+            return $this->db->prepare($out, $params);
         }
 
         return $params ? $this->db->prepare($out, $params) : $out;
