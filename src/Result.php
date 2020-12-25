@@ -9,7 +9,7 @@ namespace froq\database;
 
 use froq\database\ResultException;
 use froq\collection\Collection;
-use PDO, PDOStatement, PDOException, Countable, IteratorAggregate, ArrayIterator;
+use PDO, PDOStatement, PDOException, ArrayIterator, Countable, IteratorAggregate, ArrayAccess;
 
 /**
  * Result.
@@ -19,7 +19,7 @@ use PDO, PDOStatement, PDOException, Countable, IteratorAggregate, ArrayIterator
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Result implements Countable, IteratorAggregate
+final class Result implements Countable, IteratorAggregate, ArrayAccess
 {
     /** @var int */
     private int $count = 0;
@@ -222,9 +222,9 @@ final class Result implements Countable, IteratorAggregate
      * @param  int $i
      * @return array|object|null
      */
-    public function row(int $i)
+    public function row(int $i): array|object|null
     {
-        // Reverse, eg: -1 for last.
+        // Reverse, eg: for last -1.
         if ($i < 0) {
             $i = $this->count + $i;
         }
@@ -247,7 +247,7 @@ final class Result implements Countable, IteratorAggregate
      *
      * @return array|object|null
      */
-    public function first()
+    public function first(): array|object|null
     {
         return $this->row(0);
     }
@@ -257,7 +257,7 @@ final class Result implements Countable, IteratorAggregate
      *
      * @return array|object|null
      */
-    public function last()
+    public function last(): array|object|null
     {
         return $this->row(-1);
     }
@@ -276,5 +276,39 @@ final class Result implements Countable, IteratorAggregate
     public function getIterator(): iterable
     {
         return new ArrayIterator($this->toArray());
+    }
+
+    /**
+     * @inheritDoc ArrayAccess
+     */
+    public final function offsetExists($i)
+    {
+        return isset($this->rows[$i]);
+    }
+
+    /**
+     * @inheritDoc ArrayAccess
+     */
+    public final function offsetGet($i)
+    {
+        return $this->row($i);
+    }
+
+    /**
+     * @inheritDoc ArrayAccess
+     * @throws     froq\database\ResultException
+     */
+    public final function offsetSet($i, $row)
+    {
+        throw new ResultException('No set() allowed for ' . static::class);
+    }
+
+    /**
+     * @inheritDoc ArrayAccess
+     * @throws     froq\database\ResultException
+     */
+    public final function offsetUnset($i)
+    {
+        throw new ResultException('No unset() allowed for ' . static::class);
     }
 }
