@@ -463,8 +463,9 @@ final class Database
 
         // If rows wanted as return.
         if ($return) {
-            return is_string($field) ? $result->row(0)[$field]
-                                     : $result->rows();
+            return is_string($field)
+                 ? $result->rows()[0][$field] ?? null
+                 : $result->rows()[0]         ?? null;
         }
 
         return $result->count();
@@ -494,8 +495,9 @@ final class Database
 
         // If rows wanted as return.
         if ($return) {
-            return is_string($field) ? $result->rows()[0][$field]
-                                     : $result->rows();
+            return is_string($field)
+                 ? $result->rows()[0][$field] ?? null
+                 : $result->rows()[0]         ?? null;
         }
 
         return $result->count();
