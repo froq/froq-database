@@ -117,11 +117,15 @@ final class Link
                 $this->pdo       = new PDO($dsn, $user, $pass, $options);
                 $this->pdoDriver = $driver;
             } catch (PDOException $e) {
+                $code    = $e->getCode();
+                $message = $e->getMessage();
+
                 // Which driver the FUCK?
-                if ($e->getMessage() == 'could not find driver') {
-                    throw new LinkException('Could not find driver `%s`', $driver);
+                if ($message == 'could not find driver') {
+                    throw new LinkException('Could not find driver `%s`', $driver, code: $code, cause: $e);
                 }
-                throw new LinkException($e);
+
+                throw new LinkException($message, code: $code, cause: $e);
             }
 
             $charset  && $this->setCharset($charset);
