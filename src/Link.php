@@ -29,8 +29,8 @@ final class Link
      */
     use InstanceTrait;
 
-    /** @var ?PDO */
-    private ?PDO $pdo = null;
+    /** @var PDO|null */
+    private PDO|null $pdo;
 
     /** @var string */
     private string $pdoDriver;
@@ -98,14 +98,14 @@ final class Link
      */
     public function connect(): void
     {
-        if (!$this->isConnected()) {
+        if (!$this->isLive()) {
             ['dsn'     => $dsn,     'driver'   => $driver,
              'user'    => $user,    'pass'     => $pass,
              'charset' => $charset, 'timezone' => $timezone,
              'options' => $options] = $this->options;
 
-            $options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
-            $options[PDO::ATTR_EMULATE_PREPARES] ??= true;
+            $options[PDO::ATTR_ERRMODE]              = PDO::ERRMODE_EXCEPTION;
+            $options[PDO::ATTR_EMULATE_PREPARES]   ??= true;
             $options[PDO::ATTR_DEFAULT_FETCH_MODE] ??= PDO::FETCH_ASSOC;
 
             // For a proper return that gives '1' always even with identical values in UPDATE queries.
@@ -140,13 +140,14 @@ final class Link
     }
 
     /**
-     * Is connected.
+     * Check connection state.
      *
      * @return bool
+     * @since  5.0 Replaced with isConnected().
      */
-    public function isConnected(): bool
+    public function isLive(): bool
     {
-        return $this->pdo != null;
+        return isset($this->pdo);
     }
 
     /**
@@ -154,9 +155,12 @@ final class Link
      *
      * @param  string $charset
      * @return void
+     * @throws froq\database\LinkException
      */
     public function setCharset(string $charset): void
     {
+        $this->isLive() || throw new LinkException('Link is gone');
+
         $this->pdo->exec('SET NAMES ' . $this->pdo->quote($charset));
     }
 
@@ -165,9 +169,12 @@ final class Link
      *
      * @param  string $timezone
      * @return void
+     * @throws froq\database\LinkException
      */
     public function setTimezone(string $timezone): void
     {
+        $this->isLive() || throw new LinkException('Link is gone');
+
         if ($this->pdoDriver == 'mysql') {
             $this->pdo->exec('SET time_zone = ' . $this->pdo->quote($timezone));
         } else {
