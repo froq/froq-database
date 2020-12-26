@@ -452,20 +452,39 @@ final class Database
      * @return int|float|array|null
      */
     public function increase(string $table, string|array $field, int|float $value = 1, string|array $where = null,
-        array $params = null, bool $return = false, int $limit = null)
+        array $params = null, array $options = null)
     {
+        $return = $fetch = $batch = $limit = null;
+        if ($options != null) {
+            [$return, $fetch, $batch, $limit] = array_select(
+                $options, ['return', 'fetch', 'batch', 'limit']
+            );
+        }
+
         $query = $this->initQuery($table)->increase($field, $value, $return);
 
         $where && $query->where(...$this->prepareWhereInput($where, $params));
         $limit && $query->limit($limit);
-
+        prs("$query");
         $result = $query->run();
 
         // If rows wanted as return.
         if ($return) {
-            return is_string($field)
-                 ? $result->rows()[0][$field] ?? null
-                 : $result->rows()[0]         ?? null;
+            if ($batch) {
+                $result = $result->rows();
+            } else {
+                // If single row wanted as return.
+                $result      = $result->row(0);
+                $resultArray = (array) $result;
+                if (is_string($field)) {
+                    $result = $resultArray[$field];
+                } else {
+                    $fields = array_keys($field);
+                    $result = array_combine($fields, array_select($resultArray, $fields));
+                }
+            }
+
+            return $result;
         }
 
         return $result->count();
@@ -484,8 +503,15 @@ final class Database
      * @return int|float|array|null
      */
     public function decrease(string $table, string|array $field, int|float $value = 1, string|array $where = null,
-        array $params = null, bool $return = false, int $limit = null)
+        array $params = null, array $options = null)
     {
+        $return = $fetch = $batch = $limit = null;
+        if ($options != null) {
+            [$return, $fetch, $batch, $limit] = array_select(
+                $options, ['return', 'fetch', 'batch', 'limit']
+            );
+        }
+
         $query = $this->initQuery($table)->decrease($field, $value, $return);
 
         $where && $query->where(...$this->prepareWhereInput($where, $params));
@@ -495,9 +521,21 @@ final class Database
 
         // If rows wanted as return.
         if ($return) {
-            return is_string($field)
-                 ? $result->rows()[0][$field] ?? null
-                 : $result->rows()[0]         ?? null;
+            if ($batch) {
+                $result = $result->rows();
+            } else {
+                // If single row wanted as return.
+                $result      = $result->row(0);
+                $resultArray = (array) $result;
+                if (is_string($field)) {
+                    $result = $resultArray[$field];
+                } else {
+                    $fields = array_keys($field);
+                    $result = array_combine($fields, array_select($resultArray, $fields));
+                }
+            }
+
+            return $result;
         }
 
         return $result->count();
