@@ -150,9 +150,11 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     public function toObject(): array
     {
         $rows = [];
+
         foreach ($this->toArray() as $row) {
             $rows[] = (object) $row;
         }
+
         return $rows;
     }
 
@@ -167,6 +169,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     public function toClass(string $class, bool $ctor = false, array $ctorArgs = []): array
     {
         $rows = [];
+
         if (!$ctor) {
             foreach ($this->toArray() as $row) {
                 $class = new $class(...$ctorArgs);
@@ -180,6 +183,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
                 $rows[] = new $class($row, ...$ctorArgs);
             }
         }
+
         return $rows;
     }
 
@@ -243,6 +247,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
         if ($i !== null) {
             return $this->rows[$i] ?? null;
         }
+
         return $this->rows ?? null;
     }
 
