@@ -235,10 +235,14 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /**
      * Get all rows.
      *
+     * @param  int|null $i
      * @return array<array|object>|null
      */
-    public function rows(): array|null
+    public function rows(int $i = null): array|null
     {
+        if ($i !== null) {
+            return $this->rows[$i] ?? null;
+        }
         return $this->rows ?? null;
     }
 
