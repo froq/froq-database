@@ -1166,8 +1166,11 @@ final class Query
      */
     public function get(string|array $fetch = null): array|object|null
     {
-        // Optimize one-record query.
-        $this->has('limit') || $this->limit(1);
+        // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
+        if (!$this->has('limit')) {
+            $limit = ($this->db->link()->pdoDriver() != 'pgsql') || $this->has('select');
+            $limit && $this->limit(1);
+        }
 
         return $this->db->get($this->toString(), null, $fetch);
     }
