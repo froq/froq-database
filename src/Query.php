@@ -1786,13 +1786,20 @@ final class Query
     {
         $data = [];
 
+        // Eg: (.., "x", 1, ..).
         if (is_string($field)) {
             $data[$field] = $this->db->escapeName($field) . ' ' . $sign . ' ' . $value;
 
             $return && $this->return($field);
-        } else {
+        }
+        // Eg: (.., ["x" => 1, "y" => 1], ..).
+        else {
+            // Cast values as float or leave it exception below.
+            $field = array_map(fn($v) => is_numeric($v) ? floatval($v) : $v, $field);
+
             foreach ($field as $name => $value) {
-                is_string($name) || throw new QueryException('Invalid field name ' . $name);
+                is_string($name)  || throw new QueryException('Invalid field name `%s`', $name);
+                is_number($value) || throw new QueryException('Invalid field value `%s`', $value);
 
                 $data[$name] = $this->db->escapeName($name) . ' ' . $sign . ' ' . $value;
 
