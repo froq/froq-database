@@ -368,7 +368,7 @@ final class Database
      *
      * @param  string            $table
      * @param  string|array|null $where
-     * @param  array|null        $params
+     * @param  any|null          $params
      * @param  array|null        $options
      * @return int|string|array|object|null
      */
@@ -413,7 +413,7 @@ final class Database
      *
      * @param  string            $table
      * @param  string|array|null $where
-     * @param  array|null        $params
+     * @param  any|null          $params
      * @return int
      */
     public function count(string $table, string|array $where = null, $params = null): int
@@ -437,6 +437,68 @@ final class Database
         $result = $this->get('SELECT count(*) AS c FROM ('. $query .') AS t', $params, 'array');
 
         return (int) ($result['c'] ?? 0);
+    }
+
+    /**
+     * Increase given field/fields value, optionally returning current value or affected rows count.
+     *
+     * @param  string     $table
+     * @param  array      $field
+     * @param  float|int  $value
+     * @param  array|null $where
+     * @param  any|null   $params
+     * @param  bool       $return
+     * @param  int|null   $limit
+     * @return int|float|array|null
+     */
+    public function increase(string $table, string|array $field, int|float $value = 1, string|array $where = null,
+        $params = null, bool $return = false, int $limit = null)
+    {
+        $query = $this->initQuery($table)->increase($field, $value, $return);
+
+        $where && $query->where(...$this->prepareWhereInput($where, $params));
+        $limit && $query->limit($limit);
+
+        $result = $query->run();
+
+        // If rows wanted as return.
+        if ($return) {
+            return is_string($field) ? $result->row(0)[$field]
+                                     : $result->rows();
+        }
+
+        return $result->count();
+    }
+
+    /**
+     * Decrease given field/fields value, optionally returning current value or affected rows count.
+     *
+     * @param  string     $table
+     * @param  array      $field
+     * @param  float|int  $value
+     * @param  array|null $where
+     * @param  any|null   $params
+     * @param  bool       $return
+     * @param  int|null   $limit
+     * @return int|float|array|null
+     */
+    public function decrease(string $table, string|array $field, int|float $value = 1, string|array $where = null,
+        $params = null, bool $return = false, int $limit = null)
+    {
+        $query = $this->initQuery($table)->decrease($field, $value, $return);
+
+        $where && $query->where(...$this->prepareWhereInput($where, $params));
+        $limit && $query->limit($limit);
+
+        $result = $query->run();
+
+        // If rows wanted as return.
+        if ($return) {
+            return is_string($field) ? $result->rows()[0][$field]
+                                     : $result->rows();
+        }
+
+        return $result->count();
     }
 
     /**

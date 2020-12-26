@@ -451,6 +451,38 @@ final class Query
     }
 
     /**
+     * Add an increase command into query stack.
+     *
+     * @param  array     $field
+     * @param  float|int $value
+     * @param  bool      $return
+     * @return self
+     * @since  5.0
+     */
+    public function increase(string|array $field, int|float $value = 1, bool $return = false): self
+    {
+        $data = $this->prepareIncreaseDecrease('+', $field, $value, $return);
+
+        return $this->update($data, false);
+    }
+
+    /**
+     * Add a decrease command into query stack.
+     *
+     * @param  array     $field
+     * @param  float|int $value
+     * @param  bool      $return
+     * @return self
+     * @since  5.0
+     */
+    public function decrease(string|array $field, int|float $value = 1, bool $return = false): self
+    {
+        $data = $this->prepareIncreaseDecrease('-', $field, $value, $return);
+
+        return $this->update($data, false);
+    }
+
+    /**
      * Add/append a "JOIN" query into query stack.
      *
      * @param  string      $to
@@ -1734,6 +1766,40 @@ final class Query
         }
 
         return $collation;
+    }
+
+    /**
+     * Prepare increase/decrease data for update.
+     *
+     * @param  string    $sign
+     * @param  array     $field
+     * @param  float|int $value
+     * @param  bool      $return
+     * @return array
+     * @throws froq\database\QueryException
+     * @since  5.0
+     */
+    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = false): array
+    {
+        $data = [];
+
+        if (is_string($field)) {
+            $data[$field] = $this->db->escapeName($field) . ' ' . $sign . ' ' . $value;
+
+            $return && $this->return($field);
+        } else {
+            foreach ($field as $name => $value) {
+                is_string($name) || throw new QueryException('Invalid field name ' . $name);
+
+                $data[$name] = $this->db->escapeName($name) . ' ' . $sign . ' ' . $value;
+
+                $return && $fields[] = $name;
+            }
+
+            $return && $this->return(join(',', $fields));
+        }
+
+        return $data;
     }
 
     /**
