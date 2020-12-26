@@ -207,12 +207,12 @@ final class Database
      * @param  string            $table
      * @param  string            $fields
      * @param  string|array|null $where
-     * @param  any|null          $params
+     * @param  array|null        $params
      * @param  string|null       $order
      * @param  string|array|null $fetch
      * @return array|object|null
      */
-    public function select(string $table, string $fields = '*', string|array $where = null, $params = null,
+    public function select(string $table, string $fields = '*', string|array $where = null, array $params = null,
         string $order = null, string|array $fetch = null): array|object|null
     {
         $query = $this->initQuery($table)->select($fields);
@@ -230,13 +230,13 @@ final class Database
      * @param  string            $table
      * @param  string            $fields
      * @param  string|array|null $where
-     * @param  any|null          $params
+     * @param  array|null        $params
      * @param  string|null       $order
      * @param  int|array|null    $limit
      * @param  string|array|null $fetch
      * @return array|null
      */
-    public function selectAll(string $table, string $fields = '*', string|array $where = null, $params = null,
+    public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,
         string $order = null, int|array $limit = null, string|array $fetch = null): array|null
     {
         $query = $this->initQuery($table)->select($fields);
@@ -323,11 +323,11 @@ final class Database
      * @param  string            $table
      * @param  array             $data
      * @param  string|array|null $where
-     * @param  any|null          $params
+     * @param  array|null        $params
      * @param  array|null        $options
      * @return int|string|array|object|null
      */
-    public function update(string $table, array $data, string|array $where = null, $params = null, array $options = null)
+    public function update(string $table, array $data, string|array $where = null, array $params = null, array $options = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
@@ -368,11 +368,11 @@ final class Database
      *
      * @param  string            $table
      * @param  string|array|null $where
-     * @param  any|null          $params
+     * @param  array|null        $params
      * @param  array|null        $options
      * @return int|string|array|object|null
      */
-    public function delete(string $table, string|array $where = null, $params = null, array $options = null)
+    public function delete(string $table, string|array $where = null, array $params = null, array $options = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
@@ -413,10 +413,10 @@ final class Database
      *
      * @param  string            $table
      * @param  string|array|null $where
-     * @param  any|null          $params
+     * @param  array|null        $params
      * @return int
      */
-    public function count(string $table, string|array $where = null, $params = null): int
+    public function count(string $table, string|array $where = null, array $params = null): int
     {
         $query = $this->initQuery($table);
 
@@ -446,13 +446,13 @@ final class Database
      * @param  array      $field
      * @param  float|int  $value
      * @param  array|null $where
-     * @param  any|null   $params
+     * @param  array|null $params
      * @param  bool       $return
      * @param  int|null   $limit
      * @return int|float|array|null
      */
     public function increase(string $table, string|array $field, int|float $value = 1, string|array $where = null,
-        $params = null, bool $return = false, int $limit = null)
+        array $params = null, bool $return = false, int $limit = null)
     {
         $query = $this->initQuery($table)->increase($field, $value, $return);
 
@@ -477,13 +477,13 @@ final class Database
      * @param  array      $field
      * @param  float|int  $value
      * @param  array|null $where
-     * @param  any|null   $params
+     * @param  array|null $params
      * @param  bool       $return
      * @param  int|null   $limit
      * @return int|float|array|null
      */
     public function decrease(string $table, string|array $field, int|float $value = 1, string|array $where = null,
-        $params = null, bool $return = false, int $limit = null)
+        array $params = null, bool $return = false, int $limit = null)
     {
         $query = $this->initQuery($table)->decrease($field, $value, $return);
 
@@ -887,12 +887,12 @@ final class Database
      * Prepare a where input.
      *
      * @param  string|array $in
-     * @param  any|null     $params
+     * @param  array|null   $params
      * @return array
      * @since  4.15
      * @throws froq\database\DatabaseException
      */
-    private function prepareWhereInput(string|array $in, $params = null): array
+    private function prepareWhereInput(string|array $in, array $params = null): array
     {
         $where = $in;
 
