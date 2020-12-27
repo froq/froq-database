@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace froq\database\record;
 
 use froq\database\record\{FormException, Record};
-use froq\database\{Database, trait\DbTrait, trait\TableTrait, trait\ValidationTrait};
+use froq\database\{Database, trait\RecordTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait};
 use froq\common\interface\{Arrayable, Sizable};
 use froq\validation\ValidationException;
@@ -27,13 +27,11 @@ use froq\validation\ValidationException;
 class Form implements Arrayable, Sizable
 {
     /**
-     * @see froq\database\trait\DbTrait
-     * @see froq\database\trait\TableTrait
-     * @see froq\database\trait\ValidationTrait
      * @see froq\common\trait\DataTrait
      * @see froq\common\trait\DataLoadTrait
+     * @see froq\database\trait\RecordTrait
      */
-    use DbTrait, TableTrait, ValidationTrait, DataTrait, DataLoadTrait;
+    use RecordTrait, DataTrait, DataLoadTrait;
 
     /** @var string */
     protected string $name;
@@ -59,8 +57,9 @@ class Form implements Arrayable, Sizable
      * @param  array|null                  $validationOptions
      * @throws froq\database\record\FormException
      */
-    public function __construct(Database $db = null, string $table = null, string $tablePrimary = null, array $data = null,
-        string|Record $record = null, string $name = null, array $validationRules = null, array $validationOptions = null)
+    public function __construct(Database $db = null, string $table = null, string $tablePrimary = null,
+        array $data = null, string|Record $record = null, array $options = null, array $validationRules = null,
+        array $validationOptions = null, string $name = null,)
     {
         // Try to use active app database object.
         $db = (!$db && function_exists('app')) ?  app()->database() : $db;
@@ -83,6 +82,8 @@ class Form implements Arrayable, Sizable
                 $this->recordClass = $record;
             }
         }
+
+        $this->setOptions($options, self::$optionsDefault);
 
         // Set table stuff & validation stuff.
         $table             && $this->table             = $table;
@@ -195,7 +196,8 @@ class Form implements Arrayable, Sizable
     {
         // Use internal or owned (current) record/record class if available.
         $record = $this->record ?? $this->recordClass ?? new Record(
-            $this->db, $this->getTable(), $this->getTablePrimary(), $this->getData(), $this,
+            $this->db, $this->getTable(), $this->getTablePrimary(),
+            data: $this->getData(), form: $this, options: $this->options,
             validationRules: $this->getValidationRules(), validationOptions: $this->getValidationOptions()
         );
 
@@ -318,7 +320,10 @@ class Form implements Arrayable, Sizable
             throw new FormException('No data set yet for save(), call setData() or isValid($data) first');
         }
 
-        $this->record->save($this->data, $options, validate: false /* Must be validated until here.. */)
+        // Options are used for only save actions.
+        $options = array_merge($this->options, $options ?? []);
+
+        $this->record->save($this->data, options: $options, validate: false /* Must be validated until here.. */)
                      ->setForm($this);
 
         // Require new validation.

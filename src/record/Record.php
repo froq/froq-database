@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace froq\database\record;
 
 use froq\database\record\{RecordException, Form, FormException};
-use froq\database\{Database, Query, trait\DbTrait, trait\TableTrait, trait\ValidationTrait};
+use froq\database\{Database, Query, trait\RecordTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait, DataMagicTrait};
 use froq\common\interface\{Arrayable, Sizable};
 use froq\validation\ValidationException;
@@ -28,14 +28,12 @@ use froq\pager\Pager;
 class Record implements Arrayable, Sizable
 {
     /**
-     * @see froq\database\trait\DbTrait
-     * @see froq\database\trait\TableTrait
-     * @see froq\database\trait\ValidationTrait
+     * @see froq\database\trait\RecordTrait
      * @see froq\common\trait\DataTrait
      * @see froq\common\trait\DataLoadTrait
      * @see froq\common\trait\DataMagicTrait
      */
-    use DbTrait, TableTrait, ValidationTrait, DataTrait, DataLoadTrait, DataMagicTrait;
+    use RecordTrait, DataTrait, DataLoadTrait, DataMagicTrait;
 
     /** @var froq\database\Query */
     protected Query $query;
@@ -67,8 +65,9 @@ class Record implements Arrayable, Sizable
      * @param  array|null                            $validationOptions
      * @throws froq\database\record\FormException
      */
-    public function __construct(Database $db = null, string $table = null, string $tablePrimary = null, array $data = null,
-        string|Form $form = null, array $validationRules = null, array $validationOptions = null)
+    public function __construct(Database $db = null, string $table = null, string $tablePrimary = null,
+        array $data = null, string|Form $form = null, array $options = null, array $validationRules = null,
+        array $validationOptions = null)
     {
         // Try to use active app database object.
         $db = (!$db && function_exists('app')) ?  app()->database() : $db;
@@ -91,6 +90,8 @@ class Record implements Arrayable, Sizable
                 $this->formClass = $form;
             }
         }
+
+        $this->setOptions($options, self::$optionsDefault);
 
         // Set table stuff & validation stuff.
         $table             && $this->table             = $table;
@@ -179,7 +180,8 @@ class Record implements Arrayable, Sizable
     {
         // Use internal or owned (current) form/form class if available.
         $form = $this->form ?? $this->formClass ?? new Form(
-            $this->db, $this->getTable(), $this->getTablePrimary(), $this->getData(), $this,
+            $this->db, $this->getTable(), $this->getTablePrimary(),
+            data: $this->getData(), record: $this, options: $this->options,
             validationRules: $this->getValidationRules(), validationOptions: $this->getValidationOptions()
         );
 
@@ -318,7 +320,8 @@ class Record implements Arrayable, Sizable
      * @return self
      * @throws froq\database\record\RecordException
      */
-    public final function save(array $data = null, array $options = null, array &$errors = null, bool $validate = true): self
+    public final function save(array &$data = null, array &$errors = null, array $options = null,
+        bool $validate = true): self
     {
         [$table, $primary] = $this->pack();
 
@@ -339,81 +342,28 @@ class Record implements Arrayable, Sizable
                     . ' in a try/catch block and use errors() to see error details]', errors: $errors);
         }
 
-        // Insert action.
-        if (!isset($primary) || !isset($data[$primary])) {
-            $data = $this->db->transaction(function () use ($data, $table, $primary, $options) {
-                $return   = $options['return']   ?? false;    // Whether returning any field(s) or current data.
-                $sequence = $options['sequence'] ?? $primary; // Whether table has sequence or not.
+        // Options are used for only save actions.
+        $options = array_merge($this->options, $options ?? []);
 
-                $query = $this->query()->insert($data, sequence: !!$sequence);
-                $return && $query->return($return, 'array');
-                $result = $query->run();
+        // Detect insert/update.
+        $new = !isset($primary) || !isset($data[$primary]);
 
-                unset($query);
-
-                // Set primary value with new id.
-                $id = $result->id();
-
-                $this->saved = !!$result->count();
-
-                // Swap data with returning data.
-                if ($return) {
-                    $result = (array) $result->first();
-                    if (isset($result[$return])) {
-                        $result = [$return => $result[$return]];
-                    }
-                    $data = $result;
-                }
-
-                if ($primary && $id) {
-                    // Put on the top primary.
-                    $data = [$primary => $id] + $data;
-
-                    $this->id($id);
-                }
-
-                return $data;
-            });
-        }
-        // Update action.
-        else {
+        // Check id validity.
+        if (!$new) {
             $id = $data[$primary] ?? null;
-            if ($id == null) {
-                throw new RecordException('Empty primary value given for save()');
-            }
-
-            $data = $this->db->transaction(function () use ($data, $table, $primary, $options, $id) {
-                $return = $options['return'] ?? false; // Whether returning any field(s) or current data.
-
-                unset($data[$primary]); // Not needed in data set.
-
-                $query = $this->query()->update($data)->equal($primary, $id);
-                $return && $query->return($return, 'array');
-                $result = $query->run();
-
-                unset($query);
-
-                // Swap data with returning data.
-                if ($return) {
-                    $result = (array) $result->first();
-                    if (isset($result[$return])) {
-                        $result = [$return => $result[$return]];
-                    }
-                    $data = $result;
-                }
-
-                // Put on the top primary.
-                $data = [$primary => $id] + $data;
-
-                $this->id($id);
-
-                $this->saved = !!$result->count();
-
-                return $data;
-            });
+            $id || throw new RecordException('Empty primary value given for save()');
         }
 
-        // Update stacks both record & form.
+        // When no transaction wrap requested.
+        if ($options['transaction']) {
+            $data = $new ? $this->db->transaction(fn() => $this->doInsert($data, $table, $primary, $options))
+                         : $this->db->transaction(fn() => $this->doUpdate($data, $table, $primary, $options, $id));
+        } else {
+            $data = $new ? $this->doInsert($data, $table, $primary, $options)
+                         : $this->doUpdate($data, $table, $primary, $options, $id);
+        }
+
+        // Update data on both record & form.
         $this->setData($data);
         if ($form = $this->getForm()) {
             $form->setData($data);
@@ -552,5 +502,94 @@ class Record implements Arrayable, Sizable
         }
 
         return [$this->table, $this->tablePrimary ?? null, $id];
+    }
+
+    /**
+     * Do an insert action.
+     *
+     * @param  array       $data
+     * @param  string      $table
+     * @param  string|null $primary
+     * @param  array       $options
+     * @return array
+     * @internal
+     */
+    private function doInsert(array $data, string $table, string|null $primary, array $options): array
+    {
+        $return   = $options['return']   ?? null;     // Whether returning any field(s) or current data.
+        $sequence = $options['sequence'] ?? $primary; // Whether table has sequence or not.
+
+        $query    = $this->query()->insert($data, sequence: !!$sequence);
+        $return   && $query->return($return, 'array');
+        $result   = $query->run();
+
+        unset($query);
+
+        // Get new id if available.
+        $id = $result->id();
+
+        $this->saved = !!$result->count();
+
+        // Swap data with returning data.
+        if ($return) {
+            $result = (array) $result->first();
+            if (isset($result[$return])) {
+                $result = [$return => $result[$return]];
+            }
+            $data = $result;
+        }
+
+        if ($primary && $id) {
+            // Put on the top primary.
+            $data = [$primary => $id] + $data;
+
+            // Set primary value with new id.
+            $this->id($id);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Do an insert action.
+     *
+     * @param  array       $data
+     * @param  string      $table
+     * @param  string|null $primary
+     * @param  array       $options
+     * @param  int|string  $id
+     * @return array
+     * @internal
+     */
+    private function doUpdate(array $data, string $table, string|null $primary, array $options, int|string $id): array
+    {
+        $return = $options['return'] ?? false; // Whether returning any field(s) or current data.
+
+        unset($data[$primary]); // Not needed in data set.
+
+        $query  = $this->query()->update($data)->equal($primary, $id);
+        $return && $query->return($return, 'array');
+        $result = $query->run();
+
+        unset($query);
+
+        // Swap data with returning data.
+        if ($return) {
+            $result = (array) $result->first();
+            if (isset($result[$return])) {
+                $result = [$return => $result[$return]];
+            }
+            $data = $result;
+        }
+
+        // Put on the top primary.
+        $data = [$primary => $id] + $data;
+
+        // Set primary value with given id.
+        $this->id($id);
+
+        $this->saved = !!$result->count();
+
+        return $data;
     }
 }
