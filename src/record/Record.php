@@ -320,8 +320,7 @@ class Record implements Arrayable, Sizable
      * @return self
      * @throws froq\database\record\RecordException
      */
-    public final function save(array &$data = null, array &$errors = null, array $options = null,
-        bool $validate = true): self
+    public final function save(array &$data = null, array &$errors = null, array $options = null, bool $validate = true): self
     {
         [$table, $primary] = $this->pack();
 
