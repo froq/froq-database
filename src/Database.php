@@ -946,15 +946,16 @@ final class Database
                 // use ("a = ? AND b = ?", [1, 2]) convention instead for multiple conditions.
                 $temp = [];
                 foreach ($where as $key => $value) {
-                    if (!is_string($key)) {
-                        throw new DatabaseException('Invalid where input, use ("a = ? AND b = ?", [1, 2])'
-                            . ' convention');
-                    }
+                    is_string($key) || throw new DatabaseException(
+                        'Invalid where input, use ("a = ? AND b = ?", [1, 2]) convention'
+                    );
 
-                    // Check whether a placeholder given or not (eg: ["a" => 1]).
-                    if (strpbrk($key, '?:') === false) {
-                        $key .= ' = ?';
-                    }
+                    ctype_alnum($key) || throw new DatabaseException(
+                        'Invalid field name `%s` in where input, use an alphanumeric name', $key
+                    );
+
+                    // Add placeholders.
+                    $key = $key . ' = ?';
 
                     $temp[$key] = $value;
                 }
