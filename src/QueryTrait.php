@@ -351,6 +351,15 @@ trait QueryTrait
     }
 
     /**
+     * @alias of aggregate()
+     * @since 5.0
+     */
+    public function agg(...$args)
+    {
+        return $this->aggregate(...$args);
+    }
+
+    /**
      * @alias of Database.escape()
      */
     public function esc(...$args)
