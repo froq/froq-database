@@ -1382,8 +1382,8 @@ final class Query
      */
     public function reset(): self
     {
-        $this->stack = [];
         $this->key   = '';
+        $this->stack = [];
 
         return $this;
     }
