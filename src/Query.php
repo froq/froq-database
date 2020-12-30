@@ -569,10 +569,12 @@ final class Query
         $op = $this->prepareOp($op ?: 'AND'); // @default=AND
 
         if (is_string($where)) {
+            // Eg: (id = ?, 1).
             $this->add('where', [$this->prepare($where, $params), $op]);
         } else {
-            // Eg: [id => 1, status => ok, ..].
+            // Eg: ([id => 1, status => ok, ..]).
             foreach ($where as $field => $param) {
+                $field = $this->prepareField($field);
                 $this->add('where', [$this->prepare($field . ' = ?', [$param]), $op]);
             }
         }
