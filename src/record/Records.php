@@ -24,7 +24,7 @@ use froq\pager\Pager;
  */
 class Records extends ItemCollection
 {
-    /** @var froq\pager\Pager */
+    /** @var ?froq\pager\Pager */
     protected ?Pager $pager;
 
     /**
