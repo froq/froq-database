@@ -951,7 +951,7 @@ final class Database
                     );
 
                     // Add placeholders.
-                    $key = $key . ' = ?';
+                    $key = $this->quoteName($key) . ' = ?';
 
                     $temp[$key] = $value;
                 }
