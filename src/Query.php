@@ -1475,14 +1475,14 @@ final class Query
      */
     public function toQueryString(string $key, int $indent = null): string
     {
-        $n = ' ';
+        $n  = ' '; $t  = '';
         $nt = ' '; $ts = '';
         if ($indent) {
             if ($indent == 1) {
-                $n = "\n";
+                $n  = "\n"; $t = "\t";
                 $nt = "\n"; $ts = "\t";
             } elseif ($indent > 1) {
-                $n = "\n"; $t = str_repeat("\t", $indent - 1);
+                $n  = "\n";      $t  = str_repeat("\t", $indent - 1);
                 $nt = "\n" . $t; $ts = str_repeat("\t", $indent - 1 + 1); // Sub.
             }
         }
@@ -1598,7 +1598,7 @@ final class Query
                     }
 
                     $ret = $nt . 'UPDATE ' . $table
-                         . $nt . 'SET ' . join(', ' . $nt, $stack['update']);
+                         . $nt . 'SET ' . join(',' . $nt . $t, $stack['update']);
 
                     isset($stack['where']) && $ret .= $nt . $this->toQueryString('where', $indent);
                     isset($stack['order']) && $ret .= $nt . $this->toQueryString('order');
