@@ -1383,9 +1383,20 @@ final class Query
     public function reset(): self
     {
         $this->stack = [];
-        $this->key = '';
+        $this->key   = '';
 
         return $this;
+    }
+
+    /**
+     * Check whether a clause/statement in query stack.
+     *
+     * @param  string $key
+     * @return bool
+     */
+    public function has(string $key): bool
+    {
+        return isset($this->stack[$key]);
     }
 
     /**
@@ -1861,17 +1872,6 @@ final class Query
         $search = $this->db->quote($start . $search . $end);
 
         return $search;
-    }
-
-    /**
-     * Check whether a clause/statement in query stack.
-     *
-     * @param  string $key
-     * @return bool
-     */
-    private function has(string $key): bool
-    {
-        return isset($this->stack[$key]);
     }
 
     /**
