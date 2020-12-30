@@ -149,13 +149,17 @@ final class Query
     /**
      * Add/append a "SELECT" query into query stack.
      *
-     * @param  string $select
-     * @param  bool   $prepare
+     * @param  string|array $select
+     * @param  bool         $prepare
      * @return self
      * @throws froq\database\QueryException
      */
-    public function select(string $select, bool $prepare = true): self
+    public function select(string|array $select, bool $prepare = true): self
     {
+        if (is_array($select)) {
+            $select = join(', ', $select);
+        }
+
         $select = trim($select);
         $select || throw new QueryException('Empty select given');
 
