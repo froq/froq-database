@@ -584,7 +584,7 @@ final class Database
      */
     public function quote(string $in): string
     {
-        return "'". $in ."'";
+        return "'" . $in . "'";
     }
 
     /**
@@ -611,13 +611,13 @@ final class Database
             $name = substr($in, 1, $rpos - 1); // Eg: part foo of (foo).
             $rest = substr($in, $rpos + 1) ?: ''; // Eg: part ::int of (foo)::int.
 
-            return '('. $this->quoteNames($name) .')'. $rest;
+            return '(' . $this->quoteNames($name) . ')' . $rest;
         }
 
         // Dot notations (eg: foo.id => "foo"."id").
         $pos = strpos($in, '.');
         if ($pos) {
-            return $this->quoteNames(substr($in, 0, $pos)) .'.'.
+            return $this->quoteNames(substr($in, 0, $pos)) . '.' .
                    $this->quoteNames(substr($in, $pos + 1));
         }
 
@@ -634,15 +634,15 @@ final class Database
                 $rest = substr($in, $pos + 1);
 
                 return (strtolower($name) == 'array')
-                     ? $name .'['. $this->quoteNames($rest)
-                     : $this->quoteName($name) .'['. $rest;
+                     ? $name . '[' . $this->quoteNames($rest)
+                     : $this->quoteName($name) . '[' . $rest;
             }
         }
 
         return match ($pdoDriver) {
-            'mysql' => '`'. $in .'`',
-            'mssql' => '['. $in .']',
-            default => '"'. $in .'"'
+            'mysql' => '`' . trim($in, '`')  . '`',
+            'mssql' => '[' . trim($in, '[]') . ']',
+            default => '"' . trim($in, '"')  . '"'
         };
     }
 
@@ -731,12 +731,8 @@ final class Database
     {
         $out = $this->link->pdo()->quote($in);
 
-        if (!$quote) {
-            $out = trim($out, "'");
-        }
-        if ($extra != '') {
-            $out = addcslashes($out, $extra);
-        }
+        $quote || $out = trim($out, "'");
+        $extra && $out = addcslashes($out, $extra);
 
         return $out;
     }
@@ -841,7 +837,7 @@ final class Database
                         $value = join(', ', $value);
                     }
 
-                    $keys[]   = '~:'. $key .'~';
+                    $keys[]   = '~:' . $key . '~';
                     $values[] = $value;
                 } else { // Question-mark.
                     if (!array_key_exists($i, $params)) {
@@ -853,7 +849,7 @@ final class Database
                         $value = join(', ', $value);
                     }
 
-                    $keys[]   = '~'. preg_quote($holder) .'(?![|&])~'; // PgSQL operators.
+                    $keys[]   = '~' . preg_quote($holder) . '(?![|&])~'; // PgSQL operators.
                     $values[] = $value;
                 }
             }
