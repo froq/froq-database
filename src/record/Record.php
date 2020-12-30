@@ -35,14 +35,14 @@ class Record implements Arrayable, Sizable
      */
     use RecordTrait, DataTrait, DataLoadTrait, DataMagicTrait;
 
-    /** @var froq\database\Query */
-    protected Query $query;
-
     /** @var froq\database\record\Form */
     protected Form $form;
 
     /** @var string */
     protected string $formClass;
+
+    /** @var froq\database\Query */
+    protected Query $query;
 
     /** @var int|string */
     private int|string $id;
@@ -70,7 +70,7 @@ class Record implements Arrayable, Sizable
         array $validationOptions = null)
     {
         // Try to use active app database object.
-        $db = (!$db && function_exists('app')) ?  app()->database() : $db;
+        $db ??= function_exists('app') ? app()->database() : null;
 
         if ($db == null) {
             throw new RecordException('No database given to deal, be sure running this module with froq\app'
@@ -289,6 +289,22 @@ class Record implements Arrayable, Sizable
     }
 
     /**
+     * Apply one/many "WHERE" condition/conditions for find/remove actions. Note: query will always contain primary
+     * value(s) as first statement and continue with "AND" operator.
+     *
+     * @param  array|string $where
+     * @param  array|null   $params
+     * @param  string|null  $op
+     * @return self
+     */
+    public final function where(array|string $where, array $params = null, string $op = null): self
+    {
+        $this->query->where($where, $params, $op);
+
+        return $this;
+    }
+
+    /**
      * Set/get id property and id (primary) field of data stack, cause a `RecordException` if no table primary
      * presented yet.
      *
@@ -376,10 +392,11 @@ class Record implements Arrayable, Sizable
      * `RecordException` if id is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  int|string|null $id
+     * @param  array|null      $cols
      * @return froq\database\record\Record
      * @throws froq\database\record\RecordException
      */
-    public final function find(int|string $id = null): Record
+    public final function find(int|string $id = null, array $cols = null): Record
     {
         $id ??= $this->id();
 
@@ -389,13 +406,27 @@ class Record implements Arrayable, Sizable
             throw new RecordException('Empty primary value given for find()');
         }
 
-        $data = $this->query()->select('*')->from($table)
-                     ->equal($primary, $id)->getArray();
+        $query = $this->query()->equal($primary, $id);
+        $where = $this->query->pull('where');
+        if ($where) foreach ($where as [$where, $op]) {
+            $query->where($where, op: $op);
+        }
+
+        $cols = $cols ?: '*';
+        $data = $query->select($cols)->from($table)
+                      ->getArray();
 
         $this->finded = $data ? 1 : 0;
 
-        $that = new static($this->db, $table, $primary);
-        $that->setData((array) $data);
+        // Prevent wrong argument errors on constructor.
+        $that = (static::class == self::class)
+              ? new static($this->db, $table, $primary)
+              : new static();
+
+        if ($data) {
+            $this->setData($data);
+            $that->setData($data);
+        }
 
         return $that;
     }
@@ -405,12 +436,13 @@ class Record implements Arrayable, Sizable
      * if ids are empty or cause a `RecordException` if no table primary presented.
      *
      * @param  array<int|string>         $ids
+     * @param  array|null                $cols
      * @param  froq\database\Pager|null &$pager
      * @param  int|null                  $limit
      * @return froq\database\record\Records
      * @throws froq\database\record\RecordException
      */
-    public final function findAll(array $ids, Pager &$pager = null, int $limit = null): Records
+    public final function findAll(array $ids, array $cols = null, Pager &$pager = null, int $limit = null): Records
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
@@ -418,14 +450,24 @@ class Record implements Arrayable, Sizable
             throw new RecordException('Empty primary values given for findAll()');
         }
 
-        $data = $this->query()->select('*')->from($table)
-                     ->equal($primary, [$ids])->getArrayAll($pager, $limit);
+        $query = $this->query()->equal($primary, [$ids]);
+        $where = $this->query->pull('where');
+        if ($where) foreach ($where as [$where, $op]) {
+            $query->where($where, op: $op);
+        }
+
+        $cols = $cols ?: '*';
+        $data = $query->select($cols)->from($table)
+                      ->getArrayAll($pager, $limit);
 
         $this->finded = $data ? count($data) : 0;
 
-        $that = new static($this->db, $table, $primary);
-        $thats = [];
+        // Prevent wrong argument errors on constructor.
+        $that = (static::class == self::class)
+              ? new static($this->db, $table, $primary)
+              : new static();
 
+        $thats = [];
         if ($data) foreach ($data as $dat) {
             $thats[] = (clone $that)->setData((array) $dat);
         }
@@ -437,11 +479,11 @@ class Record implements Arrayable, Sizable
      * Remove a record from target table by given id or owned id, set `$removed` property, throw a `RecordException`
      * if id is empty or cause a `RecordException` if no table primary presented.
      *
-     * @param  int|string $id
+     * @param  int|string|null $id
      * @return int
      * @throws froq\database\record\RecordException
      */
-    public final function remove(int|string $id): int
+    public final function remove(int|string $id = null): int
     {
         $id ??= $this->id();
 
@@ -451,8 +493,16 @@ class Record implements Arrayable, Sizable
             throw new RecordException('Empty primary value given for remove()');
         }
 
-        $this->removed = $this->query()->delete()->from($table)
-                              ->equal($primary, $id)->run()->count(); // Run & get affected rows count.
+        $query = $this->query()->equal($primary, $id);
+        $where = $this->query->pull('where');
+        if ($where) foreach ($where as [$where, $op]) {
+            $query->where($where, op: $op);
+        }
+
+        $query->delete()->from($table);
+
+        // Run & get affected rows count.
+        $this->removed = (int) $query->runExec();
 
         return $this->removed;
     }
@@ -473,8 +523,16 @@ class Record implements Arrayable, Sizable
             throw new RecordException('Empty primary values given for removeAll()');
         }
 
-        $this->removed = $this->query()->delete()->from($table)
-                              ->equal($primary, [$ids])->run()->count(); // Run & get affected rows count.
+        $query = $this->query()->equal($primary, [$ids]);
+        $where = $this->query->pull('where');
+        if ($where) foreach ($where as [$where, $op]) {
+            $query->where($where, op: $op);
+        }
+
+        $query->delete()->from($table);
+
+        // Run & get affected rows count.
+        $this->removed = (int) $query->runExec();
 
         return $this->removed;
     }
@@ -562,12 +620,18 @@ class Record implements Arrayable, Sizable
      */
     private function doUpdate(array $data, string $table, string|null $primary, array $options, int|string $id): array
     {
-        $return = $options['return'] ?? false; // Whether returning any field(s) or current data.
+        $return = $options['return'] ?? null; // Whether returning any field(s) or current data.
 
         unset($data[$primary]); // Not needed in data set.
 
         $query  = $this->query()->update($data)->equal($primary, $id);
         $return && $query->return($return, 'array');
+
+        $where = $this->query->pull('where');
+        if ($where) foreach ($where as [$where, $op]) {
+            $query->where($where, op: $op);
+        }
+
         $result = $query->run();
 
         unset($query);
