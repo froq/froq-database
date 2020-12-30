@@ -33,14 +33,14 @@ class Form implements Arrayable, Sizable
      */
     use RecordTrait, DataTrait, DataLoadTrait;
 
-    /** @var string */
-    protected string $name;
-
     /** @var froq\database\record\Record */
     protected Record $record;
 
     /** @var string */
     protected string $recordClass;
+
+    /** @var string */
+    protected string $name;
 
     /** @var bool */
     private bool $saved;
@@ -59,10 +59,10 @@ class Form implements Arrayable, Sizable
      */
     public function __construct(Database $db = null, string $table = null, string $tablePrimary = null,
         array $data = null, string|Record $record = null, array $options = null, array $validationRules = null,
-        array $validationOptions = null, string $name = null,)
+        array $validationOptions = null, string $name = null)
     {
         // Try to use active app database object.
-        $db = (!$db && function_exists('app')) ?  app()->database() : $db;
+        $db ??= function_exists('app') ? app()->database() : null;
 
         if ($db == null) {
             throw new FormException('No database given to deal, be sure running this module with froq\app'
