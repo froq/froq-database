@@ -227,6 +227,14 @@ class Record implements Arrayable, Sizable
     }
 
     /**
+     * @alias of isFinded()
+     */
+    public final function found(...$args)
+    {
+        return $this->isFinded(...$args);
+    }
+
+    /**
      * Proxy method to owned form class for validation processes.
      *
      * @param  array|null &$data
