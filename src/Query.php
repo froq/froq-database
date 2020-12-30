@@ -1400,6 +1400,23 @@ final class Query
     }
 
     /**
+     * Pull an item from query stack.
+     *
+     * @param  string   $key
+     * @param  any|null $default
+     * @return any|null
+     * @since  5.0
+     */
+    public function pull(string $key, $default = null)
+    {
+        if (isset($this->stack[$key])) {
+            $value = $this->stack[$key];
+            unset($this->stack[$key]);
+        }
+        return $value ?? $default;
+    }
+
+    /**
      * Get query stack.
      *
      * @return array
@@ -1799,7 +1816,8 @@ final class Query
      * @throws froq\database\QueryException
      * @since  5.0
      */
-    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = false): array
+    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1,
+        bool $return = false): array
     {
         $data = [];
 
@@ -1877,16 +1895,16 @@ final class Query
     /**
      * Add a clause/statement to query stack.
      *
-     * @param  string       $key
-     * @param  string|array $value
-     * @param  bool         $merge
+     * @param  string $key
+     * @param  any    $value
+     * @param  bool   $merge
      * @return self
      */
     private function add(string $key, $value, bool $merge = true): self
     {
         $merge && $value = [...($this->stack[$key] ?? []), $value];
 
-        $this->key = $key; // Tick for last call.
+        $this->key         = $key; // Tick for last call.
         $this->stack[$key] = $value;
 
         return $this;
