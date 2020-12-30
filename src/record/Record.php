@@ -431,6 +431,8 @@ class Record implements Arrayable, Sizable
               ? new static($this->db, $table, $primary)
               : new static();
 
+        $that->finded = $this->finded;
+
         if ($data) {
             $this->setData($data);
             $that->setData($data);
@@ -474,6 +476,8 @@ class Record implements Arrayable, Sizable
         $that = (static::class == self::class)
               ? new static($this->db, $table, $primary)
               : new static();
+
+        $that->finded = $this->finded;
 
         $thats = [];
         if ($data) foreach ($data as $dat) {
