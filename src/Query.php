@@ -1364,7 +1364,7 @@ final class Query
      * @return self
      * @since  5.0
      */
-    public function affix(string|Query $query = null, int $indent = null): self
+    public function append(string|Query $query = null, int $indent = null): self
     {
         $query ??= $this;
 
@@ -1372,7 +1372,7 @@ final class Query
             [$query] = [$this->toString($indent, false), $query->reset()];
         }
 
-        return $this->add('affix', $query);
+        return $this->add('append', $query);
     }
 
     /**
@@ -1447,8 +1447,8 @@ final class Query
             $ret = $this->toQueryString('with', $indent);
         }
 
-        if ($this->has('affix')) {
-            $ret .= $n . join($n . $t, $this->stack['affix']);
+        if ($this->has('append')) {
+            $ret .= $n . join($n . $t, $this->stack['append']);
         }
 
         foreach (['insert', 'update', 'delete', 'select'] as $key) {
