@@ -550,6 +550,28 @@ class Record implements Arrayable, Sizable
     }
 
     /**
+     * Find a record by given id (and optionally given where), and save it with given new data if find successes.
+     * This method shortcut for find() > save() process.
+     *
+     * @param  int|string  $id
+     * @param  array|null &$data
+     * @param  array|null &$errors
+     * @param  array|null  $where
+     * @param  array|null  $options
+     * @param  bool        $validate
+     * @return bool
+     */
+    public final function findSave(int|string $id, array &$data = null, array &$errors = null, array $where = null,
+        array $options = null, bool $validate = true): bool
+    {
+        // Will be used for only find().
+        $where && $this->where($where);
+
+        return $this->find($id)->isFinded()
+            && $this->save($data, $errors, $options, $validate)->isSaved();
+    }
+
+    /**
      * Pack table, table primary and id/ids stuff, throw a `RecordException` if no table presented or no table
      * primary presented when primary check requested as `$primary = true`.
      *
