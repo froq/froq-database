@@ -386,6 +386,14 @@ class Record implements Arrayable, Sizable
                          : $this->doUpdate($data, $table, $primary, $options, $id);
         }
 
+        // Drop unwanted fields.
+        if (isset($options['drop'])) {
+            $fields = (array) $options['drop'];
+            foreach ($fields as $field) {
+                unset($data[$field]);
+            }
+        }
+
         // Update data on both record & form.
         $this->setData($data);
         if ($form = $this->getForm()) {
