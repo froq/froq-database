@@ -213,16 +213,15 @@ final class Query
      */
     public function selectJson(array $fields, string $as): self
     {
-        $select = null;
-        $selectSet = isset($fields[0]); // Simple check for set/map array.
+        $aset = isset($fields[0]); // Simple check for set/map array.
 
         $func = match ($this->db->link()->pdoDriver()) {
-            'pgsql' => $selectSet ? 'json_build_array' : 'json_build_object',
-            'mysql' => $selectSet ? 'json_array'       : 'json_object',
+            'pgsql' => $aset ? 'json_build_array' : 'json_build_object',
+            'mysql' => $aset ? 'json_array'       : 'json_object',
             default => throw new QueryException('Method %s() available for PgSQL & MySQL only', __method__)
         };
 
-        if ($selectSet) {
+        if ($aset) {
             $select = $this->prepareFields(join(', ', $fields));
         } else {
             foreach ($fields as $fieldKey => $fieldName) {
