@@ -43,8 +43,8 @@ abstract class AbstractEntity implements EntityInterface
             // Unused vars (all nulls).
             if ($drop === true) {
                 $diff = count($vars) > count($data)
-                          ? array_diff($vars, array_keys($data))
-                          : array_diff(array_keys($data), $vars);
+                      ? array_diff($vars, array_keys($data))
+                      : array_diff(array_keys($data), $vars);
             }
             // Unwanted vars.
             else {
@@ -53,8 +53,8 @@ abstract class AbstractEntity implements EntityInterface
 
             // Clear unused/unwanted vars.
             foreach ($diff as $var) {
-                if (!isset($this->{$var}) /* eg: id=null */ or
-                    !!$drop               /* eg: drop=['id'] */) {
+                if (!isset($this->{$var}) /* eg: id=null */
+                    || !!$drop            /* eg: drop=['id'] */) {
                     try {
                         unset($this->{$var});
                     } catch (Error) {}
