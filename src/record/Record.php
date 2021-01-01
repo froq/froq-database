@@ -337,14 +337,17 @@ class Record implements Arrayable, Sizable
      * presented, throw a `RecordException` if no data or target table given yet or throw a `ValidationException`
      * if validation fails.
      *
-     * @param  array|null $data
-     * @param  array|null $options
-     * @param  array|null &$errors
-     * @param  bool       $validate @internal
-     * @return self
+     * @param  array|null        &$data
+     * @param  array|null        &$errors
+     * @param  array|null         $options
+     * @param  string|array|null  $drop
+     * @param  bool               $bool
+     * @param  bool               $_validate @internal
+     * @return bool|self
      * @throws froq\database\record\RecordException
      */
-    public final function save(array &$data = null, array &$errors = null, array $options = null, bool $validate = true): self
+    public final function save(array &$data = null, array &$errors = null, array $options = null,
+        string|array $drop = null, bool $bool = false, bool $_validate = true): bool|self
     {
         [$table, $primary] = $this->pack();
 
@@ -359,7 +362,7 @@ class Record implements Arrayable, Sizable
         }
 
         // Run validation.
-        if ($validate) {
+        if ($_validate) {
             ($this->validated = $this->isValid($data, $errors, $options))
                 || throw new ValidationException('Cannot save record, validation failed [tip: run save()'
                     . ' in a try/catch block and use errors() to see error details]', errors: $errors);
@@ -387,11 +390,16 @@ class Record implements Arrayable, Sizable
         }
 
         // Drop unwanted fields.
-        if (isset($options['drop'])) {
-            $fields = (array) $options['drop'];
+        if (isset($options['drop']) || $drop) {
+            $fields = (array) ($options['drop'] ?? $drop);
             foreach ($fields as $field) {
                 unset($data[$field]);
             }
+        }
+
+        // When bool return wanted.
+        if (isset($options['bool'])) {
+            $bool = (bool) $options['bool'];
         }
 
         // Update data on both record & form.
@@ -400,7 +408,7 @@ class Record implements Arrayable, Sizable
             $form->setData($data);
         }
 
-        return $this;
+        return !$bool ? $this : $this->isSaved();
     }
 
     /**
@@ -561,22 +569,23 @@ class Record implements Arrayable, Sizable
      * Find a record by given id (and optionally given where), and save it with given new data if find successes.
      * This method shortcut for find() > save() process.
      *
-     * @param  int|string  $id
-     * @param  array|null &$data
-     * @param  array|null &$errors
-     * @param  array|null  $where
-     * @param  array|null  $options
-     * @param  bool        $validate
+     * @param  int|string         $id
+     * @param  array|null        &$data
+     * @param  array|null        &$errors
+     * @param  array|null         $options
+     * @param  string|array|null  $drop
+     * @param  array|null         $where
+     * @param  bool               $_validate @internal
      * @return bool
      */
-    public final function findSave(int|string $id, array &$data = null, array &$errors = null, array $where = null,
-        array $options = null, bool $validate = true): bool
+    public final function findSave(int|string $id, array &$data = null, array &$errors = null, array $options = null,
+        string|array $drop = null, array $where = null, bool $_validate = true): bool
     {
         // Will be used for only find().
         $where && $this->where($where);
 
         return $this->find($id)->isFinded()
-            && $this->save($data, $errors, $options, $validate)->isSaved();
+            && $this->save($data, $errors, $options, $drop, _validate: $_validate)->isSaved();
     }
 
     /**
