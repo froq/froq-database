@@ -37,16 +37,16 @@ abstract class AbstractEntity implements EntityInterface
 
         // Drop unused/unwanted vars.
         if ($drop) {
-            $vars = $this->getVarNames();
             $diff = [];
 
             // Unused vars (all nulls).
             if ($drop === true) {
+                $vars = $this->getVarNames();
                 $diff = count($vars) > count($data)
                       ? array_diff($vars, array_keys($data))
                       : array_diff(array_keys($data), $vars);
             }
-            // Unwanted vars.
+            // Unwanted vars (list).
             else {
                 $diff = $drop;
             }
