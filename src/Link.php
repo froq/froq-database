@@ -33,7 +33,7 @@ final class Link
     private PDO|null $pdo;
 
     /** @var string */
-    private string $pdoDriver;
+    private string $driver;
 
     /** @var array */
     private array $options = [
@@ -76,9 +76,9 @@ final class Link
      *
      * @return string|null
      */
-    public function pdoDriver(): string|null
+    public function driver(): string|null
     {
-        return $this->pdoDriver ?? null;
+        return $this->driver ?? null;
     }
 
     /**
@@ -114,11 +114,11 @@ final class Link
             }
 
             try {
-                $this->pdo       = new PDO($dsn, $user, $pass, $options);
-                $this->pdoDriver = $driver;
+                $this->pdo    = new PDO($dsn, $user, $pass, $options);
+                $this->driver = $driver;
             } catch (PDOException $e) {
-                $code    = $e->getCode();
-                $message = $e->getMessage();
+                $code         = $e->getCode();
+                $message      = $e->getMessage();
 
                 // Which driver the FUCK?
                 if ($message == 'could not find driver') {
@@ -179,7 +179,7 @@ final class Link
     {
         $this->isLive() || throw new LinkException('Link is gone');
 
-        if ($this->pdoDriver == 'mysql') {
+        if ($this->driver == 'mysql') {
             $this->pdo->exec('SET time_zone = ' . $this->pdo->quote($timezone));
         } else {
             $this->pdo->exec('SET TIME ZONE ' . $this->pdo->quote($timezone));

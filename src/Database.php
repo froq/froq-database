@@ -621,8 +621,8 @@ final class Database
                    $this->quoteNames(substr($in, $pos + 1));
         }
 
-        $pdoDriver = $this->link->pdoDriver();
-        if ($pdoDriver == 'pgsql') {
+        $driver = $this->link->driver();
+        if ($driver == 'pgsql') {
             // Cast notations (eg: foo::int).
             if ($pos = strpos($in, '::')) {
                 return $this->quoteName(substr($in, 0, $pos)) . substr($in, $pos);
@@ -639,7 +639,7 @@ final class Database
             }
         }
 
-        return match ($pdoDriver) {
+        return match ($driver) {
             'mysql' => '`' . trim($in, '`')  . '`',
             'mssql' => '[' . trim($in, '[]') . ']',
             default => '"' . trim($in, '"')  . '"'
@@ -757,7 +757,7 @@ final class Database
      */
     public function escapeName(string $in): string
     {
-        $in = match ($this->link->pdoDriver()) {
+        $in = match ($this->link->driver()) {
             'mysql' => str_replace('`', '``', $in),
             'mssql' => str_replace(']', ']]', $in),
             default => str_replace('"', '""', $in)
