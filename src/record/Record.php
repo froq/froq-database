@@ -391,7 +391,8 @@ class Record implements Arrayable, Sizable
 
         // Drop unwanted fields.
         if (isset($options['drop']) || $drop) {
-            $fields = (array) ($options['drop'] ?? $drop);
+            $fields = $options['drop'] ?? $drop;
+            $fields = (array) (is_string($fields) ? explode(' ', $fields) : $fields);
             foreach ($fields as $field) {
                 unset($data[$field]);
             }
