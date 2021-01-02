@@ -1248,6 +1248,28 @@ final class Query
     }
 
     /**
+     * Run an insert query and get last insert id.
+     *
+     * @return int|null
+     * @since  5.0
+     */
+    public function getId(): int|null
+    {
+        return $this->run()->id();
+    }
+
+    /**
+     * Run an insert query and get all insert ids.
+     *
+     * @return array|null
+     * @since  5.0
+     */
+    public function getIds(): array|null
+    {
+        return $this->run()->ids();
+    }
+
+    /**
      * Get count result stringifying & running current query stack.
      *
      * @return int
