@@ -1239,6 +1239,17 @@ final class Query
     }
 
     /**
+     * Get a result row as class instance stringifying & running current query stack.
+     *
+     * @return object|null
+     * @since  5.0
+     */
+    public function getClass(string $class): object|null
+    {
+        return $this->get(['class', $class]);
+    }
+
+    /**
      * Get all result rows as array stringifying & running current query stack.
      *
      * @param  froq\pager\Pager|null &$pager
@@ -1262,6 +1273,20 @@ final class Query
     public function getObjectAll(Pager &$pager = null, int $limit = null): array|null
     {
         return $this->getAll('object', $pager, $limit);
+    }
+
+    /**
+     * Get all result rows as class instance stringifying & running current query stack.
+     *
+     * @param  string                 $class
+     * @param  froq\pager\Pager|null &$pager
+     * @param  int|null               $limit
+     * @return array|null
+     * @since  5.0
+     */
+    public function getClassAll(string $class, Pager &$pager = null, int $limit = null): array|null
+    {
+        return $this->getAll(['class', $class], $pager, $limit);
     }
 
     /**
