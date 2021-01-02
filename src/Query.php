@@ -1164,6 +1164,23 @@ final class Query
     }
 
     /**
+     * Commit a "execute" query, reset stack and return self for next command. Note: this method is useful when
+     * chaining is desired for executing "delete" queries and passing to next query, eg. "insert", "update" etc.
+     *
+     * @return self
+     * @since  5.0
+     */
+    public function commit(): self
+    {
+        // Keep table for next query.
+        $table = $this->stack['table'] ?? $this->stack['from'] ?? '';
+
+        $this->runExec();
+
+        return $this->reset()->table($table);
+    }
+
+    /**
      * Get a result row stringifying & running current query stack.
      *
      * @param  string|array<string>|null $fetch
