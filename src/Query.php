@@ -1172,10 +1172,10 @@ final class Query
      */
     public function commit(): self
     {
-        // Keep table for next query.
-        $table = $this->stack['table'] ?? $this->stack['from'] ?? '';
-
         $this->runExec();
+
+        // Keep target table for next query.
+        $table = $this->stack['table'] ?? $this->stack['from'] ?? $this->stack['into'] ?? '';
 
         return $this->reset()->table($table);
     }
