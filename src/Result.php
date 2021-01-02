@@ -81,7 +81,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
 
             $query = ltrim($pdoStatement->queryString);
 
-            // Select queries & Returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
+            // Select queries & returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
             if (stripos($query, 'SELECT') === 0 || (
                 stripos($query, 'RETURNING') && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
             )) {
@@ -90,8 +90,8 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
 
                 $this->rows = (
                     ($fetchType == PDO::FETCH_CLASS)
-                      ? $pdoStatement->fetchAll($fetchType, $fetchClass)
-                      : $pdoStatement->fetchAll($fetchType)
+                        ? $pdoStatement->fetchAll($fetchType, $fetchClass)
+                        : $pdoStatement->fetchAll($fetchType)
                 ) ?: null;
             }
 
