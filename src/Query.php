@@ -1848,7 +1848,8 @@ final class Query
             return ($op == '1') ? 'ASC' : 'DESC';
         }
 
-        throw new QueryException('Invalid op `%s`, valids are: %s, 1, -1', [$op, join(', ', $ops)]);
+        throw new QueryException('Invalid op `%s`, valids are: OR, AND for where\'s'
+            . ' and ASC, DESC, 1, -1 for order\'s', $op);
     }
 
     /**
