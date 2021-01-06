@@ -606,14 +606,37 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Delete one/many record from owned table by given conditions.
+     * Select record(s) from owned table by given conditions.
      *
-     * @param  array|null  $where
-     * @param  array|null  $params
-     * @param  string|null $op
+     * @param  string|array|null $where
+     * @param  array|null        $params
+     * @param  string|null       $op
+     * @param  string            $fields
+     * @param  string|null       $order
+     * @param  string|array|null $fetch
+     * @return array|object|null
+     */
+    public final function select(string|array $where, array $params = null, string $op = null, int $limit = 1,
+        string $fields = '*', string $order = null, string|array $fetch = null): array|object|null
+    {
+        $query = $this->query()->select($fields);
+
+        $where && $query->where($where, $params, $op);
+        $order && $query->orderBy($order);
+        $query->limit($limit);
+
+        return ($limit == 1) ? $query->run($fetch)->row(0) : $query->run($fetch)->rows();
+    }
+
+    /**
+     * Delete record(s) from owned table by given conditions.
+     *
+     * @param  string|array|null $where
+     * @param  array|null        $params
+     * @param  string|null       $op
      * @return int|null
      */
-    public final function delete(string|array $where = null, array $params = null, string $op = null): int|null
+    public final function delete(string|array $where, array $params = null, string $op = null): int|null
     {
         $query = $this->query()->delete();
         $where && $query->where($where, $params, $op);
