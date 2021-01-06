@@ -777,12 +777,12 @@ final class Database
         // Eg: "id, name ..." or "id as ID, ...".
         preg_match_all('~([^\s,]+)(?:\s+(?:(AS)\s+)?([^\s,]+))?~i', $in, $match);
 
-        $names   = array_filter($match[1], 'strlen');
-        $aliases = array_filter($match[3], 'strlen');
+        $names = array_filter($match[1], 'strlen');
         if (!$names) {
             return $in;
         }
 
+        $aliases = array_filter($match[3], 'strlen');
         foreach ($names as $i => $name) {
             $names[$i] = $this->escapeName($name);
             if (isset($aliases[$i])) {
