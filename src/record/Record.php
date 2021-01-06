@@ -606,6 +606,27 @@ class Record implements Arrayable, Sizable
     }
 
     /**
+     * Delete one/many record from owned table by given conditions.
+     *
+     * @param  array|null  $where
+     * @param  array|null  $params
+     * @param  string|null $op
+     * @return int|null
+     */
+    public final function delete(string|array $where = null, array $params = null, string $op = null): int|null
+    {
+        $query = $this->query()->delete();
+        $where && $query->where($where, $params, $op);
+
+        $where = $this->query->pull('where');
+        if ($where) foreach ($where as [$where, $op]) {
+            $query->where($where, op: $op);
+        }
+
+        return $query->run()->count();
+    }
+
+    /**
      * Pack table, table primary and id/ids stuff, throw a `RecordException` if no table presented or no table
      * primary presented when primary check requested as `$primary = true`.
      *
