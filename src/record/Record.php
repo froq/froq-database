@@ -171,14 +171,14 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Get a form instance setting and returning owned or creating new one from provided form class or
+     * Get a form instance setting and returning own or creating new one from provided form class or
      * default.
      *
      * @return froq\database\record\Form
      */
     public final function getFormInstance(): Form
     {
-        // Use internal or owned (current) form/form class if available.
+        // Use internal or own (current) form/form class if available.
         $form = $this->form ?? $this->formClass ?? new Form(
             $this->db, $this->getTable(), $this->getTablePrimary(),
             data: $this->getData(), record: $this, options: $this->options,
@@ -190,7 +190,7 @@ class Record implements Arrayable, Sizable
             // Check also class validity.
             $this->setFormClass($form);
 
-            // Init & update owned form.
+            // Init & update own form.
             $this->setForm($form = new $form());
         }
 
@@ -235,7 +235,7 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Proxy method to owned form class for validation processes.
+     * Proxy method to own form class for validation processes.
      *
      * @param  array|null &$data
      * @param  array|null &$errors
@@ -349,7 +349,7 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Save given or owned data to target table, set `$saved` property, set `$id` property if table primary was
+     * Save given or own data to target table, set `$saved` property, set `$id` property if table primary was
      * presented, throw a `RecordException` if no data or target table given yet or throw a `ValidationError` if
      * validation fails.
      *
@@ -429,7 +429,7 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Find and get a record from target table by given id or owned id, set `$finded` property, throw a
+     * Find and get a record from target table by given id or own id, set `$finded` property, throw a
      * `RecordException` if id is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  int|string|null $id
@@ -521,7 +521,7 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Remove a record from target table by given id or owned id, set `$removed` property, throw a `RecordException`
+     * Remove a record from target table by given id or own id, set `$removed` property, throw a `RecordException`
      * if id is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  int|string|null $id
@@ -606,7 +606,7 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Select record(s) from owned table by given conditions.
+     * Select record(s) from own table by given conditions.
      *
      * @param  string|array|null $where
      * @param  array|null        $params
@@ -629,7 +629,7 @@ class Record implements Arrayable, Sizable
     }
 
     /**
-     * Delete record(s) from owned table by given conditions.
+     * Delete record(s) from own table by given conditions.
      *
      * @param  string|array|null $where
      * @param  array|null        $params

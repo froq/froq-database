@@ -187,14 +187,14 @@ class Form implements Arrayable, Sizable
     }
 
     /**
-     * Get a record instance setting and returning owned or creating new one from provided record class or
+     * Get a record instance setting and returning own or creating new one from provided record class or
      * default.
      *
      * @return froq\database\record\Record
      */
     public final function getRecordInstance(): Record
     {
-        // Use internal or owned (current) record/record class if available.
+        // Use internal or own (current) record/record class if available.
         $record = $this->record ?? $this->recordClass ?? new Record(
             $this->db, $this->getTable(), $this->getTablePrimary(),
             data: $this->getData(), form: $this, options: $this->options,
@@ -206,7 +206,7 @@ class Form implements Arrayable, Sizable
             // Check also class validity.
             $this->setRecordClass($record);
 
-            // Init & update owned record.
+            // Init & update own record.
             $this->setRecord($record = new $record());
         }
 
@@ -222,8 +222,8 @@ class Form implements Arrayable, Sizable
     }
 
     /**
-     * Check whether given or owned data is valid filtering/sanitizing data, fill `$errors` argument with
-     * validation errors if validation fails, throw a `FormException` if given or owned record data or owned
+     * Check whether given or own data is valid filtering/sanitizing data, fill `$errors` argument with
+     * validation errors if validation fails, throw a `FormException` if given or own record data or own
      * rules is empty.
      *
      * @param  array|null &$data
@@ -265,7 +265,7 @@ class Form implements Arrayable, Sizable
     }
 
     /**
-     * Proxy method to owned record saved state/result.
+     * Proxy method to own record saved state/result.
      *
      * @param  int|string|null &$id
      * @return bool
@@ -278,7 +278,7 @@ class Form implements Arrayable, Sizable
     }
 
     /**
-     * Check whether form is sent (submitted) with given or owned name, or request method is post.
+     * Check whether form is sent (submitted) with given or own name, or request method is post.
      *
      * @param  string|null $name
      * @return bool
@@ -294,7 +294,7 @@ class Form implements Arrayable, Sizable
     }
 
     /**
-     * Save owned data via a newly created record entity returning that record, throw a `FormException` if no
+     * Save own data via a newly created record entity returning that record, throw a `FormException` if no
      * validation was run or throw a `ValidationError` if runned validation was failed.
      *
      * @param  array|null $options
