@@ -313,6 +313,22 @@ class Record implements Arrayable, Sizable
     }
 
     /**
+     * Apply conflict clause for insert/update actions.
+     *
+     * @param  string     $fields
+     * @param  string     $action
+     * @param  array|null $update
+     * @param  array|null $where
+     * @return self
+     */
+    public function conflict(string $fields, string $action, array $update = null, array $where = null): self
+    {
+        $this->query->conflict($fields, $action, $update, $where);
+
+        return $this;
+    }
+
+    /**
      * Set/get id property and id (primary) field of data stack, cause a `RecordException` if no table primary
      * presented yet.
      *
@@ -630,6 +646,10 @@ class Record implements Arrayable, Sizable
 
         $query    = $this->query()->insert($data, sequence: !!$sequence);
         $return   && $query->return($return, 'array');
+
+        $conflict = $this->query->pull('conflict');
+        $conflict && $query->conflict(...$conflict);
+
         $result   = $query->run();
 
         unset($query);
@@ -676,10 +696,13 @@ class Record implements Arrayable, Sizable
 
         unset($data[$primary]); // Not needed in data set.
 
-        $query  = $this->query()->update($data)->equal($primary, $id);
-        $return && $query->return($return, 'array');
+        $query    = $this->query()->update($data)->equal($primary, $id);
+        $return   && $query->return($return, 'array');
 
-        $where = $this->query->pull('where');
+        $conflict = $this->query->pull('conflict');
+        $conflict && $query->conflict(...$conflict);
+
+        $where    = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
             $query->where($where, op: $op);
         }
