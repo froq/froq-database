@@ -11,7 +11,7 @@ use froq\database\record\{FormException, Record};
 use froq\database\{Database, trait\RecordTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait};
 use froq\common\interface\{Arrayable, Sizable};
-use froq\validation\ValidationException;
+use froq\validation\ValidationError;
 
 /**
  * Form.
@@ -295,7 +295,7 @@ class Form implements Arrayable, Sizable
 
     /**
      * Save owned data via a newly created record entity returning that record, throw a `FormException` if no
-     * validation was run or throw a `ValidationException` if runned validation was failed.
+     * validation was run or throw a `ValidationError` if runned validation was failed.
      *
      * @param  array|null $options
      * @return froq\database\record\Record
@@ -306,7 +306,7 @@ class Form implements Arrayable, Sizable
         if ($this->validated === null) {
             throw new FormException('Cannot run save process, form not validated yet');
         } elseif ($this->validated === false) {
-            throw new ValidationException('Cannot run save process, form validation was failed [tip: run save()'
+            throw new ValidationError('Cannot run save process, form validation was failed [tip: run save()'
                 . ' in a try/catch block and use errors() to see error details]', errors: $this->errors());
         }
 

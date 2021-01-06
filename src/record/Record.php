@@ -11,7 +11,7 @@ use froq\database\record\{RecordException, Form, FormException};
 use froq\database\{Database, Query, trait\RecordTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait, DataMagicTrait};
 use froq\common\interface\{Arrayable, Sizable};
-use froq\validation\ValidationException;
+use froq\validation\ValidationError;
 use froq\pager\Pager;
 
 /**
@@ -350,8 +350,8 @@ class Record implements Arrayable, Sizable
 
     /**
      * Save given or owned data to target table, set `$saved` property, set `$id` property if table primary was
-     * presented, throw a `RecordException` if no data or target table given yet or throw a `ValidationException`
-     * if validation fails.
+     * presented, throw a `RecordException` if no data or target table given yet or throw a `ValidationError` if
+     * validation fails.
      *
      * @param  array|null        &$data
      * @param  array|null        &$errors
@@ -380,7 +380,7 @@ class Record implements Arrayable, Sizable
         // Run validation.
         if ($_validate) {
             ($this->validated = $this->isValid($data, $errors, $options))
-                || throw new ValidationException('Cannot save record, validation failed [tip: run save()'
+                || throw new ValidationError('Cannot save record, validation failed [tip: run save()'
                     . ' in a try/catch block and use errors() to see error details]', errors: $errors);
         }
 
