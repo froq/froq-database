@@ -47,14 +47,14 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
 
             // Check fetch option.
             if (isset($options['fetch'])) {
-                $fetch      = (array) $options['fetch'];
-                $fetchType  = $fetch[0] ?? null;
-                $fetchClass = $fetch[1] ?? null;
+                $fetch     = (array) $options['fetch'];
+                $fetchType = $fetch[0] ?? null;
 
                 switch ($fetchType) {
                     case  'array': $fetchType = PDO::FETCH_ASSOC; break;
                     case 'object': $fetchType = PDO::FETCH_OBJ;   break;
                     case  'class':
+                        $fetchClass = $fetch[1] ?? null;
                         $fetchClass || throw new ResultException(
                             'No fetch class given, it is required when fetch type is `class`'
                         );
@@ -309,7 +309,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public final function offsetSet($i, $row)
     {
-        throw new ResultException('No set() allowed for ' . static::class);
+        throw new ResultException('No set() allowed for ' . $this::class);
     }
 
     /**
@@ -318,6 +318,6 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public final function offsetUnset($i)
     {
-        throw new ResultException('No unset() allowed for ' . static::class);
+        throw new ResultException('No unset() allowed for ' . $this::class);
     }
 }
