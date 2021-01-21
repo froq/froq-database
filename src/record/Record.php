@@ -358,12 +358,13 @@ class Record implements Arrayable, Sizable
      * @param  array|null         $options
      * @param  string|array|null  $drop
      * @param  bool               $bool
+     * @param  bool               $select
      * @param  bool               $_validate @internal
      * @return bool|self
      * @throws froq\database\record\RecordException
      */
     public final function save(array &$data = null, array &$errors = null, array $options = null,
-        string|array $drop = null, bool $bool = false, bool $_validate = true): bool|self
+        string|array $drop = null, bool $bool = false, bool $select = false, bool $_validate = true): bool|self
     {
         [$table, $primary] = $this->pack();
 
@@ -410,6 +411,14 @@ class Record implements Arrayable, Sizable
             $bool = (bool) ($options['bool'] ?? $bool);
             if ($bool) {
                 return $this->isSaved();
+            }
+        }
+
+        // When select whole/fresh data wanted (works with primary's only).
+        if (isset($options['select']) || $select) {
+            $select = (bool) ($options['select'] ?? $select);
+            if ($select) {
+                $data = (array) $this->db->select($table, where: [$primary => $data[$primary]]);
             }
         }
 
