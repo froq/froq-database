@@ -405,6 +405,14 @@ class Record implements Arrayable, Sizable
                          : $this->doUpdate($data, $table, $primary, $options, $id);
         }
 
+        // When bool return wanted.
+        if (isset($options['bool']) || $bool) {
+            $bool = (bool) ($options['bool'] ?? $bool);
+            if ($bool) {
+                return $this->isSaved();
+            }
+        }
+
         // Drop unwanted fields.
         if (isset($options['drop']) || $drop) {
             $fields = $options['drop'] ?? $drop;
@@ -414,18 +422,13 @@ class Record implements Arrayable, Sizable
             }
         }
 
-        // When bool return wanted.
-        if (isset($options['bool'])) {
-            $bool = (bool) $options['bool'];
-        }
-
         // Update data on both record & form.
         $this->setData($data);
         if ($form = $this->getForm()) {
             $form->setData($data);
         }
 
-        return !$bool ? $this : $this->isSaved();
+        return $this;
     }
 
     /**
