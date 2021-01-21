@@ -29,16 +29,10 @@ abstract class AbstractEntity implements EntityInterface
      */
     public function __construct(array $data = null, array|bool $drop = null)
     {
-        $data = $data ?? [];
-
-        foreach ($data as $var => $value) {
-            $this->{$var} = $value;
-        }
+        $data ??= [];
 
         // Drop unused/unwanted vars.
         if ($drop) {
-            $diff = [];
-
             // Unused vars (all nulls).
             if ($drop === true) {
                 $vars = $this->getVarNames();
@@ -53,45 +47,41 @@ abstract class AbstractEntity implements EntityInterface
 
             // Clear unused/unwanted vars.
             foreach ($diff as $var) {
-                if (!isset($this->{$var}) /* eg: id=null */
-                    || !!$drop            /* eg: drop=['id'] */) {
-                    try {
-                        unset($this->{$var});
-                    } catch (Error) {}
+                if (!isset($data[$var]) /* eg: id=null */
+                    || !!$drop          /* eg: drop=['id'] */) {
+                    unset($data[$var]);
                 }
             }
         }
-    }
 
-    /**
-     * Magic - serialize.
-     *
-     * @return array
-     */
-    public function __serialize()
-    {
-        return $this->getVars();
-    }
-
-    /**
-     * Magic - unserialize.
-     *
-     * @param  array $data
-     * @return void
-     */
-    public function __unserialize(array $data)
-    {
-        // First: set all vars (cos PHP creates new entity object with all vars).
+        // Set vars.
         foreach ($data as $var => $value) {
             $this->{$var} = $value;
         }
-
-        // Then drop unused vars.
-        $diff = array_diff($this->getVarNames(), array_keys($data));
-        foreach ($diff as $var) {
-            unset($this->{$var});
-        }
     }
+
+    // /**
+    //  * Magic - serialize.
+    //  *
+    //  * @return array
+    //  */
+    // public function __serialize()
+    // {
+    //     return $this->getVars();
+    // }
+
+    // /**
+    //  * Magic - unserialize.
+    //  *
+    //  * @param  array $data
+    //  * @return void
+    //  */
+    // public function __unserialize(array $data)
+    // {
+    //     foreach ($data as $var => $value) {
+    //         $this->{$var} = $value;
+    //     }
+    // }
 
     /**
      * Magic - set.
@@ -218,7 +208,6 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function getVarNames(bool $all = true): array
     {
-        // Note: returns non-defined vars also.
         return array_keys($this->getVars($all));
     }
 
@@ -230,7 +219,6 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function getVarValues(bool $all = true): array
     {
-        // Note: returns defined vars only.
         return array_values($this->getVars($all));
     }
 
