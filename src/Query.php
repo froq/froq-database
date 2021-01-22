@@ -659,13 +659,17 @@ final class Query
      * Add/append a "WHERE .. IN (..)" query into query stack.
      *
      * @param  string      $field
-     * @param  array       $params
+     * @param  array|Query $params
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereIn(string $field, array $params, string $op = null): self
+    public function whereIn(string $field, array|Query $params, string $op = null): self
     {
+        if ($params instanceof Query) {
+            return $this->where($this->prepareField($field) . ' IN (' . $params . ')', null, $op);
+        }
+
         $params || throw new QueryException('No parameters given');
 
         return $this->where($this->prepareField($field)
@@ -676,13 +680,17 @@ final class Query
      * Add/append a "WHERE .. NOT IN (..)" query into query stack.
      *
      * @param  string      $field
-     * @param  array       $params
+     * @param  array|Query $params
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereNotIn(string $field, array $params, string $op = null): self
+    public function whereNotIn(string $field, array|Query $params, string $op = null): self
     {
+        if ($params instanceof Query) {
+            return $this->where($this->prepareField($field) . ' NOT IN (' . $params . ')', null, $op);
+        }
+
         $params || throw new QueryException('No parameters given');
 
         return $this->where($this->prepareField($field)
