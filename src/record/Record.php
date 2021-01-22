@@ -61,13 +61,15 @@ class Record implements Arrayable, Sizable
      * @param  string|null                           $tablePrimary
      * @param  array|null                            $data
      * @param  string|froq\database\record\Form|null $form
+     * @param  array|null                            $options
+     * @param  array|null                            $validations
      * @param  array|null                            $validationRules
      * @param  array|null                            $validationOptions
      * @throws froq\database\record\FormException
      */
     public function __construct(Database $db = null, string $table = null, string $tablePrimary = null,
-        array $data = null, string|Form $form = null, array $options = null, array $validationRules = null,
-        array $validationOptions = null)
+        array $data = null, string|Form $form = null, array $options = null, array $validations = null,
+        array $validationRules = null, array $validationOptions = null)
     {
         // Try to use active app database object.
         $db ??= function_exists('app') ? app()->database() : null;
@@ -78,13 +80,13 @@ class Record implements Arrayable, Sizable
         }
 
         $this->db    = $db;
-        $this->query = new Query($db, table: $table);
+        $this->query = new Query($db, $table);
 
         $data && $this->data = $data;
 
         if ($form != null) {
             if ($form instanceof Form) {
-                $this->form = $form;
+                $this->form      = $form;
                 $this->formClass = $form::class;
             } else {
                 $this->formClass = $form;
@@ -92,6 +94,15 @@ class Record implements Arrayable, Sizable
         }
 
         $this->setOptions($options, self::$optionsDefault);
+
+        // Validations can be combined or simple array'ed.
+        if ($validations != null) {
+            isset($validations['@rules'])   && $validationRules   = array_pluck($validations, '@rules');
+            isset($validations['@options']) && $validationOptions = array_pluck($validations, '@options');
+
+            // Simple array'ed if no "@rules" field given.
+            $validationRules ??= $validations;
+        }
 
         // Set table stuff & validation stuff.
         $table             && $this->table             = $table;

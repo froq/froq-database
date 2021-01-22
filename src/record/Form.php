@@ -48,18 +48,21 @@ class Form implements Arrayable, Sizable
     /**
      * Constructor.
      *
-     * @param  froq\database\Database|null $db
-     * @param  string|null                 $table
-     * @param  string|null                 $tablePrimary
-     * @param  array|null                  $data
-     * @param  string|null                 $name
-     * @param  array|null                  $validationRules
-     * @param  array|null                  $validationOptions
+     * @param  froq\database\Database|null      $db
+     * @param  string|null                      $table
+     * @param  string|null                      $tablePrimary
+     * @param  array|null                       $data
+     * @param  froq\database\record\Record|null $record
+     * @param  array|null                       $options
+     * @param  array|null                       $validations
+     * @param  array|null                       $validationRules
+     * @param  array|null                       $validationOptions
+     * @param  string|null                      $name
      * @throws froq\database\record\FormException
      */
     public function __construct(Database $db = null, string $table = null, string $tablePrimary = null,
-        array $data = null, string|Record $record = null, array $options = null, array $validationRules = null,
-        array $validationOptions = null, string $name = null)
+        array $data = null, string|Record $record = null, array $options = null, array $validations = null,
+        array $validationRules = null, array $validationOptions = null, string $name = null)
     {
         // Try to use active app database object.
         $db ??= function_exists('app') ? app()->database() : null;
@@ -76,7 +79,7 @@ class Form implements Arrayable, Sizable
 
         if ($record != null) {
             if ($record instanceof Record) {
-                $this->record = $record;
+                $this->record      = $record;
                 $this->recordClass = $record::class;
             } else {
                 $this->recordClass = $record;
@@ -84,6 +87,15 @@ class Form implements Arrayable, Sizable
         }
 
         $this->setOptions($options, self::$optionsDefault);
+
+        // Validations can be combined or simple array'ed.
+        if ($validations != null) {
+            isset($validations['@rules'])   && $validationRules   = array_pluck($validations, '@rules');
+            isset($validations['@options']) && $validationOptions = array_pluck($validations, '@options');
+
+            // Simple array'ed if no "@rules" field given.
+            $validationRules ??= $validations;
+        }
 
         // Set table stuff & validation stuff.
         $table             && $this->table             = $table;
