@@ -406,14 +406,6 @@ class Record implements Arrayable, Sizable
                          : $this->doUpdate($data, $table, $primary, $options, $id);
         }
 
-        // When bool return wanted.
-        if (isset($options['bool']) || $bool) {
-            $bool = (bool) ($options['bool'] ?? $bool);
-            if ($bool) {
-                return $this->isSaved();
-            }
-        }
-
         // When select whole/fresh data wanted (works with primary's only).
         if (isset($options['select']) || $select) {
             $select = (bool) ($options['select'] ?? $select);
@@ -435,6 +427,14 @@ class Record implements Arrayable, Sizable
         $this->setData($data);
         if ($form = $this->getForm()) {
             $form->setData($data);
+        }
+
+        // When bool return wanted.
+        if (isset($options['bool']) || $bool) {
+            $bool = (bool) ($options['bool'] ?? $bool);
+            if ($bool) {
+                return $this->isSaved();
+            }
         }
 
         return $this;
