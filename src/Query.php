@@ -206,13 +206,23 @@ final class Query
     /**
      * Add/append a "SELECT" query into query stack with a JSON function.
      *
-     * @param  array  $fields
-     * @param  string $as
+     * @param  string|array $fields
+     * @param  string       $as
      * @return self
      * @throws froq\database\QueryException
      */
-    public function selectJson(array $fields, string $as): self
+    public function selectJson(string|array $fields, string $as): self
     {
+        // Eg: ('id:foo.id, ..').
+        if (is_string($fields)) {
+            $temp   = mb_split('\s*,\s*', trim($fields, ', '));
+            $fields = [];
+            foreach ($temp as $tem) {
+                [$key, $name] = mb_split('\s*:\s*', $tem, 2);
+                $fields[$key] = $name;
+            }
+        }
+
         $aset = isset($fields[0]); // Simple check for set/map array.
 
         $func = match ($this->db->link()->driver()) {
