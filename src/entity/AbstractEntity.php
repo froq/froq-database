@@ -244,12 +244,12 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Filter.
+     * Filter vars.
      *
-     * @return static
+     * @return self
      * @since  4.12
      */
-    public function filter(callable $func = null): static
+    public function filter(callable $func = null): self
     {
         $filtered = array_filter(
             $vars = $this->getVars(),
@@ -262,6 +262,23 @@ abstract class AbstractEntity implements EntityInterface
                     unset($this->{$var});
                 }
             } catch (Error) {}
+        }
+
+        return $this;
+    }
+
+    /**
+     * Clean null vars.
+     *
+     * @return self
+     * @since  5.0
+     */
+    public function clean(): self
+    {
+        foreach ($this->getVarNames() as $var) {
+            if (!isset($this->{$var})) {
+                unset($this->{$var});
+            }
         }
 
         return $this;
