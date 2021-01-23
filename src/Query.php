@@ -207,11 +207,11 @@ final class Query
      * Add/append a "SELECT" query into query stack with a JSON function.
      *
      * @param  string|array $fields
-     * @param  string       $as
+     * @param  string|null  $as
      * @return self
      * @throws froq\database\QueryException
      */
-    public function selectJson(string|array $fields, string $as): self
+    public function selectJson(string|array $fields, string $as = null): self
     {
         // Eg: ('id:foo.id, ..').
         if (is_string($fields)) {
@@ -243,7 +243,13 @@ final class Query
         $select = trim((string) $select);
         $select || throw new QueryException('Empty select fields given');
 
-        return $this->select($func . '(' . $select . ') AS ' . $this->prepareField($as), false);
+        $select = $func . '(' . $select . ')';
+
+        if ($as != '') {
+            $select .= ' AS ' . $this->prepareField($as);
+        }
+
+        return $this->select($select, false);
     }
 
     /**
