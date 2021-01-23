@@ -667,7 +667,8 @@ final class Query
     public function whereIn(string $field, array|Query $params, string $op = null): self
     {
         if ($params instanceof Query) {
-            return $this->where($this->prepareField($field) . ' IN (' . $params . ')', null, $op);
+            return $this->where($this->prepareField($field)
+                . ' IN (' . $params->toString() . ')', null, $op);
         }
 
         $params || throw new QueryException('No parameters given');
@@ -688,7 +689,8 @@ final class Query
     public function whereNotIn(string $field, array|Query $params, string $op = null): self
     {
         if ($params instanceof Query) {
-            return $this->where($this->prepareField($field) . ' NOT IN (' . $params . ')', null, $op);
+            return $this->where($this->prepareField($field)
+                . ' NOT IN (' . $params->toString() . ')', null, $op);
         }
 
         $params || throw new QueryException('No parameters given');
@@ -919,8 +921,8 @@ final class Query
     public function whereRandom(float $value = 0.01, string $op = null): self
     {
         return ($this->db->link()->driver() == 'pgsql')
-            ? $this->where('random() < ' . $value, $op)
-            : $this->where('rand() < ' . $value, $op);
+             ? $this->where('random() < ' . $value, $op)
+             : $this->where('rand() < ' . $value, $op);
     }
 
     /**
@@ -1500,12 +1502,12 @@ final class Query
     /**
      * Get query stack as string.
      *
-     * @param  int|null $indent
-     * @param  bool     $trim @internal
+     * @param  int|bool|null $indent
+     * @param  bool          $_trim @internal
      * @return string
      * @throws froq\database\QueryException
      */
-    public function toString(int $indent = null, bool $trim = true): string
+    public function toString(int|bool $indent = null, bool $_trim = true): string
     {
         $n = $t = ' ';
         if ($indent) {
@@ -1531,7 +1533,7 @@ final class Query
                 . ' aggregate() etc. first');
         }
 
-        $trim && $ret = trim($ret);
+        $_trim && $ret = trim($ret);
 
         return $ret;
     }
@@ -1539,12 +1541,12 @@ final class Query
     /**
      * Get a part of query stack as string.
      *
-     * @param  string   $key
-     * @param  int|null $indent
+     * @param  string        $key
+     * @param  int|bool|null $indent
      * @return string
      * @throws froq\database\QueryException
      */
-    public function toQueryString(string $key, int $indent = null): string
+    public function toQueryString(string $key, int|bool $indent = null): string
     {
         $n  = ' '; $t  = '';
         $nt = ' '; $ts = '';
