@@ -238,7 +238,10 @@ final class Query
             $select = $this->prepareFields(join(', ', $fields));
         } else {
             foreach ($fields as $fieldKey => $fieldName) {
-                $select[] = sprintf("'%s', %s", $fieldKey, $this->prepareField((string) $fieldName));
+                $select[] = sprintf("'%s', %s", $fieldKey, (
+                    ($fieldName instanceof Sql) ? $fieldName // For raw values.
+                        : $this->prepareField((string) $fieldName)
+                ));
             }
             $select = join(', ', $select);
         }
