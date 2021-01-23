@@ -215,12 +215,15 @@ final class Query
     {
         // Eg: ('id:foo.id, ..').
         if (is_string($fields)) {
-            $temp   = mb_split('\s*,\s*', trim($fields, ', '));
+            $parts  = mb_split('\s*,\s*', trim($fields, ', '));
             $fields = [];
-            foreach ($temp as $tem) {
-                [$key, $name] = mb_split('\s*:\s*', $tem, 2);
+
+            foreach ($parts as $part) {
+                [$key, $name] = mb_split('\s*:\s*', $part, 2);
                 $fields[$key] = $name;
             }
+
+            unset($parts, $part);
         }
 
         $aset = isset($fields[0]); // Simple check for set/map array.
@@ -1900,14 +1903,13 @@ final class Query
      *
      * @param  string    $sign
      * @param  array     $field
-     * @param  float|int $value
+     * @param  int|float $value
      * @param  bool      $return
      * @return array
      * @throws froq\database\QueryException
      * @since  5.0
      */
-    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1,
-        bool $return = false): array
+    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = false): array
     {
         $data = [];
 
