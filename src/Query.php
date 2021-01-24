@@ -1222,7 +1222,7 @@ final class Query
     {
         // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
         if (!$this->has('limit')) {
-            $limit = ($this->db->link()->driver() != 'pgsql') || $this->has('select');
+            $limit = $this->has('select') || ($this->db->link()->driver() != 'pgsql');
             $limit && $this->limit(1);
         }
 
