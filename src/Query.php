@@ -1028,8 +1028,8 @@ final class Query
         // Eg: ("id ASC") or ("id ASC, name DESC").
         if (strpos($field, ' ')) {
             $fields = [];
-            foreach (split(',', $field) as $i => $field) {
-                [$field, $op] = split(' ', trim($field), 2);
+            foreach (mb_split('\s*,\s*', $field) as $i => $field) {
+                @ [$field, $op] = mb_split('\s+', trim($field), 2);
                 $fields[$i] = $this->prepareField($field) . $collate;
                 if ($op != null) {
                     $fields[$i] .= ' ' . $this->prepareOp($op, true);
@@ -1839,6 +1839,11 @@ final class Query
             throw new QueryException('Empty field given');
         }
 
+        // Check names (eg: '@id ..', 1 or '@[id, ..]').
+        if (str_contains($field, '@')) {
+            return $this->db->prepareName($field);
+        }
+
         return $this->db->escapeName($field);
     }
 
@@ -1855,6 +1860,11 @@ final class Query
 
         if ($fields === '') {
             throw new QueryException('Empty fields given');
+        }
+
+        // Check names (eg: '@id ..', 1 or '@[id, ..]').
+        if (str_contains($fields, '@')) {
+            return $this->db->prepareName($fields);
         }
 
         return strpbrk($fields, ', ') ? $this->db->escapeNames($fields)

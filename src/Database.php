@@ -861,6 +861,21 @@ final class Database
     }
 
     /**
+     * Prepare given input returning a string output with escaped names.
+     *
+     * @param  string $in
+     * @return string
+     * @since  5.0
+     */
+    public function prepareName(string $in): string
+    {
+        $out = $this->preparePrepareInput($in);
+        $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
+
+        return $out;
+    }
+
+    /**
      * Prepare statement input returning a `PDOStatement` object.
      *
      * @param  string $in
