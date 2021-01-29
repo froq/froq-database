@@ -593,10 +593,18 @@ final class Query
             // Eg: (id = ?, 1).
             $this->add('where', [$this->prepare($where, $params), $op]);
         } else {
-            // Eg: ([id => 1, status => ok, ..]).
+            static $signs = ['!', '<', '>'];
+            // Eg: ([id => 1, active! => false, ..]).
             foreach ($where as $field => $param) {
+                $sign = ' = ';
+                if (in_array($field[-1], $signs)) {
+                    $sign  = ' != ';
+                    $field = substr($field, 0, -1);
+                }
+
                 $field = $this->prepareField($field);
-                $this->add('where', [$this->prepare($field . ' = ?', [$param]), $op]);
+
+                $this->add('where', [$this->prepare($field . $sign . '?', [$param]), $op]);
             }
         }
 

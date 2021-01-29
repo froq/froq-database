@@ -952,23 +952,30 @@ final class Database
                 $where  = trim($where);
                 $params = (array) $params;
             } else {
+                static $signs = ['!', '<', '>'];
                 // Note: "where" must not be combined when array given, eg: (["a = ? AND b = ?" => [1, 2]])
                 // will not be prepared and prepare() method will throw exception about replacement index. So
                 // use ("a = ? AND b = ?", [1, 2]) convention instead for multiple conditions.
                 $temp = [];
-                foreach ($where as $key => $value) {
-                    is_string($key) || throw new DatabaseException(
+                foreach ($where as $field => $value) {
+                    is_string($field) || throw new DatabaseException(
                         'Invalid where input, use ("a = ? AND b = ?", [1, 2]) convention'
                     );
 
-                    ctype_alnum($key) || throw new DatabaseException(
-                        'Invalid field name `%s` in where input, use an alphanumeric name', $key
+                    $sign = ' = ';
+                    if (in_array($field[-1], $signs)) {
+                        $sign  = ' != ';
+                        $field = substr($field, 0, -1);
+                    }
+
+                    ctype_alnum($field) || throw new DatabaseException(
+                        'Invalid field name `%s` in where input, use an alphanumeric name', $field
                     );
 
                     // Add placeholders.
-                    $key = $this->quoteName($key) . ' = ?';
+                    $field = $this->quoteName($field) . $sign . '?';
 
-                    $temp[$key] = $value;
+                    $temp[$field] = $value;
                 }
 
                 $where  = join(' AND ', array_keys($temp));
