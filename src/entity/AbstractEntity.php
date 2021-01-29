@@ -26,8 +26,9 @@ abstract class AbstractEntity implements EntityInterface
      *
      * @param array|null      $data
      * @param array|bool|null $drop
+     * @param bool            $clean
      */
-    public function __construct(array $data = null, array|bool $drop = null)
+    public function __construct(array $data = null, array|bool $drop = null, bool $clean = false)
     {
         $data ??= [];
 
@@ -45,7 +46,7 @@ abstract class AbstractEntity implements EntityInterface
                 $diff = $drop;
             }
 
-            // Clear unused/unwanted vars.
+            // Drop unused/unwanted vars.
             foreach ($diff as $var) {
                 if (!isset($data[$var]) /* eg: id=null */
                     || !!$drop          /* eg: drop=['id'] */) {
@@ -58,6 +59,9 @@ abstract class AbstractEntity implements EntityInterface
         foreach ($data as $var => $value) {
             $this->{$var} = $value;
         }
+
+        // Clean null vars.
+        $clean && $this->clean();
     }
 
     // /**
