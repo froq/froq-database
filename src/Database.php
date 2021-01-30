@@ -465,7 +465,7 @@ final class Database
 
         $where && $query->where(...$this->prepareWhereInput($where, $params));
         $limit && $query->limit($limit);
-        prs("$query");
+
         $result = $query->run();
 
         // If rows wanted as return.
