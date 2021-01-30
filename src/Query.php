@@ -1676,7 +1676,8 @@ final class Query
                                   : $nt . join(', ', $temp->stack['update']);
 
                             if ($where != null) {
-                                [$where, $params] = array_select((array) $where, [0, 1]);
+                                $where = (array) $where;
+                                [$where, $params] = array_select($where, [0, 1]);
                                 $ret .= $nt . trim($temp->where((string) $where, (array) $params)
                                     ->toQueryString('where'));
                             }
