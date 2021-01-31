@@ -580,12 +580,12 @@ final class Query
     /**
      * Add/append a "WHERE" query into query stack.
      *
-     * @param  string|array $where
-     * @param  array|null   $params
-     * @param  string|null  $op
+     * @param  string|array     $where
+     * @param  array|Query|null $params
+     * @param  string|null      $op
      * @return self
      */
-    public function where(string|array $where, array $params = null, string $op = null): self
+    public function where(string|array $where, array|Query $params = null, string $op = null): self
     {
         $op = $this->prepareOp($op ?: 'AND'); // @default=AND
 
@@ -625,6 +625,9 @@ final class Query
         if (is_array($param)) {
             return $this->whereIn($field, $param);
         }
+        if ($param instanceof Query) {
+            return $this->where($this->prepareField($field) . ' = (?r)', $param, $op);
+        }
 
         $param = (array) $param;
         $param || throw new QueryException('No parameter given');
@@ -645,6 +648,9 @@ final class Query
     {
         if (is_array($param)) {
             return $this->whereNotIn($field, $param);
+        }
+        if ($param instanceof Query) {
+            return $this->where($this->prepareField($field) . ' != (?r)', $param, $op);
         }
 
         $param = (array) $param;
@@ -1812,13 +1818,17 @@ final class Query
     /**
      * Prepare an input.
      *
-     * @param  string     $in
-     * @param  array|null $params
+     * @param  string           $in
+     * @param  array|Query|null $params
      * @return string
      * @throws froq\database\QueryException
      */
-    public function prepare(string $in, array $params = null): string
+    public function prepare(string $in, array|Query $params = null): string
     {
+        if ($params && $params instanceof Query) {
+            $params = [$params->toString()];
+        }
+
         $out = trim($in);
 
         if ($out === '') {
