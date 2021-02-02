@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{EntityException, EntityArrayInterface, EntityInterface};
+use froq\database\entity\{EntityException, EntityListInterface, EntityInterface};
 use froq\collection\Collection;
 use froq\pager\Pager;
 use ArrayIterator;
@@ -16,11 +16,11 @@ use ArrayIterator;
  * Abstract Entity Array.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\AbstractEntityArray
+ * @object  froq\database\entity\AbstractEntityList
  * @author  Kerem Güneş
  * @since   4.2
  */
-abstract class AbstractEntityArray implements EntityArrayInterface
+abstract class AbstractEntityList implements EntityListInterface
 {
     /** @var array<froq\database\entity\EntityInterface> */
     private array $items = [];
@@ -40,8 +40,8 @@ abstract class AbstractEntityArray implements EntityArrayInterface
      */
     public function __construct(array $items = null, Pager $pager = null, array|bool $drop = null)
     {
-        // Create entity class (eg: FooEntityArray => FooEntity)
-        $this->itemsClass = substr(static::class, 0, -5);
+        // Create entity class (eg: FooEntityList => FooEntity)
+        $this->itemsClass = substr(static::class, 0, -4);
 
         class_exists($this->itemsClass) || throw new EntityException(
             'Entity class %s not exists, be sure it is defined under the same namespace & directory',
