@@ -272,6 +272,57 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     }
 
     /**
+     * Filter.
+     *
+     * @param  callable $func
+     * @param  bool     $keepKeys
+     * @return self
+     * @since  5.0
+     */
+    public function filter(callable $func, bool $keepKeys = false): self
+    {
+        // Stay in here.
+        $func = $func->bindTo($this, $this);
+
+        $this->rows = $this->toCollection()->filter($func, $keepKeys)->toArray();
+
+        return $this;
+    }
+
+    /**
+     * Map.
+     *
+     * @param  callable $func
+     * @return self
+     * @since  5.0
+     */
+    public function map(callable $func): self
+    {
+        // Stay in here.
+        $func = $func->bindTo($this, $this);
+
+        $this->rows = $this->toCollection()->map($func)->toArray();
+
+        return $this;
+    }
+
+    /**
+     * Reduce.
+     *
+     * @param  any      $carry
+     * @param  callable $func
+     * @return any
+     * @since  5.0
+     */
+    public function reduce($carry, callable $func)
+    {
+        // Stay in here.
+        $func = $func->bindTo($this, $this);
+
+        return $this->toCollection()->reduce($carry, $func);
+    }
+
+    /**
      * @inheritDoc Countable
      */
     public function count(): int
