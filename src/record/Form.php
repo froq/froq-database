@@ -9,9 +9,10 @@ namespace froq\database\record;
 
 use froq\database\record\{FormException, Record};
 use froq\database\{Database, trait\RecordTrait};
-use froq\common\trait\{DataTrait, DataLoadTrait};
-use froq\common\interface\{Arrayable, Sizable};
+use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait};
+use froq\common\interface\Arrayable;
 use froq\validation\ValidationError;
+use ArrayAccess;
 
 /**
  * Form.
@@ -24,14 +25,13 @@ use froq\validation\ValidationError;
  * @author  Kerem Güneş
  * @since   5.0
  */
-class Form implements Arrayable, Sizable
+class Form implements Arrayable, ArrayAccess
 {
     /**
-     * @see froq\common\trait\DataTrait
-     * @see froq\common\trait\DataLoadTrait
      * @see froq\database\trait\RecordTrait
+     * @see froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait}
      */
-    use RecordTrait, DataTrait, DataLoadTrait;
+    use RecordTrait, DataTrait, DataLoadTrait, DataAccessTrait;
 
     /** @var froq\database\record\Record */
     protected Record $record;

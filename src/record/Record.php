@@ -9,10 +9,11 @@ namespace froq\database\record;
 
 use froq\database\record\{RecordException, Form, FormException};
 use froq\database\{Database, Query, trait\RecordTrait};
-use froq\common\trait\{DataTrait, DataLoadTrait, DataMagicTrait};
-use froq\common\interface\{Arrayable, Sizable};
+use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataMagicTrait};
+use froq\common\interface\Arrayable;
 use froq\validation\ValidationError;
 use froq\pager\Pager;
+use ArrayAccess;
 
 /**
  * Record.
@@ -25,15 +26,13 @@ use froq\pager\Pager;
  * @author  Kerem Güneş
  * @since   5.0
  */
-class Record implements Arrayable, Sizable
+class Record implements Arrayable, ArrayAccess
 {
     /**
      * @see froq\database\trait\RecordTrait
-     * @see froq\common\trait\DataTrait
-     * @see froq\common\trait\DataLoadTrait
-     * @see froq\common\trait\DataMagicTrait
+     * @see froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataMagicTrait}
      */
-    use RecordTrait, DataTrait, DataLoadTrait, DataMagicTrait;
+    use RecordTrait, DataTrait, DataLoadTrait, DataAccessTrait, DataMagicTrait;
 
     /** @var froq\database\record\Form */
     protected Form $form;
