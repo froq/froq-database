@@ -304,10 +304,12 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result      = $result->row(0);
-                $resultArray = (array) $result;
-                if (isset($resultArray[$return])) {
-                    $result = $resultArray[$return];
+                $result = $result->row(0);
+                if (!is_array($return)) {
+                    $resultArray = (array) $result;
+                    if (isset($resultArray[$return])) {
+                        $result = $resultArray[$return];
+                    }
                 }
             }
 
@@ -350,10 +352,12 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result      = $result->row(0);
-                $resultArray = (array) $result;
-                if (isset($resultArray[$return])) {
-                    $result = $resultArray[$return];
+                $result = $result->row(0);
+                if (!is_array($return)) {
+                    $resultArray = (array) $result;
+                    if (isset($resultArray[$return])) {
+                        $result = $resultArray[$return];
+                    }
                 }
             }
 
@@ -395,10 +399,12 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result      = $result->row(0);
-                $resultArray = (array) $result;
-                if (isset($resultArray[$return])) {
-                    $result = $resultArray[$return];
+                $result = $result->row(0);
+                if (!is_array($return)) {
+                    $resultArray = (array) $result;
+                    if (isset($resultArray[$return])) {
+                        $result = $resultArray[$return];
+                    }
                 }
             }
 
