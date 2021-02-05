@@ -206,8 +206,8 @@ final class Query
     /**
      * Add/append a "SELECT" query into query stack with a JSON function.
      *
-     * @param  string|array $fields
-     * @param  string|null  $as
+     * @param  string|array<string> $fields
+     * @param  string|null          $as
      * @return self
      * @throws froq\database\QueryException
      */
@@ -235,7 +235,7 @@ final class Query
         };
 
         if ($aset) {
-            $select = $this->prepareFields(join(', ', $fields));
+            $select = $this->prepareFields($fields);
         } else {
             foreach ($fields as $fieldKey => $fieldName) {
                 $select[] = sprintf("'%s', %s", $fieldKey, (
@@ -366,7 +366,7 @@ final class Query
             $values[$i] = '(' . join(', ', $this->db->escape($value)) . ')';
         }
 
-        $fields = $this->prepareFields(join(', ', $fields));
+        $fields = $this->prepareFields($fields);
 
         return $this->add('insert', [$fields, $values, 'sequence' => $sequence], false);
     }
@@ -437,12 +437,12 @@ final class Query
     /**
      * Add a "RETURNING" clause into query stack.
      *
-     * @param  string                    $fields
+     * @param  string|array<string>      $fields
      * @param  string|array<string>|null $fetch
      * @return self
      * @since  4.18
      */
-    public function return(string $fields, string|array $fetch = null): self
+    public function return(string|array $fields, string|array $fetch = null): self
     {
         $fields = $this->prepareFields($fields);
 
@@ -1869,12 +1869,16 @@ final class Query
     /**
      * Prepare fields.
      *
-     * @param  string $fields
+     * @param  string|array<string> $fields
      * @return string
      * @throws froq\database\QueryException
      */
-    public function prepareFields(string $fields): string
+    public function prepareFields(string|array $fields): string
     {
+        if (is_array($fields)) {
+            $fields = join(', ', $fields);
+        }
+
         $fields = trim($fields);
 
         if ($fields === '') {
