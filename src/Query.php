@@ -1053,7 +1053,7 @@ final class Query
             return $this->add('order', join(', ', $fields) . $nulls);
         }
 
-        return $this->add('order', $this->prepareField($field) . $collate . $nulls);
+        return $this->add('order', $this->prepareFields($field) . $collate . $nulls);
     }
 
     /**
