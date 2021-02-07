@@ -341,7 +341,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /**
      * @inheritDoc ArrayAccess
      */
-    public final function offsetExists($i)
+    public function offsetExists($i)
     {
         return isset($this->rows[$i]);
     }
@@ -349,7 +349,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /**
      * @inheritDoc ArrayAccess
      */
-    public final function offsetGet($i)
+    public function offsetGet($i)
     {
         return $this->row($i);
     }
@@ -358,7 +358,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      * @inheritDoc ArrayAccess
      * @throws     froq\database\ResultException
      */
-    public final function offsetSet($i, $row)
+    public function offsetSet($i, $row)
     {
         throw new ResultException('No set() allowed for ' . $this::class);
     }
@@ -367,7 +367,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      * @inheritDoc ArrayAccess
      * @throws     froq\database\ResultException
      */
-    public final function offsetUnset($i)
+    public function offsetUnset($i)
     {
         throw new ResultException('No unset() allowed for ' . $this::class);
     }
