@@ -82,7 +82,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
             $query = ltrim($pdoStatement->queryString);
 
             // Select queries & returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
-            if (stripos($query, 'SELECT') || (
+            if (stripos($query, 'SELECT') !== false || (
                 stripos($query, 'RETURNING') && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
             )) {
                 // Set or get default.
