@@ -62,50 +62,31 @@ final class Query
     }
 
     /**
-     * Add a "WITH" query into query stack.
+     * Add a "WITH" query into query stack, with/without "RECURSIVE" & "MATERIALIZED" options.
      *
      * @param  string       $name
      * @param  string|Query $query
      * @param  array|null   $params
      * @param  bool         $prepare
-     * @param  bool         $materialized
+     * @param  string|null  $fields
+     * @param  bool|null    $recursive
+     * @param  bool|null    $materialized
      * @return self
      * @since  5.0
      */
     public function with(string $name, string|Query $query, array $params = null, bool $prepare = true,
-        bool $materialized = true): self
+        string $fields = null, bool $recursive = null, bool $materialized = null): self
     {
         $name = $this->prepareField($name);
 
-        if ($prepare && is_string($query)) {
-            $query = $this->prepare($query, $params);
-        }
-
-        return $this->add('with', [$name, null, (string) $query, $materialized]);
-    }
-
-    /**
-     * Add a "WITH RECURSIVE" query into query stack.
-     *
-     * @param  string       $name
-     * @param  string       $fields
-     * @param  string|Query $query
-     * @param  array|null   $params
-     * @param  bool         $prepare
-     * @return self
-     * @since  5.0
-     */
-    public function withRecursive(string $name, string $fields, string|Query $query, array $params = null,
-        bool $prepare = true): self
-    {
-        $name   = $this->prepareField($name);
-        $fields = $this->prepareFields($fields);
+        // Can be skipped in some situations.
+        $fields && $fields = $this->prepareFields($fields);
 
         if ($prepare && is_string($query)) {
             $query = $this->prepare($query, $params);
         }
 
-        return $this->add('with', [$name, $fields, (string) $query, null]);
+        return $this->add('with', [$name, (string) $query, $fields, $recursive, $materialized]);
     }
 
     /**
@@ -1603,11 +1584,16 @@ final class Query
             case 'with':
                 if (isset($stack['with'])) {
                     $with = [];
-                    foreach ($stack['with'] as [$name, $fields, $query, $materialized]) {
-                        if ($fields !== null) {
-                            $as = 'RECURSIVE ' . $name . ' (' . $fields . ') AS ';
-                        } else {
-                            $as = $name . ' AS ' . (!$materialized ? 'NOT MATERIALIZED ' : '');
+
+                    foreach ($stack['with'] as [$name, $query, $fields, $recursive, $materialized]) {
+                        $as = $recursive ? 'RECURSIVE ' . $name : $name;
+                        if ($fields != null) {
+                            $as .= ' (' . $fields . ')';
+                        }
+
+                        $as .= ' AS ';
+                        if ($materialized !== null) {
+                            $as .= ($materialized ? 'MATERIALIZED ' : 'NOT MATERIALIZED ');
                         }
 
                         if ($indent >= 1) {
