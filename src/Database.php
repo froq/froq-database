@@ -638,10 +638,15 @@ final class Database
             if ($pos = strpos($in, '[')) {
                 $name = substr($in, 0, $pos);
                 $rest = substr($in, $pos + 1);
+                $last = '';
+                if (strpos($rest, ']')) {
+                    $rest = substr($in, $pos + 1, -1);
+                    $last = ']';
+                }
 
                 return (strtolower($name) == 'array')
-                     ? $name . '[' . $this->quoteNames($rest)
-                     : $this->quoteName($name) . '[' . $rest;
+                     ? $name . '[' . $this->quoteNames($rest) . $last
+                     : $this->quoteName($name) . '[' . $rest . $last;
             }
         }
 
