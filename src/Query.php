@@ -62,34 +62,6 @@ final class Query
     }
 
     /**
-     * Add a "WITH" query into query stack, with/without "RECURSIVE" & "MATERIALIZED" options.
-     *
-     * @param  string       $name
-     * @param  string|Query $query
-     * @param  array|null   $params
-     * @param  bool         $prepare
-     * @param  string|null  $fields
-     * @param  bool|null    $recursive
-     * @param  bool|null    $materialized
-     * @return self
-     * @since  5.0
-     */
-    public function with(string $name, string|Query $query, array $params = null, bool $prepare = true,
-        string $fields = null, bool $recursive = null, bool $materialized = null): self
-    {
-        $name = $this->prepareField($name);
-
-        // Can be skipped in some situations.
-        $fields && $fields = $this->prepareFields($fields);
-
-        if ($prepare && is_string($query)) {
-            $query = $this->prepare($query, $params);
-        }
-
-        return $this->add('with', [$name, (string) $query, $fields, $recursive, $materialized]);
-    }
-
-    /**
      * Set/reset the target table.
      *
      * @param  string $table
@@ -528,6 +500,34 @@ final class Query
     public function using(string $fields): self
     {
         return $this->addTo('join', 'USING (' . $this->prepareFields($fields) . ')');
+    }
+
+    /**
+     * Add a "WITH" query into query stack, with/without "RECURSIVE" & "MATERIALIZED" options.
+     *
+     * @param  string       $name
+     * @param  string|Query $query
+     * @param  array|null   $params
+     * @param  bool         $prepare
+     * @param  string|null  $fields
+     * @param  bool|null    $recursive
+     * @param  bool|null    $materialized
+     * @return self
+     * @since  5.0
+     */
+    public function with(string $name, string|Query $query, array $params = null, bool $prepare = true,
+        string $fields = null, bool $recursive = null, bool $materialized = null): self
+    {
+        $name = $this->prepareField($name);
+
+        // Can be skipped in some situations.
+        $fields && $fields = $this->prepareFields($fields);
+
+        if ($prepare && is_string($query)) {
+            $query = $this->prepare($query, $params);
+        }
+
+        return $this->add('with', [$name, (string) $query, $fields, $recursive, $materialized]);
     }
 
     /**
