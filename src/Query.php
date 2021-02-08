@@ -126,15 +126,16 @@ final class Query
      *
      * @param  string      $select
      * @param  string|null $as
+     * @param  bool        $wrap
      * @return self
      * @throws froq\database\QueryException
      */
-    public function selectRaw(string $select, string $as = null): self
+    public function selectRaw(string $select, string $as = null, bool $wrap = true): self
     {
         $select = trim($select);
         $select || throw new QueryException('Empty select given');
 
-        $select = '(' . $select . ')';
+        $select = $wrap ? '(' . $select . ')' : $select;
 
         if ($as != '') {
             $select .= ' AS ' . $this->prepareField($as);
@@ -148,12 +149,13 @@ final class Query
      *
      * @param  string|Query $query
      * @param  string       $as
+     * @param  bool         $wrap
      * @return self
      * @throws froq\database\QueryException
      */
-    public function selectQuery(string|Query $query, string $as): self
+    public function selectQuery(string|Query $query, string $as, bool $wrap = true): self
     {
-        return $this->selectRaw((string) $query, $as);
+        return $this->selectRaw((string) $query, $as, $wrap);
     }
 
     /**
