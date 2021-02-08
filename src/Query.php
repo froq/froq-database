@@ -503,6 +503,25 @@ final class Query
     }
 
     /**
+     * Add an "UNION" query into query stack, with/without "ALL" option.
+     *
+     * @param  string|Query $query
+     * @param  array|null   $params
+     * @param  bool         $prepare
+     * @param  bool         $all
+     * @return self
+     * @since  5.0
+     */
+    public function union(string|Query $query, array $params = null, bool $prepare = true, bool $all = false): self
+    {
+        if ($prepare && is_string($query)) {
+            $query = $this->prepare($query, $params);
+        }
+
+        return $this->add('union', [(string) $query, $all]);
+    }
+
+    /**
      * Add a "WITH" query into query stack, with/without "RECURSIVE" & "MATERIALIZED" options.
      *
      * @param  string       $name
@@ -1628,6 +1647,18 @@ final class Query
 
                     isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join', $indent);
                     isset($stack['where'])  && $ret .= $nt . $this->toQueryString('where', $indent);
+
+                    if (isset($stack['union'])) {
+                        foreach ($stack['union'] as [$query, $all]) {
+                            $ret .= $nt . 'UNION ' . ($all ? 'ALL ' : '');
+                            if ($indent >= 1) {
+                                $ret .= '(' . $n . $ts . $query . $nt . ')';
+                            } else {
+                                $ret .= '(' . $query . ')';
+                            }
+                        }
+                    }
+
                     isset($stack['group'])  && $ret .= $nt . $this->toQueryString('group');
                     isset($stack['having']) && $ret .= $nt . $this->toQueryString('having');
                     isset($stack['order'])  && $ret .= $nt . $this->toQueryString('order');
