@@ -480,7 +480,35 @@ final class Query
     }
 
     /**
-     * Add/append an "ON" clause into query stack.
+     * Add/append a "LEFT JOIN" query into query stack.
+     *
+     * @param  string     $to
+     * @param  string     $on
+     * @param  array|null $params
+     * @param  bool       $outer
+     * @return self
+     */
+    public function joinLeft(string $to, string $on, array $params = null, bool $outer = false): self
+    {
+        return $this->join($to, $on, $params, 'LEFT' . ($outer ? ' OUTER' : ''));
+    }
+
+    /**
+     * Add/append a "RIGHT JOIN" query into query stack.
+     *
+     * @param  string     $to
+     * @param  string     $on
+     * @param  array|null $params
+     * @param  bool       $outer
+     * @return self
+     */
+    public function joinRight(string $to, string $on, array $params = null, bool $outer = false): self
+    {
+        return $this->join($to, $on, $params, 'RIGHT' . ($outer ? ' OUTER' : ''));
+    }
+
+    /**
+     * Add/append an "ON" clause into query stack for joins.
      *
      * @param  string     $on
      * @param  array|null $params
@@ -493,7 +521,7 @@ final class Query
     }
 
     /**
-     * Add/append an "USING" clause into query stack.
+     * Add/append an "USING" clause into query stack for joins.
      *
      * @param  string $fields
      * @return self
@@ -549,34 +577,6 @@ final class Query
         }
 
         return $this->add('with', [$name, (string) $query, $fields, $recursive, $materialized]);
-    }
-
-    /**
-     * Add/append a "LEFT JOIN" query into query stack.
-     *
-     * @param  string     $to
-     * @param  string     $on
-     * @param  array|null $params
-     * @param  bool       $outer
-     * @return self
-     */
-    public function joinLeft(string $to, string $on, array $params = null, bool $outer = false): self
-    {
-        return $this->join($to, $on, $params, 'LEFT' . ($outer ? ' OUTER' : ''));
-    }
-
-    /**
-     * Add/append a "RIGHT JOIN" query into query stack.
-     *
-     * @param  string     $to
-     * @param  string     $on
-     * @param  array|null $params
-     * @param  bool       $outer
-     * @return self
-     */
-    public function joinRight(string $to, string $on, array $params = null, bool $outer = false): self
-    {
-        return $this->join($to, $on, $params, 'RIGHT' . ($outer ? ' OUTER' : ''));
     }
 
     /**
@@ -1590,7 +1590,7 @@ final class Query
         $nt = ' '; $ts = '';
         if ($indent) {
             if ($indent == 1) {
-                $n  = "\n"; $t = "\t";
+                $n  = "\n"; $t  = "\t";
                 $nt = "\n"; $ts = "\t";
             } elseif ($indent > 1) {
                 $n  = "\n";      $t  = str_repeat("\t", $indent - 1);
