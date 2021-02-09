@@ -102,13 +102,18 @@ final class Query
     /**
      * Add/append a "SELECT" query into query stack.
      *
-     * @param  string|array $select
-     * @param  bool         $prepare
+     * @param  string|array|Query $select
+     * @param  bool               $prepare
+     * @param  string|null        $as
      * @return self
      * @throws froq\database\QueryException
      */
-    public function select(string|array $select, bool $prepare = true): self
+    public function select(string|array|Query $select, bool $prepare = true, string $as = null): self
     {
+        if ($select instanceof Query) {
+            return $this->add('select', '(' . $select->toString() . ') AS ' . $this->prepareField($as));
+        }
+
         if (is_array($select)) {
             $select = join(', ', $select);
         }

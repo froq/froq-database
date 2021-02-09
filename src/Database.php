@@ -693,7 +693,8 @@ final class Database
     {
         if (is_array($in) && $format != '?a') {
             return array_map(fn($in) => $this->escape($in, $format), $in);
-        } elseif (is_object($in)) {
+        }
+        if (is_object($in)) {
             return match (true) {
                 ($in instanceof Sql)   => $in->content(),
                 ($in instanceof Name)  => $this->escapeName($in->content()),
