@@ -168,10 +168,11 @@ final class Query
      *
      * @param  string|array<string> $fields
      * @param  string|null          $as
+     * @param  bool                 $prepare
      * @return self
      * @throws froq\database\QueryException
      */
-    public function selectJson(string|array $fields, string $as = null): self
+    public function selectJson(string|array $fields, string $as = null, bool $prepare = true): self
     {
         // Eg: ('id:foo.id, ..').
         if (is_string($fields)) {
@@ -198,11 +199,16 @@ final class Query
             $select = $this->prepareFields($fields);
         } else {
             foreach ($fields as $key => $field) {
+                if ($field instanceof Query || $field instanceof Sql) {
+                    $field = '(' . $field . ')'; // For raw/query fields.
+                    $prepare = false;
+                }
+
                 $select[] = sprintf("'%s', %s", $key, (
-                    ($field instanceof Sql || $field instanceof Query) ? '(' . $field . ')' // For raw/query values.
-                        : $this->prepareField((string) $field)
+                    $prepare ? $this->prepareField((string) $field) : $field
                 ));
             }
+
             $select = join(', ', $select);
         }
 
