@@ -37,8 +37,9 @@ abstract class AbstractEntityList implements EntityListInterface
      * @param array|null            $items
      * @param froq\pager\Pager|null $pager
      * @param array|bool|null       $drop
+     * @param bool                  $clean
      */
-    public function __construct(array $items = null, Pager $pager = null, array|bool $drop = null)
+    public function __construct(array $items = null, Pager $pager = null, array|bool $drop = null, bool $clean = false)
     {
         // Create entity class (eg: FooEntityList => FooEntity)
         $this->itemsClass = substr(static::class, 0, -4);
@@ -50,7 +51,7 @@ abstract class AbstractEntityList implements EntityListInterface
 
         // Convert items to related entity.
         if ($items) foreach ($items as $item) {
-            $this->items[] = new $this->itemsClass($item, $drop);
+            $this->items[] = new $this->itemsClass($item, $drop, $clean);
         }
 
         $this->pager = $pager;
