@@ -186,21 +186,21 @@ final class Query
             unset($parts, $part);
         }
 
-        $aset = isset($fields[0]); // Simple check for set/map array.
+        $list = isset($fields[0]); // Simple check for set/map array.
 
         $func = match ($this->db->link()->driver()) {
-            'pgsql' => $aset ? 'json_build_array' : 'json_build_object',
-            'mysql' => $aset ? 'json_array'       : 'json_object',
+            'pgsql' => $list ? 'json_build_array' : 'json_build_object',
+            'mysql' => $list ? 'json_array'       : 'json_object',
             default => throw new QueryException('Method %s() available for PgSQL & MySQL only', __method__)
         };
 
-        if ($aset) {
+        if ($list) {
             $select = $this->prepareFields($fields);
         } else {
-            foreach ($fields as $fieldKey => $fieldName) {
-                $select[] = sprintf("'%s', %s", $fieldKey, (
-                    ($fieldName instanceof Sql) ? $fieldName // For raw values.
-                        : $this->prepareField((string) $fieldName)
+            foreach ($fields as $key => $field) {
+                $select[] = sprintf("'%s', %s", $key, (
+                    ($field instanceof Sql || $field instanceof Query) ? '(' . $field . ')' // For raw/query values.
+                        : $this->prepareField((string) $field)
                 ));
             }
             $select = join(', ', $select);
