@@ -1386,15 +1386,15 @@ final class Query
     /**
      * Add/append a "SELECT" query into query stack for an aggregate function.
      *
-     * @param  string      $func
-     * @param  string      $field
-     * @param  string|null $as
-     * @param  array|null  $options
+     * @param  string       $func
+     * @param  string|array $field
+     * @param  string|null  $as
+     * @param  array|null   $options
      * @return self
      * @throws froq\database\QueryException
      * @since  4.4
      */
-    public function aggregate(string $func, string $field, string $as = null, array $options = null): self
+    public function aggregate(string $func, string|array $field, string $as = null, array $options = null): self
     {
         // Extract options (with defaults).
         [$distinct, $prepare, $order] = [
@@ -1404,7 +1404,7 @@ final class Query
         ];
 
         $distinct && $distinct = 'DISTINCT ';
-        $prepare  && $field    = $this->prepareField($field);
+        $prepare  && $field    = $this->prepareFields($field);
 
         // Dirty hijack..
         if ($order != null) {
