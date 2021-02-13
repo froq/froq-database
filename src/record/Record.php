@@ -651,6 +651,28 @@ class Record implements Arrayable, ArrayAccess
     }
 
     /**
+     * Update record(s) on own table by given conditions.
+     *
+     * @param  array             $data
+     * @param  string|array|null $where
+     * @param  array|null        $params
+     * @param  string|null       $op
+     * @return int|null
+     */
+    public final function update(array $data, string|array $where, array $params = null, string $op = null): int|null
+    {
+        $query = $this->query()->update($data);
+        $where && $query->where($where, $params, $op);
+
+        $where = $this->query->pull('where');
+        if ($where) foreach ($where as [$where, $op]) {
+            $query->where($where, op: $op);
+        }
+
+        return $query->run()->count();
+    }
+
+    /**
      * Delete record(s) from own table by given conditions.
      *
      * @param  string|array|null $where
