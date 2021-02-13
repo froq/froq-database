@@ -244,14 +244,16 @@ abstract class AbstractEntity implements EntityInterface
     /**
      * Empty entity dropping all vars.
      *
-     * @return void
+     * @return self
      * @since  5.0
      */
-    public function empty(): void
+    public function empty(): self
     {
         foreach ($this->getVarNames() as $var) {
             unset($this->{$var});
         }
+
+        return $this;
     }
 
     /**

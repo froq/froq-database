@@ -167,14 +167,16 @@ abstract class AbstractEntityList implements EntityListInterface
     /**
      * Empty entity list dropping all vars.
      *
-     * @return void
+     * @return self
      * @since  5.0
      */
-    public function empty(): void
+    public function empty(): self
     {
         foreach (array_keys($this->items) as $i) {
             unset($this->items[$i]);
         }
+
+        return $this;
     }
 
     /**
