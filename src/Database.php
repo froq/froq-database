@@ -815,7 +815,7 @@ final class Database
      */
     public function prepare(string $in, array $params = null): string
     {
-        $out = $this->preparePrepareInput($in);
+        $out = $this->prepareNameInput($in);
         $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
 
         // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a / :foo, :foo_bar".
@@ -881,7 +881,7 @@ final class Database
      */
     public function prepareName(string $in): string
     {
-        $out = $this->preparePrepareInput($in);
+        $out = $this->prepareNameInput($in);
         $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
 
         return $out;
@@ -896,7 +896,7 @@ final class Database
      */
     public function prepareStatement(string $in): PDOStatement
     {
-        $out = $this->preparePrepareInput($in);
+        $out = $this->prepareNameInput($in);
         $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
 
         try {
@@ -944,6 +944,32 @@ final class Database
         $pager->run($count, $limit);
 
         return $pager;
+    }
+
+    /**
+     * Prepare a prepare input escaping names only eg. `@id`.
+     *
+     * @param  string $in
+     * @return string
+     */
+    private function prepareNameInput(string $in): string
+    {
+        $out = trim($in);
+
+        if ($out != '') {
+            // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
+            $pos = strpos($out, '@');
+            if ($pos > -1) {
+                $out = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
+                    if (count($match) == 1) {
+                        return $this->escapeNames(substr($match[0], 2, -1));
+                    }
+                    return $this->escapeName($match[1]);
+                }, $out);
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -996,31 +1022,5 @@ final class Database
         }
 
         return [$where, $params];
-    }
-
-    /**
-     * Prepare a prepare input escaping names only eg. `@id`.
-     *
-     * @param  string $in
-     * @return string
-     */
-    private function preparePrepareInput(string $in): string
-    {
-        $out = trim($in);
-
-        if ($out != '') {
-            // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
-            $pos = strpos($out, '@');
-            if ($pos > -1) {
-                $out = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
-                    if (count($match) == 1) {
-                        return $this->escapeNames(substr($match[0], 2, -1));
-                    }
-                    return $this->escapeName($match[1]);
-                }, $out);
-            }
-        }
-
-        return $out;
     }
 }
