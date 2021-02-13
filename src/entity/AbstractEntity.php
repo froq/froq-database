@@ -82,8 +82,15 @@ abstract class AbstractEntity implements EntityInterface
      */
     public function __unserialize(array $data)
     {
+        // First set all vars (PHP creates new object with all vars).
         foreach ($data as $var => $value) {
             $this->{$var} = $value;
+        }
+
+        // Then drop unused vars.
+        $diff = array_diff($this->getVarNames(), array_keys($data));
+        foreach ($diff as $var) {
+            unset($this->{$var});
         }
     }
 
@@ -119,7 +126,7 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Magic - call: provides ability such calls `setId()`, `getId()` etc. on extender classes, throws an
+     * Magic - call: provide an ability such calls `setId()`, `getId()` etc. on extender classes, throw an
      * `EntityException` if an invalid call comes.
      *
      * @param  string $call
@@ -142,7 +149,7 @@ abstract class AbstractEntity implements EntityInterface
         if (str_starts_with($call, 'set')) {
             return $callArgs ? $this->__set($var, $callArgs[0]) : throw new EntityException(
                 'No call argument given for %s() call on entity %s', [$call, static::class]);
-        } elseif (str_ends_with($call, 'get')) {
+        } elseif (str_starts_with($call, 'get')) {
             return $this->__get($var);
         }
 
