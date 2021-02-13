@@ -64,28 +64,28 @@ abstract class AbstractEntity implements EntityInterface
         $clean && $this->clean();
     }
 
-    // /**
-    //  * Magic - serialize.
-    //  *
-    //  * @return array
-    //  */
-    // public function __serialize()
-    // {
-    //     return $this->getVars();
-    // }
+    /**
+     * Magic - serialize.
+     *
+     * @return array
+     */
+    public function __serialize()
+    {
+        return $this->getVars();
+    }
 
-    // /**
-    //  * Magic - unserialize.
-    //  *
-    //  * @param  array $data
-    //  * @return void
-    //  */
-    // public function __unserialize(array $data)
-    // {
-    //     foreach ($data as $var => $value) {
-    //         $this->{$var} = $value;
-    //     }
-    // }
+    /**
+     * Magic - unserialize.
+     *
+     * @param  array $data
+     * @return void
+     */
+    public function __unserialize(array $data)
+    {
+        foreach ($data as $var => $value) {
+            $this->{$var} = $value;
+        }
+    }
 
     /**
      * Magic - set.
@@ -197,9 +197,7 @@ abstract class AbstractEntity implements EntityInterface
         $vars = get_object_vars($this);
 
         // Filter private/protected vars.
-        if (!$all) {
-            $vars = array_filter($vars, fn($v) => $v[0] != '_', 2);
-        }
+        $all || $vars = array_filter($vars, fn($v) => $v[0] != '_', 2);
 
         return $vars;
     }
