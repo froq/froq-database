@@ -1039,7 +1039,11 @@ final class Query
 
         // Eg: "tr_TR" or "tr_TR.utf8".
         if ($collate != null) {
-            $collate = ' COLLATE ' . $this->prepareCollation($collate);
+            $collate = trim($collate);
+            if ($this->db->link()->driver() == 'pgsql') {
+                $collate = '"' . trim($collate, '"') . '"';
+            }
+            $collate = ' COLLATE ' . $collate;
         }
 
         // Eg: "FIRST" or "LAST".
@@ -1945,23 +1949,6 @@ final class Query
 
         throw new QueryException('Invalid op `%s`, valids are: OR, AND for where\'s'
             . ' and ASC, DESC, 1, -1 for order\'s', $op);
-    }
-
-    /**
-     * Prepare collation.
-     *
-     * @param  string $collation
-     * @return string
-     */
-    public function prepareCollation(string $collation): string
-    {
-        $collation = trim($collation);
-
-        if ($this->db->link()->driver() == 'pgsql') {
-            $collation = '"' . trim($collation, '"') . '"';
-        }
-
-        return $collation;
     }
 
     /**
