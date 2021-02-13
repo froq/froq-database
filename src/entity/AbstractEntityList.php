@@ -165,6 +165,30 @@ abstract class AbstractEntityList implements EntityListInterface
     }
 
     /**
+     * Empty entity list dropping all vars.
+     *
+     * @return void
+     * @since  5.0
+     */
+    public function empty(): void
+    {
+        foreach (array_keys($this->items) as $i) {
+            unset($this->items[$i]);
+        }
+    }
+
+    /**
+     * Check whether entity list is empty.
+     *
+     * @return bool
+     * @since  5.0
+     */
+    public function isEmpty(): bool
+    {
+        return empty($this->items);
+    }
+
+    /**
      * Filter.
      *
      * @param  callable $func

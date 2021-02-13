@@ -242,6 +242,19 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
+     * Empty entity dropping all vars.
+     *
+     * @return void
+     * @since  5.0
+     */
+    public function empty(): void
+    {
+        foreach ($this->getVarNames() as $var) {
+            unset($this->{$var});
+        }
+    }
+
+    /**
      * Check whether entity is empty.
      *
      * @return bool
@@ -266,11 +279,9 @@ abstract class AbstractEntity implements EntityInterface
         );
 
         foreach (array_keys($vars) as $var) {
-            try {
-                if (!isset($filtered[$var])) {
-                    unset($this->{$var});
-                }
-            } catch (Error) {}
+            if (!isset($filtered[$var])) {
+                unset($this->{$var});
+            }
         }
 
         return $this;
