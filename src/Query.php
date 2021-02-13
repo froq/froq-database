@@ -104,41 +104,25 @@ final class Query
      *
      * @param  string|array|Query $select
      * @param  bool               $prepare
+     * @param  bool               $wrap
      * @param  string|null        $as
      * @return self
      * @throws froq\database\QueryException
      */
-    public function select(string|array|Query $select, bool $prepare = true, string $as = null): self
+    public function select(string|array|Query $select, bool $prepare = true, bool $wrap = false, string $as = null): self
     {
         if ($select instanceof Query) {
-            return $this->add('select', '(' . $select->toString() . ') AS ' . $this->prepareField($as));
+            $select = $select->toString(); $wrap = true;
+        } else {
+            if (is_array($select)) {
+                $select = join(', ', $select);
+            }
+
+            $select = trim($select);
+            $select || throw new QueryException('Empty select given');
+
+            $prepare && $select = $this->prepareFields($select);
         }
-
-        if (is_array($select)) {
-            $select = join(', ', $select);
-        }
-
-        $select = trim($select);
-        $select || throw new QueryException('Empty select given');
-
-        $prepare && $select = $this->prepareFields($select);
-
-        return $this->add('select', $select);
-    }
-
-    /**
-     * Add/append a "SELECT" query into query stack from a raw query.
-     *
-     * @param  string      $select
-     * @param  string|null $as
-     * @param  bool        $wrap
-     * @return self
-     * @throws froq\database\QueryException
-     */
-    public function selectRaw(string $select, string $as = null, bool $wrap = true): self
-    {
-        $select = trim($select);
-        $select || throw new QueryException('Empty select given');
 
         $select = $wrap ? '(' . $select . ')' : $select;
 
@@ -153,14 +137,19 @@ final class Query
      * Add/append a "SELECT" query into query stack from a raw query or Query instance.
      *
      * @param  string|Query $query
-     * @param  string       $as
+     * @param  array|null   $params
+     * @param  string|null  $as
      * @param  bool         $wrap
      * @return self
-     * @throws froq\database\QueryException
+     * @causes froq\database\QueryException
      */
-    public function selectQuery(string|Query $query, string $as, bool $wrap = true): self
+    public function selectQuery(string|Query $query, array $params = null, string $as = null, bool $wrap = true): self
     {
-        return $this->selectRaw((string) $query, $as, $wrap);
+        if (is_string($query)) {
+            $query = $this->prepare($query, $params);
+        }
+
+        return $this->select($query, false, $wrap, $as);
     }
 
     /**
@@ -936,7 +925,7 @@ final class Query
      */
     public function whereExists(string|Query $query, array $params = null, string $op = null): self
     {
-        if ($params && is_string($query)) {
+        if (is_string($query)) {
             $query = $this->prepare($query, $params);
         }
 
@@ -953,7 +942,7 @@ final class Query
      */
     public function whereNotExists(string|Query $query, array $params = null, string $op = null): self
     {
-        if ($params && is_string($query)) {
+        if (is_string($query)) {
             $query = $this->prepare($query, $params);
         }
 
@@ -983,7 +972,7 @@ final class Query
      */
     public function having(string|Query $query, array $params = null): self
     {
-        if ($params && is_string($query)) {
+        if (is_string($query)) {
             $query = $this->prepare($query, $params);
         }
 
