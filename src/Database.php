@@ -698,7 +698,7 @@ final class Database
             return match (true) {
                 ($in instanceof Sql)   => $in->content(),
                 ($in instanceof Name)  => $this->escapeName($in->content()),
-                ($in instanceof Query) => $in->toString(),
+                ($in instanceof Query) => '(' . $in->toString() . ')',
                 default                => throw new DatabaseException('Invalid input object `%s`,'
                     . ' valids are: Query, sql\{Sql, Name}', $in::class)
             };
