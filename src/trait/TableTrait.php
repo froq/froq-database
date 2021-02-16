@@ -21,7 +21,7 @@ namespace froq\database\trait;
 trait TableTrait
 {
     /** @var string, string */
-    private string $table, $tablePrimary;
+    protected string $table, $tablePrimary;
 
     /**
      * Set table.
