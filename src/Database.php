@@ -210,10 +210,10 @@ final class Database
      * @param  array|null        $params
      * @param  string|null       $order
      * @param  string|array|null $fetch
-     * @return array|object|null
+     * @return array|object|scalar|null
      */
     public function select(string $table, string $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, string|array $fetch = null): array|object|null
+        string $order = null, string|array $fetch = null, string|bool $flat = null)
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -221,7 +221,14 @@ final class Database
         $order && $query->orderBy($order);
         $query->limit(1);
 
-        return $query->run($fetch)->row(0);
+        $result = $query->run($fetch)->row(0);
+
+        // When a single column value wanted.
+        if ($result && $flat) {
+            return array_select((array) $result, is_string($flat) ? $flat : key($result));
+        }
+
+        return $result;
     }
 
     /**
@@ -237,7 +244,7 @@ final class Database
      * @return array|null
      */
     public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, int|array $limit = null, string|array $fetch = null): array|null
+        string $order = null, int|array $limit = null, string|array $fetch = null, string|bool $flat = null): array|null
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -245,7 +252,14 @@ final class Database
         $order && $query->orderBy($order);
         $limit && $query->limit(...(array) $limit);
 
-        return $query->run($fetch)->rows();
+        $result = $query->run($fetch)->rows();
+
+        // When a single column value wanted.
+        if ($result && $flat) {
+            $result = array_column((array) $result, is_string($flat) ? $flat : key($result[0]));
+        }
+
+        return $result;
     }
 
     /**
