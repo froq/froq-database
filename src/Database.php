@@ -1010,6 +1010,11 @@ final class Database
                         'Invalid field name `%s` in where input, use an alphanumeric name', $field
                     );
 
+                    if (is_array($value)) {
+                        $sign  = ' ';
+                        $value = new Sql('IN (' . join(', ', $this->escape($value)) . ')');
+                    }
+
                     // Add placeholders.
                     $field = $this->quoteName($field) . $sign . '?';
 
