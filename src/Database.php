@@ -1025,8 +1025,10 @@ final class Database
                     );
 
                     if (is_array($value)) {
+                        $value = !str_contains($sign, '!')
+                            ? new Sql('IN (' . join(', ', $this->escape($value)) . ')')
+                            : new Sql('NOT IN (' . join(', ', $this->escape($value)) . ')');
                         $sign  = ' ';
-                        $value = new Sql('IN (' . join(', ', $this->escape($value)) . ')');
                     }
 
                     // Add placeholders.
