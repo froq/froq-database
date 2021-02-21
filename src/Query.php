@@ -301,10 +301,14 @@ final class Query
             // Eg: ["name" => "Kerem", ..].
             $fields = array_keys($data);
             $values = [array_values($data)];
-        } else {
+        } elseif (isset($data['fields'], $data['values'])) {
             // Eg: ["fields" => ["name", ..], "values" => ["Kerem", ..]].
             $fields = (array) ($data['fields'] ?? []);
             $values = (array) ($data['values'] ?? []);
+        } elseif (isset($data[0])) {
+            // Eg: [["name" => "Kerem", ..], ..].
+            $fields = array_keys($data[0]);
+            $values = array_map(fn($d) => array_values($d), $data);
         }
 
         if (!$fields || !$values) {
