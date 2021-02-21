@@ -348,8 +348,8 @@ final class Query
         $data || throw new QueryException('Empty data given for update');
 
         $set = [];
-        foreach ($data as $name => $value) {
-            $set[] = $this->db->escapeName($name)
+        foreach ($data as $field => $value) {
+            $set[] = $this->db->escapeName($field)
                 . ' = ' . ($escape ? $this->db->escape($value) : $value);
         }
 
@@ -423,7 +423,7 @@ final class Query
     {
         $action = strtoupper($action);
 
-        if (!equals($action, 'NOTHING', 'UPDATE')) {
+        if (!in_array($action, ['NOTHING', 'UPDATE'])) {
             throw new QueryException('Invalid action `%s` for conflict, valids are: NOTHING, UPDATE',
                 $action);
         }
@@ -1701,12 +1701,23 @@ final class Query
                         };
 
                         if ($action == 'UPDATE') {
-                            $temp = (clone $this)->reset()->table('@');
-                            $temp->update($update);
+                            $temp = [];
+                            foreach ($update as $field => $value) {
+                                $field = $this->prepareField($field);
+                                // Handle PostgreSQL's speciality.
+                                if (is_string($field) && str_starts_with(strtoupper($value), '@EXCLUDED')) {
+                                    $temp[$field] = 'EXCLUDED.' . $this->prepareField(substr($value, 10));
+                                } else {
+                                    $temp[$field] = $this->escape($value);
+                                }
+                            }
+
+                            $temp = (clone $this)->reset()->table('@')
+                                  ->update($temp, false)->pull('update');
 
                             $ret .= ($driver == 'pgsql')
-                                  ? $nt . 'SET ' . join(', ', $temp->stack['update'])
-                                  : $nt . join(', ', $temp->stack['update']);
+                                  ? $nt . 'SET ' . join(', ', $temp)
+                                  : $nt . join(', ', $temp);
 
                             if ($where != null) {
                                 $where = (array) $where;
@@ -1840,6 +1851,29 @@ final class Query
         }
 
         return $ret;
+    }
+
+    /**
+     * Escape an input.
+     *
+     * @param  any         $in
+     * @param  string|null $format
+     * @return any
+     */
+    public function escape($in, string $format = null)
+    {
+        return $this->db->escape($in, $format);
+    }
+
+    /**
+     * Escape a name input.
+     *
+     * @param  string $in
+     * @return string
+     */
+    public function escapeName(string $in): string
+    {
+        return $this->db->escapeName($in);
     }
 
     /**
