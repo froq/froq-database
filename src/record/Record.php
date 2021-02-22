@@ -418,10 +418,8 @@ class Record implements Arrayable, ArrayAccess
 
         // When select whole/fresh data wanted (works with primary's only).
         if (isset($options['select']) || $select) {
-            $select = (bool) ($options['select'] ?? $select);
-            if ($select) {
-                $data = (array) $this->db->select($table, where: [$primary => $data[$primary]]);
-            }
+            $select = $options['select'] ?? $select;
+            $select && $data = (array) $this->db->select($table, where: [$primary => $data[$primary]]);
         }
 
         // Drop unwanted fields.
@@ -441,7 +439,7 @@ class Record implements Arrayable, ArrayAccess
 
         // When bool return wanted.
         if (isset($options['bool']) || $bool) {
-            $bool = (bool) ($options['bool'] ?? $bool);
+            $bool = $options['bool'] ?? $bool;
             if ($bool) {
                 return $this->isSaved();
             }
@@ -745,7 +743,7 @@ class Record implements Arrayable, ArrayAccess
         // Get new id if available.
         $id = $result->id();
 
-        $this->saved = !!$result->count();
+        $this->saved = (bool) $result->count();
 
         // Swap data with returning data.
         if ($return) {
@@ -799,6 +797,11 @@ class Record implements Arrayable, ArrayAccess
 
         unset($query);
 
+        // Set primary value with given id.
+        $this->id($id);
+
+        $this->saved = (bool) $result->count();
+
         // Swap data with returning data.
         if ($return) {
             $result = (array) $result->first();
@@ -810,11 +813,6 @@ class Record implements Arrayable, ArrayAccess
 
         // Put on the top primary.
         $data = [$primary => $id] + $data;
-
-        // Set primary value with given id.
-        $this->id($id);
-
-        $this->saved = !!$result->count();
 
         return $data;
     }
