@@ -347,13 +347,13 @@ final class Query
 
         $data || throw new QueryException('Empty data given for update');
 
-        $set = [];
+        $sets = [];
         foreach ($data as $field => $value) {
-            $set[] = $this->db->escapeName($field)
+            $sets[] = $this->db->escapeName($field)
                 . ' = ' . ($escape ? $this->db->escape($value) : $value);
         }
 
-        return $this->add('update', $set, false);
+        return $this->add('update', $sets, false);
     }
 
     /**
@@ -1715,12 +1715,12 @@ final class Query
                                 }
                             }
 
-                            $temp = ($that = clone $this)->reset()->table('@')
+                            $sets = ($that = clone $this)->reset()->table('@')
                                   ->update($temp, false)->pull('update');
 
                             $ret .= ($driver == 'pgsql')
-                                  ? $nt . 'SET ' . join(', ', $temp)
-                                  : $nt . join(', ', $temp);
+                                  ? $nt . 'SET ' . join(', ', $sets)
+                                  : $nt . join(', ', $sets);
 
                             if ($where != null) {
                                 $where = (array) $where;
