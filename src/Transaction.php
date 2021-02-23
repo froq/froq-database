@@ -38,13 +38,13 @@ final class Transaction
     /**
      * Begin a transaction.
      *
-     * @return void
+     * @return bool
      * @throws froq\database\TransactionException
      */
-    public function begin(): void
+    public function begin(): bool
     {
         try {
-            $this->pdo->beginTransaction()
+            return $this->pdo->beginTransaction()
                 || throw new TransactionException('Failed to begin transaction');
         } catch (PDOException $e) {
             throw new TransactionException($e);
