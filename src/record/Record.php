@@ -350,12 +350,14 @@ class Record implements Arrayable, ArrayAccess
         [, $primary] = $this->pack(primary: true);
 
         if (func_num_args()) {
-            $this->__set($primary, ($this->id = $id));
+            isset($this->data) // Put on the top primary.
+                ? $this->data = [$primary => $id] + $this->data
+                : $this->data[$primary] = ($this->id = $id);
 
             return $this;
         }
 
-        return $this->id ?? $this->__get($primary);
+        return $this->id ?? $this->data[$primary] ?? null;
     }
 
     /**
