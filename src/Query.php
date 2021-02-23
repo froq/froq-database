@@ -1715,7 +1715,7 @@ final class Query
                                 }
                             }
 
-                            $temp = (clone $this)->reset()->table('@')
+                            $temp = ($that = clone $this)->reset()->table('@')
                                   ->update($temp, false)->pull('update');
 
                             $ret .= ($driver == 'pgsql')
@@ -1725,11 +1725,11 @@ final class Query
                             if ($where != null) {
                                 $where = (array) $where;
                                 [$where, $params] = array_select($where, [0, 1]);
-                                $ret .= $nt . trim($temp->where((string) $where, (array) $params)
+                                $ret .= $nt . trim($that->where((string) $where, (array) $params)
                                     ->toQueryString('where'));
                             }
 
-                            unset($temp);
+                            unset($that);
                         }
                     }
 
