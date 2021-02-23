@@ -427,6 +427,9 @@ final class Query
             throw new QueryException('Invalid action `%s` for conflict, valids are: NOTHING, UPDATE',
                 $action);
         }
+        if ($update == null && $action == 'UPDATE') {
+            throw new DatabaseException('Conflict action is update, but no update data given');
+        }
 
         $fields = $this->prepareFields($fields);
 
