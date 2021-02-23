@@ -1705,7 +1705,7 @@ final class Query
                             foreach ($update as $field => $value) {
                                 $field = $this->prepareField($field);
                                 // Handle PostgreSQL's speciality.
-                                if (is_string($field) && str_starts_with(strtoupper($value), '@EXCLUDED')) {
+                                if (is_string($field) && str_starts_with(strtoupper($value), '@EXCLUDED.')) {
                                     $temp[$field] = 'EXCLUDED.' . $this->prepareField(substr($value, 10));
                                 } else {
                                     $temp[$field] = $this->escape($value);
