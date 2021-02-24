@@ -429,8 +429,12 @@ class Record implements Arrayable, ArrayAccess
         // Drop unwanted fields.
         if (isset($options['drop']) || $drop) {
             $fields = $options['drop'] ?? $drop;
-            $fields = (array) (is_string($fields) ? explode(' ', $fields) : $fields);
-            foreach ($fields as $field) {
+            if ($fields == '@null') {
+                $fields = array_keys(array_filter($data, fn($v) => $v === null));
+            }
+
+            $fields = is_string($fields) ? explode(' ', $fields) : $fields;
+            foreach ((array) $fields as $field) {
                 unset($data[$field]);
             }
         }
