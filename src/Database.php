@@ -1020,9 +1020,14 @@ final class Database
                         $field = substr($field, 0, -1);
                     }
 
-                    ctype_alnum($field) || throw new DatabaseException(
-                        'Invalid field name `%s` in where input, use an alphanumeric name', $field
-                    );
+                    // $type = '';
+                    // if (str_contains($field, '::')) {
+                    //     [$field, $type] = explode('::', $field);
+                    // }
+
+                    // ctype_alnum($field) || throw new DatabaseException(
+                    //     'Invalid field name `%s` in where input, use an alphanumeric name', $field
+                    // );
 
                     if (is_array($value)) {
                         $value = !str_contains($sign, '!')
@@ -1030,6 +1035,8 @@ final class Database
                             : new Sql('NOT IN (' . join(', ', $this->escape($value)) . ')');
                         $sign  = ' ';
                     }
+
+                    // $type && $field .= '::' . $type;
 
                     // Add placeholders.
                     $field = $this->quoteName($field) . $sign . '?';
