@@ -225,7 +225,8 @@ final class Database
 
         // When a single column value wanted.
         if ($result && $flat) {
-            return array_select((array) $result, is_string($flat) ? $flat : key($result));
+            $result = (array) $result;
+            return array_select($result, is_string($flat) ? $flat : key($result));
         }
 
         return $result;
@@ -256,7 +257,8 @@ final class Database
 
         // When a single column value wanted.
         if ($result && $flat) {
-            $result = array_column((array) $result, is_string($flat) ? $flat : key($result[0]));
+            $result = (array) $result;
+            $result = array_column($result, is_string($flat) ? $flat : key($result[0]));
         }
 
         return $result;
