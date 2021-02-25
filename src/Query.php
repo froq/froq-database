@@ -1704,19 +1704,27 @@ final class Query
                         };
 
                         if ($action == 'UPDATE') {
-                            $temp = [];
-                            foreach ($update as $field => $value) {
-                                $field = $this->prepareField($field);
-                                // Handle PostgreSQL's speciality.
-                                if (is_string($field) && str_starts_with(strtoupper($value), '@EXCLUDED.')) {
-                                    $temp[$field] = 'EXCLUDED.' . $this->prepareField(substr($value, 10));
-                                } else {
-                                    $temp[$field] = $this->escape($value);
+                            // Handle PostgreSQL's stuff (eg: update => ['name', ..]).
+                            if (is_list($update)) {
+                                $temp = $this->prepareFields($update);
+                                $sets = [sprintf('(%s) = (%s)', $temp, implode(', ', array_map(
+                                    fn($t) => 'EXCLUDED.' . $t, explode(', ', $temp)))
+                                )];
+                            } else {
+                                $temp = [];
+                                foreach ($update as $field => $value) {
+                                    $field = $this->prepareField($field);
+                                    // Handle PostgreSQL's stuff (eg: update => ['name' => '@excluded.name', ..]).
+                                    if (is_string($field) && str_starts_with(strtoupper($value), '@EXCLUDED.')) {
+                                        $temp[$field] = 'EXCLUDED.' . $this->prepareField(substr($value, 10));
+                                    } else {
+                                        $temp[$field] = $this->escape($value);
+                                    }
                                 }
-                            }
 
-                            $sets = ($that = clone $this)->reset()->table('@')
-                                  ->update($temp, false)->pull('update');
+                                $sets = ($that = clone $this)->reset()->table('@')
+                                      ->update($temp, false)->pull('update');
+                            }
 
                             $ret .= ($driver == 'pgsql')
                                   ? $nt . 'SET ' . join(', ', $sets)
