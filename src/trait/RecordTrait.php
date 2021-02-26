@@ -9,6 +9,7 @@ namespace froq\database\trait;
 
 use froq\database\{trait\DbTrait, trait\TableTrait, trait\ValidationTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait, DataMagicTrait, OptionTrait};
+use froq\validation\ValidationError;
 
 /**
  * Record Trait.
@@ -40,4 +41,27 @@ trait RecordTrait
         'return'      => null, // Whether returning any field(s) or current data (for "returning" clause).
         'fetch'       => null, // Fetch type.
     ];
+
+    /**
+     * Prepare given or own data running validation, throw if validation fails and silent option is not true.
+     *
+     * @param  array|null &$data
+     * @param  bool        $silent
+     * @return self|null
+     * @throws froq\validation\ValidationError
+     */
+    public final function prepare(array &$data = null, bool $silent = false): self|null
+    {
+        $this->isValid($data, $errors);
+
+        if ($errors == null) {
+            return $this;
+        }
+        if ($silent) {
+            return null;
+        }
+
+        throw new ValidationError('Cannot save record, validation failed [tip: run save()'
+            . ' in a try/catch block and use errors() to see error details]', errors: $errors);
+    }
 }
