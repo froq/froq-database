@@ -331,7 +331,7 @@ class Record implements Arrayable, ArrayAccess
      * @param  array|null $where
      * @return self
      */
-    public function conflict(string $fields, string $action, array $update = null, array $where = null): self
+    public final function conflict(string $fields, string $action, array $update = null, array $where = null): self
     {
         $this->query->conflict($fields, $action, $update, $where);
 
@@ -393,10 +393,9 @@ class Record implements Arrayable, ArrayAccess
         }
 
         // Run validation.
-        if ($_validate) {
-            ($this->validated = $this->isValid($data, $errors, $options))
-                || throw new ValidationError('Cannot save record, validation failed [tip: run save()'
-                    . ' in a try/catch block and use errors() to see error details]', errors: $errors);
+        if ($_validate && !$this->isValid($data, $errors, $options)) {
+            throw new ValidationError('Cannot save record, validation failed [tip: run save()'
+                . ' in a try/catch block and use errors() to see error details]', errors: $errors);
         }
 
         // Options are used for only save actions.
