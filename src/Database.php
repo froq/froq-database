@@ -836,11 +836,15 @@ final class Database
 
         // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a / :foo, :foo_bar".
         static $pattern = '~
-              \?[sifbnra](?![\w]) # Scalars/(n)ame/(r)aw. Eg: ("id = ?i", ["1"]) or ("?n = ?i", ["id", "1"]).
-            | \?\?                # Names (identifier).   Eg: ("?? = ?", ["id", 1]).
-            | \?(?![\w&|])        # Any type.             Eg: ("id = ?", [1]), but not "id ?| array[..]" for PgSQL.
-            | (?<!:):\w+          # Named parameters.     Eg: ("id = :id", [1]), but not "id::int" casts for PgSQL.
-        ~xu';
+            # Scalars/(n)ame/(r)aw. Eg: ("id = ?i", ["1"]) or ("?n = ?i", ["id", "1"]).
+            \?[sifbnra](?![\w])
+            # Names (identifier). Eg: ("?? = ?", ["id", 1]).
+            | \?\?
+            # Any type with/without format. Eg: ("id = ?", [1]), ("id = ?1 OR id = ?1", [1]), not "id ?| array[..]" for PgSQL.
+            | \?(?![a-z&|])([\d][sifbnra]?)?
+            # Named parameters. Eg: ("id = :id", [1]), but not "id::int" casts for PgSQL.
+            | (?<!:):\w+
+        ~x';
 
         if (preg_match_all($pattern, $out, $match)) {
             if ($params == null) {
@@ -848,13 +852,43 @@ final class Database
                     . ' required when input contains parameter placeholders like ?, ?? or :foo', __method__);
             }
 
-            $i       = 0;
-            $keys    = $values = [];
+            $i = 0;
+            $keys = $values = $used = [];
             $holders = array_filter($match[0]);
+
+            // For those usages, eg: ('id = ?1 OR id = ?1', [123]).
+            foreach ($holders as $ii => $holder) {
+                $pos = $holder[1] ?? '';
+                if (ctype_digit($pos)) {
+                    $ipos = $pos - 1;
+                    if (!array_key_exists($ipos, $params)) {
+                        throw new DatabaseException('Replacement `%s` not found in given parameters', $ipos);
+                    }
+
+                    $format = $holder[2] ?? '';
+                    $format && $format = '?' . $format;
+
+                    $value = $this->escape($params[$ipos], $format);
+                    while (($pos = strpos($out, $holder)) !== false) {
+                        $out = substr_replace($out, strval($value), $pos, strlen($holder));
+                        array_push($used, $ipos);
+                    }
+
+                    // Drop used holder.
+                    unset($holders[$ii]);
+                }
+            }
+
+            // Drop used items by their indexes & re-form params.
+            if ($used != null) {
+                array_unset($params, ...$used);
+                $params = array_slice($params, 0);
+            }
 
             foreach ($holders as $holder) {
                 $pos = strpos($holder, ':');
-                if ($pos > -1) { // Named.
+                // Named.
+                if ($pos !== false) {
                     $key = trim($holder, ':');
                     if (!array_key_exists($key, $params)) {
                         throw new DatabaseException('Replacement key `%s` not found in given parameters', $key);
@@ -867,7 +901,9 @@ final class Database
 
                     $keys[]   = '~:' . $key . '~';
                     $values[] = $value;
-                } else { // Question-mark.
+                }
+                // Question-mark.
+                else {
                     if (!array_key_exists($i, $params)) {
                         throw new DatabaseException('Replacement index `%s` not found in given parameters', $i);
                     }
@@ -975,7 +1011,7 @@ final class Database
         if ($out != '') {
             // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
             $pos = strpos($out, '@');
-            if ($pos > -1) {
+            if ($pos !== false) {
                 $out = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
                     if (count($match) == 1) {
                         return $this->escapeNames(substr($match[0], 2, -1));
