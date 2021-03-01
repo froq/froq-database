@@ -282,14 +282,17 @@ final class Query
     /**
      * Add an "INSERT" query into query stack.
      *
-     * @param  array|null $data
-     * @param  bool|null  $batch
-     * @param  bool|null  $sequence
+     * @param  array|null            $data
+     * @param  bool|null             $batch
+     * @param  bool|null             $sequence
+     * @param bool|string|array|null $return
      * @return self
      * @throws froq\database\QueryException
      */
-    public function insert(array $data = null, bool $batch = null, bool $sequence = null): self
+    public function insert(array $data = null, bool $batch = null, bool $sequence = null, bool|string|array $return = null): self
     {
+        $return && $this->return($return);
+
         // For with()/into() calls.
         if ($data === null) {
             return $this->add('insert', '1', false);
@@ -333,13 +336,16 @@ final class Query
     /**
      * Add an "UPDATE" query into query stack.
      *
-     * @param  array|null $data
-     * @param  bool       $escape
+     * @param  array|null            $data
+     * @param  bool                  $escape
+     * @param bool|string|array|null $return
      * @return self
      * @throws froq\database\QueryException
      */
-    public function update(array $data = null, bool $escape = true): self
+    public function update(array $data = null, bool $escape = true, bool|string|array $return = null): self
     {
+        $return && $this->return($return);
+
         // For with() calls.
         if ($data === null) {
             return $this->add('update', '1', false);
@@ -359,10 +365,13 @@ final class Query
     /**
      * Add/append "DELETE" query into query stack.
      *
+     * @param bool|string|array|null $return
      * @return self
      */
-    public function delete(): self
+    public function delete(bool|string|array $return = null): self
     {
+        $return && $this->return($return);
+
         return $this->add('delete', '1', false);
     }
 
@@ -396,14 +405,16 @@ final class Query
     /**
      * Add a "RETURNING" clause into query stack.
      *
-     * @param  string|array<string>      $fields
+     * @param  string|array<string>|bool $fields
      * @param  string|array<string>|null $fetch
      * @return self
      * @since  4.18
      */
-    public function return(string|array $fields, string|array $fetch = null): self
+    public function return(string|array|bool $fields, string|array $fetch = null): self
     {
-        $fields = $this->prepareFields($fields);
+        $fields = ($fields === true) ? '*' : $this->prepareFields($fields);
+
+        $fetch ??= $this->stack['return']['fetch'] ?? null;
 
         return $this->add('return', ['fields' => $fields, 'fetch' => $fetch], false);
     }
@@ -435,6 +446,34 @@ final class Query
 
         return $this->add('conflict', ['fields' => $fields, 'action' => $action,
                                        'update' => $update, 'where'  => $where], false);
+    }
+
+    /**
+     * Set sequence directive of query stack.
+     *
+     * @param  string|array $option
+     * @return self
+     * @since  5.0
+     */
+    public function sequence(bool $option): self
+    {
+        $this->stack['insert']['sequence'] = $option;
+
+        return $this;
+    }
+
+    /**
+     * Set fetch directive of query stack.
+     *
+     * @param  string|array $option
+     * @return self
+     * @since  5.0
+     */
+    public function fetch(string|array $option): self
+    {
+        $this->stack['return']['fetch'] = $option;
+
+        return $this;
     }
 
     /**
@@ -1204,7 +1243,7 @@ final class Query
      */
     public function run(string|array $fetch = null, bool $sequence = null): Result
     {
-        // Get from stack if given with return() / insert().
+        // From stack if given with return(), insert() etc.
         $fetch    ??= $this->stack['return']['fetch']    ?? null;
         $sequence ??= $this->stack['insert']['sequence'] ?? null;
 
@@ -1247,10 +1286,12 @@ final class Query
      */
     public function get(string|array $fetch = null): array|object|null
     {
+        $fetch ??= $this->stack['return']['fetch'] ?? null;
+
         // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
         if (!$this->has('limit')) {
-            $limit = $this->has('select') || ($this->db->link()->driver() != 'pgsql');
-            $limit && $this->limit(1);
+            $ok = $this->has('select') || ($this->db->link()->driver() != 'pgsql');
+            $ok && $this->limit(1);
         }
 
         return $this->db->get($this->toString(), null, $fetch);
@@ -1266,6 +1307,8 @@ final class Query
      */
     public function getAll(string|array $fetch = null, Pager &$pager = null, int $limit = null): array|null
     {
+        $fetch ??= $this->stack['return']['fetch'] ?? null;
+
         if ($limit === null) {
             return $this->db->getAll($this->toString(), null, $fetch);
         }
