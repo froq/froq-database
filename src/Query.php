@@ -422,24 +422,27 @@ final class Query
     /**
      * Add a "CONFLICT" clause into query stack.
      *
-     * @param  string     $fields
-     * @param  string     $action
-     * @param  array|null $update
-     * @param  array|null $where
+     * @param  string            $fields
+     * @param  string            $action
+     * @param  string|array|null $update
+     * @param  array|null        $where
      * @return self
      * @throws froq\database\QueryException
      * @since  4.18
      */
-    public function conflict(string $fields, string $action, array $update = null, array $where = null): self
+    public function conflict(string $fields, string $action, string|array $update = null, array $where = null): self
     {
         $action = strtoupper($action);
 
         if (!in_array($action, ['NOTHING', 'UPDATE'])) {
-            throw new QueryException('Invalid action `%s` for conflict, valids are: NOTHING, UPDATE',
+            throw new QueryException('Invalid conflict action `%s`, valids are: NOTHING, UPDATE',
                 $action);
         }
+
+        is_string($update) && $update = mb_split('\s+', $update);
+
         if ($update == null && $action == 'UPDATE') {
-            throw new DatabaseException('Conflict action is update, but no update data given');
+            throw new DatabaseException('Conflict action is `update`, but no update data given');
         }
 
         $fields = $this->prepareFields($fields);
