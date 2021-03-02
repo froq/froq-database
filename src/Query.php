@@ -653,6 +653,13 @@ final class Query
                     $field = substr($field, 0, -1);
                 }
 
+                if (is_array($param)) {
+                    $param = !str_contains($sign, '!')
+                        ? new Sql('IN (' . join(', ', $this->escape($param)) . ')')
+                        : new Sql('NOT IN (' . join(', ', $this->escape($param)) . ')');
+                    $sign  = ' ';
+                }
+
                 $field = $this->prepareField($field);
 
                 $this->add('where', [$this->prepare($field . $sign . '?', [$param]), $op]);
