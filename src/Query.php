@@ -1417,6 +1417,32 @@ final class Query
     }
 
     /**
+     * Alias for getArray()/getArrayAll().
+     *
+     * @param  bool $all
+     * @param  ...  $args
+     * @return array|null
+     * @since  5.0
+     */
+    public function array(bool $all = false, ...$args): array|null
+    {
+        return !$all ? $this->getArray() : $this->getArrayAll(...$args);
+    }
+
+    /**
+     * Alias for getObject()/getObjectAll().
+     *
+     * @param  bool $all
+     * @param  ...  $args
+     * @return object|array|null
+     * @since  5.0
+     */
+    public function object(bool $all = false, ...$args): object|array|null
+    {
+        return !$all ? $this->getObject() : $this->getObjectAll(...$args);
+    }
+
+    /**
      * Get count result stringifying & running current query stack.
      *
      * @return int
