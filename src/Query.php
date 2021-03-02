@@ -109,7 +109,7 @@ final class Query
      * @return self
      * @throws froq\database\QueryException
      */
-    public function select(string|array|Query $select, bool $prepare = true, bool $wrap = false, string $as = null): self
+    public function select(string|array|Query $select = '*', bool $prepare = true, bool $wrap = false, string $as = null): self
     {
         if ($select instanceof Query) {
             $select = $select->toString(); $wrap = true;
