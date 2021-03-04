@@ -28,11 +28,12 @@ class DatabaseException extends Exception
      *
      * @param string|Throwable $message
      * @param any|null         $messageParams
-     * @param int|null         $code
+     * @param int|string|null  $code
      * @param Throwable|null   $previous
+     * @param Throwable|null   $cause
      */
-    public function __construct(string|Throwable $message = null, $messageParams = null, int $code = null,
-        Throwable $previous = null)
+    public function __construct(string|Throwable $message = null, $messageParams = null, int|string $code = null,
+        Throwable $previous = null, Throwable $cause = null)
     {
         if ($message != null) {
             if (is_string($message)) {
@@ -43,14 +44,19 @@ class DatabaseException extends Exception
                     : $this->parseMessageInfo($message->getMessage());
             }
 
-            // Assign sql-state.
+            // Update sql-state & code.
             $this->sqlState = (string) $errorInfo[0];
+
+            if (is_string($code)) {
+                $this->sqlState = $code;
+                $code = 0;
+            }
 
             // Override if null.
             $code ??= (int) $errorInfo[1];
         }
 
-        parent::__construct($message, $messageParams, $code, $previous);
+        parent::__construct($message, $messageParams, $code, $previous, $cause);
     }
 
     /**
