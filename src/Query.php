@@ -1603,18 +1603,21 @@ final class Query
     /**
      * Pull an item from query stack.
      *
-     * @param  string   $key
-     * @param  any|null $default
+     * @param  string      $key
+     * @param  string|null $subkey
      * @return any|null
      * @since  5.0
      */
-    public function pull(string $key, $default = null)
+    public function pull(string $key, string $subkey = null)
     {
         if (isset($this->stack[$key])) {
             $value = $this->stack[$key];
+            if (isset($subkey) && isset($value[$subkey])) {
+                $value = $value[$subkey];
+            }
             unset($this->stack[$key]);
         }
-        return $value ?? $default;
+        return $value ?? null;
     }
 
     /**
