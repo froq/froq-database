@@ -660,6 +660,27 @@ class Record implements Arrayable, ArrayAccess
     }
 
     /**
+     * Find a record by given id (and optionally given where), and remove it.
+     * This method shortcut for find() > remove() process.
+     *
+     * @param  int|string         $id
+     * @param  array|null        &$data
+     * @param  array|null        &$errors
+     * @param  array|null         $options
+     * @param  string|array|null  $drop
+     * @param  array|null         $where
+     * @param  bool               $_validate @internal
+     * @return bool
+     */
+    public final function findRemove(int|string $id, array $where = null): bool
+    {
+        // Will be used for only find().
+        $where && $this->where($where);
+
+        return $this->find($id)->isFinded() && $this->remove();
+    }
+
+    /**
      * Select record(s) from own table by given conditions.
      *
      * @param  string|array|null $where
