@@ -575,9 +575,7 @@ class Record implements Arrayable, ArrayAccess
 
         [$table, $primary, $id] = $this->pack($id, primary: true);
 
-        if ($id == null) {
-            throw new RecordException('Empty primary value given for remove()');
-        }
+        $id || throw new RecordException('Empty primary value given for remove()');
 
         $query = $this->query()->equal($primary, $id);
 
@@ -614,9 +612,7 @@ class Record implements Arrayable, ArrayAccess
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
-        if ($ids == null) {
-            throw new RecordException('Empty primary values given for removeAll()');
-        }
+        $ids || throw new RecordException('Empty primary values given for removeAll()');
 
         $query = $this->query()->equal($primary, [$ids]);
         $where = $this->query->pull('where');
