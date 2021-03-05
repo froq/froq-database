@@ -566,10 +566,10 @@ class Record implements Arrayable, ArrayAccess
      * if id is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  int|string|null $id
-     * @return int
+     * @return int|array|null
      * @throws froq\database\record\RecordException
      */
-    public final function remove(int|string $id = null): int
+    public final function remove(int|string $id = null): int|array|null
     {
         $id ??= $this->id();
 
@@ -580,17 +580,26 @@ class Record implements Arrayable, ArrayAccess
         }
 
         $query = $this->query()->equal($primary, $id);
+
         $where = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
             $query->where($where, op: $op);
         }
 
+        $return = $this->query->pull('return', 'fields') ?: '*';
+        $return && $query->return($return, 'array');
+
         $query->delete()->from($table);
 
-        // Run & get affected rows count.
-        $this->removed = (int) $query->runExec();
+        $result = $query->run();
 
-        return $this->removed;
+        // When returning fields wanted.
+        $return && $data = $result->rows(0);
+
+        // Set state with affected rows count.
+        $this->removed = (int) $result->count();
+
+        return $return ? $data : $this->removed;
     }
 
     /**
@@ -598,10 +607,10 @@ class Record implements Arrayable, ArrayAccess
      * if ids is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  array<int|string> $ids
-     * @return int
+     * @return int|array|null
      * @throws froq\database\record\RecordException
      */
-    public final function removeAll(array $ids): int
+    public final function removeAll(array $ids): int|array|null
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
@@ -615,12 +624,20 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
+        $return = $this->query->pull('return', 'fields') ?: '*';
+        $return && $query->return($return, 'array');
+
         $query->delete()->from($table);
 
-        // Run & get affected rows count.
-        $this->removed = (int) $query->runExec();
+        $result = $query->run();
 
-        return $this->removed;
+        // When returning fields wanted.
+        $return && $data = $result->rows();
+
+        // Set state with affected rows count.
+        $this->removed = (int) $result->count();
+
+        return $return ? $data : $this->removed;
     }
 
     /**
