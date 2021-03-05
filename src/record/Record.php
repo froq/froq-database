@@ -323,6 +323,20 @@ class Record implements Arrayable, ArrayAccess
     }
 
     /**
+     * Apply returnin clause for insert/update/delete actions.
+     *
+     * @param  string|array|bool $fields
+     * @param  array|null        $fetch
+     * @return self
+     */
+    public function return(string|array|bool $fields, string|array $fetch = null): self
+    {
+        $this->query->return($fields, $fetch);
+
+        return $this;
+    }
+
+    /**
      * Apply conflict clause for insert/update actions.
      *
      * @param  string     $fields
@@ -480,7 +494,7 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
-        $cols = $cols ?: '*';
+        $cols = $cols ?: $this->query->pull('return', 'fields') ?: '*';
         $data = $query->select($cols)->from($table)
                       ->getArray();
 
@@ -526,7 +540,7 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
-        $cols = $cols ?: '*';
+        $cols = $cols ?: $this->query->pull('return', 'fields') ?: '*';
         $data = $query->select($cols)->from($table)
                       ->getArrayAll($pager, $limit);
 
@@ -738,6 +752,8 @@ class Record implements Arrayable, ArrayAccess
         $sequence = $options['sequence'] ?? $primary; // Whether table has sequence or not.
 
         $query    = $this->query()->insert($data, sequence: !!$sequence);
+
+        $return ??= $this->query->pull('return', 'fields');
         $return   && $query->return($return, 'array');
 
         $conflict = $this->query->pull('conflict');
@@ -790,6 +806,8 @@ class Record implements Arrayable, ArrayAccess
         unset($data[$primary]); // Not needed in data set.
 
         $query    = $this->query()->update($data)->equal($primary, $id);
+
+        $return ??= $this->query->pull('return', 'fields');
         $return   && $query->return($return, 'array');
 
         $conflict = $this->query->pull('conflict');
