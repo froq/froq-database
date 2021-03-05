@@ -321,7 +321,7 @@ final class Database
             } else {
                 // If single row wanted as return.
                 $result = $result->row(0);
-                if (!is_array($return)) {
+                if (is_string($return)) {
                     $resultArray = (array) $result;
                     if (isset($resultArray[$return])) {
                         $result = $resultArray[$return];
@@ -369,7 +369,7 @@ final class Database
             } else {
                 // If single row wanted as return.
                 $result = $result->row(0);
-                if (!is_array($return)) {
+                if (is_string($return)) {
                     $resultArray = (array) $result;
                     if (isset($resultArray[$return])) {
                         $result = $resultArray[$return];
@@ -416,7 +416,7 @@ final class Database
             } else {
                 // If single row wanted as return.
                 $result = $result->row(0);
-                if (!is_array($return)) {
+                if (is_string($return)) {
                     $resultArray = (array) $result;
                     if (isset($resultArray[$return])) {
                         $result = $resultArray[$return];
