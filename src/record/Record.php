@@ -638,7 +638,7 @@ class Record implements Arrayable, ArrayAccess
 
     /**
      * Find a record by given id (and optionally given where), and save it with given new data if find successes.
-     * This method shortcut for find() > save() process.
+     * This method shortcut for find() > save() process with a boolean return.
      *
      * @param  int|string         $id
      * @param  array|null        &$data
@@ -661,7 +661,7 @@ class Record implements Arrayable, ArrayAccess
 
     /**
      * Find a record by given id (and optionally given where), and remove it.
-     * This method shortcut for find() > remove() process.
+     * This method shortcut for find() > remove() process with a boolean return.
      *
      * @param  int|string         $id
      * @param  array|null        &$data
