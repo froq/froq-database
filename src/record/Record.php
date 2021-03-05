@@ -49,8 +49,11 @@ class Record implements Arrayable, ArrayAccess
     /** @var bool */
     private bool $saved;
 
-    /** @var int, int */
-    private int $finded, $removed;
+    /** @var int */
+    private int $finded;
+
+    /** @var int|array|null */
+    private int|array|null $removed;
 
     /**
      * Constructor.
@@ -286,10 +289,10 @@ class Record implements Arrayable, ArrayAccess
     /**
      * Check removed state/result, fill given state argument.
      *
-     * @param  int|null &$removed
+     * @param  int|array|null &$removed
      * @return bool
      */
-    public final function isRemoved(int &$removed = null): bool
+    public final function isRemoved(int|array &$removed = null): bool
     {
         $removed = $this->removed ?? null;
 
@@ -591,13 +594,10 @@ class Record implements Arrayable, ArrayAccess
 
         $result = $query->run();
 
-        // When returning fields wanted.
-        $return && $data = $result->rows(0);
+        // Set with returned rows data or affected rows count.
+        $this->removed = $return ? $result->rows(0) : $result->count();
 
-        // Set state with affected rows count.
-        $this->removed = (int) $result->count();
-
-        return $return ? $data : $this->removed;
+        return $this->removed;
     }
 
     /**
@@ -627,13 +627,10 @@ class Record implements Arrayable, ArrayAccess
 
         $result = $query->run();
 
-        // When returning fields wanted.
-        $return && $data = $result->rows();
+        // Set with returned rows data or affected rows count.
+        $this->removed = $return ? $result->rows() : $result->count();
 
-        // Set state with affected rows count.
-        $this->removed = (int) $result->count();
-
-        return $return ? $data : $this->removed;
+        return $this->removed;
     }
 
     /**
