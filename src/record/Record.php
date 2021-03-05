@@ -473,12 +473,12 @@ class Record implements Arrayable, ArrayAccess
      * Find and get a record from target table by given id or own id, set `$finded` property, throw a
      * `RecordException` if id is empty or cause a `RecordException` if no table primary presented.
      *
-     * @param  int|string|null $id
-     * @param  array|null      $cols
+     * @param  int|string|null   $id
+     * @param  array|string|null $cols
      * @return froq\database\record\Record
      * @throws froq\database\record\RecordException
      */
-    public final function find(int|string $id = null, array $cols = null): Record
+    public final function find(int|string $id = null, array|string $cols = null): Record
     {
         $id ??= $this->id();
 
@@ -520,13 +520,13 @@ class Record implements Arrayable, ArrayAccess
      * if ids are empty or cause a `RecordException` if no table primary presented.
      *
      * @param  array<int|string>         $ids
-     * @param  array|null                $cols
+     * @param  array|string|null         $cols
      * @param  froq\database\Pager|null &$pager
      * @param  int|null                  $limit
      * @return froq\database\record\Records
      * @throws froq\database\record\RecordException
      */
-    public final function findAll(array $ids, array $cols = null, Pager &$pager = null, int $limit = null): Records
+    public final function findAll(array $ids, array|string $cols = null, Pager &$pager = null, int $limit = null): Records
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
