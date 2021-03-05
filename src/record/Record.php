@@ -695,8 +695,13 @@ class Record implements Arrayable, ArrayAccess
         string $fields = '*', string $order = null, string|array $fetch = null): array|object|null
     {
         $query = $this->query()->select($fields);
-
         $where && $query->where($where, $params, $op);
+
+        $where = $this->query->pull('where');
+        if ($where) foreach ($where as [$where, $op]) {
+            $query->where($where, op: $op);
+        }
+
         $order && $query->orderBy($order);
         $query->limit($limit);
 
