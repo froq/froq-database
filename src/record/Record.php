@@ -584,7 +584,7 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
-        $return = $this->query->pull('return', 'fields') ?: '*';
+        $return = $this->query->pull('return', 'fields');
         $return && $query->return($return, 'array');
 
         $query->delete()->from($table);
@@ -620,7 +620,7 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
-        $return = $this->query->pull('return', 'fields') ?: '*';
+        $return = $this->query->pull('return', 'fields');
         $return && $query->return($return, 'array');
 
         $query->delete()->from($table);
