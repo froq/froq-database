@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\record\{RecordException, Form, FormException};
+use froq\database\record\{RecordException, FormException, Form};
 use froq\database\{Database, Query, trait\RecordTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataMagicTrait};
 use froq\common\interface\Arrayable;
@@ -513,11 +513,7 @@ class Record implements Arrayable, ArrayAccess
 
         $this->finded = $data ? 1 : 0;
 
-        // Prevent wrong argument errors on constructor.
-        $that = (static::class == self::class)
-              ? new static($this->db, $table, $primary)
-              : new static();
-
+        $that = $this->copy($table, $primary);
         $that->finded = $this->finded;
 
         if ($data) {
@@ -559,11 +555,7 @@ class Record implements Arrayable, ArrayAccess
 
         $this->finded = $data ? count($data) : 0;
 
-        // Prevent wrong argument errors on constructor.
-        $that = (static::class == self::class)
-              ? new static($this->db, $table, $primary)
-              : new static();
-
+        $that = $this->copy($table, $primary);
         $that->finded = $this->finded;
 
         $thats = [];
@@ -579,10 +571,10 @@ class Record implements Arrayable, ArrayAccess
      * if id is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  int|string|null $id
-     * @return int|array|null
+     * @return int|froq\database\record\Record|null
      * @throws froq\database\record\RecordException
      */
-    public final function remove(int|string $id = null): int|array|null
+    public final function remove(int|string $id = null): int|Record|null
     {
         $id ??= $this->id();
 
@@ -604,8 +596,23 @@ class Record implements Arrayable, ArrayAccess
 
         $result = $query->run();
 
-        // Set with returned rows data or affected rows count.
-        $this->removed = $return ? $result->rows(0) : $result->count();
+        // With a record.
+        if ($return) {
+            $this->removed = $data = $result->rows(0);
+
+            $that = $this->copy($table, $primary);
+            $that->removed = $this->removed;
+
+            if ($data) {
+                $this->setData($data);
+                $that->setData($data);
+            }
+
+            return $that;
+        }
+
+        // With a count.
+        $this->removed = $result->count();
 
         return $this->removed;
     }
@@ -615,10 +622,10 @@ class Record implements Arrayable, ArrayAccess
      * if ids is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  array<int|string> $ids
-     * @return int|array|null
+     * @return int|froq\database\record\Records|null
      * @throws froq\database\record\RecordException
      */
-    public final function removeAll(array $ids): int|array|null
+    public final function removeAll(array $ids): int|Records|null
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
@@ -637,8 +644,23 @@ class Record implements Arrayable, ArrayAccess
 
         $result = $query->run();
 
-        // Set with returned rows data or affected rows count.
-        $this->removed = $return ? $result->rows() : $result->count();
+        // With a record list.
+        if ($return) {
+            $this->removed = $data = $result->rows();
+
+            $that = $this->copy($table, $primary);
+            $that->removed = $this->removed;
+
+            $thats = [];
+            if ($data) foreach ($data as $dat) {
+                $thats[] = (clone $that)->setData((array) $dat);
+            }
+
+            return new Records($thats);
+        }
+
+        // With a count.
+        $this->removed = $result->count();
 
         return $this->removed;
     }
@@ -780,6 +802,25 @@ class Record implements Arrayable, ArrayAccess
         }
 
         return [$this->table, $this->tablePrimary ?? null, $id];
+    }
+
+    /**
+     * Create a static copy instance with some own basic properties.
+     *
+     * @param  string $table
+     * @param  string $primary
+     * @return static
+     * @internal
+     */
+    private function copy(string $table, string $primary): static
+    {
+        $that = new static();
+        $that->db = $this->db;
+
+        $that->setTable($table)
+             ->setTablePrimary($primary);
+
+        return $that;
     }
 
     /**
