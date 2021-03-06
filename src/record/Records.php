@@ -57,4 +57,33 @@ class Records extends ItemCollection
     {
         return $this->pager;
     }
+
+    /**
+     * Get a array copy of data items.
+     *
+     * @return array<int, array>
+     */
+    public final function data(): array
+    {
+        return $this->toArray(true);
+    }
+
+    /**
+     * @param  bool $deep
+     * @return array<int, array|froq\database\record\Record>
+     * @override
+     */
+    public final function toArray(bool $deep = true): array
+    {
+        if ($deep) {
+            $items = [];
+            foreach ($this->items() as $item) {
+                $items[] = $item->toArray();
+            }
+        } else {
+            $items = parent::toArray();
+        }
+
+        return $items;
+    }
 }
