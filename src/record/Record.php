@@ -405,13 +405,18 @@ class Record implements Arrayable, ArrayAccess
         [$table, $primary] = $this->pack();
 
         if ($data !== null) {
-            $this->setData($data);
+            $this->updateData($data);
         }
 
         $data ??= $this->getData() ?? $this->getFormData();
         if ($data == null) {
             throw new RecordException('No data given yet for save(), call setData() or load() first or '
                 . ' try calling save($data)');
+        }
+
+        // When primary given id() or setId() before.
+        if ($primary && isset($this->data[$primary])) {
+            $data[$primary] = $this->data[$primary];
         }
 
         // Run validation.
