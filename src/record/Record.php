@@ -239,10 +239,10 @@ class Record implements Arrayable, ArrayAccess
         return $this->isValid(...$args);
     }
 
-    /** Shorter state checkers. */
-    public final function saved(): bool { return !empty($this->saved); }
-    public final function finded(): bool { return !empty($this->finded); }
-    public final function removed(): bool { return !empty($this->removed); }
+    /** State getters. */
+    public final function saved() { return $this->saved ?? null; }
+    public final function finded() { return $this->finded ?? null; }
+    public final function removed() { return $this->removed ?? null; }
 
     /**
      * @alias of isFinded()
@@ -275,7 +275,7 @@ class Record implements Arrayable, ArrayAccess
     {
         $id = $this->id ?? null;
 
-        return !empty($this->saved);
+        return !!$this->saved();
     }
 
     /**
@@ -286,7 +286,7 @@ class Record implements Arrayable, ArrayAccess
      */
     public final function isFinded(int &$finded = null): bool
     {
-        $finded = $this->finded ?? null;
+        $finded = $this->finded();
 
         return !!$finded;
     }
@@ -299,7 +299,7 @@ class Record implements Arrayable, ArrayAccess
      */
     public final function isRemoved(int|array &$removed = null): bool
     {
-        $removed = $this->removed ?? null;
+        $removed = $this->removed();
 
         return !!$removed;
     }
