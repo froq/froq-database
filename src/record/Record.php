@@ -239,6 +239,11 @@ class Record implements Arrayable, ArrayAccess
         return $this->isValid(...$args);
     }
 
+    /** Shorter state checkers. */
+    public final function saved(): bool { return !empty($this->saved); }
+    public final function finded(): bool { return !empty($this->finded); }
+    public final function removed(): bool { return !empty($this->removed); }
+
     /**
      * @alias of isFinded()
      */
