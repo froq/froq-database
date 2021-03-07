@@ -210,14 +210,16 @@ final class Database
      * @param  array|null        $params
      * @param  string|null       $order
      * @param  string|array|null $fetch
+     * @param  string|bool|null  $flat
+     * @param  string|null       $op
      * @return array|object|scalar|null
      */
     public function select(string $table, string $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, string|array $fetch = null, string|bool $flat = null)
+        string $order = null, string|array $fetch = null, string|bool $flat = null, string $op = null)
     {
         $query = $this->initQuery($table)->select($fields);
 
-        $where && $query->where(...$this->prepareWhereInput($where, $params));
+        $where && $query->where(...$this->prepareWhereInput($where, $params, $op));
         $order && $query->orderBy($order);
         $query->limit(1);
 
@@ -242,14 +244,16 @@ final class Database
      * @param  string|null       $order
      * @param  int|array|null    $limit
      * @param  string|array|null $fetch
+     * @param  string|bool|null  $flat
+     * @param  string|null       $op
      * @return array|null
      */
     public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, int|array $limit = null, string|array $fetch = null, string|bool $flat = null): array|null
+        string $order = null, int|array $limit = null, string|array $fetch = null, string|bool $flat = null, string $op = null)
     {
         $query = $this->initQuery($table)->select($fields);
 
-        $where && $query->where(...$this->prepareWhereInput($where, $params));
+        $where && $query->where(...$this->prepareWhereInput($where, $params, $op));
         $order && $query->orderBy($order);
         $limit && $query->limit(...(array) $limit);
 
@@ -347,9 +351,11 @@ final class Database
      * @param  string|array|null $where
      * @param  array|null        $params
      * @param  array|null        $options
+     * @param  string|null       $op
      * @return int|string|array|object|null
      */
-    public function update(string $table, array $data, string|array $where = null, array $params = null, array $options = null)
+    public function update(string $table, array $data, string|array $where = null, array $params = null, array $options = null,
+        string $op = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
@@ -360,7 +366,7 @@ final class Database
 
         $query = $this->initQuery($table)->update($data);
 
-        $where  && $query->where(...$this->prepareWhereInput($where, $params));
+        $where  && $query->where(...$this->prepareWhereInput($where, $params, $op));
         $return && $query->return($return, $fetch);
         $limit  && $query->limit($limit);
 
@@ -394,9 +400,11 @@ final class Database
      * @param  string|array|null $where
      * @param  array|null        $params
      * @param  array|null        $options
+     * @param  string|null       $op
      * @return int|string|array|object|null
      */
-    public function delete(string $table, string|array $where = null, array $params = null, array $options = null)
+    public function delete(string $table, string|array $where = null, array $params = null, array $options = null,
+        string $op = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
@@ -407,7 +415,7 @@ final class Database
 
         $query = $this->initQuery($table)->delete();
 
-        $where  && $query->where(...$this->prepareWhereInput($where, $params));
+        $where  && $query->where(...$this->prepareWhereInput($where, $params, $op));
         $return && $query->return($return, $fetch);
         $limit  && $query->limit($limit);
 
@@ -470,11 +478,10 @@ final class Database
      *
      * @param  string     $table
      * @param  array      $field
-     * @param  float|int  $value
+     * @param  int|float  $value
      * @param  array|null $where
      * @param  array|null $params
-     * @param  bool       $return
-     * @param  int|null   $limit
+     * @param  array|null $options
      * @return int|float|array|null
      */
     public function increase(string $table, string|array $field, int|float $value = 1, string|array $where = null,
@@ -521,11 +528,10 @@ final class Database
      *
      * @param  string     $table
      * @param  array      $field
-     * @param  float|int  $value
+     * @param  int|float  $value
      * @param  array|null $where
      * @param  array|null $params
-     * @param  bool       $return
-     * @param  int|null   $limit
+     * @param  array|null $options
      * @return int|float|array|null
      */
     public function decrease(string $table, string|array $field, int|float $value = 1, string|array $where = null,
@@ -1033,11 +1039,12 @@ final class Database
      *
      * @param  string|array $in
      * @param  array|null   $params
+     * @param  string|null  $op
      * @return array
      * @since  4.15
      * @throws froq\database\DatabaseException
      */
-    private function prepareWhereInput(string|array $in, array $params = null): array
+    private function prepareWhereInput(string|array $in, array $params = null, string $op = null): array
     {
         $where = $in;
 
@@ -1086,7 +1093,7 @@ final class Database
                     $temp[$field] = $value;
                 }
 
-                $where  = join(' AND ', array_keys($temp));
+                $where  = join(' ' . ($op ?: 'AND') . ' ', array_keys($temp));
                 $params = array_values($temp);
             }
         }
