@@ -121,7 +121,9 @@ final class Query
             $select = trim($select);
             $select || throw new QueryException('Empty select given');
 
-            $prepare && $select = $this->prepareFields($select);
+            if ($prepare && $select != '*') {
+                $select = $this->prepareFields($select);
+            }
         }
 
         $select = $wrap ? '(' . $select . ')' : $select;
@@ -1730,9 +1732,7 @@ final class Query
                     $table = $stack['from'] ?? $stack['table'] ?? null;
                     $table || throw new QueryException('Table is not defined yet, call from() or table() to continue');
 
-                    if ($stack['select'] == ['*']) {
-                        $select = '*';
-                    } else {
+                    if ($stack['select'] != '*') {
                         foreach ($stack['select'] as $field) {
                             $select[] = $n . $ts . $field;
                         }
