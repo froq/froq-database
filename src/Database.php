@@ -332,7 +332,11 @@ final class Database
             return $result;
         }
 
-        return $batch ? $result->ids() : $result->id();
+        if ($sequence !== false) {
+            return $batch ? $result->ids() : $result->id();
+        }
+
+        return $result->count();
     }
 
     /**
