@@ -439,7 +439,9 @@ final class Query
                 $action);
         }
 
-        is_string($update) && $update = mb_split('\s+', $update);
+        if (is_string($update) && $update != '*') {
+            $update = mb_split('\s+', $update);
+        }
 
         if ($update == null && $action == 'UPDATE') {
             throw new DatabaseException('Conflict action is `update`, but no update data given');
@@ -1786,6 +1788,11 @@ final class Query
                         };
 
                         if ($action == 'UPDATE') {
+                            // Use all insert fields for excluded stuff below.
+                            if ($update == '*') {
+                                $update = [$stack['insert'][0]];
+                            }
+
                             // Handle PostgreSQL's stuff (eg: update => ['name', ..]).
                             if (is_list($update)) {
                                 $temp = $this->prepareFields($update);
