@@ -1740,7 +1740,7 @@ final class Query
                     }
 
                     $ret = $nt . 'SELECT ' . trim($select)
-                         . $nt . 'FROM ' . $table;
+                         . $nt . 'FROM '   . $table;
 
                     isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join', $indent);
                     isset($stack['where'])  && $ret .= $nt . $this->toQueryString('where', $indent);
@@ -1846,7 +1846,7 @@ final class Query
                     }
 
                     $ret = $nt . 'UPDATE ' . $table
-                         . $nt . 'SET ' . join(',' . $nt . $t, $stack['update']);
+                         . $nt . 'SET '    . join(',' . $nt . $t, $stack['update']);
 
                     isset($stack['where']) && $ret .= $nt . $this->toQueryString('where', $indent);
                     isset($stack['order']) && $ret .= $nt . $this->toQueryString('order');
