@@ -37,7 +37,7 @@ class Records extends ItemCollection
     {
         foreach ($items as $item) {
             ($item instanceof Record) || throw new RecordsException(
-                'Each item must extend class %s, %s given', [Record::class, typeof($item)]
+                'Each item must extend class %s, %s given', [Record::class, get_type($item)]
             );
         }
 
