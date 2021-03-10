@@ -2081,10 +2081,10 @@ final class Query
     /**
      * Prepare increase/decrease data for update.
      *
-     * @param  string    $sign
-     * @param  array     $field
-     * @param  int|float $value
-     * @param  bool      $return
+     * @param  string       $sign
+     * @param  string|array $field
+     * @param  int|float    $value
+     * @param  bool         $return
      * @return array
      * @throws froq\database\QueryException
      * @since  5.0
@@ -2102,7 +2102,8 @@ final class Query
         // Eg: (.., ["x" => 1, "y" => 1], ..).
         else {
             // Cast values as float or leave it exception below.
-            $field = array_map(fn($v) => is_numeric($v) ? floatval($v) : $v, $field);
+            $field  = array_map(fn($v) => is_numeric($v) ? (float) $v : $v, $field);
+            $fields = [];
 
             foreach ($field as $name => $value) {
                 is_string($name)  || throw new QueryException('Invalid field name `%s`', $name);
@@ -2113,7 +2114,7 @@ final class Query
                 $return && $fields[] = $name;
             }
 
-            $return && $this->return(join(',', $fields));
+            $return && $this->return($fields);
         }
 
         return $data;
