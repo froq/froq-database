@@ -267,6 +267,14 @@ trait QueryTrait
     }
 
     /**
+     * @alias of indexBy()
+     */
+    public function index(...$args)
+    {
+        return $this->indexBy(...$args);
+    }
+
+    /**
      * @alias of whereEqual()
      */
     public function eq(...$args)

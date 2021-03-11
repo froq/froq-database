@@ -194,11 +194,12 @@ final class Database
      * @param  string            $query
      * @param  array|null        $params
      * @param  string|array|null $fetch
+     * @param  string|null       $index
      * @return array|null
      */
-    public function getAll(string $query, array $params = null, string|array $fetch = null): array|null
+    public function getAll(string $query, array $params = null, string|array $fetch = null, string $index = null): array|null
     {
-        return $this->query($query, $params, ['fetch' => $fetch])->rows();
+        return $this->query($query, $params, ['fetch' => $fetch, 'index' => $index])->rows();
     }
 
     /**

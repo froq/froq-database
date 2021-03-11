@@ -1134,6 +1134,18 @@ final class Query
     }
 
     /**
+     * Index row set by given field.
+     *
+     * @param  string $field
+     * @return self
+     * @since  5.0
+     */
+    public function indexBy(string $field): self
+    {
+        return $this->add('index', $field, false);
+    }
+
+    /**
      * Add "LIMIT" clause into query stack.
      *
      * @param  int      $limit
@@ -1260,8 +1272,11 @@ final class Query
         // From stack if given with return(), insert() etc.
         $fetch    ??= $this->stack['return']['fetch']    ?? null;
         $sequence ??= $this->stack['insert']['sequence'] ?? null;
+        $index      = $this->stack['index']              ?? null;
 
-        return $this->db->query($this->toString(), null, ['fetch' => $fetch, 'sequence' => $sequence]);
+        return $this->db->query($this->toString(), null, [
+            'fetch' => $fetch, 'sequence' => $sequence, 'index' => $index
+        ]);
     }
 
     /**
@@ -1322,14 +1337,15 @@ final class Query
     public function getAll(string|array $fetch = null, Pager &$pager = null, int $limit = null): array|null
     {
         $fetch ??= $this->stack['return']['fetch'] ?? null;
+        $index   = $this->stack['index']           ?? null;
 
         if ($limit === null) {
-            return $this->db->getAll($this->toString(), null, $fetch);
+            return $this->db->getAll($this->toString(), null, $fetch, $index);
         }
 
         $this->paginate($pager, $limit);
 
-        return $this->db->getAll($this->toString(), null, $fetch);
+        return $this->db->getAll($this->toString(), null, $fetch, $index);
     }
 
     /**

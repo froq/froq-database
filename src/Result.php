@@ -93,6 +93,23 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
                         ? $pdoStatement->fetchAll($fetchType, $fetchClass)
                         : $pdoStatement->fetchAll($fetchType)
                 ) ?: null;
+
+                // Indexing by given index field.
+                if (isset($options['index']) && $this->rows != null) {
+                    $index = $options['index'];
+                    if (!array_key_exists($index, (array) $this->rows[0])) {
+                        throw new ResultException('Given index `%s` not found in row set', $index);
+                    }
+
+                    $rows  = [];
+                    $array = is_array($this->rows[0]);
+                    foreach ($this->rows as $row) {
+                        $rows[$array ? $row[$index] : $row->{$index}] = $row;
+                    }
+
+                    // Re-assign.
+                    $this->rows = $rows;
+                }
             }
 
             // Insert queries.
@@ -248,7 +265,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
             return $this->rows[$i] ?? null;
         }
 
-        return $this->rows ?? null;
+        return $this->rows;
     }
 
     /**
@@ -258,7 +275,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function first(): array|object|null
     {
-        return $this->row(0);
+        return $this->rows ? current($this->rows) : null;
     }
 
     /**
@@ -268,7 +285,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function last(): array|object|null
     {
-        return $this->row(-1);
+        return $this->rows ? end($this->rows) : null;
     }
 
     /**
