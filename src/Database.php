@@ -185,7 +185,7 @@ final class Database
      */
     public function get(string $query, array $params = null, string|array $fetch = null): array|object|null
     {
-        return $this->query($query, $params, ['fetch' => $fetch])->row(0);
+        return $this->query($query, $params, ['fetch' => $fetch])->rows(0);
     }
 
     /**

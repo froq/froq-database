@@ -1315,15 +1315,13 @@ final class Query
      */
     public function get(string|array $fetch = null): array|object|null
     {
-        $fetch ??= $this->stack['return']['fetch'] ?? null;
-
         // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
         if (!$this->has('limit')) {
             $ok = $this->has('select') || ($this->db->link()->driver() != 'pgsql');
             $ok && $this->limit(1);
         }
 
-        return $this->db->get($this->toString(), null, $fetch);
+        return $this->run($fetch)->rows(0);
     }
 
     /**
@@ -1336,16 +1334,11 @@ final class Query
      */
     public function getAll(string|array $fetch = null, Pager &$pager = null, int $limit = null): array|null
     {
-        $fetch ??= $this->stack['return']['fetch'] ?? null;
-        $index   = $this->stack['index']           ?? null;
-
-        if ($limit === null) {
-            return $this->db->getAll($this->toString(), null, $fetch, $index);
+        if ($limit !== null) {
+            $this->paginate($pager, $limit);
         }
 
-        $this->paginate($pager, $limit);
-
-        return $this->db->getAll($this->toString(), null, $fetch, $index);
+        return $this->run($fetch)->rows();
     }
 
     /**
