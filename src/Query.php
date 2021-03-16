@@ -1531,7 +1531,7 @@ final class Query
      */
     public function paginate(Pager &$pager = null, int $limit = null): self
     {
-        $pager = $pager ?? $this->db->initPager($this->count(), $limit);
+        $pager ??= $this->db->initPager($this->count(), $limit);
 
         return $this->paginateWith($pager);
     }
