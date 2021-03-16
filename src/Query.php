@@ -10,6 +10,7 @@ namespace froq\database;
 use froq\database\{QueryTrait, QueryException, Database, Result};
 use froq\database\sql\{Sql, Name};
 use froq\database\trait\DbTrait;
+use froq\collection\Collection;
 use froq\pager\Pager;
 
 /**
@@ -1415,6 +1416,20 @@ final class Query
     }
 
     /**
+     * Get all result rows as collection.
+     *
+     * @param  string|array<string>|null  $fetch
+     * @param  froq\pager\Pager|null     &$pager
+     * @param  int|null                   $limit
+     * @return froq\collection\Collection
+     * @since  5.0
+     */
+    public function getCollection(string|array $fetch = null, Pager &$pager = null, int $limit = null): Collection
+    {
+        return new Collection($this->getAll($fetch, $pager, $limit));
+    }
+
+    /**
      * Run an insert query and get last insert id.
      *
      * @return int|null
@@ -1460,6 +1475,15 @@ final class Query
     public function object(bool $all = false, ...$args): object|array|null
     {
         return !$all ? $this->getObject() : $this->getObjectAll(...$args);
+    }
+
+    /**
+     * @alias of getCollection()
+     * @since  5.0
+     */
+    public function collection(...$args)
+    {
+        return $this->getCollection(...$args);
     }
 
     /**
