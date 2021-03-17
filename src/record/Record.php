@@ -395,12 +395,12 @@ class Record implements Arrayable, ArrayAccess
      * @param  string|array|null  $drop
      * @param  bool               $bool
      * @param  bool               $select
-     * @param  bool               $_validate @internal
+     * @param  bool|null          $_validate @internal
      * @return bool|self
      * @throws froq\database\record\RecordException
      */
     public final function save(array &$data = null, array &$errors = null, array $options = null,
-        string|array $drop = null, bool $bool = false, bool $select = false, bool $_validate = true): bool|self
+        string|array $drop = null, bool $bool = false, bool $select = false, bool $_validate = null): bool|self
     {
         [$table, $primary] = $this->pack();
 
@@ -419,14 +419,17 @@ class Record implements Arrayable, ArrayAccess
             $data[$primary] = $this->data[$primary];
         }
 
+        // Options are used for only save actions.
+        $options = array_merge($this->options, $options ?? []);
+
+        // Default is true (@see froq\database\trait\RecordTrait).
+        $_validate ??= (bool) $options['validate'];
+
         // Run validation.
         if ($_validate && !$this->isValid($data, $errors, $options)) {
             throw new ValidationError('Cannot save record, validation failed [tip: run save()'
                 . ' in a try/catch block and use errors() to see error details]', errors: $errors);
         }
-
-        // Options are used for only save actions.
-        $options = array_merge($this->options, $options ?? []);
 
         // Detect insert/update.
         $new = !isset($primary) || !isset($data[$primary]);
@@ -675,11 +678,11 @@ class Record implements Arrayable, ArrayAccess
      * @param  array|null         $options
      * @param  string|array|null  $drop
      * @param  array|null         $where
-     * @param  bool               $_validate @internal
+     * @param  bool|null          $_validate @internal
      * @return bool
      */
     public final function findSave(int|string $id, array &$data = null, array &$errors = null, array $options = null,
-        string|array $drop = null, array $where = null, bool $_validate = true): bool
+        string|array $drop = null, array $where = null, bool $_validate = null): bool
     {
         // Will be used for only find().
         $where && $this->where($where);

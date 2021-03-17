@@ -38,6 +38,7 @@ trait RecordTrait
     protected static array $optionsDefault = [
         'transaction' => true, // Whether save actions will be done in a transaction wrap.
         'sequence'    => true, // Whether saved record has a ID sequence.
+        'validate'    => true,
         'return'      => null, // Whether returning any field(s) or current data (for "returning" clause).
         'fetch'       => null, // Fetch type.
     ];
