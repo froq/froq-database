@@ -666,8 +666,8 @@ class Record implements Arrayable, ArrayAccess
     }
 
     /**
-     * Find a record by given id (and optionally given where), and save it with given new data if find successes.
-     * This method shortcut for find() > save() process with a boolean return.
+     * Find a record by given id (and optionally given where), and save it with given new data if find successes. This
+     * method shortcut for find() > save() process with a boolean return.
      *
      * @param  int|string         $id
      * @param  array|null        &$data
@@ -689,16 +689,11 @@ class Record implements Arrayable, ArrayAccess
     }
 
     /**
-     * Find a record by given id (and optionally given where), and remove it.
-     * This method shortcut for find() > remove() process with a boolean return.
+     * Find a record by given id (and optionally given where), and remove it. This method shortcut for find() > remove()
+     * process with a boolean return.
      *
-     * @param  int|string         $id
-     * @param  array|null        &$data
-     * @param  array|null        &$errors
-     * @param  array|null         $options
-     * @param  string|array|null  $drop
-     * @param  array|null         $where
-     * @param  bool               $_validate @internal
+     * @param  int|string  $id
+     * @param  array|null  $where
      * @return bool
      */
     public final function findRemove(int|string $id, array $where = null): bool
