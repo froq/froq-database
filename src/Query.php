@@ -1658,6 +1658,20 @@ final class Query
     }
 
     /**
+     * Drop an item from query stack.
+     *
+     * @param  string $key
+     * @return self
+     * @since  5.0
+     */
+    public function drop(string $key): self
+    {
+        unset($this->stack[$key]);
+
+        return $this;
+    }
+
+    /**
      * Get query stack.
      *
      * @return array
