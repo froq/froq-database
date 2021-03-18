@@ -119,15 +119,15 @@ final class Database
         $query || throw new DatabaseException('Empty query given to %s()', __method__);
 
         try {
-            $slowQuery = isset($this->logger->slowQuery)
-                && Profiler::mark('@slowQuery');
+            $marker = isset($this->logger->slowQuery) ? Profiler::marker('@slowQuery') : null;
+            $marker && Profiler::mark($marker);
 
             $pdo          = $this->link->pdo();
             $pdoStatement = !isset($this->profiler) ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
 
-            if ($slowQuery) {
-                $time = Profiler::unmark('@slowQuery');
+            if ($marker) {
+                $time = Profiler::unmark($marker);
                 if ($time >= $this->logger->slowQuery) {
                     $this->logger->logWarn('Slow query: time '. $time .', '. $query);
                 }
@@ -155,15 +155,15 @@ final class Database
         $query || throw new DatabaseException('Empty query given to %s()', __method__);
 
         try {
-            $slowQuery = isset($this->logger->slowQuery)
-                && Profiler::mark('@slowQuery');
+            $marker = isset($this->logger->slowQuery) ? Profiler::marker('@slowQuery') : null;
+            $marker && Profiler::mark($marker);
 
             $pdo       = $this->link->pdo();
             $pdoResult = !isset($this->profiler) ? $pdo->exec($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
 
-            if ($slowQuery) {
-                $time = Profiler::unmark('@slowQuery');
+            if ($marker) {
+                $time = Profiler::unmark($marker);
                 if ($time >= $this->logger->slowQuery) {
                     $this->logger->logWarn('Slow query: time '. $time .', '. $query);
                 }

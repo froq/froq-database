@@ -189,6 +189,18 @@ final class Profiler
     }
 
     /**
+     * Create a marker (to prevent name collusion).
+     *
+     * @param  string $name
+     * @return string
+     * @since  5.0
+     */
+    public static function marker(string $name): string
+    {
+        return sprintf('%s-%.10F', $name, microtime(true));
+    }
+
+    /**
      * Mark a profile entry returning its started time.
      *
      * @param  string $name
