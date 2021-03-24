@@ -51,7 +51,9 @@ abstract class AbstractEntityList implements EntityListInterface
 
         // Convert items to related entity.
         if ($items) foreach ($items as $item) {
-            $this->items[] = new $this->itemsClass($item, $drop, $clean);
+            if ($item) {
+                $this->items[] = new $this->itemsClass($item, $drop, $clean);
+            }
         }
 
         $this->pager = $pager;
