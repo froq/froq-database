@@ -180,6 +180,36 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
+     * Set one var.
+     *
+     * @param  string $vars
+     * @return self
+     * @since  5.0
+     */
+    public final function set(string $var, $value): self
+    {
+        property_exists($this, $var) && $this->{$var} = $value;
+
+        return $this;
+    }
+
+    /**
+     * Set many vars.
+     *
+     * @param  array $vars
+     * @return self
+     * @since  5.0
+     */
+    public final function setVars(array $vars): self
+    {
+        foreach ($vars as $var => $value) {
+            property_exists($this, $var) && $this->{$var} = $value;
+        }
+
+        return $this;
+    }
+
+    /**
      * Get a var value if it set.
      *
      * @param  string $var
@@ -229,6 +259,22 @@ abstract class AbstractEntity implements EntityInterface
     public final function getVarValues(bool $all = true): array
     {
         return array_values($this->getVars($all));
+    }
+
+    /**
+     * Remove one var or many vars.
+     *
+     * @param  string|array $vars
+     * @return self
+     * @since  5.0
+     */
+    public final function remove(string|array $vars): self
+    {
+        foreach ((array) $vars as $var) {
+            unset($this->{$var});
+        }
+
+        return $this;
     }
 
     /**
