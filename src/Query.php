@@ -654,7 +654,7 @@ final class Query
             foreach ($where as $field => $param) {
                 $sign = ' = ';
                 if (in_array($field[-1], $signs)) {
-                    $sign  = ' != ';
+                    $sign  = format(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
                     $field = substr($field, 0, -1);
                 }
 
