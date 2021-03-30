@@ -427,8 +427,8 @@ class Record implements Arrayable, ArrayAccess
 
         // Run validation.
         if ($_validate && !$this->isValid($data, $errors, $options)) {
-            throw new ValidationError('Cannot save record, validation failed [tip: run save()'
-                . ' in a try/catch block and use errors() to see error details]', errors: $errors);
+            throw new ValidationError('Cannot save record (%s), validation failed [tip: run save()'
+                . ' in a try/catch block and use errors() to see error details]', $this::class, errors: $errors);
         }
 
         // Detect insert/update.

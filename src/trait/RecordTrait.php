@@ -62,7 +62,7 @@ trait RecordTrait
             return null;
         }
 
-        throw new ValidationError('Cannot save record, validation failed [tip: run save()'
-            . ' in a try/catch block and use errors() to see error details]', errors: $errors);
+        throw new ValidationError('Cannot prepare record (%s), validation failed [tip: run prepare()'
+            . ' in a try/catch block and use errors() to see error details]', $this::class, errors: $errors);
     }
 }
