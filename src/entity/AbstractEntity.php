@@ -188,7 +188,7 @@ abstract class AbstractEntity implements EntityInterface
      */
     public final function set(string $var, $value): self
     {
-        property_exists($this, $var) && $this->{$var} = $value;
+        $this->__set($var, $value);
 
         return $this;
     }
@@ -203,7 +203,7 @@ abstract class AbstractEntity implements EntityInterface
     public final function setVars(array $vars): self
     {
         foreach ($vars as $var => $value) {
-            property_exists($this, $var) && $this->{$var} = $value;
+            $this->__set($var, $value);
         }
 
         return $this;
@@ -216,9 +216,9 @@ abstract class AbstractEntity implements EntityInterface
      * @return any|null
      * @since  4.11
      */
-    public final function get(string $var)
+    public final function get(string $var, $default = null)
     {
-        return property_exists($this, $var) ? $this->{$var} : null;
+        return $this->__get($var) ?? $default;
     }
 
     /**
