@@ -262,13 +262,13 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Remove one var or many vars.
+     * Drop one var / many vars.
      *
      * @param  string|array $vars
      * @return self
      * @since  5.0
      */
-    public final function remove(string|array $vars): self
+    public final function drop(string|array $vars): self
     {
         foreach ((array) $vars as $var) {
             unset($this->{$var});
