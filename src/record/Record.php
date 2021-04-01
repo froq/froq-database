@@ -732,7 +732,7 @@ class Record implements Arrayable, ArrayAccess
         $order && $query->orderBy($order);
         $query->limit($limit);
 
-        return ($limit == 1) ? $query->run($fetch)->row(0) : $query->run($fetch)->rows();
+        return ($limit == 1) ? $query->run($fetch)->rows(0) : $query->run($fetch)->rows();
     }
 
     /**
