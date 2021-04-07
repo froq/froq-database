@@ -445,7 +445,7 @@ abstract class AbstractEntity implements EntityInterface
     {
         if ($in && is_object($in)) {
             $out = (array) ($in instanceof Traversable ? iterator_to_array($in) : (
-                method_exists($in, 'toArray') ? $in->toArray() : get_object_vars($in)
+                $in instanceof EntityInterface ? $in->toArray(true) : get_object_vars($in)
             ));
         } else {
             $out = (array) $in;
@@ -454,7 +454,7 @@ abstract class AbstractEntity implements EntityInterface
         // Overwrite.
         foreach ($out as $var => $value) {
             if ($value && $value instanceof EntityInterface) {
-                $out[$var] = $value->toArray();
+                $out[$var] = $value->toArray(true);
                 continue;
             }
 
