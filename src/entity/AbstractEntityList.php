@@ -260,6 +260,23 @@ abstract class AbstractEntityList implements EntityListInterface
     }
 
     /**
+     * Each.
+     *
+     * @param  callable $func
+     * @return static
+     * @since  5.0
+     */
+    public function each(callable $func): static
+    {
+        // Stay in here.
+        $func = $func->bindTo($this, $this);
+
+        $this->toCollection()->each($func);
+
+        return $this;
+    }
+
+    /**
      * Create a collection from entity vars.
      *
      * @return froq\collection\Collection
