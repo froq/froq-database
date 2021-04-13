@@ -463,13 +463,13 @@ final class Database
     /**
      * Run a count query with/without given conditions.
      *
-     * @param  string     $query
-     * @param  array|null $params
+     * @param  string|Query $query
+     * @param  array|null   $params
      * @return int
      */
-    public function countQuery(string $query, array $params = null): int
+    public function countQuery(string|Query $query, array $params = null): int
     {
-        $result = $this->get('SELECT count(*) AS c FROM ('. $query .') AS t', $params, 'array');
+        $result = $this->get('SELECT count(*) AS c FROM (' . $query . ') AS t', $params, 'array');
 
         return (int) ($result['c'] ?? 0);
     }
