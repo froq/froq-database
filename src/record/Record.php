@@ -732,7 +732,9 @@ class Record implements Arrayable, ArrayAccess
         $order && $query->orderBy($order);
         $query->limit($limit);
 
-        return ($limit == 1) ? $query->run($fetch)->rows(0) : $query->run($fetch)->rows();
+        $query->run($fetch);
+
+        return ($limit == 1) ? $query->rows(0) : $query->rows();
     }
 
     /**
@@ -754,7 +756,9 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
-        return $query->run()->count();
+        $query->run();
+
+        return $query->count();
     }
 
     /**
@@ -775,7 +779,9 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
-        return $query->run()->count();
+        $query->run();
+
+        return $query->count();
     }
 
     /**
