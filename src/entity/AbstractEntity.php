@@ -262,6 +262,22 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
+     * Select one var / many vars.
+     *
+     * @param  string|array $vars
+     * @return array
+     * @since  5.0
+     */
+    public final function select(string|array $vars): array
+    {
+        foreach ((array) $vars as $var) {
+            $ret[$var] = $this->{$var} ?? null;
+        }
+
+        return $ret;
+    }
+
+    /**
      * Drop one var / many vars.
      *
      * @param  string|array $vars
