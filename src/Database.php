@@ -181,11 +181,20 @@ final class Database
      * @param  string            $query
      * @param  array|null        $params
      * @param  string|array|null $fetch
-     * @return array|object|null
+     * @param  string|bool|null  $flat
+     * @return array|object|scalar|null
      */
-    public function get(string $query, array $params = null, string|array $fetch = null): array|object|null
+    public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null)
     {
-        return $this->query($query, $params, ['fetch' => $fetch])->rows(0);
+        $result = $this->query($query, $params, ['fetch' => $fetch])->rows(0);
+
+        // When a single column value wanted.
+        if ($result && $flat) {
+            $result = (array) $result;
+            $result = array_select($result, is_string($flat) ? $flat : key($result));
+        }
+
+        return $result;
     }
 
     /**
@@ -194,12 +203,22 @@ final class Database
      * @param  string            $query
      * @param  array|null        $params
      * @param  string|array|null $fetch
+     * @param  string|bool|null  $flat
      * @param  string|null       $index
      * @return array|null
      */
-    public function getAll(string $query, array $params = null, string|array $fetch = null, string $index = null): array|null
+    public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null,
+        string $index = null): array|null
     {
-        return $this->query($query, $params, ['fetch' => $fetch, 'index' => $index])->rows();
+        $result = $this->query($query, $params, ['fetch' => $fetch, 'index' => $index])->rows();
+
+        // When a single column value wanted.
+        if ($result && $flat) {
+            $result = (array) $result;
+            $result = array_column($result, is_string($flat) ? $flat : key($result[0]));
+        }
+
+        return $result;
     }
 
     /**
@@ -229,7 +248,7 @@ final class Database
         // When a single column value wanted.
         if ($result && $flat) {
             $result = (array) $result;
-            return array_select($result, is_string($flat) ? $flat : key($result));
+            $result = array_select($result, is_string($flat) ? $flat : key($result));
         }
 
         return $result;
