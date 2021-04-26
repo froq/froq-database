@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\record\{RecordException, FormException, Form};
+use froq\database\record\{RecordException, RecordList, FormException, Form};
 use froq\database\{Database, Query, trait\RecordTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataMagicTrait};
 use froq\common\interface\Arrayable;
@@ -705,6 +705,56 @@ class Record implements Arrayable, ArrayAccess
         $where && $this->where($where);
 
         return $this->find($id)->isFinded() && $this->remove();
+    }
+
+    /**
+     * Find multiple records by given arguments returning a RecordList filled by found records.
+     *
+     * @param  string|array    $where
+     * @param  any          ...$args For select() method.
+     * @return froq\database\record\RecordList
+     */
+    public final function findBy(string|array $where, ...$args): RecordList
+    {
+        $rows = $this->select($where, ...$args);
+        $that = $this->copy();
+
+        // For single records.
+        if (isset($args['limit'])) {
+            $rows = [(array) $rows];
+        }
+
+        $thats = [];
+        if ($rows) foreach ($rows as $row) {
+            $thats[] = (clone $that)->setData((array) $row);
+        }
+
+        return new RecordList($thats);
+    }
+
+    /**
+     * Remove multiple records by given arguments returning a RecordList filled by removed records.
+     *
+     * @param  string|array    $where
+     * @param  any          ...$args For delete() method.
+     * @return froq\database\record\RecordList
+     */
+    public final function removeBy(string|array $where, ...$args): RecordList
+    {
+        // For returning fields.
+        if (!isset($args['return'])) {
+            $args['return'] = '*';
+        }
+
+        $rows = $this->delete($where, ...$args);
+        $that = $this->copy();
+
+        $thats = [];
+        if ($rows) foreach ($rows as $row) {
+            $thats[] = (clone $that)->setData((array) $row);
+        }
+
+        return new RecordList($thats);
     }
 
     /**
