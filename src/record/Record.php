@@ -756,9 +756,7 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
-        $query->run();
-
-        return $query->count();
+        return $query->run()->count();
     }
 
     /**
@@ -769,7 +767,7 @@ class Record implements Arrayable, ArrayAccess
      * @param  string|null       $op
      * @return int|null
      */
-    public final function delete(string|array $where, array $params = null, string $op = null): int|null
+    public final function delete(string|array $where, array $params = null, string $fields = '', string $op = null): int|array|null
     {
         $query = $this->query()->delete();
         $where && $query->where($where, $params, $op);
@@ -779,9 +777,12 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
-        $query->run();
+        // Returning fields.
+        $return && $query->return($fields);
 
-        return $query->count();
+        $result = $query->run();
+
+        return $return ? $result->rows() : $result->count();
     }
 
     /**
