@@ -767,7 +767,7 @@ class Record implements Arrayable, ArrayAccess
      * @param  string|null       $op
      * @return int|null
      */
-    public final function delete(string|array $where, array $params = null, string $fields = '', string $op = null): int|array|null
+    public final function delete(string|array $where, array $params = null, string $return = '', string $op = null): int|array|null
     {
         $query = $this->query()->delete();
         $where && $query->where($where, $params, $op);
@@ -778,7 +778,7 @@ class Record implements Arrayable, ArrayAccess
         }
 
         // Returning fields.
-        $return && $query->return($fields);
+        $return && $query->return($return);
 
         $result = $query->run();
 
