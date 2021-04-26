@@ -44,7 +44,7 @@ class RecordList extends ItemCollection
         }
 
         // State "readOnly" can be changed calling readOnly() or lock()/unlock().
-        parent::__construct($items, readOnly: true);
+        parent::__construct($items, readOnly: false);
     }
 
     /**
