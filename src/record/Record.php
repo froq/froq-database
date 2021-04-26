@@ -718,7 +718,7 @@ class Record implements Arrayable, ArrayAccess
      * @param  string|array|null $fetch
      * @return array|object|null
      */
-    public final function select(string|array $where, array $params = null, string $op = null, int $limit = 1,
+    public final function select(string|array $where, array $params = null, string $op = null, int|null $limit = 1,
         string $fields = '*', string $order = null, string|array $fetch = null): array|object|null
     {
         $query = $this->query()->select($fields);
@@ -729,8 +729,8 @@ class Record implements Arrayable, ArrayAccess
             $query->where($where, op: $op);
         }
 
-        $order && $query->orderBy($order);
-        $query->limit($limit);
+        $limit && $query->limit($limit);
+        $order && $query->order($order);
 
         $result = $query->run($fetch);
 
@@ -811,18 +811,18 @@ class Record implements Arrayable, ArrayAccess
     /**
      * Create a static copy instance with some own basic properties.
      *
-     * @param  string $table
-     * @param  string $primary
+     * @param  string|null $table
+     * @param  string|null $primary
      * @return static
      * @internal
      */
-    private function copy(string $table, string $primary): static
+    private function copy(string $table = null, string $primary = null): static
     {
         $that = new static();
         $that->db = $this->db;
 
-        $that->setTable($table)
-             ->setTablePrimary($primary);
+        $that->setTable($table ?? $this->getTable())
+             ->setTablePrimary($primary ?? $this->getTablePrimary());
 
         return $that;
     }
