@@ -535,10 +535,10 @@ class Record implements Arrayable, ArrayAccess
      * @param  array|string|null         $cols
      * @param  froq\database\Pager|null &$pager
      * @param  int|null                  $limit
-     * @return froq\database\record\Records
+     * @return froq\database\record\RecordList
      * @throws froq\database\record\RecordException
      */
-    public final function findAll(array $ids, array|string $cols = null, Pager &$pager = null, int $limit = null): Records
+    public final function findAll(array $ids, array|string $cols = null, Pager &$pager = null, int $limit = null): RecordList
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
@@ -566,7 +566,7 @@ class Record implements Arrayable, ArrayAccess
             $thats[] = (clone $that)->setData((array) $dat);
         }
 
-        return new Records($thats, $pager);
+        return new RecordList($thats, $pager);
     }
 
     /**
@@ -625,10 +625,10 @@ class Record implements Arrayable, ArrayAccess
      * if ids is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  array<int|string> $ids
-     * @return int|froq\database\record\Records|null
+     * @return int|froq\database\record\RecordList|null
      * @throws froq\database\record\RecordException
      */
-    public final function removeAll(array $ids): int|Records|null
+    public final function removeAll(array $ids): int|RecordList|null
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
@@ -659,7 +659,7 @@ class Record implements Arrayable, ArrayAccess
                 $thats[] = (clone $that)->setData((array) $dat);
             }
 
-            return new Records($thats);
+            return new RecordList($thats);
         }
 
         // With a count.

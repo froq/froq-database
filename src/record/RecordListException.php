@@ -10,12 +10,12 @@ namespace froq\database\record;
 use froq\database\DatabaseException;
 
 /**
- * Records Exception.
+ * Record List Exception.
  *
  * @package froq\database\record
- * @object  froq\database\record\RecordsException
+ * @object  froq\database\record\RecordListException
  * @author  Kerem Güneş
  * @since   5.0
  */
-class RecordsException extends DatabaseException
+class RecordListException extends DatabaseException
 {}

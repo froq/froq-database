@@ -7,22 +7,22 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\record\{RecordsException, Record};
+use froq\database\record\{RecordListException, Record};
 use froq\collection\ItemCollection;
 use froq\pager\Pager;
 
 /**
- * Records.
+ * Record List.
  *
- * Represents a record set entity that used internally and holds `$pager` property and its getter method, and also
+ * Represents a record list entity that used internally and holds `$pager` property and its getter method, and also
  * all basic collection methods such as `filter()`, `map(), `reduce()` etc.
  *
  * @package froq\database\record
- * @object  froq\database\record\Records
+ * @object  froq\database\record\RecordList
  * @author  Kerem Güneş
  * @since   5.0
  */
-class Records extends ItemCollection
+class RecordList extends ItemCollection
 {
     /** @var froq\pager\Pager|null */
     protected Pager|null $pager;
@@ -35,17 +35,16 @@ class Records extends ItemCollection
      */
     public function __construct(array $items, Pager $pager = null)
     {
+        $this->pager = $pager;
+
         foreach ($items as $item) {
-            ($item instanceof Record) || throw new RecordsException(
+            ($item instanceof Record) || throw new RecordListException(
                 'Each item must extend class %s, %s given', [Record::class, get_type($item)]
             );
         }
 
-        parent::__construct($items);
-
-        // Set pager & lock.
-        $this->pager = $pager;
-        $this->readOnly(true);
+        // State "readOnly" can be changed calling readOnly() or lock()/unlock().
+        parent::__construct($items, readOnly: true);
     }
 
     /**
@@ -78,7 +77,7 @@ class Records extends ItemCollection
         if ($deep) {
             $items = [];
             foreach ($this->items() as $item) {
-                $items[] = $item->toArray();
+                $items[] = ($item instanceof Record) ? $item->toArray() : $item;
             }
         } else {
             $items = parent::toArray();
