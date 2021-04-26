@@ -32,8 +32,9 @@ class RecordList extends ItemCollection
      *
      * @param array                 $items
      * @param froq\pager\Pager|null $pager
+     * @param bool|null             $readOnly
      */
-    public function __construct(array $items, Pager $pager = null)
+    public function __construct(array $items, Pager $pager = null, bool $readOnly = null)
     {
         $this->pager = $pager;
 
@@ -44,7 +45,7 @@ class RecordList extends ItemCollection
         }
 
         // State "readOnly" can be changed calling readOnly() or lock()/unlock().
-        parent::__construct($items, readOnly: false);
+        parent::__construct($items, readOnly: $readOnly);
     }
 
     /**
