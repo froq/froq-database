@@ -164,10 +164,10 @@ trait ValidationTrait
      * Run a validation for given data by rules & options, filtering/sanitizing `$data` argument and filling
      * `$errors` argument when validation fails.
      *
-     * @param  array &$data
-     * @param  array  $rules
-     * @param  array  $options
-     * @param  array &$errors
+     * @param  ?array &$data
+     * @param  ?array  $rules
+     * @param  ?array  $options
+     * @param  ?array &$errors
      * @return bool
      * @throws froq\common\Exception
      * @internal
