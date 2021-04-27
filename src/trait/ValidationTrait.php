@@ -26,11 +26,11 @@ trait ValidationTrait
     /** @var array, array */
     protected array $validationRules, $validationOptions;
 
-    /** @var ?array */
-    protected ?array $validationErrors = null;
+    /** @var array|null */
+    protected array|null $validationErrors = null;
 
-    /** @var ?bool */
-    protected ?bool $validated = null;
+    /** @var bool|null */
+    protected bool|null $validated = null;
 
     /**
      * Get validated state.
@@ -49,7 +49,7 @@ trait ValidationTrait
      */
     public final function errors(): array|null
     {
-        return $this->getValidationErrors();
+        return $this->validationErrors;
     }
 
     /**
