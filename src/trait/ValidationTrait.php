@@ -53,16 +53,6 @@ trait ValidationTrait
     }
 
     /**
-     * Get fields from validation rules.
-     *
-     * @return array|null
-     */
-    public final function fields(): array|null
-    {
-        return isset($this->validationRules) ? array_keys($this->validationRules) : null;
-    }
-
-    /**
      * Set validation rules.
      *
      * @param  array $validationRules
