@@ -989,7 +989,7 @@ final class Database
     }
 
     /**
-     * Init an `Sql` object with/without given params.
+     * Init a `Sql` object with/without given params.
      *
      * @param  string     $in
      * @param  array|null $params
