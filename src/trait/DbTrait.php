@@ -28,10 +28,10 @@ trait DbTrait
     /**
      * Get db property.
      *
-     * @return froq\database\Database|null
+     * @return froq\database\Database
      */
-    public final function db(): Database|null
+    public final function db(): Database
     {
-        return $this->db ?? null;
+        return $this->db;
     }
 }
