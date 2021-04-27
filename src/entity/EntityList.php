@@ -7,55 +7,58 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{EntityException, EntityListInterface, EntityInterface};
+use froq\database\entity\{EntityListException, Entity};
+use froq\common\interface\Arrayable;
 use froq\collection\Collection;
 use froq\pager\Pager;
-use ArrayIterator;
+use Countable, JsonSerializable, ArrayAccess, IteratorAggregate, ArrayIterator;
 
 /**
- * Abstract Entity Array.
+ * Entity List.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\AbstractEntityList
+ * @object  froq\database\entity\EntityList
  * @author  Kerem Güneş
- * @since   4.2
+ * @since   4.2, 5.0 Dropped abstract-ness.
  */
-abstract class AbstractEntityList implements EntityListInterface
+class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess, IteratorAggregate
 {
-    /** @var array<froq\database\entity\EntityInterface> */
+    /** @var array<froq\database\entity\Entity> */
     private array $items = [];
 
     /** @var string @since 4.8 */
     private string $itemsClass;
 
-    /** @var ?froq\pager\Pager */
-    protected ?Pager $pager;
+    /** @var froq\pager\Pager|null */
+    protected Pager|null $pager;
 
     /**
      * Constructor.
      *
      * @param array|null            $items
      * @param froq\pager\Pager|null $pager
-     * @param array|bool|null       $drop
-     * @param bool                  $clean
-     * @param array|null            $arguments Constructor arguments of the target entity.
+     * @param string|null           $itemsClass     The target entity.
+     * @param ...                   $itemsClassArgs The target entity constructor arguments.
      */
-    public function __construct(array $items = null, Pager $pager = null, array|bool $drop = null, bool $clean = false,
-        array $arguments = null)
+    public function __construct(array $items = null, Pager $pager = null, string $itemsClass = null,
+        ...$itemsClassArgs)
     {
-        // Create entity class (eg: FooEntityList => FooEntity)
-        $this->itemsClass = substr(static::class, 0, -4);
+        // Set entity class with given or from name (eg: FooEntityList => FooEntity)
+        $this->itemsClass = $itemsClass ?? substr(static::class, 0, -4);
 
-        class_exists($this->itemsClass) || throw new EntityException(
-            'Entity class %s not exists, be sure it is defined under the same namespace & directory',
-            $this->itemsClass
+        class_exists($this->itemsClass) || throw new EntityListException(
+            'Entity class `%s` not exists, be sure it is defined under the same namespace & directory '.
+            'or pass $itemsClass argument to constructor', [$this->itemsClass]
         );
 
         // Convert items to related entity.
         if ($items) foreach ($items as $item) {
-            if ($item) {
-                $this->items[] = new $this->itemsClass($item, $drop, $clean, ...(array) $arguments);
+            // Item may be an array or entity.
+            if (!$item instanceof Entity) {
+                $item = new $this->itemsClass($item, ...$itemsClassArgs);
             }
+
+            $this->add($item);
         }
 
         $this->pager = $pager;
@@ -66,10 +69,9 @@ abstract class AbstractEntityList implements EntityListInterface
      *
      * @return array
      */
-    public function __serialize()
+    public function __serialize(): array
     {
-        return ['items' => $this->items, 'itemsClass' => $this->itemsClass,
-                'pager' => $this->pager];
+        return ['items' => $this->items, 'itemsClass' => $this->itemsClass, 'pager' => $this->pager];
     }
 
     /**
@@ -80,8 +82,7 @@ abstract class AbstractEntityList implements EntityListInterface
      */
     public function __unserialize(array $data)
     {
-        ['items' => $this->items, 'itemsClass' => $this->itemsClass,
-         'pager' => $this->pager] = $data;
+        ['items' => $this->items, 'itemsClass' => $this->itemsClass, 'pager' => $this->pager] = $data;
     }
 
     /**
@@ -96,13 +97,42 @@ abstract class AbstractEntityList implements EntityListInterface
     }
 
     /**
+     * Add an item into data stack with next index.
+     *
+     * @param  froq\database\entity\Entity $item
+     * @since  5.0
+     * @return self
+     */
+    public final function add(Entity $item): self
+    {
+        $this->items[] = $item;
+
+        return $this;
+    }
+
+    /**
+     * Set an item onto data stack with given index.
+     *
+     * @param  int                              $i
+     * @param  froq\database\entity\Entity|null $item
+     * @since  5.0
+     * @return self
+     */
+    public final function set(int $i, Entity|null $item): self
+    {
+        $this->items[$i] = $item;
+
+        return $this;
+    }
+
+    /**
      * Get an item from data stack with given index.
      *
      * @param  int $i
-     * @return froq\database\entity\EntityInterface|null
+     * @return froq\database\entity\Entity|null
      * @since  4.11
      */
-    public final function get(int $i): EntityInterface|null
+    public final function get(int $i): Entity|null
     {
         return $this->items[$i] ?? null;
     }
@@ -120,7 +150,7 @@ abstract class AbstractEntityList implements EntityListInterface
     /**
      * Get all items.
      *
-     * @return array<froq\database\entity\EntityInterface|null>
+     * @return array<froq\database\entity\Entity|null>
      */
     public final function items(): array
     {
@@ -141,9 +171,9 @@ abstract class AbstractEntityList implements EntityListInterface
     /**
      * Get first item or return null if no items.
      *
-     * @return froq\database\entity\EntityInterface|null
+     * @return froq\database\entity\Entity|null
      */
-    public final function first(): EntityInterface|null
+    public final function first(): Entity|null
     {
         return $this->get(0);
     }
@@ -151,11 +181,11 @@ abstract class AbstractEntityList implements EntityListInterface
     /**
      * Get last item or return null if no items.
      *
-     * @return froq\database\entity\EntityInterface|null
+     * @return froq\database\entity\Entity|null
      */
-    public final function last(): EntityInterface|null
+    public final function last(): Entity|null
     {
-        return $this->get(count($this->items) - 1);
+        return $this->get($this->count() - 1);
     }
 
     /**
@@ -347,19 +377,19 @@ abstract class AbstractEntityList implements EntityListInterface
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\entity\EntityException
+     * @throws     froq\database\entity\EntityListException
      */
     public final function offsetSet($i, $item)
     {
-        throw new EntityException('No set() allowed for ' . static::class);
+        throw new EntityListException('No set() allowed for ' . static::class);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\entity\EntityException
+     * @throws     froq\database\entity\EntityListException
      */
     public final function offsetUnset($i)
     {
-        throw new EntityException('No unset() allowed for ' . static::class);
+        throw new EntityListException('No unset() allowed for ' . static::class);
     }
 }

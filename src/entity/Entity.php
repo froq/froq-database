@@ -7,19 +7,20 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{EntityException, EntityInterface};
+use froq\database\entity\EntityException;
+use froq\common\interface\Arrayable;
 use froq\collection\Collection;
-use ArrayIterator, Traversable, Error;
+use Countable, JsonSerializable, ArrayAccess, IteratorAggregate, ArrayIterator, Traversable, Error;
 
 /**
- * Abstract Entity.
+ * Entity.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\AbstractEntity
+ * @object  froq\database\entity\Entity
  * @author  Kerem Güneş
- * @since   4.2
+ * @since   4.2, 5.0 Dropped abstract-ness.
  */
-abstract class AbstractEntity implements EntityInterface
+class Entity implements Arrayable, Countable, JsonSerializable, ArrayAccess, IteratorAggregate
 {
     /**
      * Constructor.
@@ -126,37 +127,6 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Magic - call: provide an ability such calls `setId()`, `getId()` etc. on extender classes, throw an
-     * `EntityException` if an invalid call comes.
-     *
-     * @param  string $call
-     * @param  array  $callArgs
-     * @return any
-     * @throws froq\database\entity\EntityException
-     * @todo   Drop?
-     */
-    public function __call(string $call, array $callArgs)
-    {
-        // Eg: id().
-        if (property_exists($this, $call)) {
-            return $callArgs ? $this->__set($call, $callArgs[0])
-                             : $this->__get($call);
-        }
-
-        $var = lcfirst(substr($call, 3));
-
-        // Eg: setId(), getId().
-        if (str_starts_with($call, 'set')) {
-            return $callArgs ? $this->__set($var, $callArgs[0]) : throw new EntityException(
-                'No call argument given for %s() call on entity %s', [$call, static::class]);
-        } elseif (str_starts_with($call, 'get')) {
-            return $this->__get($var);
-        }
-
-        throw new EntityException('Invalid call as %s() on entity %s', [$call, static::class]);
-    }
-
-    /**
      * Check whether a var set on entity.
      *
      * @param  string $var
@@ -210,7 +180,7 @@ abstract class AbstractEntity implements EntityInterface
     }
 
     /**
-     * Get a var value if it set.
+     * Get a var value.
      *
      * @param  string $var
      * @return any|null
@@ -280,7 +250,7 @@ abstract class AbstractEntity implements EntityInterface
     /**
      * Drop one var / many vars.
      *
-     * @param  string|array $vars
+     * @param  string|array<string> $vars
      * @return self
      * @since  5.0
      */
@@ -298,7 +268,7 @@ abstract class AbstractEntity implements EntityInterface
      *
      * @return int|string|null
      */
-    public function id(): int|string|null
+    public function id()
     {
         return $this->get('id');
     }
@@ -332,6 +302,7 @@ abstract class AbstractEntity implements EntityInterface
     /**
      * Filter vars.
      *
+     * @param  callable|null $func
      * @return self
      * @since  4.12
      */
@@ -386,8 +357,7 @@ abstract class AbstractEntity implements EntityInterface
      */
     public function toArray(bool $deep = false): array
     {
-        return !$deep ? $this->getVars()
-                      : self::toArrayDeep($this->getVars());
+        return !$deep ? $this->getVars() : self::toArrayDeep($this->getVars());
     }
 
     /**
@@ -461,7 +431,7 @@ abstract class AbstractEntity implements EntityInterface
     {
         if ($in && is_object($in)) {
             $out = (array) ($in instanceof Traversable ? iterator_to_array($in) : (
-                $in instanceof EntityInterface ? $in->toArray(true) : get_object_vars($in)
+                $in instanceof self ? $in->toArray(true) : get_object_vars($in)
             ));
         } else {
             $out = (array) $in;
@@ -469,7 +439,7 @@ abstract class AbstractEntity implements EntityInterface
 
         // Overwrite.
         foreach ($out as $var => $value) {
-            if ($value && $value instanceof EntityInterface) {
+            if ($value && $value instanceof self) {
                 $out[$var] = $value->toArray(true);
                 continue;
             }
