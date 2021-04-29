@@ -5,25 +5,29 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\entity;
+namespace froq\database\object;
 
-use froq\database\entity\{EntityListException, Entity};
-use froq\common\interface\Arrayable;
+use froq\database\object\{ObjectListException, ObjectListInterface, ObjectInterface};
 use froq\collection\Collection;
 use froq\pager\Pager;
-use Countable, JsonSerializable, ArrayAccess, IteratorAggregate, ArrayIterator;
+use ArrayIterator;
 
 /**
- * Entity List.
+ * Object List.
  *
- * @package froq\database\entity
- * @object  froq\database\entity\EntityList
+ * Represents a list-like collection entity that used for data stacking the subclasses derived from
+ * AbstractObject (ObjectInterface) class, and also has many utility methods all ready-to-use.
+ *
+ * Although it has no abstract method, it is abstracted due to it is not useable as it standalone.
+ *
+ * @package froq\database\object
+ * @object  froq\database\object\AbstractObjectList
  * @author  Kerem Güneş
- * @since   4.2, 5.0 Dropped abstract-ness.
+ * @since   4.2, 5.0 Moved in "object" subpackage.
  */
-class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess, IteratorAggregate
+abstract class AbstractObjectList implements ObjectListInterface
 {
-    /** @var array<froq\database\entity\Entity> */
+    /** @var array<froq\database\object\ObjectInterface> */
     private array $items = [];
 
     /** @var string @since 4.8 */
@@ -37,24 +41,24 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
      *
      * @param array|null            $items
      * @param froq\pager\Pager|null $pager
-     * @param string|null           $itemsClass     The target entity.
-     * @param ...                   $itemsClassArgs The target entity constructor arguments.
+     * @param string|null           $itemsClass     The target object.
+     * @param ...                   $itemsClassArgs The target object constructor arguments.
      */
     public function __construct(array $items = null, Pager $pager = null, string $itemsClass = null,
         ...$itemsClassArgs)
     {
-        // Set entity class with given or from name (eg: FooEntityList => FooEntity)
+        // Set object class with given or from name (eg: FooObjectList => FooObject)
         $this->itemsClass = $itemsClass ?? substr(static::class, 0, -4);
 
-        class_exists($this->itemsClass) || throw new EntityListException(
-            'Entity class `%s` not exists, be sure it is defined under the same namespace & directory '.
+        class_exists($this->itemsClass) || throw new ObjectListException(
+            'Object class `%s` not exists, be sure it is defined under the same namespace & directory '.
             'or pass $itemsClass argument to constructor', [$this->itemsClass]
         );
 
-        // Convert items to related entity.
+        // Convert items to related object.
         if ($items) foreach ($items as $item) {
-            // Item may be an array or entity.
-            if (!$item instanceof Entity) {
+            // Item may be an array or object.
+            if (!$item instanceof ObjectInterface) {
                 $item = new $this->itemsClass($item, ...$itemsClassArgs);
             }
 
@@ -99,11 +103,11 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
     /**
      * Add an item into data stack with next index.
      *
-     * @param  froq\database\entity\Entity $item
+     * @param  froq\database\object\ObjectInterface $item
      * @since  5.0
      * @return self
      */
-    public final function add(Entity $item): self
+    public final function add(ObjectInterface $item): self
     {
         $this->items[] = $item;
 
@@ -113,12 +117,12 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
     /**
      * Set an item onto data stack with given index.
      *
-     * @param  int                              $i
-     * @param  froq\database\entity\Entity|null $item
+     * @param  int $i
+     * @param  froq\database\object\ObjectInterface|null $item
      * @since  5.0
      * @return self
      */
-    public final function set(int $i, Entity|null $item): self
+    public final function set(int $i, ObjectInterface|null $item): self
     {
         $this->items[$i] = $item;
 
@@ -129,10 +133,10 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
      * Get an item from data stack with given index.
      *
      * @param  int $i
-     * @return froq\database\entity\Entity|null
+     * @return froq\database\object\ObjectInterface|null
      * @since  4.11
      */
-    public final function get(int $i): Entity|null
+    public final function get(int $i): ObjectInterface|null
     {
         return $this->items[$i] ?? null;
     }
@@ -150,7 +154,7 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
     /**
      * Get all items.
      *
-     * @return array<froq\database\entity\Entity|null>
+     * @return array<froq\database\object\ObjectInterface|null>
      */
     public final function items(): array
     {
@@ -171,9 +175,9 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
     /**
      * Get first item or return null if no items.
      *
-     * @return froq\database\entity\Entity|null
+     * @return froq\database\object\ObjectInterface|null
      */
-    public final function first(): Entity|null
+    public final function first(): ObjectInterface|null
     {
         return $this->get(0);
     }
@@ -181,9 +185,9 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
     /**
      * Get last item or return null if no items.
      *
-     * @return froq\database\entity\Entity|null
+     * @return froq\database\object\ObjectInterface|null
      */
-    public final function last(): Entity|null
+    public final function last(): ObjectInterface|null
     {
         return $this->get($this->count() - 1);
     }
@@ -199,7 +203,7 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
     }
 
     /**
-     * Empty entity list dropping all vars.
+     * Empty object list dropping all vars.
      *
      * @return self
      * @since  5.0
@@ -214,7 +218,7 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
     }
 
     /**
-     * Check whether entity list is empty.
+     * Check whether object list is empty.
      *
      * @return bool
      * @since  5.0
@@ -309,7 +313,7 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
     }
 
     /**
-     * Create a collection from entity vars.
+     * Create a collection from object vars.
      *
      * @return froq\collection\Collection
      * @since  4.8
@@ -377,19 +381,19 @@ class EntityList implements Arrayable, Countable, JsonSerializable, ArrayAccess,
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\entity\EntityListException
+     * @throws     froq\database\object\ObjectListException
      */
     public final function offsetSet($i, $item)
     {
-        throw new EntityListException('No set() allowed for ' . static::class);
+        throw new ObjectListException('No set() allowed for ' . static::class);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\entity\EntityListException
+     * @throws     froq\database\object\ObjectListException
      */
     public final function offsetUnset($i)
     {
-        throw new EntityListException('No unset() allowed for ' . static::class);
+        throw new ObjectListException('No unset() allowed for ' . static::class);
     }
 }

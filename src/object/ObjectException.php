@@ -5,17 +5,17 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\entity;
+namespace froq\database\object;
 
 use froq\database\DatabaseException;
 
 /**
- * Entity List Exception.
+ * Object Exception.
  *
- * @package froq\database\entity
- * @object  froq\database\entity\EntityListException
+ * @package froq\database\object
+ * @object  froq\database\object\ObjectException
  * @author  Kerem Güneş
- * @since   5.0
+ * @since   4.2, 5.0
  */
-class EntityListException extends DatabaseException
+class ObjectException extends DatabaseException
 {}

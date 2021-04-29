@@ -5,22 +5,26 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\entity;
+namespace froq\database\object;
 
-use froq\database\entity\EntityException;
-use froq\common\interface\Arrayable;
+use froq\database\object\{ObjectException, ObjectInterface};
 use froq\collection\Collection;
-use Countable, JsonSerializable, ArrayAccess, IteratorAggregate, ArrayIterator, Traversable, Error;
+use ArrayIterator, Traversable, Error;
 
 /**
- * Entity.
+ * Abstract Object.
  *
- * @package froq\database\entity
- * @object  froq\database\entity\Entity
+ * Represents a collection-like entity that used for data preparations for the presentation layer, and also
+ * has many utility methods all ready-to-use.
+ *
+ * Although it has no abstract method, it is abstracted due to it is not useable as it standalone.
+ *
+ * @package froq\database\object
+ * @object  froq\database\object\AbstractObject
  * @author  Kerem Güneş
- * @since   4.2, 5.0 Dropped abstract-ness.
+ * @since   4.2, 5.0 Moved as "object" subpackage.
  */
-class Entity implements Arrayable, Countable, JsonSerializable, ArrayAccess, IteratorAggregate
+abstract class AbstractObject implements ObjectInterface
 {
     /**
      * Constructor.
@@ -127,7 +131,7 @@ class Entity implements Arrayable, Countable, JsonSerializable, ArrayAccess, Ite
     }
 
     /**
-     * Check whether a var set on entity.
+     * Check whether a var set on object.
      *
      * @param  string $var
      * @return bool
@@ -138,7 +142,7 @@ class Entity implements Arrayable, Countable, JsonSerializable, ArrayAccess, Ite
     }
 
     /**
-     * Check whether a var defined on entity.
+     * Check whether a var defined on object.
      *
      * @param  string $var
      * @return bool
@@ -274,7 +278,7 @@ class Entity implements Arrayable, Countable, JsonSerializable, ArrayAccess, Ite
     }
 
     /**
-     * Empty entity dropping all vars.
+     * Empty object dropping all vars.
      *
      * @return self
      * @since  5.0
@@ -289,7 +293,7 @@ class Entity implements Arrayable, Countable, JsonSerializable, ArrayAccess, Ite
     }
 
     /**
-     * Check whether entity is empty.
+     * Check whether object is empty.
      *
      * @return bool
      * @since  4.11
@@ -340,7 +344,7 @@ class Entity implements Arrayable, Countable, JsonSerializable, ArrayAccess, Ite
     }
 
     /**
-     * Create a collection from entity vars.
+     * Create a collection from object vars.
      *
      * @param  bool $deep
      * @return froq\collection\Collection
@@ -404,20 +408,20 @@ class Entity implements Arrayable, Countable, JsonSerializable, ArrayAccess, Ite
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\entity\EntityException
+     * @throws     froq\database\object\ObjectException
      */
     public final function offsetSet($var, $value)
     {
-        throw new EntityException('No set() allowed for ' . static::class);
+        throw new ObjectException('No set() allowed for ' . static::class);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\entity\EntityException
+     * @throws     froq\database\object\ObjectException
      */
     public final function offsetUnset($var)
     {
-        throw new EntityException('No unset() allowed for ' . static::class);
+        throw new ObjectException('No unset() allowed for ' . static::class);
     }
 
     /**
