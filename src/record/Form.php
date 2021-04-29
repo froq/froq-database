@@ -67,10 +67,10 @@ class Form implements Arrayable, ArrayAccess
         // Try to use active app database object.
         $db ??= function_exists('app') ? app()->database() : null;
 
-        if ($db == null) {
-            throw new FormException('No database given to deal, be sure running this module with froq\app'
-                . ' module and be sure `database` option exists in app config or pass $db argument');
-        }
+        $db || throw new RecordException(
+            'No database given to deal, be sure running this module with `froq\app` ' .
+            'module and be sure `database` option exists in app config or pass $db argument'
+        );
 
         $this->db = $db;
 
