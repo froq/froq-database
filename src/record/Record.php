@@ -502,9 +502,7 @@ class Record implements Arrayable, ArrayAccess
 
         [$table, $primary, $id] = $this->pack($id, primary: true);
 
-        if ($id == null) {
-            throw new RecordException('Empty primary value given for find()');
-        }
+        $id || throw new RecordException('Empty primary value given for find()');
 
         $query = $this->query()->equal($primary, $id);
         $where = $this->query->pull('where');
@@ -544,9 +542,7 @@ class Record implements Arrayable, ArrayAccess
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
-        if ($ids == null) {
-            throw new RecordException('Empty primary values given for findAll()');
-        }
+        $ids || throw new RecordException('Empty primary values given for findAll()');
 
         $query = $this->query()->equal($primary, [$ids]);
         $where = $this->query->pull('where');
