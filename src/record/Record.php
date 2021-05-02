@@ -43,8 +43,8 @@ class Record implements Arrayable, ArrayAccess
     /** @var froq\database\Query */
     protected Query $query;
 
-    /** @var int|string */
-    private int|string $id;
+    /** @var int|string|null */
+    private int|string|null $id;
 
     /** @var bool */
     private bool $saved;
@@ -213,10 +213,10 @@ class Record implements Arrayable, ArrayAccess
     /**
      * Set id.
      *
-     * @param  int|string $id
+     * @param  int|string|null $id
      * @return self
      */
-    public final function setId(int|string $id): self
+    public final function setId(int|string|null $id): self
     {
         return $this->id($id);
     }
