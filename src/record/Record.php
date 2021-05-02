@@ -871,8 +871,12 @@ class Record implements Arrayable, ArrayAccess
      */
     private function copy(string $table = null, string $primary = null): static
     {
-        $that = new static();
-        $that->db = $this->db;
+        if (static::class == self::class) {
+            $that = new self(db: $this->db);
+        } else {
+            $that = new static();
+            $that->db = $this->db;
+        }
 
         $that->setTable($table ?? $this->getTable())
              ->setTablePrimary($primary ?? $this->getTablePrimary());
