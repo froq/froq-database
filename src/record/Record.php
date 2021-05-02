@@ -438,6 +438,8 @@ class Record implements Arrayable, ArrayAccess
         if (!$new) {
             $id = $data[$primary] ?? null;
             $id || throw new RecordException('Empty primary value given for save()');
+        } else {
+            unset($data[$primary]);
         }
 
         // When no transaction wrap requested.
