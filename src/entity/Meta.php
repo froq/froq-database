@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\MetaException;
+use froq\util\Objects;
 use Reflector;
 
 class Meta
@@ -31,6 +32,9 @@ class Meta
                 case 'entityList':
                 case 'repository':
                     $value = str_replace('.', '\\', $value);
+                    if (!str_contains($value, '\\')) {
+                        $value = Objects::getNamespace($class) . '\\' . $value;
+                    }
                     break;
             }
         }
