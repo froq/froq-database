@@ -11,23 +11,6 @@ use froq\database\entity\Meta;
 
 final class EntityPropertyMeta extends Meta
 {
-    public final function setSetterMethod(string $method): void
-    {
-        $this->data['@setter'] = $method;
-    }
-    public final function getSetterMethod(): string|null
-    {
-        return $this->data['@setter'] ?? null;
-    }
-    public final function setGetterMethod(string $method): void
-    {
-        $this->data['@getter'] = $method;
-    }
-    public final function getGetterMethod(): string|null
-    {
-        return $this->data['@getter'] ?? null;
-    }
-
     public function getEntityClass(): string|null
     {
         return $this->getDataField('entity');
@@ -95,4 +78,21 @@ final class EntityPropertyMeta extends Meta
         }
         return null;
     }
+
+    // public final function setSetterMethod(string $method): void
+    // {
+    //     $this->data['@setter'] = $method;
+    // }
+    // public final function getSetterMethod(): string|null
+    // {
+    //     return $this->data['@setter'] ?? null;
+    // }
+    // public final function setGetterMethod(string $method): void
+    // {
+    //     $this->data['@getter'] = $method;
+    // }
+    // public final function getGetterMethod(): string|null
+    // {
+    //     return $this->data['@getter'] ?? null;
+    // }
 }
