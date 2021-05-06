@@ -60,10 +60,10 @@ final class EntityPropertyMeta extends Meta
         return isset($this->data['entityList']);
     }
 
-    // public function isLink(): bool
-    // {
-    //     return $this->getLinkTable() != null;
-    // }
+    public function isLink(): bool
+    {
+        return $this->getLinkTable() != null;
+    }
     public function getLinkTable(): string|null
     {
         return $this->getDataField('link.to');
