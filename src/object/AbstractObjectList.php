@@ -18,7 +18,7 @@ use ArrayIterator;
  * Represents a list-like collection entity that used for data stacking the subclasses derived from
  * AbstractObject (ObjectInterface) class, and also has many utility methods all ready-to-use.
  *
- * Although it has no abstract method, it is abstracted due to it is not useable as it standalone.
+ * Although it has no abstract method, it is abstracted due to it is not useable as standalone.
  *
  * @package froq\database\object
  * @object  froq\database\object\AbstractObjectList
@@ -34,7 +34,7 @@ abstract class AbstractObjectList implements ObjectListInterface
     private string $itemsClass;
 
     /** @var froq\pager\Pager|null */
-    protected Pager|null $pager;
+    protected Pager|null $pager = null;
 
     /**
      * Constructor.
