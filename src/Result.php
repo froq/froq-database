@@ -245,11 +245,6 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function row(int $i): array|object|null
     {
-        // Reverse, eg: for last -1.
-        if ($i < 0) {
-            $i = $this->count + $i;
-        }
-
         return $this->rows[$i] ?? null;
     }
 
@@ -257,14 +252,13 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      * Get all rows.
      *
      * @param  int|null $i
-     * @return array<array|object>|null
+     * @return array<array|object>|object|null
      */
-    public function rows(int $i = null): array|null
+    public function rows(int $i = null): array|object|null
     {
         if ($i !== null) {
-            return $this->rows[$i] ?? null;
+            return $this->row($i);
         }
-
         return $this->rows;
     }
 
