@@ -27,7 +27,7 @@ final class MetaParser
         );
 
         /** @var froq\database\entity\EntityClassMeta */
-        $meta = MetaFactory::init(Meta::TYPE_CLASS, $data, $class, $class);
+        $meta = MetaFactory::init(Meta::TYPE_CLASS, $class, $class, $data);
         $meta->setReflector($ref);
 
         // And add properties.
@@ -48,9 +48,9 @@ final class MetaParser
                 /** @var froq\database\entity\EntityPropertyMeta */
                 $prop = MetaFactory::init(
                     Meta::TYPE_PROPERTY,
-                    data: self::dataFromReflection($pref),
                     name: $cname . '.' . $pname, // Fully qualified property name.
                     class: $cname,
+                    data: self::dataFromReflection($pref),
                 );
 
                 // // Add setter/getter methods (if defined & public).
@@ -136,11 +136,6 @@ final class MetaParser
                     [$ref->name, $class, strtolower($error)]
                 );
             }
-        }
-
-        // Dots may be used for entity (class) names.
-        if (isset($data['entity']) && str_contains($data['entity'], '.')) {
-            $data['entity'] = str_replace('.', '\\', $data['entity']);
         }
 
         return $data;
