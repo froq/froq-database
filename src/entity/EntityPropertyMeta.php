@@ -45,7 +45,7 @@ final class EntityPropertyMeta extends Meta
 
     public function isLink(): bool
     {
-        return $this->getLinkTable() != null;
+        return isset($this->data['link']['to']);
     }
     public function getLinkTable(): string|null
     {
@@ -59,6 +59,26 @@ final class EntityPropertyMeta extends Meta
     {
         return $this->getDataField('link.where');
     }
+    public function getLinkMethod(): string|null
+    {
+        return $this->getDataField('link.method');
+    }
+    // public function getLinkMethod(): string|null
+    // {
+    //     $method = $this->getDataField('link.method');
+    //     if ($method && is_array($method)) {
+    //         $method = $method[0];
+    //     }
+    //     return $method;
+    // }
+    // public function getLinkMethodArgument(): string|null
+    // {
+    //     $method = $this->getDataField('link.method');
+    //     if ($method && is_array($method)) {
+    //         return $method[1];
+    //     }
+    //     return null;
+    // }
     public function getLinkLimit(): int|null
     {
         $limit = $this->getDataField('link.limit');
@@ -73,6 +93,7 @@ final class EntityPropertyMeta extends Meta
                 $table,
                 $this->getLinkColumn(),
                 $this->getLinkCondition(),
+                $this->getLinkMethod() ?: 'one-to-one', // As default.
                 $this->getLinkLimit(),
             ];
         }
