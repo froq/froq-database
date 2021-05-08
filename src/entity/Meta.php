@@ -18,48 +18,33 @@ class Meta
                  TYPE_PROPERTY = 3;
 
     protected int $type;
-    protected array $data;
-    protected string $name; // @todo class name, var name
+    protected string $name;
     protected string $class;
+    protected array $data = [];
 
     private Reflector $reflector;
 
-    public function __construct(int $type, array $data, string $name, string $class)
+    public function __construct(int $type, string $name, string $class, array $data = null)
     {
-        foreach ($data as $key => &$value) {
-            switch ($key) {
-                case 'entity':
-                case 'entityList':
-                case 'repository':
-                    $value = str_replace('.', '\\', $value);
-                    if (!str_contains($value, '\\')) {
-                        $value = Objects::getNamespace($class) . '\\' . $value;
-                    }
-                    break;
-            }
-        }
-
         $this->type  = $type;
-        $this->data  = $data;
         $this->name  = $name;
         $this->class = $class;
+
+        // Data may be delayed.
+        $data && $this->setData($data);
     }
 
     public final function getType(): int
     {
         return $this->type;
     }
-    public final function getData(): array
+    public final function getName(): string
     {
-        return $this->data;
+        return $this->name;
     }
     public final function getClass(): string
     {
         return $this->class;
-    }
-    public final function getName(): string
-    {
-        return $this->name;
     }
 
     public final function getOption(string $name, $default = null): bool
@@ -85,12 +70,37 @@ class Meta
         return $this->type == self::TYPE_PROPERTY;
     }
 
+    public final function setData(array $data): void
+    {
+        foreach ($data as $key => &$value) {
+            switch ($key) {
+                case 'entity':
+                case 'entityList':
+                case 'repository':
+                    // Dots mean namespace separator ("\").
+                    $value = str_replace('.', '\\', $value);
+
+                    // When no fully qualified class name given.
+                    if (!str_contains($value, '\\')) {
+                        $value = Objects::getNamespace($this->class) . '\\' . $value;
+                    }
+                    break;
+            }
+        }
+
+        $this->data = $data;
+    }
+    public final function getData(): array|null
+    {
+        return $this->data ?: null;
+    }
+
     public final function setReflector(Reflector $reflector): void
     {
         $this->reflector = $reflector;
     }
-    public final function getReflector(): Reflector
+    public final function getReflector(): Reflector|null
     {
-        return $this->reflector;
+        return $this->reflector ?? null;
     }
 }
