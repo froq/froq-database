@@ -11,7 +11,6 @@ use froq\database\entity\{ManagerException, MetaParser, AbstractEntity};
 use froq\database\record\{Form, Record};
 use froq\database\{Database, Query, Result, trait\DbTrait};
 use froq\validation\Rule as ValidationRule;
-use froq\util\Objects;
 use ReflectionProperty, Throwable;
 
 final class Manager
@@ -68,8 +67,9 @@ final class Manager
         self::assignEntityProps($entity, $record, $cmeta);
         self::assignEntityRecord($entity, $record);
 
+        // Fill linked properties.
         if ($record->isSaved()) {
-            $this->fillLinks($cmeta, $entity);
+            $this->loadLinkedProps($cmeta, $entity);
         }
 
         return $entity;
@@ -78,13 +78,12 @@ final class Manager
     public function find(object $entity, int|string $id = null): object|null
     {
         $cmeta = MetaParser::parse($entity::class);
-        // prd($cmeta,1);
 
         if ($id === null) {
             $id = (string) $id;
             $primary = $cmeta->getTablePrimary();
-            if (isset($entity->{$primary})) {
-                $id = $entity->{$primary};
+            if (isset($entity->$primary)) {
+                $id = $entity->$primary;
             } elseif (is_callable([$entity, 'getId'])) {
                 $id = $entity->getId();
             }
@@ -93,7 +92,7 @@ final class Manager
         $fields = '*';
         // Get select fields if available.
         if (is_callable([$entity, 'fields'])) {
-            $fields = $entity->fields();
+            $fields = $entity::fields();
         }
 
         $record = $this->initRecord($cmeta)
@@ -104,8 +103,11 @@ final class Manager
         self::assignEntityProps($entity, $record, $cmeta);
         self::assignEntityRecord($entity, $record);
 
+        // Fill linked properties.
         if ($record->isFinded()) {
-            $this->fillLinks($cmeta, $entity);
+            foreach ($this->getLinkedProps($cmeta) as $prop) {
+                $this->loadLinkedProps($prop, $entity);
+            }
         }
 
         return $entity;
@@ -131,7 +133,7 @@ final class Manager
             }
             // When "validations()" method exists on entity class.
             elseif (is_callable([$entity, 'validations'])) {
-                $validations = $entity->validations();
+                $validations = $entity::validations();
             }
             // When propties have "validation" metadata on entity class.
             else {
@@ -159,93 +161,115 @@ final class Manager
         );
     }
 
-    private function fillLinks(EntityClassMeta $cmeta, object $entity): void
+    private function getLinkedProps(EntityClassMeta $cmeta): array
     {
+        return array_filter($cmeta->getProperties(), fn($p) => $p->isLink());
+    }
+
+    private function loadLinkedProps(EntityPropertyMeta $pmeta, object $entity): void
+    {
+        [$table, $column, $condition, $method, $limit] = $pmeta->packLinkStuff();
+
+        $class = $pmeta->getEntityClass();
+        $class ?: throw new ManagerException(
+            'No valid link entity provided in `%s` meta',
+            $pmeta->getName()
+        );
+
+        // Check non-link / non-valid properties.
+        $column ?: throw new ManagerException(
+            'No valid link column provided in `%s` meta',
+            $pmeta->getName()
+        );
+
+        $pcmeta = MetaParser::parse($class);
+
+        $fields = '*';
+        // Get select fields if available.
+        if (is_callable([$class, 'fields'])) {
+            $fields = $class::fields();
+        }
+
+        // Create a select query.
         $query = $this->db->initQuery();
+        $query->select($fields)->from($table);
 
-        foreach (($props = $cmeta->getProperties()) as $pname => $pmeta) {
-            // Unpack link stuff.
-            [$table, $column, $condition, $limit] = $pmeta->packLinkStuff();
+        // Given or default limit (if not disabled as "-1").
+        $limit = ($limit != -1) ? ($limit ?? 1000) : null;
 
-            // Skip non-link properties.
-            if ($table == null) {
-                continue;
-            }
+        switch ($method) {
+            case 'one-to-one':
+                $pfield = $pcmeta->getTablePrimary();
+                $pvalue = self::getPropertyValue($column, $entity);
 
-            $class = $pmeta->getEntityClass();
-            $class ?: throw new ManagerException(
-                'No valid link entity provided in `%s` meta',
-                $pmeta->getName()
-            );
+                // Update limit.
+                $limit = 1;
+                break;
+            case 'one-to-many':
+                $pfield = $column; // Reference column.
+                $pdmeta = MetaParser::parse($pmeta->getReflector()->getDeclaringClass()->name);
+                $pvalue = self::getPropertyValue($pdmeta->getTablePrimary(), $entity);
 
-            // Check non-link / non-valid properties.
-            $column ?: throw new ManagerException(
-                'No valid link column provided in `%s` meta',
-                $pmeta->getName()
-            );
+                unset($pdmeta);
+                break;
+        }
 
-            $props[$column] ?? throw new ManagerException(
-                'Entity `%s` has no property such `%s` to link `%s` entity',
-                [$cmeta->getName(), $column, $class]
-            );
+        // Apply link criteria.
+        $query->equal($pfield, $pvalue);
 
-            $pemeta = MetaParser::parse($class);
-            $pecolm = $props[$column];
+        // Apply link (row) limit.
+        $limit && $query->limit($limit);
 
-            // Create select query.
-            $query->select($pemeta->getPropertyNames())
-                  ->from($pemeta->getTable())
-                  ->equal(
-                    $pemeta->getTablePrimary(), // Primary key.
-                    $pecolm->getValue($entity), // Primary value.
-                  )
-            ;
+        // Apply where condition.
+        if ($condition != null) {
+            $query->where('(' . str_replace(
+                ['==', '&', '|'], ['=', 'AND', 'OR'],
+                $condition
+            ) . ')');
+        }
 
-            // Add given/default limit (if not disabled as "-1").
-            $limit = ($limit != -1) ? ($limit ?? 1000) : null;
+        prs($query->toString(1));
+        prs("---");
 
-            $limit && $query->limit($limit);
+        $propEntity     = new $class();
+        $propEntityList = ($listClass = $pmeta->getEntityListClass()) ? new $listClass() : null;
 
-            // Add where condition.
-            if ($condition != null) {
-                $query->where('(' . str_replace(
-                    ['==', '&', '|'], ['=', 'AND', 'OR'],
-                    $condition
-                ) . ')');
-            }
+        // $propEntity->setOwner($entity);
+        // $propEntityList?->setOwner($entity);
 
-            $propEntity     = new $class();
-            $propEntityList = ($classList = $pmeta->getEntityListClass()) ? new $classList() : null;
-
-            // An entity list.
-            if ($propEntityList != null) {
-                $data = (array) $query->getArrayAll($pager, $limit);
-                foreach ($data as $i=>$dat) {
-                    $propEntityClone = clone $propEntity;
-                    foreach ($dat as $name => $value) {
-                        self::setPropertyValue($pemeta->getProperty($name)->getReflector(),
-                            $propEntityClone, $value);
-                    }
-
-                    $propEntityList->add($propEntityClone);
+        // An entity list.
+        if ($propEntityList != null) {
+            $data = (array) $query->getArrayAll($pager, $limit);
+            foreach ($data as $dat) {
+                $propEntityClone = clone $propEntity;
+                foreach ($dat as $name => $value) {
+                    $prop = $pcmeta->getProperty($name);
+                    $prop && self::setPropertyValue($prop->getReflector(), $propEntityClone, $value);
                 }
 
-                $pager && $propEntityList->setPager($pager);
-
-                // Set property value as an entity list.
-                self::setPropertyValue($pmeta->getReflector(), $entity, $propEntityList);
+                $propEntityList->add($propEntityClone);
             }
-            // An entity.
-            else {
-                $data = (array) $query->getArray();
-                foreach ($data as $name => $value) {
-                    self::setPropertyValue($pemeta->getProperty($name)->getReflector(),
-                        $propEntity, $value);
-                }
 
-                // Set property value as an entity.
-                self::setPropertyValue($pmeta->getReflector(), $entity, $propEntity);
+            $pager && $propEntityList->setPager($pager);
+
+            // Set property value as an entity list.
+            self::setPropertyValue($pmeta->getReflector(), $entity, $propEntityList);
+        }
+        // An entity.
+        else {
+            $data = (array) $query->getArray();
+            foreach ($data as $name => $value) {
+                $prop = $pcmeta->getProperty($name);
+                $prop && self::setPropertyValue($prop->getReflector(), $propEntity, $value);
             }
+
+            // Recursion for other linked stuff.
+            foreach ($this->getLinkedProps($pcmeta) as $prop) {
+                $this->loadLinkedProps($prop, $propEntity);
+            }
+
+            // Set property value as an entity.
+            self::setPropertyValue($pmeta->getReflector(), $entity, $propEntity);
         }
     }
 
@@ -266,8 +290,10 @@ final class Manager
         }
     }
 
-    private static function setPropertyValue(ReflectionProperty $ref, object $entity, $value)
+    private static function setPropertyValue(string|ReflectionProperty $ref, object $entity, $value)
     {
+        is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
+
         // When a property-specific setter is available.
         if (is_callable([$entity, $method = ('set' . $ref->name)])) {
             $entity->$method($value);
@@ -278,8 +304,10 @@ final class Manager
 
         $ref->setValue($entity, $value);
     }
-    private static function getPropertyValue(ReflectionProperty $ref, object $entity)
+    private static function getPropertyValue(string|ReflectionProperty $ref, object $entity)
     {
+        is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
+
         // When a property-specific getter is available.
         if (is_callable([$entity, $method = ('get' . $ref->name)])) {
             return $entity->$method();
