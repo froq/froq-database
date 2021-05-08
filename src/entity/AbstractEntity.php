@@ -8,9 +8,12 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\record\Record;
+use ReflectionClass, ReflectionProperty;
 
 abstract class AbstractEntity
 {
+    // private AbstractEntity $owner;
+    private $owner;
     private Record $record;
 
     public function __debugInfo()
@@ -35,6 +38,16 @@ abstract class AbstractEntity
                 $this->{$name} = $value;
             }
         }
+    }
+
+    // public final function setOwner(AbstractEntity $owner): void
+    public final function setOwner($owner): void
+    {
+        $this->owner = $owner;
+    }
+    public final function getOwner()//: AbstractEntity|null
+    {
+        return $this->owner ?? null;
     }
 
     public final function setRecord(Record $record): void

@@ -13,7 +13,29 @@ use froq\pager\Pager;
 
 abstract class AbstractEntityList extends ItemCollection
 {
+    // private AbstractEntity|AbstractEntityList $owner;
+    private $owner;
     private object|null $pager = null;
+
+    public function __debugInfo()
+    {
+        $ret = (array) $this;
+
+        // Drop (self) record property. @temp?
+        unset($ret["\0" . self::class . "\0pager"]);
+
+        return $ret;
+    }
+
+    // public final function setOwner(AbstractEntity|AbstractEntityList $owner): void
+    public final function setOwner($owner): void
+    {
+        $this->owner = $owner;
+    }
+    public final function getOwner()//: AbstractEntity|AbstractEntityList|null
+    {
+        return $this->owner ?? null;
+    }
 
     public final function setPager(Pager $pager): void
     {
