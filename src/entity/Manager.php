@@ -11,7 +11,7 @@ use froq\database\entity\{ManagerException, MetaParser, AbstractEntity};
 use froq\database\record\{Form, Record};
 use froq\database\{Database, Query, Result, trait\DbTrait};
 use froq\validation\Rule as ValidationRule;
-use ReflectionProperty, Throwable;
+use ReflectionClass, ReflectionProperty, Throwable;
 
 final class Manager
 {
@@ -84,14 +84,14 @@ final class Manager
             $primary = $cmeta->getTablePrimary();
             if (isset($entity->$primary)) {
                 $id = $entity->$primary;
-            } elseif (is_callable([$entity, 'getId'])) {
+            } elseif (is_callable_method($entity, 'getId')) {
                 $id = $entity->getId();
             }
         }
 
         $fields = '*';
         // Get select fields if available.
-        if (is_callable([$entity, 'fields'])) {
+        if (is_callable_method($entity, 'fields')) {
             $fields = $entity::fields();
         }
 
@@ -132,7 +132,7 @@ final class Manager
                 );
             }
             // When "validations()" method exists on entity class.
-            elseif (is_callable([$entity, 'validations'])) {
+            elseif (is_callable_method($entity, 'validations')) {
                 $validations = $entity::validations();
             }
             // When propties have "validation" metadata on entity class.
@@ -186,7 +186,7 @@ final class Manager
 
         $fields = '*';
         // Get select fields if available.
-        if (is_callable([$class, 'fields'])) {
+        if (is_callable_method($class, 'fields')) {
             $fields = $class::fields();
         }
 
@@ -295,7 +295,7 @@ final class Manager
         is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
 
         // When a property-specific setter is available.
-        if (is_callable([$entity, $method = ('set' . $ref->name)])) {
+        if (is_callable_method($entity, $method = ('set' . $ref->name))) {
             $entity->$method($value);
             return;
         }
@@ -309,7 +309,7 @@ final class Manager
         is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
 
         // When a property-specific getter is available.
-        if (is_callable([$entity, $method = ('get' . $ref->name)])) {
+        if (is_callable_method($entity, $method = ('get' . $ref->name))) {
             return $entity->$method();
         }
 
