@@ -86,6 +86,17 @@ final class EntityPropertyMeta extends Meta
         return intval($limit) ?: null;
     }
 
+    public function getLinkCascade(): string|bool
+    {
+        return $this->getDataField('link.cascade', default: 'find');
+    }
+    public function isLinkCascadingFor(string $action): bool
+    {
+        $cascade = $this->getLinkCascade();
+
+        return $cascade && ($cascade == '*' || str_contains($cascade, $action));
+    }
+
     public function packLinkStuff(): array|null
     {
         if ($table = $this->getLinkTable()) {
