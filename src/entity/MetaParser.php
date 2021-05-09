@@ -130,19 +130,6 @@ final class MetaParser
             }
         }
 
-        // JSON format used for validations.
-        if (isset($data['validation']) && is_string($data['validation'])) {
-            $data['validation'] = json_decode($data['validation'], true);
-
-            if ($error = json_error_message()) {
-                $class = strtolower(str_replace('Reflection', '', $ref::class));
-                throw new MetaException(
-                    'Failed to parse meta validation of `%s` %s [error: %s]',
-                    [$ref->name, $class, strtolower($error)]
-                );
-            }
-        }
-
         return $data;
     }
 }
