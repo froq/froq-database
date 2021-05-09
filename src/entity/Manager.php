@@ -234,12 +234,10 @@ final class Manager
             ) . ')');
         }
 
-        prs($query->toString(1));
-        prs("---");
-
         $propEntity     = new $class();
         $propEntityList = ($listClass = $pmeta->getEntityListClass()) ? new $listClass() : null;
 
+        // Nope..
         // $propEntity->setOwner($entity);
         // $propEntityList?->setOwner($entity);
 
