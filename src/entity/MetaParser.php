@@ -122,9 +122,7 @@ final class MetaParser
 
                 if ($error = json_error_message()) {
                     // Prepare a fully-qualified name.
-                    $rname = isset($ref->class)
-                        ? str_replace('\\', '.',$ref->class . '.' . $ref->name)
-                        : $ref->name;
+                    $rname  = isset($ref->class) ? $ref->class . '::$' . $ref->name : $ref->name;
                     $rclass = str_replace('Reflection', '', $ref::class);
 
                     throw new MetaException(
