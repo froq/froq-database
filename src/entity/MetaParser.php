@@ -53,7 +53,7 @@ final class MetaParser
                 /** @var froq\database\entity\EntityPropertyMeta */
                 $prop = MetaFactory::init(
                     Meta::TYPE_PROPERTY,
-                    name: $cname . '.' . $pname, // Fully qualified property name.
+                    name: $cname . '.' . $pname, // Fully-qualified property name.
                     class: $cname,
                     data: self::dataFromReflection($pref),
                 );
@@ -121,10 +121,15 @@ final class MetaParser
                 $data = json_decode($json, true);
 
                 if ($error = json_error_message()) {
-                    $class = strtolower(str_replace('Reflection', '', $ref::class));
+                    // Prepare a fully-qualified name.
+                    $rname = isset($ref->class)
+                        ? str_replace('\\', '.',$ref->class . '.' . $ref->name)
+                        : $ref->name;
+                    $rclass = str_replace('Reflection', '', $ref::class);
+
                     throw new MetaException(
                         'Failed to parse meta annotation of `%s` %s [error: %s]',
-                        [$ref->name, $class, strtolower($error)]
+                        [$rname, strtolower($rclass), strtolower($error)]
                     );
                 }
             }
