@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\record\Record;
-use ReflectionClass, ReflectionProperty;
 
 abstract class AbstractEntity
 {
