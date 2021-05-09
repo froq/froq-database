@@ -46,7 +46,7 @@ final class Manager
         return $this->db->transaction($call, $callError);
     }
 
-    public function save(object $entity): object|null
+    public function save(object $entity): object
     {
         $cmeta = MetaParser::parse($entity::class);
 
@@ -77,7 +77,7 @@ final class Manager
         return $entity;
     }
 
-    public function find(object $entity, int|string $id = null): object|null
+    public function find(object $entity, int|string $id = null): object
     {
         $cmeta = MetaParser::parse($entity::class);
 
