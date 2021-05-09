@@ -70,7 +70,7 @@ final class Manager
         // Fill linked properties.
         if ($record->isSaved()) {
             foreach ($this->getLinkedProps($cmeta) as $pmeta) {
-                $this->loadLinkedProps($pmeta, $entity, 'save');
+                $this->loadLinkedProp($pmeta, $entity, 'save');
             }
         }
 
@@ -108,7 +108,7 @@ final class Manager
         // Fill linked properties.
         if ($record->isFinded()) {
             foreach ($this->getLinkedProps($cmeta) as $pmeta) {
-                $this->loadLinkedProps($pmeta, $entity, 'find');
+                $this->loadLinkedProp($pmeta, $entity, 'find');
             }
         }
 
@@ -168,9 +168,9 @@ final class Manager
         return array_filter($cmeta->getProperties(), fn($p) => $p->isLink());
     }
 
-    private function loadLinkedProps(EntityPropertyMeta $pmeta, object $entity, string $action = ''): void
+    private function loadLinkedProp(EntityPropertyMeta $pmeta, object $entity, string $action = null): void
     {
-        if ($action && !$pmeta->isLinkCascadingFor($action)) {
+        if ($action != null && !$pmeta->isLinkCascadingFor($action)) {
             return;
         }
 
@@ -271,7 +271,7 @@ final class Manager
 
             // Recursion for other linked stuff.
             foreach ($this->getLinkedProps($pcmeta) as $prop) {
-                $this->loadLinkedProps($prop, $propEntity);
+                $this->loadLinkedProp($prop, $propEntity, $action);
             }
 
             // Set property value as an entity.
