@@ -15,6 +15,11 @@ final class MetaParser
 {
     public static function parse(string $class, bool $withProperties = true): Meta
     {
+        // Check MetaFactory cache for only "withProperties" parsing.
+        if ($withProperties && MetaFactory::hasCacheItem($class)) {
+            return MetaFactory::getCacheItem($class);
+        }
+
         try {
             $ref = new ReflectionClass($class);
         } catch (ReflectionException $e) {

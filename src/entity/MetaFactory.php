@@ -13,17 +13,25 @@ class MetaFactory
 {
     private static array $cache;
 
-    public static function init(int $type, array $data, string $name, string $class): Meta
+    public static function init(int $type, string $name, string $class, array $data = null): Meta
     {
-        // Cache key.
-        $key = join('@', [$type, $name, $class]);
-
-        self::$cache[$key] = match ($type) {
-            Meta::TYPE_CLASS    => new EntityClassMeta($type, $data, $name, $class),
-            Meta::TYPE_PROPERTY => new EntityPropertyMeta($type, $data, $name, $class),
+        return self::$cache[$name] ??= match ($type) {
+            Meta::TYPE_CLASS    => new EntityClassMeta($type, $name, $class, $data),
+            Meta::TYPE_PROPERTY => new EntityPropertyMeta($type, $name, $class, $data),
             default             => throw new MetaException('Invalid type `%s`', $type)
         };
+    }
 
-        return self::$cache[$key];
+    public static function hasCacheItem(string $name): bool
+    {
+        return isset(self::$cache[$name]);
+    }
+    public static function setCacheItem(string $name, Meta $item): void
+    {
+        self::$cache[$name] = $item;
+    }
+    public static function getCacheItem(string $name): Meta|null
+    {
+        return self::$cache[$name] ?? null;
     }
 }
