@@ -201,7 +201,7 @@ final class Manager
         $query->select($fields)->from($table);
 
         // Given or default limit (if not disabled as "-1").
-        $limit = ($limit != -1) ? ($limit ?? 1000) : null;
+        $limit = ($limit != -1) ? $limit : null;
 
         switch ($method) {
             case 'one-to-one':
@@ -212,12 +212,21 @@ final class Manager
                 $limit = 1;
                 break;
             case 'one-to-many':
-                $pfield = $column; // Reference column.
+                $pfield = $column; // Reference.
                 $pdmeta = MetaParser::parse($pmeta->getReflector()->getDeclaringClass()->name);
                 $pvalue = self::getPropertyValue($pdmeta->getTablePrimary(), $entity);
 
                 unset($pdmeta);
                 break;
+            case 'many-to-one':
+                $pfield = $pcmeta->getTablePrimary(); // Reference.
+                $pvalue = self::getPropertyValue($column, $entity);
+                break;
+            default:
+                throw new ManagerException(
+                    'Unimplemented method `%s` on `%s` property',
+                    [$method, $pmeta->getName()]
+                );
         }
 
         // Apply link criteria.
@@ -248,7 +257,8 @@ final class Manager
                 $propEntityClone = clone $propEntity;
                 foreach ($dat as $name => $value) {
                     $prop = $pcmeta->getProperty($name);
-                    $prop && self::setPropertyValue($prop->getReflector(), $propEntityClone, $value);
+                    $prop ? self::setPropertyValue($prop->getReflector(), $propEntityClone, $value)
+                          : throw new ManagerException('Property `%s.%s` not exists', [$class, $name]);
                 }
 
                 $propEntityList->add($propEntityClone);
@@ -264,7 +274,8 @@ final class Manager
             $data = (array) $query->getArray();
             foreach ($data as $name => $value) {
                 $prop = $pcmeta->getProperty($name);
-                $prop && self::setPropertyValue($prop->getReflector(), $propEntity, $value);
+                $prop ? self::setPropertyValue($prop->getReflector(), $propEntity, $value)
+                      : throw new ManagerException('Property `%s.%s` not exists', [$class, $name]);
             }
 
             // Recursion for other linked stuff.
