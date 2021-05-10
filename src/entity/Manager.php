@@ -275,7 +275,7 @@ final class Manager
             foreach ($data as $name => $value) {
                 $prop = $pcmeta->getProperty($name);
                 $prop ? self::setPropertyValue($prop->getReflector(), $propEntity, $value)
-                      : throw new ManagerException('Property `%s.%s` not exists', [$class, $name]);
+                      : throw new ManagerException('Property `%s.%s` not exists or private', [$class, $name]);
             }
 
             // Recursion for other linked stuff.
