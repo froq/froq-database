@@ -15,7 +15,7 @@ abstract class AbstractEntityList extends ItemCollection
 {
     // private AbstractEntity|AbstractEntityList $owner;
     private $owner;
-    private object|null $pager = null;
+    private Pager|null $pager = null;
 
     public function __debugInfo()
     {
