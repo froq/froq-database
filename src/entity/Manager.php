@@ -170,17 +170,18 @@ final class Manager
 
     private function loadLinkedProp(EntityPropertyMeta $pmeta, object $entity, string $action = null): void
     {
-        if ($action != null && !$pmeta->isLinkCascadingFor($action)) {
+        // Check whether cascade op allows the given action.
+        if ($action && !$pmeta->isLinkCascadingFor($action)) {
             return;
         }
-
-        [$table, $column, $condition, $method, $limit] = $pmeta->packLinkStuff();
 
         $class = $pmeta->getEntityClass();
         $class ?: throw new ManagerException(
             'No valid link entity provided in `%s` meta',
             $pmeta->getName()
         );
+
+        [$table, $column, $condition, $method, $limit] = $pmeta->packLinkStuff();
 
         // Check non-link / non-valid properties.
         $column ?: throw new ManagerException(

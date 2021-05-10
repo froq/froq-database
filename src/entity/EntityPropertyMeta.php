@@ -94,6 +94,7 @@ final class EntityPropertyMeta extends Meta
     {
         $cascade = $this->getLinkCascade();
 
+        // Asterisk allows both "true" and "*" arguments.
         return $cascade && ($cascade == '*' || str_contains($cascade, $action));
     }
 
