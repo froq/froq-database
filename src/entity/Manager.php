@@ -109,16 +109,17 @@ final class Manager
             $fields = $entity::fields();
         }
 
+        // No try/catch, so allow exceptions in Record.
         $record = $this->initRecord($cmeta)
                 ->setId($id)
                 ->return($fields)
-                ->find(); // No try/catch, allow exceptions in Record.
+                ->find();
 
         self::assignEntityProps($entity, $record, $cmeta);
         self::assignEntityRecord($entity, $record);
 
-        // Fill linked properties.
         if ($record->isFinded()) {
+            // Fill linked properties.
             foreach ($this->getLinkedProps($cmeta) as $pmeta) {
                 $this->loadLinkedProp($pmeta, $entity, 'find');
             }
@@ -271,7 +272,7 @@ final class Manager
                 foreach ($dat as $name => $value) {
                     $prop = $pcmeta->getProperty($name);
                     $prop ? self::setPropertyValue($prop->getReflector(), $propEntityClone, $value)
-                          : throw new ManagerException('Property `%s.%s` not exists', [$class, $name]);
+                          : throw new ManagerException('Property `%s.%s` not exists or private', [$class, $name]);
                 }
 
                 $propEntityList->add($propEntityClone);
