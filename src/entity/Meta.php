@@ -63,11 +63,11 @@ class Meta
 
     public final function isTypeClass(): bool
     {
-        return $this->type == self::TYPE_CLASS;
+        return ($this->type == self::TYPE_CLASS);
     }
     public final function isTypeProperty(): bool
     {
-        return $this->type == self::TYPE_PROPERTY;
+        return ($this->type == self::TYPE_PROPERTY);
     }
 
     public final function setData(array $data): void
@@ -80,7 +80,7 @@ class Meta
                     // Dots mean namespace separator ("\").
                     $value = str_replace('.', '\\', $value);
 
-                    // When no fully qualified class name given.
+                    // When a non-fully-qualified class name given.
                     if (!str_contains($value, '\\')) {
                         $value = Objects::getNamespace($this->class) . '\\' . $value;
                     }
