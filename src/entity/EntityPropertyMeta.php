@@ -33,6 +33,10 @@ final class EntityPropertyMeta extends Meta
     {
         return $this->getDataField('validation');
     }
+    public function getValidationDefault()
+    {
+        return $this->getDataField('validation.default');
+    }
 
     public function isEntity(): bool
     {
