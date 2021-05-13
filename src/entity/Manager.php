@@ -50,25 +50,37 @@ final class Manager
     {
         $cmeta = MetaParser::parse($entity::class);
 
-        $data = [];
+        $entityData = $entityProps = [];
         foreach ($cmeta->getProperties() as $name => $pmeta) {
-            // Skip entity properties.
+            $value = self::getPropertyValue($pmeta->getReflector(), $entity);
+
+            // Collect & skip entity properties to save later.
             if ($pmeta->isEntity()) {
+                // We can't save empty entities.
+                if ($value != null) {
+                    $entityProps[] = $value;
+                }
                 continue;
             }
 
-            $data[$name] = self::getPropertyValue($pmeta->getReflector(), $entity);
+            $entityData[$name] = $value ?? $pmeta->getValidationDefault();
         }
 
+        // No try/catch, so allow exceptions in Record.
         $record = $this->initRecord($cmeta, $entity)
-                ->setData($data)
-                ->save(); // No try/catch, allow exceptions in Record.
+                ->setData($entityData)
+                ->save();
 
         self::assignEntityProps($entity, $record, $cmeta);
         self::assignEntityRecord($entity, $record);
 
-        // Fill linked properties.
-        if ($record->isSaved()) {
+        if ($record->isSaved($id)) {
+            // Also save if any entity property exists.
+            foreach ($entityProps as $entityProp) {
+                $this->save($entityProp);
+            }
+
+            // Fill linked properties.
             foreach ($this->getLinkedProps($cmeta) as $pmeta) {
                 $this->loadLinkedProp($pmeta, $entity, 'save');
             }
