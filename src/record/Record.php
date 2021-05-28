@@ -74,9 +74,7 @@ class Record implements Arrayable, ArrayAccess
         array $validationRules = null, array $validationOptions = null)
     {
         // Try to use active app database object.
-        $db ??= function_exists('app') ? app()->database() : null;
-
-        $db || throw new RecordException(
+        $db ??= function_exists('app') ? app()->database() : throw new RecordException(
             'No database given to deal, be sure running this module with `froq\app` ' .
             'module and be sure `database` option exists in app config or pass $db argument'
         );
