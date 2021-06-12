@@ -186,8 +186,7 @@ final class Manager
             return;
         }
 
-        $class = $pmeta->getEntityClass();
-        $class ?: throw new ManagerException(
+        $class = $pmeta->getEntityClass() ?: throw new ManagerException(
             'No valid link entity provided in `%s` meta',
             $pmeta->getName()
         );
@@ -220,23 +219,22 @@ final class Manager
                 $pfield = $pcmeta->getTablePrimary();
                 $pvalue = self::getPropertyValue($column, $entity);
 
-                // Update limit.
-                $limit = 1;
+                $limit = 1; // Update limit.
                 break;
             case 'one-to-many':
                 $pfield = $column; // Reference.
                 $pdmeta = MetaParser::parse($pmeta->getReflector()->getDeclaringClass()->name);
                 $pvalue = self::getPropertyValue($pdmeta->getTablePrimary(), $entity);
 
-                unset($pdmeta);
+                unset($pdmeta); // Free.
                 break;
             case 'many-to-one':
-                $pfield = $pcmeta->getTablePrimary(); // Reference.
+                $pfield = $pcmeta->getTablePrimary();
                 $pvalue = self::getPropertyValue($column, $entity);
                 break;
             default:
                 throw new ManagerException(
-                    'Unimplemented method `%s` on `%s` property',
+                    'Unimplemented link method `%s` on `%s` property',
                     [$method, $pmeta->getName()]
                 );
         }
