@@ -1076,6 +1076,14 @@ final class Query
         $field = trim((string) $field);
         $field || throw new QueryException('No field given');
 
+        // Shortcut for ASC/DESC ops (eg: +id, -id).
+        if ($op == null) {
+            $op = match ($field[0]) {
+                '+' => 1, '-' => -1, default => null,
+            };
+            $op && $field = ltrim($field, '+-');
+        }
+
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
         if ($op != null) {
             $field .= ' ' . $this->prepareOp(strval($op), true);
