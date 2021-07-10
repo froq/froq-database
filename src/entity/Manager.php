@@ -132,8 +132,6 @@ final class Manager
 
     private function initRecord(EntityClassMeta $cmeta, object $entity = null): Record
     {
-        $record = $cmeta->getRecord() ?: Record::class;
-
         $validations = null;
         if ($entity != null) {
             $ref = $cmeta->getReflector();
@@ -160,6 +158,9 @@ final class Manager
                 }
             }
         }
+
+        // Use annotated record class or default.
+        $record = $cmeta->getRecord() ?: Record::class;
 
         return new $record(
             $this->db,
