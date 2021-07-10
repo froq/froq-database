@@ -39,15 +39,7 @@ abstract class AbstractEntityList extends ItemCollection
 
     public final function setPager(Pager $pager): void
     {
-        // Wrap pager for brevity & public access,
-        // and to set all dynamic vars eg. limit, offset etc.
-        $this->pager = new class($pager) {
-            public function __construct($pager) {
-                foreach ($pager->toArray() as $name => $value) {
-                    $this->$name = $value;
-                }
-            }
-        };
+        $this->pager = $pager;
     }
     public final function getPager(): Pager|null
     {
