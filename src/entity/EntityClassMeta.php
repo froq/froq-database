@@ -52,6 +52,11 @@ final class EntityClassMeta extends Meta
         return $ret;
     }
 
+    public function getListClass(): string|null
+    {
+        return $this->getDataField('list');
+    }
+
     // /**
     //  * @alias of getTablePrimary()
     //  */
