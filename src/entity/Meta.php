@@ -72,11 +72,20 @@ class Meta
 
     public final function setData(array $data): void
     {
+        // Annotation "list" is for only classes.
+        if (isset($data['list']) && $this->isTypeProperty()) {
+            throw new MetaException(
+                'Invalid annotation directive `list` for property `%s`',
+                $this->name
+            );
+        }
+
         foreach ($data as $key => &$value) {
             switch ($key) {
                 case 'entity':
                 case 'entityList':
                 case 'repository':
+                case 'list':
                     // Dots mean namespace separator ("\").
                     $value = str_replace('.', '\\', $value);
 
