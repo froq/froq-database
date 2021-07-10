@@ -7,10 +7,11 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{ManagerException, MetaParser, AbstractEntity};
+use froq\database\entity\{ManagerException, MetaParser, AbstractEntity, AbstractEntityList};
 use froq\database\record\{Form, Record};
 use froq\database\{Database, Query, Result, trait\DbTrait};
 use froq\validation\Rule as ValidationRule;
+use froq\pager\Pager;
 use ReflectionClass, ReflectionProperty, Throwable;
 
 final class Manager
@@ -101,11 +102,7 @@ final class Manager
             }
         }
 
-        $fields = '*';
-        // Get select fields if available.
-        if (is_callable_method($entity, 'fields')) {
-            $fields = $entity::fields();
-        }
+        $fields = self::getEntityFields($entity);
 
         // No try/catch, so allow exceptions in Record.
         $record = $this->initRecord($cmeta)
@@ -126,7 +123,55 @@ final class Manager
         return $entity;
     }
 
-    public function findBy() {}
+    public function findBy(string $entityClass, string|array $where = null, int $limit = null, string $order = null,
+        Pager &$pager = null): array|object
+    {
+        $cmeta = MetaParser::parse($entityClass);
+
+        $entity = new $entityClass();
+        $entityList = [];
+
+        $record = $this->initRecord($cmeta);
+        $fields = self::getEntityFields($entity);
+
+        $rows = $record->select($where ?? [], fields: $fields, limit: $limit, order: $order);
+
+        if ($rows != null) {
+            // For a proper list to loop below.
+            if ($limit == 1) {
+                $rows = [$rows];
+            }
+
+            foreach ($rows as $row) {
+                $entityClone = clone $entity;
+                self::assignEntityProps($entityClone, $row, $cmeta);
+                self::assignEntityRecord($entityClone, $record);
+
+                // Fill linked properties.
+                foreach ($this->getLinkedProps($cmeta) as $pmeta) {
+                    $this->loadLinkedProp($pmeta, $entityClone, 'find');
+                }
+
+                $entityList[] = $entityClone;
+            }
+
+            // When entity list provided.
+            if (($entityListClass = $cmeta->getListClass())
+                && class_extends($entityListClass, AbstractEntityList::class)) {
+                $entityListObject = new $entityListClass();
+                $entityListObject->setData($entityList);
+
+                // Lock entity list & set pager.
+                $entityListObject->readOnly(true);
+                $pager && $entityListObject->setPager($pager);
+
+                $entityList = $entityListObject;
+            }
+        }
+
+        return $entityList;
+    }
+
     public function remove() {}
     public function removeBy() {}
 
@@ -201,12 +246,7 @@ final class Manager
         );
 
         $pcmeta = MetaParser::parse($class);
-
-        $fields = '*';
-        // Get select fields if available.
-        if (is_callable_method($class, 'fields')) {
-            $fields = $class::fields();
-        }
+        $fields = self::getEntityFields($class);
 
         // Create a select query.
         $query = $this->db->initQuery();
@@ -299,12 +339,16 @@ final class Manager
         }
     }
 
-    private static function assignEntityProps(object $entity, Record $record, EntityClassMeta $cmeta): void
+    private static function assignEntityProps(object $entity, array|Record $record, EntityClassMeta $cmeta): void
     {
-        if (!$record->isEmpty()) {
+        $data = is_array($record) ? $record : $record->getData();
+
+        if ($data) {
             $props = $cmeta->getProperties();
-            foreach ($record->getData() as $name => $value) {
-                isset($props[$name]) && self::setPropertyValue($props[$name]->getReflector(), $entity, $value);
+            foreach ($data as $name => $value) {
+                isset($props[$name]) && self::setPropertyValue(
+                    $props[$name]->getReflector(), $entity, $value
+                );
             }
         }
     }
@@ -342,5 +386,11 @@ final class Manager
         $ref->isPublic() || $ref->setAccessible(true);
 
         return $ref->getValue($entity);
+    }
+
+    private static function getEntityFields(object|string $entity): array|string
+    {
+        // Get select fields if available or all ("*").
+        return is_callable_method($entity, 'fields') ? $entity::fields() : '*';
     }
 }
