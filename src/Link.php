@@ -98,39 +98,41 @@ final class Link
      */
     public function connect(): void
     {
-        if (!$this->isLive()) {
-            ['dsn'     => $dsn,     'driver'   => $driver,
-             'user'    => $user,    'pass'     => $pass,
-             'charset' => $charset, 'timezone' => $timezone,
-             'options' => $options] = $this->options;
-
-            $options[PDO::ATTR_ERRMODE]              = PDO::ERRMODE_EXCEPTION;
-            $options[PDO::ATTR_EMULATE_PREPARES]   ??= true;
-            $options[PDO::ATTR_DEFAULT_FETCH_MODE] ??= PDO::FETCH_ASSOC;
-
-            // For a proper return that gives '1' always even with identical values in UPDATE queries.
-            if ($driver == 'mysql') {
-                $options[PDO::MYSQL_ATTR_FOUND_ROWS] ??= true;
-            }
-
-            try {
-                $this->pdo    = new PDO($dsn, $user, $pass, $options);
-                $this->driver = $driver;
-            } catch (PDOException $e) {
-                $code         = $e->getCode();
-                $message      = $e->getMessage();
-
-                // Which driver the FUCK?
-                if ($message == 'could not find driver') {
-                    throw new LinkException('Could not find driver `%s`', $driver, code: $code, cause: $e);
-                }
-
-                throw new LinkException($message, code: $code, cause: $e);
-            }
-
-            $charset  && $this->setCharset($charset);
-            $timezone && $this->setTimezone($timezone);
+        if ($this->isAlive()) {
+            return;
         }
+
+        ['dsn'     => $dsn,     'driver'   => $driver,
+         'user'    => $user,    'pass'     => $pass,
+         'charset' => $charset, 'timezone' => $timezone,
+         'options' => $options] = $this->options;
+
+        $options[PDO::ATTR_ERRMODE]              = PDO::ERRMODE_EXCEPTION;
+        $options[PDO::ATTR_EMULATE_PREPARES]   ??= true;
+        $options[PDO::ATTR_DEFAULT_FETCH_MODE] ??= PDO::FETCH_ASSOC;
+
+        // For a proper return that gives '1' always even with identical values in UPDATE queries.
+        if ($driver == 'mysql') {
+            $options[PDO::MYSQL_ATTR_FOUND_ROWS] ??= true;
+        }
+
+        try {
+            $this->pdo    = new PDO($dsn, $user, $pass, $options);
+            $this->driver = $driver;
+        } catch (PDOException $e) {
+            $code         = $e->getCode();
+            $message      = $e->getMessage();
+
+            // Which driver the FUCK?
+            if ($message == 'could not find driver') {
+                throw new LinkException('Could not find driver `%s`', $driver, code: $code, cause: $e);
+            }
+
+            throw new LinkException($message, code: $code, cause: $e);
+        }
+
+        $charset  && $this->setCharset($charset);
+        $timezone && $this->setTimezone($timezone);
     }
 
     /**
@@ -149,9 +151,9 @@ final class Link
      * @return bool
      * @since  5.0 Replaced with isConnected().
      */
-    public function isLive(): bool
+    public function isAlive(): bool
     {
-        return isset($this->pdo);
+        return $this->pdo != null;
     }
 
     /**
@@ -163,7 +165,7 @@ final class Link
      */
     public function setCharset(string $charset): void
     {
-        $this->isLive() || throw new LinkException('Link is gone');
+        $this->isAlive() || throw new LinkException('Link is gone');
 
         $this->pdo->exec('SET NAMES ' . $this->pdo->quote($charset));
     }
@@ -177,7 +179,7 @@ final class Link
      */
     public function setTimezone(string $timezone): void
     {
-        $this->isLive() || throw new LinkException('Link is gone');
+        $this->isAlive() || throw new LinkException('Link is gone');
 
         if ($this->driver == 'mysql') {
             $this->pdo->exec('SET time_zone = ' . $this->pdo->quote($timezone));
