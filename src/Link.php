@@ -153,7 +153,7 @@ final class Link
      */
     public function isAlive(): bool
     {
-        return $this->pdo != null;
+        return isset($this->pdo);
     }
 
     /**
