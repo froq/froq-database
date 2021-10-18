@@ -30,10 +30,10 @@ final class Database
     private Link $link;
 
     /** @var froq\logger\Logger|null */
-    private Logger $logger;
+    private Logger|null $logger = null;
 
     /** @var froq\database\Profiler|null. */
-    private Profiler $profiler;
+    private Profiler|null $profiler = null;
 
     /**
      * Constructor.
@@ -50,7 +50,7 @@ final class Database
         $logging = $options['logging'] ?? null;
         if ($logging) {
             $this->logger = new Logger($logging);
-            $this->logger->slowQuery = $options['logging']['slowQuery'] ?? null; // Keep.
+            $this->logger->setOption('slowQuery', $options['logging']['slowQuery'] ?? null);
         }
 
         // Default is false (no profiling).
@@ -61,7 +61,7 @@ final class Database
 
         $this->link = Link::init($options);
         try {
-            !isset($this->profiler) ? $this->link->connect()
+            empty($this->profiler) ? $this->link->connect()
                 : $this->profiler->profileConnection(fn() => $this->link->connect());
         } catch (LinkException $e) {
             throw new DatabaseLinkException($e);
@@ -87,8 +87,9 @@ final class Database
      */
     public function logger(): Logger
     {
-        return isset($this->logger) ? $this->logger : throw new DatabaseException(
-            'Database object has no logger, be sure `logging` field is not empty in options');
+        return $this->logger ?? throw new DatabaseException(
+            'Database object has no logger, be sure `logging` field is not empty in options'
+        );
     }
 
     /**
@@ -99,8 +100,9 @@ final class Database
      */
     public function profiler(): Profiler
     {
-        return isset($this->profiler) ? $this->profiler : throw new DatabaseException(
-            'Database object has no profiler, be sure `profiling` field is not empty or false in options');
+        return $this->profiler ?? throw new DatabaseException(
+            'Database object has no profiler, be sure `profiling` field is not empty or false in options'
+        );
     }
 
     /**
@@ -119,16 +121,19 @@ final class Database
         $query || throw new DatabaseException('Empty query given to %s()', __method__);
 
         try {
-            $marker = isset($this->logger->slowQuery) ? Profiler::marker('@slowQuery') : null;
-            $marker && Profiler::mark($marker);
+            $timeop = $this->logger?->getOption('slowQuery');
+            if ($timeop) {
+                $marker = Profiler::marker('slowQuery');
+                Profiler::mark($marker);
+            }
 
             $pdo          = $this->link->pdo();
-            $pdoStatement = !isset($this->profiler) ? $pdo->query($query)
+            $pdoStatement = !$this->profiler ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
 
-            if ($marker) {
+            if ($timeop) {
                 $time = Profiler::unmark($marker);
-                if ($time >= $this->logger->slowQuery) {
+                if ($time > $timeop) {
                     $this->logger->logWarn('Slow query: time '. $time .', '. $query);
                 }
             }
@@ -155,16 +160,19 @@ final class Database
         $query || throw new DatabaseException('Empty query given to %s()', __method__);
 
         try {
-            $marker = isset($this->logger->slowQuery) ? Profiler::marker('@slowQuery') : null;
-            $marker && Profiler::mark($marker);
+            $timeop = $this->logger?->getOption('slowQuery');
+            if ($timeop) {
+                $marker = Profiler::marker('slowQuery');
+                Profiler::mark($marker);
+            }
 
             $pdo       = $this->link->pdo();
-            $pdoResult = !isset($this->profiler) ? $pdo->exec($query)
+            $pdoResult = !$this->profiler ? $pdo->exec($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
 
-            if ($marker) {
+            if ($timeop) {
                 $time = Profiler::unmark($marker);
-                if ($time >= $this->logger->slowQuery) {
+                if ($time > $timeop) {
                     $this->logger->logWarn('Slow query: time '. $time .', '. $query);
                 }
             }
