@@ -25,14 +25,9 @@ abstract class AbstractEntity
         return $ret;
     }
 
-    public final function fill(...$args)
+    public final function fill(...$properties)
     {
-        // When an array given as first argument.
-        if (isset($args[0]) && is_array($args[0])) {
-            $args = $args[0];
-        }
-
-        foreach ($args as $name => $value) {
+        foreach ($properties as $name => $value) {
             if (property_exists(static::class, $name)) {
                 $this->{$name} = $value;
             }
