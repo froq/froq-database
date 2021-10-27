@@ -392,7 +392,7 @@ final class Manager
         if (is_callable_method($entity, 'fields')) {
             $fields = $entity::fields();
             is_array($fields) || is_string($fields) || throw new ManagerException(
-                'Method %s::fields() must return array|string, %s returned',
+                'Method %s.fields() must return array|string, %s returned',
                 [is_object($entity) ? $entity::class : $entity, get_type($fields)]
             );
 
