@@ -73,7 +73,7 @@ final class Manager
         self::assignEntityProps($entity, $record, $cmeta);
         self::assignEntityRecord($entity, $record);
 
-        if ($record->isSaved($id)) {
+        if ($record->isSaved()) {
             // Also save if any entity property exists.
             foreach ($entityProps as $entityProp) {
                 $this->save($entityProp);
