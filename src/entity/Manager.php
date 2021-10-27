@@ -93,8 +93,7 @@ final class Manager
         $cmeta = MetaParser::parse($entity::class);
 
         if ($id === null) {
-            $id = (string) $id;
-            $primary = $cmeta->getTablePrimary();
+            $primary = (string) $cmeta->getTablePrimary();
             if (isset($entity->$primary)) {
                 $id = $entity->$primary;
             } elseif (is_callable_method($entity, 'getId')) {
@@ -210,7 +209,7 @@ final class Manager
         return new $record(
             $this->db,
             table: $cmeta->getTable(),
-            tablePrimary: $id = $cmeta->getTablePrimary(),
+            tablePrimary: ($id = $cmeta->getTablePrimary()),
             options: [
                 'transaction' => $cmeta->getOption('transaction', true),
                 'sequence'    => $cmeta->getOption('sequence', !!$id),
