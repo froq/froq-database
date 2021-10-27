@@ -25,28 +25,34 @@ abstract class AbstractEntity
         return $ret;
     }
 
-    public final function fill(...$properties)
+    public final function fill(...$properties): static
     {
         foreach ($properties as $name => $value) {
             if (property_exists(static::class, $name)) {
                 $this->{$name} = $value;
             }
         }
+
+        return $this;
     }
 
-    // public final function setOwner(AbstractEntity $owner): void
-    public final function setOwner($owner): void
+    // public final function setOwner(AbstractEntity $owner): static
+    public final function setOwner($owner): static
     {
         $this->owner = $owner;
+
+        return $this;
     }
     public final function getOwner()//: AbstractEntity|null
     {
         return $this->owner ?? null;
     }
 
-    public final function setRecord(Record $record): void
+    public final function setRecord(Record $record): static
     {
         $this->record = $record;
+
+        return $this;
     }
     public final function getRecord(): Record
     {

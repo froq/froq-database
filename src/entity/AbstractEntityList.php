@@ -27,19 +27,23 @@ abstract class AbstractEntityList extends ItemCollection
         return $ret;
     }
 
-    // public final function setOwner(AbstractEntity|AbstractEntityList $owner): void
-    public final function setOwner($owner): void
+    // public final function setOwner(AbstractEntity|AbstractEntityList $owner): static
+    public final function setOwner($owner): static
     {
         $this->owner = $owner;
+
+        return $this;
     }
     public final function getOwner()//: AbstractEntity|AbstractEntityList|null
     {
         return $this->owner ?? null;
     }
 
-    public final function setPager(Pager $pager): void
+    public final function setPager(Pager $pager): static
     {
         $this->pager = $pager;
+
+        return $this;
     }
     public final function getPager(): Pager|null
     {
