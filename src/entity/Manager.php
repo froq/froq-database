@@ -204,7 +204,7 @@ final class Manager
         }
 
         // Use annotated record class or default.
-        $record = $cmeta->getRecord() ?: Record::class;
+        $record = $cmeta->getRecordClass() ?: Record::class;
 
         return new $record(
             $this->db,

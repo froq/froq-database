@@ -52,11 +52,6 @@ final class EntityClassMeta extends Meta
         return $ret;
     }
 
-    public function getListClass(): string|null
-    {
-        return $this->getDataField('list');
-    }
-
     // /**
     //  * @alias of getTablePrimary()
     //  */
@@ -70,11 +65,17 @@ final class EntityClassMeta extends Meta
         ];
     }
 
-    // public function getForm(): string|null
+    public function getListClass(): string|null
+    {
+        return $this->getDataField('list');
+    }
+
+    // public function getFormClass(): string|null
     // {
     //     return $this->getDataField('form');
     // }
-    public function getRecord(): string|null
+
+    public function getRecordClass(): string|null
     {
         return $this->getDataField('record');
     }
