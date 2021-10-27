@@ -94,8 +94,8 @@ final class Manager
 
         if ($id === null) {
             $primary = (string) $cmeta->getTablePrimary();
-            if (isset($entity->$primary)) {
-                $id = $entity->$primary;
+            if (isset($entity->{$primary})) {
+                $id = $entity->{$primary};
             } elseif (is_callable_method($entity, 'getId')) {
                 $id = $entity->getId();
             }
