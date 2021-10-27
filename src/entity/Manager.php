@@ -92,6 +92,7 @@ final class Manager
     {
         $cmeta = MetaParser::parse($entity::class);
 
+        // Get from entity.
         if ($id === null) {
             $id = self::getEntityPrimaryValue($entity, $cmeta);
         }
@@ -384,8 +385,23 @@ final class Manager
 
     private static function getEntityFields(object|string $entity): array|string
     {
-        // Get select fields if available or all ("*").
-        return is_callable_method($entity, 'fields') ? $entity::fields() : '*';
+        // Default is all.
+        $fields = '*';
+
+        // When fields() method available.
+        if (is_callable_method($entity, 'fields')) {
+            $fields = $entity::fields();
+            is_array($fields) || is_string($fields) || throw new ManagerException(
+                'Method %s::fields() must return array|string, %s returned',
+                [is_object($entity) ? $entity::class : $entity, get_type($fields)]
+            );
+
+            if (!$fields || $fields === ['*']) {
+                $fields = '*';
+            }
+        }
+
+        return $fields;
     }
 
     private static function getEntityPrimaryValue(object $entity, EntityClassMeta $cmeta): int|string|null
