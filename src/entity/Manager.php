@@ -188,11 +188,51 @@ final class Manager
 
         return $entity;
     }
-    public function removeBy() {}
+
+    public function removeBy(string $entityClass, string|array $where): object|null
+    {
+        $cmeta = MetaParser::parse($entityClass);
+
+        $entity = new $entityClass();
+        $entityList = null;
+        $entityListData = [];
+
+        $record = $this->initRecord($cmeta);
+        $return = self::getEntityFields($entity);
+
+        $rows = $record->delete($where, return: $return);
+
+        if ($rows != null) {
+            foreach ($rows as $row) {
+                $entityClone = clone $entity;
+                self::assignEntityProps($entityClone, $row, $cmeta);
+                self::assignEntityRecord($entityClone, $record);
+
+                // Drop linked properties (records actually).
+                foreach ($this->getLinkedProps($cmeta) as $pmeta) {
+                    $this->unloadLinkedProp($pmeta, $entityClone);
+                }
+
+                $entityListData[] = $entityClone;
+            }
+
+            // Use list class when provided or an anonymous class.
+            $entityList = ($entityListClass = $cmeta->getListClass())
+                ? new $entityListClass()
+                : new class() extends AbstractEntityList {};
+
+            // Fill & lock entity list.
+            $entityList->setData($entityListData)->readOnly(true);
+        }
+
+        return $entityList;
+    }
 
     private function initRecord(EntityClassMeta $cmeta, object $entity = null): Record
     {
         $validations = null;
+
+        // Assign validations if available.
         if ($entity != null) {
             $ref = $cmeta->getReflector();
             // When "validations" property is defined on entity class.
