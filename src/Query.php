@@ -415,6 +415,11 @@ final class Query
      */
     public function return(string|array|bool $fields, string|array $fetch = null): self
     {
+        // For PostgreSQL & Oracle only.
+        if (!in_array($this->db->link()->driver(), ['pgsql', 'oracle'])) {
+            return $this;
+        }
+
         $fields = ($fields === true) ? '*' : $this->prepareFields($fields);
 
         $fetch ??= $this->stack['return']['fetch'] ?? null;
