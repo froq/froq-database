@@ -768,7 +768,7 @@ class Record implements Arrayable, ArrayAccess
         string $fields = '*', string $order = null, string|array $fetch = null): array|object|null
     {
         $query = $this->query()->select($fields);
-        $where && $query->where($where, $params, $op);
+        $query->where($where, $params, $op);
 
         $where = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
@@ -795,7 +795,7 @@ class Record implements Arrayable, ArrayAccess
     public final function update(array $data, string|array $where, array $params = null, string $op = null): int|null
     {
         $query = $this->query()->update($data);
-        $where && $query->where($where, $params, $op);
+        $query->where($where, $params, $op);
 
         $where = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
@@ -816,7 +816,7 @@ class Record implements Arrayable, ArrayAccess
     public final function delete(string|array $where, array $params = null, string $return = '', string $op = null): int|array|null
     {
         $query = $this->query()->delete();
-        $where && $query->where($where, $params, $op);
+        $query->where($where, $params, $op);
 
         $where = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
