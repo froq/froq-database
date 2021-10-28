@@ -92,11 +92,7 @@ final class Manager
     {
         $cmeta = MetaParser::parse($entity::class);
 
-        // Get from entity.
-        if ($id === null) {
-            $id = self::getEntityPrimaryValue($entity, $cmeta);
-        }
-
+        $id   ??= self::getEntityPrimaryValue($entity, $cmeta);
         $fields = self::getEntityFields($entity);
 
         // No try/catch, so allow exceptions in Record.
@@ -167,7 +163,31 @@ final class Manager
         return $entityList;
     }
 
-    public function remove() {}
+    public function remove(object $entity, int|string $id = null): object
+    {
+        $cmeta = MetaParser::parse($entity::class);
+
+        $id   ??= self::getEntityPrimaryValue($entity, $cmeta);
+        $fields = self::getEntityFields($entity);
+
+        // No try/catch, so allow exceptions in Record.
+        $record = $this->initRecord($cmeta)
+                ->setId($id)
+                ->return($fields)
+                ->remove();
+
+        self::assignEntityProps($entity, $record, $cmeta);
+        self::assignEntityRecord($entity, $record);
+
+        if ($record->isRemoved()) {
+            // Drop linked properties (records actually).
+            foreach ($this->getLinkedProps($cmeta) as $pmeta) {
+                $this->unloadLinkedProp($pmeta, $entity);
+            }
+        }
+
+        return $entity;
+    }
     public function removeBy() {}
 
     private function initRecord(EntityClassMeta $cmeta, object $entity = null): Record
@@ -222,7 +242,7 @@ final class Manager
 
     private function loadLinkedProp(EntityPropertyMeta $pmeta, object $entity, string $action = null): void
     {
-        // Check whether cascade op allows the given action.
+        // Check whether cascade op allows given action.
         if ($action && !$pmeta->isLinkCascadingFor($action)) {
             return;
         }
@@ -235,17 +255,12 @@ final class Manager
         [$table, $column, $condition, $method, $limit] = $pmeta->packLinkStuff();
 
         // Check non-link / non-valid properties.
-        $column ?: throw new ManagerException(
-            'No valid link column provided in `%s` meta',
+        ($table && $column) ?: throw new ManagerException(
+            'No valid link table/column provided in `%s` meta',
             $pmeta->getName()
         );
 
         $pcmeta = MetaParser::parse($class);
-        $fields = self::getEntityFields($class);
-
-        // Create a select query.
-        $query = $this->db->initQuery();
-        $query->select($fields)->from($table);
 
         // Given or default limit (if not disabled as "-1").
         $limit = ($limit != -1) ? $limit : null;
@@ -262,7 +277,7 @@ final class Manager
                 $pdmeta = MetaParser::parse($pmeta->getReflector()->getDeclaringClass()->name);
                 $pvalue = self::getPropertyValue($pdmeta->getTablePrimary(), $entity);
 
-                unset($pdmeta); // Free.
+                unset($pdmeta);
                 break;
             case 'many-to-one':
                 $pfield = $pcmeta->getTablePrimary();
@@ -275,8 +290,12 @@ final class Manager
                 );
         }
 
-        // Apply link criteria.
-        $query->equal($pfield, $pvalue);
+        $fields = self::getEntityFields($class);
+
+        // Create a select query & apply link criteria.
+        $query = $this->db->initQuery($table)
+               ->select($fields)
+               ->equal($pfield, $pvalue);
 
         // Apply link (row) limit.
         $limit && $query->limit($limit);
@@ -332,6 +351,36 @@ final class Manager
             // Set property value as an entity.
             self::setPropertyValue($pmeta->getReflector(), $entity, $propEntity);
         }
+    }
+
+    private function unloadLinkedProp(EntityPropertyMeta $pmeta, object $entity): void
+    {
+        // Check whether cascade op allows remove action.
+        if (!$pmeta->isLinkCascadingFor('remove')) {
+            return;
+        }
+
+        $class = $pmeta->getEntityClass() ?: throw new ManagerException(
+            'No valid link entity provided in `%s` meta',
+            $pmeta->getName()
+        );
+
+        [$table, $column, $condition, $method, $limit] = $pmeta->packLinkStuff();
+
+        // Check non-link / non-valid properties.
+        ($table && $column) ?: throw new ManagerException(
+            'No valid link table/column provided in `%s` meta',
+            $pmeta->getName()
+        );
+
+        $pfield = MetaParser::parse($class)->getTablePrimary();
+        $pvalue = self::getPropertyValue($pfield, $entity);
+
+        // Create a delete query & apply link criteria.
+        $this->db->initQuery($table)
+             ->delete()
+             ->equal($column, $pvalue)
+             ->run();
     }
 
     private static function assignEntityProps(object $entity, array|Record $record, EntityClassMeta $cmeta): void
