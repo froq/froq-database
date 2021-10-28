@@ -115,18 +115,15 @@ final class Manager
     }
 
     public function findBy(string $entityClass, string|array $where = null, int $limit = null, string $order = null,
-        Pager &$pager = null): array|object
+        Pager &$pager = null): object|null
     {
         $cmeta = MetaParser::parse($entityClass);
 
         $entity = new $entityClass();
-        $entityList = [];
-
         $record = $this->initRecord($cmeta);
         $fields = self::getEntityFields($entity);
 
         $rows = $record->select($where ?? [], fields: $fields, limit: $limit, order: $order);
-
         if ($rows != null) {
             // For a proper list to loop below.
             if ($limit == 1) {
@@ -143,24 +140,19 @@ final class Manager
                     $this->loadLinkedProp($pmeta, $entityClone, 'find');
                 }
 
-                $entityList[] = $entityClone;
+                $data[] = $entityClone;
             }
 
-            // When entity list provided.
-            if (($entityListClass = $cmeta->getListClass())
-                && class_extends($entityListClass, AbstractEntityList::class)) {
-                $entityListObject = new $entityListClass();
-                $entityListObject->setData($entityList);
+            // Create, fill & lock entity list.
+            $entityList = $this->initEntityList($cmeta->getListClass());
+            $entityList->setData($data)->readOnly(true);
 
-                // Lock entity list & set pager.
-                $entityListObject->readOnly(true);
-                $pager && $entityListObject->setPager($pager);
+            $pager && $entityList->setPager($pager);
 
-                $entityList = $entityListObject;
-            }
+            return $entityList;
         }
 
-        return $entityList;
+        return null;
     }
 
     public function remove(object $entity, int|string $id = null): object
@@ -194,14 +186,10 @@ final class Manager
         $cmeta = MetaParser::parse($entityClass);
 
         $entity = new $entityClass();
-        $entityList = null;
-        $entityListData = [];
-
         $record = $this->initRecord($cmeta);
         $return = self::getEntityFields($entity);
 
         $rows = $record->delete($where, return: $return);
-
         if ($rows != null) {
             foreach ($rows as $row) {
                 $entityClone = clone $entity;
@@ -213,19 +201,17 @@ final class Manager
                     $this->unloadLinkedProp($pmeta, $entityClone);
                 }
 
-                $entityListData[] = $entityClone;
+                $data[] = $entityClone;
             }
 
-            // Use list class when provided or an anonymous class.
-            $entityList = ($entityListClass = $cmeta->getListClass())
-                ? new $entityListClass()
-                : new class() extends AbstractEntityList {};
+            // Create, fill & lock entity list.
+            $entityList = $this->initEntityList($cmeta->getListClass());
+            $entityList->setData($data)->readOnly(true);
 
-            // Fill & lock entity list.
-            $entityList->setData($entityListData)->readOnly(true);
+            return $entityList;
         }
 
-        return $entityList;
+        return null;
     }
 
     private function initRecord(EntityClassMeta $cmeta, object $entity = null): Record
@@ -273,6 +259,25 @@ final class Manager
             ],
             validations: $validations,
         );
+    }
+
+    private function initEntityList(string|null $class): AbstractEntityList
+    {
+        if ($class != null) {
+            // Check class validity.
+            if (!class_extends($class, AbstractEntityList::class)) {
+                throw new ManagerException(
+                    'Entity list class %s must extend %s',
+                    [$class, AbstractEntityList::class]
+                );
+            }
+
+            $entityList = new $class();
+        } else {
+            $entityList = new class() extends AbstractEntityList {};
+        }
+
+        return $entityList;
     }
 
     private function getLinkedProps(EntityClassMeta $cmeta): array
