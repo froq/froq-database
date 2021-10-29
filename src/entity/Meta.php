@@ -47,20 +47,6 @@ class Meta
         return $this->class;
     }
 
-    public final function getOption(string $name, $default = null): bool
-    {
-        return (bool) $this->getDataField($name, $default);
-    }
-
-    public final function hasDataField(string $key): bool
-    {
-        return array_isset($this->data, $key);
-    }
-    public final function getDataField(string $key, $default = null)
-    {
-        return array_fetch($this->data, $key, $default);
-    }
-
     public final function isTypeClass(): bool
     {
         return ($this->type == self::TYPE_CLASS);
@@ -102,6 +88,20 @@ class Meta
     public final function getData(): array|null
     {
         return $this->data ?: null;
+    }
+
+    public final function hasDataField(string $key): bool
+    {
+        return array_isset($this->data, $key);
+    }
+    public final function getDataField(string $key, $default = null)
+    {
+        return array_fetch($this->data, $key, $default);
+    }
+
+    public final function getOption(string $name, $default = null): bool
+    {
+        return (bool) $this->getDataField($name, $default);
     }
 
     public final function setReflector(Reflector $reflector): void
