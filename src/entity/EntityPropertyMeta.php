@@ -75,13 +75,9 @@ final class EntityPropertyMeta extends Meta
         return intval($limit) ?: null;
     }
 
-    public function getLinkedCascade(): string|bool
-    {
-        return $this->getDataField('link.cascade', default: null);
-    }
     public function isLinkedCascadesFor(string $action): bool
     {
-        $cascade = $this->getLinkedCascade();
+        $cascade = $this->getDataField('link.cascade', default: null);
 
         // Asterisk allows both "true" and "*" arguments.
         return $cascade && ($cascade == '*' || str_contains($cascade, $action));
