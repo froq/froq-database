@@ -54,7 +54,7 @@ final class Manager
             $value = self::getPropertyValue($pmeta->getReflector(), $entity);
 
             // Collect & skip entity properties to save later.
-            if ($pmeta->isEntity()) {
+            if ($pmeta->hasEntity()) {
                 // We can't save empty entities.
                 if ($value != null) {
                     $entityProps[] = $value;
@@ -236,7 +236,7 @@ final class Manager
             else {
                 foreach ($cmeta->getProperties() as $name => $pmeta) {
                     // Skip entity properties.
-                    if ($pmeta->isEntity()) {
+                    if ($pmeta->hasEntity()) {
                         continue;
                     }
 

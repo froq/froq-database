@@ -38,11 +38,11 @@ final class EntityPropertyMeta extends Meta
         return $this->getDataField('validation.default');
     }
 
-    public function isEntity(): bool
+    public function hasEntity(): bool
     {
         return !empty($this->data['entity']);
     }
-    public function isEntityList(): bool
+    public function hasEntityList(): bool
     {
         return !empty($this->data['entityList']);
     }
