@@ -45,6 +45,7 @@ final class EntityClassMeta extends Meta
     {
         $ret = $this->getDataField('id', default: 'id');
 
+        // We use only one column (for now).
         if ($ret && strpos($ret, ',')) {
             $ret = split('\s*,\s*', $ret);
         }
