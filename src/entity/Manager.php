@@ -282,13 +282,13 @@ final class Manager
 
     private function getLinkedProps(EntityClassMeta $cmeta): array
     {
-        return array_filter($cmeta->getProperties(), fn($p) => $p->isLink());
+        return array_filter($cmeta->getProperties(), fn($p) => $p->isLinked());
     }
 
     private function loadLinkedProp(EntityPropertyMeta $pmeta, object $entity, string $action = null): void
     {
         // Check whether cascade op allows given action.
-        if ($action && !$pmeta->isLinkCascadingFor($action)) {
+        if ($action && !$pmeta->isLinkedCascadesFor($action)) {
             return;
         }
 
@@ -401,7 +401,7 @@ final class Manager
     private function unloadLinkedProp(EntityPropertyMeta $pmeta, object $entity): void
     {
         // Check whether cascade op allows remove action.
-        if (!$pmeta->isLinkCascadingFor('remove')) {
+        if (!$pmeta->isLinkedCascadesFor('remove')) {
             return;
         }
 
