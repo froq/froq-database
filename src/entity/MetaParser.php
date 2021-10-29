@@ -13,8 +13,11 @@ use ReflectionClass, ReflectionProperty, ReflectionException;
 
 final class MetaParser
 {
-    public static function parse(string $class, bool $withProperties = true): Meta
+    public static function parseClassMeta(string|object $class, bool $withProperties = true): Meta
     {
+        // When an object given.
+        is_string($class) || $class = get_class($class);
+
         // Check MetaFactory cache for only "withProperties" parsing.
         if ($withProperties && MetaFactory::hasCacheItem($class)) {
             return MetaFactory::getCacheItem($class);

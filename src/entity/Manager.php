@@ -47,7 +47,7 @@ final class Manager
 
     public function save(object $entity): object
     {
-        $ecMeta = MetaParser::parse($entity::class);
+        $ecMeta = MetaParser::parseClassMeta($entity);
 
         $entityData = $entityProps = [];
         foreach ($ecMeta->getProperties() as $name => $epMeta) {
@@ -90,7 +90,7 @@ final class Manager
 
     public function find(object $entity, int|string $id = null): object
     {
-        $ecMeta = MetaParser::parse($entity::class);
+        $ecMeta = MetaParser::parseClassMeta($entity);
 
         $id   ??= self::getEntityPrimaryValue($entity, $ecMeta);
         $fields = self::getEntityFields($entity);
@@ -117,7 +117,7 @@ final class Manager
     public function findBy(string $entityClass, string|array $where = null, int $limit = null, string $order = null,
         Pager &$pager = null): object|null
     {
-        $ecMeta = MetaParser::parse($entityClass);
+        $ecMeta = MetaParser::parseClassMeta($entityClass);
 
         $entity = new $entityClass();
         $record = $this->initRecord($ecMeta);
@@ -157,7 +157,7 @@ final class Manager
 
     public function remove(object $entity, int|string $id = null): object
     {
-        $ecMeta = MetaParser::parse($entity::class);
+        $ecMeta = MetaParser::parseClassMeta($entity);
 
         $id   ??= self::getEntityPrimaryValue($entity, $ecMeta);
         $fields = self::getEntityFields($entity);
@@ -183,7 +183,7 @@ final class Manager
 
     public function removeBy(string $entityClass, string|array $where): object|null
     {
-        $ecMeta = MetaParser::parse($entityClass);
+        $ecMeta = MetaParser::parseClassMeta($entityClass);
 
         $entity = new $entityClass();
         $record = $this->initRecord($ecMeta);
@@ -306,7 +306,7 @@ final class Manager
         );
 
         // Parse linked property class meta.
-        $ecLinkedMeta = MetaParser::parse($class);
+        $ecLinkedMeta = MetaParser::parseClassMeta($class);
 
         // prd($class);
         // prd($epMeta->getClass());
@@ -327,8 +327,8 @@ final class Manager
                 $primaryField = $column; // Reference.
 
                 // Get value from property's class.
-                // $epClassMeta  = MetaParser::parse($epMeta->getReflector()->getDeclaringClass()->name);
-                $epClassMeta  = MetaParser::parse($epMeta->getClass());
+                // $epClassMeta  = MetaParser::parseClassMeta($epMeta->getReflector()->getDeclaringClass()->name);
+                $epClassMeta  = MetaParser::parseClassMeta($epMeta->getClass());
                 $primaryValue = self::getPropertyValue($epClassMeta->getTablePrimary(), $entity);
 
                 unset($epClassMeta); // Free.
@@ -427,7 +427,7 @@ final class Manager
             $epMeta->getName()
         );
 
-        $primaryField = MetaParser::parse($class)->getTablePrimary();
+        $primaryField = MetaParser::parseClassMeta($class)->getTablePrimary();
         $primaryValue = self::getPropertyValue($primaryField, $entity);
 
         // Create a delete query & apply link criteria.
