@@ -53,11 +53,6 @@ final class EntityClassMeta extends Meta
         return $ret;
     }
 
-    // /**
-    //  * @alias of getTablePrimary()
-    //  */
-    // public function id() { return $this->getTablePrimary(); }
-
     public function packTableStuff(): array
     {
         return [
@@ -70,12 +65,6 @@ final class EntityClassMeta extends Meta
     {
         return $this->getDataField('list');
     }
-
-    // public function getFormClass(): string|null
-    // {
-    //     return $this->getDataField('form');
-    // }
-
     public function getRecordClass(): string|null
     {
         return $this->getDataField('record');

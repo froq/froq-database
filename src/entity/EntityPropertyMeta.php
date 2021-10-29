@@ -67,22 +67,7 @@ final class EntityPropertyMeta extends Meta
     {
         return $this->getDataField('link.method');
     }
-    // public function getLinkedMethod(): string|null
-    // {
-    //     $method = $this->getDataField('link.method');
-    //     if ($method && is_array($method)) {
-    //         $method = $method[0];
-    //     }
-    //     return $method;
-    // }
-    // public function getLinkedMethodArgument(): string|null
-    // {
-    //     $method = $this->getDataField('link.method');
-    //     if ($method && is_array($method)) {
-    //         return $method[1];
-    //     }
-    //     return null;
-    // }
+
     public function getLinkedLimit(): int|null
     {
         $limit = $this->getDataField('link.limit');
@@ -115,21 +100,4 @@ final class EntityPropertyMeta extends Meta
         }
         return null;
     }
-
-    // public final function setSetterMethod(string $method): void
-    // {
-    //     $this->data['@setter'] = $method;
-    // }
-    // public final function getSetterMethod(): string|null
-    // {
-    //     return $this->data['@setter'] ?? null;
-    // }
-    // public final function setGetterMethod(string $method): void
-    // {
-    //     $this->data['@getter'] = $method;
-    // }
-    // public final function getGetterMethod(): string|null
-    // {
-    //     return $this->data['@getter'] ?? null;
-    // }
 }

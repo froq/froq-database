@@ -58,20 +58,6 @@ final class MetaParser
                     data: self::dataFromReflection($pref),
                 );
 
-                // // Add setter/getter methods (if defined & public).
-                // $setter = 'set' . ucfirst($pref->name);
-                // $getter = 'get' . ucfirst($pref->name);
-
-                // if ($class->hasMethod($setter) && $class->getMethod($setter)->isPublic()) {
-                //     $prop->setSetterMethod($setter);
-                // }
-                // if ($class->hasMethod($getter) && $class->getMethod($getter)->isPublic()) {
-                //     $prop->setGetterMethod($getter);
-                // }
-
-                // // Add prop to ref as link-back.
-                // $pref->prop = $prop;
-
                 // Add reflector.
                 $prop->setReflector($pref);
 
