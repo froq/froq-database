@@ -308,6 +308,11 @@ final class Manager
         // Parse linked property class meta.
         $ecLinkedMeta = MetaParser::parse($class);
 
+        // prd($class);
+        // prd($epMeta->getClass());
+        // prd($epMeta->getReflector()->getDeclaringClass()->name);
+        // die;
+
         // Given or default limit (if not disabled as "-1").
         $limit = ($limit != -1) ? $limit : null;
 
