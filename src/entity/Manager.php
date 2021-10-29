@@ -81,7 +81,7 @@ final class Manager
 
             // Fill linked properties.
             foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
-                $this->loadLinkedProp($pmeta, $entity, 'save');
+                $this->loadLinkedProperty($pmeta, $entity, 'save');
             }
         }
 
@@ -107,7 +107,7 @@ final class Manager
         if ($record->isFinded()) {
             // Fill linked properties.
             foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
-                $this->loadLinkedProp($pmeta, $entity, 'find');
+                $this->loadLinkedProperty($pmeta, $entity, 'find');
             }
         }
 
@@ -137,7 +137,7 @@ final class Manager
 
                 // Fill linked properties.
                 foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
-                    $this->loadLinkedProp($pmeta, $entityClone, 'find');
+                    $this->loadLinkedProperty($pmeta, $entityClone, 'find');
                 }
 
                 $data[] = $entityClone;
@@ -174,7 +174,7 @@ final class Manager
         if ($record->isRemoved()) {
             // Drop linked properties (records actually).
             foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
-                $this->unloadLinkedProp($pmeta, $entity);
+                $this->unloadLinkedProperty($pmeta, $entity);
             }
         }
 
@@ -198,7 +198,7 @@ final class Manager
 
                 // Drop linked properties (records actually).
                 foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
-                    $this->unloadLinkedProp($pmeta, $entityClone);
+                    $this->unloadLinkedProperty($pmeta, $entityClone);
                 }
 
                 $data[] = $entityClone;
@@ -285,7 +285,7 @@ final class Manager
         return array_filter($cmeta->getProperties(), fn($p) => $p->isLinked());
     }
 
-    private function loadLinkedProp(EntityPropertyMeta $pmeta, object $entity, string $action = null): void
+    private function loadLinkedProperty(EntityPropertyMeta $pmeta, object $entity, string $action = null): void
     {
         // Check whether cascade op allows given action.
         if ($action && !$pmeta->isLinkedCascadesFor($action)) {
@@ -390,7 +390,7 @@ final class Manager
 
             // Recursion for other linked stuff.
             foreach ($this->getLinkedProperties($pcmeta) as $prop) {
-                $this->loadLinkedProp($prop, $propEntity, $action);
+                $this->loadLinkedProperty($prop, $propEntity, $action);
             }
 
             // Set property value as an entity.
@@ -398,7 +398,7 @@ final class Manager
         }
     }
 
-    private function unloadLinkedProp(EntityPropertyMeta $pmeta, object $entity): void
+    private function unloadLinkedProperty(EntityPropertyMeta $pmeta, object $entity): void
     {
         // Check whether cascade op allows remove action.
         if (!$pmeta->isLinkedCascadesFor('remove')) {
