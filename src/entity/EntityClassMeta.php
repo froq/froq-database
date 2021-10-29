@@ -53,14 +53,6 @@ final class EntityClassMeta extends Meta
         return $ret;
     }
 
-    public function packTableStuff(): array
-    {
-        return [
-            $this->getTable(),
-            $this->getTablePrimary(),
-        ];
-    }
-
     public function getListClass(): string|null
     {
         return $this->getDataField('list');
@@ -68,5 +60,13 @@ final class EntityClassMeta extends Meta
     public function getRecordClass(): string|null
     {
         return $this->getDataField('record');
+    }
+
+    public function packTableStuff(): array
+    {
+        return [
+            $this->getTable(),
+            $this->getTablePrimary(),
+        ];
     }
 }
