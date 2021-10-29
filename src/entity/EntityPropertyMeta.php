@@ -77,7 +77,7 @@ final class EntityPropertyMeta extends Meta
 
     public function getLinkedCascade(): string|bool
     {
-        return $this->getDataField('link.cascade', default: 'find');
+        return $this->getDataField('link.cascade', default: null);
     }
     public function isLinkedCascadesFor(string $action): bool
     {
