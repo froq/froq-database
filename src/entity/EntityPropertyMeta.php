@@ -47,27 +47,26 @@ final class EntityPropertyMeta extends Meta
         return !empty($this->data['entityList']);
     }
 
-    public function isLink(): bool
-    {
+    public function isLinked(): boes    {
         return !empty($this->data['link']);
     }
-    public function getLinkTable(): string|null
+    public function getLinkedTable(): string|null
     {
         return $this->getDataField('link.table');
     }
-    public function getLinkColumn(): string|null
+    public function getLinkedColumn(): string|null
     {
         return $this->getDataField('link.column');
     }
-    public function getLinkCondition(): string|null
+    public function getLinkedCondition(): string|null
     {
         return $this->getDataField('link.where');
     }
-    public function getLinkMethod(): string|null
+    public function getLinkedMethod(): string|null
     {
         return $this->getDataField('link.method');
     }
-    // public function getLinkMethod(): string|null
+    // public function getLinkedMethod(): string|null
     // {
     //     $method = $this->getDataField('link.method');
     //     if ($method && is_array($method)) {
@@ -75,7 +74,7 @@ final class EntityPropertyMeta extends Meta
     //     }
     //     return $method;
     // }
-    // public function getLinkMethodArgument(): string|null
+    // public function getLinkedMethodArgument(): string|null
     // {
     //     $method = $this->getDataField('link.method');
     //     if ($method && is_array($method)) {
@@ -83,20 +82,20 @@ final class EntityPropertyMeta extends Meta
     //     }
     //     return null;
     // }
-    public function getLinkLimit(): int|null
+    public function getLinkedLimit(): int|null
     {
         $limit = $this->getDataField('link.limit');
 
         return intval($limit) ?: null;
     }
 
-    public function getLinkCascade(): string|bool
+    public function getLinkedCascade(): string|bool
     {
         return $this->getDataField('link.cascade', default: 'find');
     }
-    public function isLinkCascadingFor(string $action): bool
+    public function isLinkedCascadesFor(string $action): bool
     {
-        $cascade = $this->getLinkCascade();
+        $cascade = $this->getLinkedCascade();
 
         // Asterisk allows both "true" and "*" arguments.
         return $cascade && ($cascade == '*' || str_contains($cascade, $action));
@@ -104,13 +103,13 @@ final class EntityPropertyMeta extends Meta
 
     public function packLinkStuff(): array|null
     {
-        if ($table = $this->getLinkTable()) {
+        if ($table = $this->getLinkedTable()) {
             return [
                 $table,
-                $this->getLinkColumn(),
-                $this->getLinkCondition(),
-                $this->getLinkMethod() ?: 'one-to-one', // As default.
-                $this->getLinkLimit(),
+                $this->getLinkedColumn(),
+                $this->getLinkedCondition(),
+                $this->getLinkedMethod() ?: 'one-to-one', // As default.
+                $this->getLinkedLimit(),
             ];
         }
         return null;
