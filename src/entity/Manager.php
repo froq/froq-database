@@ -70,8 +70,8 @@ final class Manager
                 ->setData($entityData)
                 ->save();
 
-        self::assignEntityProps($entity, $record, $cmeta);
         self::assignEntityRecord($entity, $record);
+        self::assignEntityProperties($entity, $record, $cmeta);
 
         if ($record->isSaved()) {
             // Also save if any entity property exists.
@@ -80,7 +80,7 @@ final class Manager
             }
 
             // Fill linked properties.
-            foreach ($this->getLinkedProps($cmeta) as $pmeta) {
+            foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
                 $this->loadLinkedProp($pmeta, $entity, 'save');
             }
         }
@@ -101,12 +101,12 @@ final class Manager
                 ->return($fields)
                 ->find();
 
-        self::assignEntityProps($entity, $record, $cmeta);
         self::assignEntityRecord($entity, $record);
+        self::assignEntityProperties($entity, $record, $cmeta);
 
         if ($record->isFinded()) {
             // Fill linked properties.
-            foreach ($this->getLinkedProps($cmeta) as $pmeta) {
+            foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
                 $this->loadLinkedProp($pmeta, $entity, 'find');
             }
         }
@@ -132,11 +132,11 @@ final class Manager
 
             foreach ($rows as $row) {
                 $entityClone = clone $entity;
-                self::assignEntityProps($entityClone, $row, $cmeta);
                 self::assignEntityRecord($entityClone, $record);
+                self::assignEntityProperties($entityClone, $row, $cmeta);
 
                 // Fill linked properties.
-                foreach ($this->getLinkedProps($cmeta) as $pmeta) {
+                foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
                     $this->loadLinkedProp($pmeta, $entityClone, 'find');
                 }
 
@@ -168,12 +168,12 @@ final class Manager
                 ->return($fields)
                 ->remove();
 
-        self::assignEntityProps($entity, $record, $cmeta);
         self::assignEntityRecord($entity, $record);
+        self::assignEntityProperties($entity, $record, $cmeta);
 
         if ($record->isRemoved()) {
             // Drop linked properties (records actually).
-            foreach ($this->getLinkedProps($cmeta) as $pmeta) {
+            foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
                 $this->unloadLinkedProp($pmeta, $entity);
             }
         }
@@ -193,11 +193,11 @@ final class Manager
         if ($rows != null) {
             foreach ($rows as $row) {
                 $entityClone = clone $entity;
-                self::assignEntityProps($entityClone, $row, $cmeta);
                 self::assignEntityRecord($entityClone, $record);
+                self::assignEntityProperties($entityClone, $row, $cmeta);
 
                 // Drop linked properties (records actually).
-                foreach ($this->getLinkedProps($cmeta) as $pmeta) {
+                foreach ($this->getLinkedProperties($cmeta) as $pmeta) {
                     $this->unloadLinkedProp($pmeta, $entityClone);
                 }
 
@@ -280,7 +280,7 @@ final class Manager
         return $entityList;
     }
 
-    private function getLinkedProps(EntityClassMeta $cmeta): array
+    private function getLinkedProperties(EntityClassMeta $cmeta): array
     {
         return array_filter($cmeta->getProperties(), fn($p) => $p->isLinked());
     }
@@ -389,7 +389,7 @@ final class Manager
             }
 
             // Recursion for other linked stuff.
-            foreach ($this->getLinkedProps($pcmeta) as $prop) {
+            foreach ($this->getLinkedProperties($pcmeta) as $prop) {
                 $this->loadLinkedProp($prop, $propEntity, $action);
             }
 
@@ -428,7 +428,7 @@ final class Manager
              ->run();
     }
 
-    private static function assignEntityProps(object $entity, array|Record $record, EntityClassMeta $cmeta): void
+    private static function assignEntityProperties(object $entity, array|Record $record, EntityClassMeta $cmeta): void
     {
         $data = is_array($record) ? $record : $record->getData();
 
