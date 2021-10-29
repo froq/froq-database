@@ -9,7 +9,7 @@ namespace froq\database\entity;
 
 use froq\database\entity\{MetaException, MetaFactory, Meta};
 use froq\util\Objects;
-use Reflector, ReflectionClass, ReflectionProperty, ReflectionException;
+use ReflectionClass, ReflectionProperty, ReflectionException;
 
 final class MetaParser
 {
@@ -21,47 +21,49 @@ final class MetaParser
         }
 
         try {
-            $ref = new ReflectionClass($class);
+            $classRef = new ReflectionClass($class);
         } catch (ReflectionException $e) {
             throw new MetaException($e);
         }
 
-        $data = self::dataFromReflection($ref);
+        $data = self::dataFromReflection($classRef);
         $data || throw new MetaException(
             'No meta attribute/annotation exists on class `%s`', $class
         );
 
         /** @var froq\database\entity\EntityClassMeta */
-        $meta = MetaFactory::init(Meta::TYPE_CLASS, $class, $class, $data);
-        $meta->setReflector($ref);
+        $meta = MetaFactory::init(
+            type: Meta::TYPE_CLASS,
+           class: $class,
+            name: $class,
+            data: $data,
+        );
+        $meta->setReflector($classRef);
 
         // And add properties.
         if ($withProperties) {
             $types = ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED;
             $props = [];
 
-            foreach ($ref->getProperties($types) as $pref) {
+            foreach ($classRef->getProperties($types) as $propRef) {
                 // We don't use static vars.
-                if ($pref->isStatic()) {
+                if ($propRef->isStatic()) {
                     continue;
                 }
 
-                $class = $pref->getDeclaringClass();
-                $pname = $pref->getName();
-                $cname = $class->getName();
+                $propName  = $propRef->name;
+                $propClass = $propRef->class;
 
                 /** @var froq\database\entity\EntityPropertyMeta */
                 $prop = MetaFactory::init(
-                    Meta::TYPE_PROPERTY,
-                    name: $cname . '.' . $pname, // Fully-qualified property name.
-                    class: $cname,
-                    data: self::dataFromReflection($pref),
+                     type: Meta::TYPE_PROPERTY,
+                    class: $propClass,
+                     name: $propClass . '.' . $propName, // Fully-qualified property name.
+                     data: self::dataFromReflection($propRef),
                 );
+                $prop->setReflector($propRef);
 
-                // Add reflector.
-                $prop->setReflector($pref);
-
-                $props[$pname] = $prop;
+                $props[$propName] = $prop;
             }
 
             $meta->setProperties($props);
@@ -70,7 +72,7 @@ final class MetaParser
         return $meta;
     }
 
-    public static function dataFromReflection(Reflector $ref): array
+    public static function dataFromReflection(ReflectionClass|ReflectionProperty $ref): array
     {
         $data = [];
 
@@ -107,13 +109,13 @@ final class MetaParser
                 $data = json_decode($json, true);
 
                 if ($error = json_error_message()) {
-                    // Prepare a fully-qualified name.
-                    $rname  = isset($ref->class) ? $ref->class . '.' . $ref->name : $ref->name;
-                    $rclass = str_replace('Reflection', '', $ref::class);
+                    // Prepare a fully-qualified name & reflection type.
+                    $refName = isset($ref->class) ? $ref->class . '.' . $ref->name : $ref->name;
+                    $refType = ($ref instanceof ReflectionClass) ? 'class' : 'property';
 
                     throw new MetaException(
                         'Failed to parse meta annotation of `%s` %s [error: %s]',
-                        [$rname, strtolower($rclass), strtolower($error)]
+                        [$refName, $refType, strtolower($error)]
                     );
                 }
             }
