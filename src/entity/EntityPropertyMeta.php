@@ -47,7 +47,8 @@ final class EntityPropertyMeta extends Meta
         return !empty($this->data['entityList']);
     }
 
-    public function isLinked(): boes    {
+    public function isLinked(): bool
+    {
         return !empty($this->data['link']);
     }
     public function getLinkedTable(): string|null
