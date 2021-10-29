@@ -482,7 +482,7 @@ final class Manager
         // Default is all.
         $fields = '*';
 
-        // When fields() method available.
+        // When fields() method available as public & static.
         if (is_callable_method($entity, 'fields')) {
             $fields = $entity::fields();
             is_array($fields) || is_string($fields) || throw new ManagerException(
@@ -490,6 +490,7 @@ final class Manager
                 [is_object($entity) ? $entity::class : $entity, get_type($fields)]
             );
 
+            // Prevent weird issues.
             if (!$fields || $fields === ['*']) {
                 $fields = '*';
             }
@@ -502,9 +503,12 @@ final class Manager
     {
         $primary = (string) $cmeta->getTablePrimary();
 
+        // When defined as public.
         if (isset($entity->{$primary})) {
             return $entity->{$primary};
-        } elseif (is_callable_method($entity, 'getId')) {
+        }
+        // When getId() defined as public.
+        elseif (is_callable_method($entity, 'getId')) {
             return $entity->getId();
         }
 
