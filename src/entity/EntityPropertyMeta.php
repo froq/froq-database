@@ -40,24 +40,24 @@ final class EntityPropertyMeta extends Meta
 
     public function isEntity(): bool
     {
-        return isset($this->data['entity']);
+        return !empty($this->data['entity']);
     }
     public function isEntityList(): bool
     {
-        return isset($this->data['entityList']);
+        return !empty($this->data['entityList']);
     }
 
     public function isLink(): bool
     {
-        return isset($this->data['link']['to']);
+        return !empty($this->data['link']);
     }
     public function getLinkTable(): string|null
     {
-        return $this->getDataField('link.to');
+        return $this->getDataField('link.table');
     }
     public function getLinkColumn(): string|null
     {
-        return $this->getDataField('link.with');
+        return $this->getDataField('link.column');
     }
     public function getLinkCondition(): string|null
     {
