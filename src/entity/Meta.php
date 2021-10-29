@@ -42,6 +42,10 @@ class Meta
     {
         return $this->name;
     }
+    public final function getShortName(): string
+    {
+        return explode('.', $this->name)[1];
+    }
     public final function getClass(): string
     {
         return $this->class;
