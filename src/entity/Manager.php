@@ -428,6 +428,13 @@ final class Manager
              ->run();
     }
 
+    private static function assignEntityRecord(object $entity, Record $record): void
+    {
+        // When entity extends AbstractEntity.
+        if ($entity instanceof AbstractEntity) {
+            $entity->setRecord($record);
+        }
+    }
     private static function assignEntityProperties(object $entity, array|Record $record, EntityClassMeta $cmeta): void
     {
         $data = is_array($record) ? $record : $record->getData();
@@ -439,13 +446,6 @@ final class Manager
                     $props[$name]->getReflector(), $entity, $value
                 );
             }
-        }
-    }
-    private static function assignEntityRecord(object $entity, Record $record): void
-    {
-        // When entity extends AbstractEntity.
-        if ($entity instanceof AbstractEntity) {
-            $entity->setRecord($record);
         }
     }
 
