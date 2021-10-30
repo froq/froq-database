@@ -308,11 +308,6 @@ final class Manager
         // Parse linked property class meta.
         $ecLinkedMeta = MetaParser::parseClassMeta($class);
 
-        // prd($class);
-        // prd($epMeta->getClass());
-        // prd($epMeta->getReflector()->getDeclaringClass()->name);
-        // die;
-
         // Given or default limit (if not disabled as "-1").
         $limit = ($limit != -1) ? $limit : null;
 
@@ -327,7 +322,6 @@ final class Manager
                 $primaryField = $column; // Reference.
 
                 // Get value from property's class.
-                // $epClassMeta  = MetaParser::parseClassMeta($epMeta->getReflector()->getDeclaringClass()->name);
                 $epClassMeta  = MetaParser::parseClassMeta($epMeta->getClass());
                 $primaryValue = self::getPropertyValue($epClassMeta->getTablePrimary(), $entity);
 
