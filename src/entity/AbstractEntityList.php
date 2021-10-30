@@ -23,7 +23,7 @@ abstract class AbstractEntityList extends ItemCollection
 
         // Drop internals.
         unset($data["\0{$class}\0manager"]);
-        unset($data["\0{$class}\0record"]);
+        unset($data["\0{$class}\0pager"]);
 
         return $data;
     }
