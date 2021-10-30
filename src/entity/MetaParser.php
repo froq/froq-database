@@ -9,7 +9,7 @@ namespace froq\database\entity;
 
 use froq\database\entity\{MetaException, MetaFactory, Meta, EntityClassMeta, EntityPropertyMeta};
 use froq\util\Objects;
-use ReflectionClass, ReflectionProperty, ReflectionException;
+use Reflector, ReflectionClass, ReflectionProperty, ReflectionException;
 
 final class MetaParser
 {
@@ -29,7 +29,7 @@ final class MetaParser
             throw new MetaException($e);
         }
 
-        $data = self::getMetaData($classRef);
+        $data = self::getData($classRef);
         if (!$data) {
             return null;
         }
@@ -62,7 +62,7 @@ final class MetaParser
                      type: Meta::TYPE_PROPERTY,
                     class: $propClass,
                      name: $propClass . '.' . $propName, // Fully-qualified property name.
-                     data: self::getMetaData($propRef),
+                     data: self::getData($propRef),
                 );
                 $prop->setReflector($propRef);
 
@@ -96,7 +96,7 @@ final class MetaParser
             return null;
         }
 
-        $data = self::getMetaData($classRef);
+        $data = self::getData($classRef);
         if (!$data) {
             return null;
         }
@@ -116,55 +116,73 @@ final class MetaParser
         return $meta;
     }
 
-    public static function getMetaData(ReflectionClass|ReflectionProperty $ref): array|null
+    public static function getData(ReflectionClass|ReflectionProperty $ref): array|null
     {
-        $data = null;
-
+        // Eg: #[meta(id:"id", table:"users", ..)]
         if ($attributes = $ref->getAttributes()) {
-            // Eg: #[meta(id:"id", table:"users", ..)]
-            foreach ($attributes as $attribute) {
-                $name = Objects::getShortName($attribute->getName());
-                if (strtolower($name) == 'meta') {
-                    $data = $attribute->getArguments();
-                    break;
-                }
-            }
-        } elseif ($annotations = $ref->getDocComment()) {
-            // Eg: @meta(id:"id", table:"users", ..)
-            // Eg: @meta(id="id", table="users", ..)
-            if (preg_match('~@meta\s*\((.+)\)~si', $annotations, $match)) {
-                $lines = preg_split('~\n~', $match[1], -1, 1);
-                // Converting to JSON.
-                foreach ($lines as &$line) {
-                    $line = preg_replace('~^[*\s]+|[\s]+$~', '', $line);
+            return self::getDataFromAttributes($attributes);
+        }
 
-                    // Comment-outs.
-                    if (str_starts_with($line, '//')) {
-                        $line = '';
-                        continue;
-                    }
+        // Eg: @meta(id:"id", table:"users", ..)
+        // Eg: @meta(id="id", table="users", ..)
+        if ($annotations = $ref->getDocComment()) {
+            return self::getDataFromAnnotations($annotations, $ref);
+        }
 
-                    // Prepare entity class & JSON field names.
-                    $line = preg_replace('~\\\\(?!["])~', '\\\\\\\\\1', $line);
-                    $line = preg_replace('~(\w{2,})\s*[:=](?![=])~', '"\1":', $line);
-                }
+        return null;
+    }
 
-                $json = '{'. trim(join(' ', array_filter($lines)), ',') .'}';
-                $data = json_decode($json, true);
-
-                if ($error = json_error_message()) {
-                    // Prepare a fully-qualified name & reflection type.
-                    $refName = isset($ref->class) ? $ref->class . '.' . $ref->name : $ref->name;
-                    $refType = ($ref instanceof ReflectionClass) ? 'class' : 'property';
-
-                    throw new MetaException(
-                        'Failed to parse meta annotation of `%s` %s [error: %s]',
-                        [$refName, $refType, strtolower($error)]
-                    );
-                }
+    private static function getDataFromAttributes(array $attributes): array|null
+    {
+        foreach ($attributes as $attribute) {
+            $name = Objects::getShortName($attribute->getName());
+            if (strtolower($name) == 'meta') {
+                return $attribute->getArguments();
             }
         }
 
-        return $data;
+        return null;
+    }
+
+    private static function getDataFromAnnotations(string $annotations, Reflector $ref): array|null
+    {
+        // Eg: @meta(id:"id", table:"users", ..)
+        // Eg: @meta(id="id", table="users", ..)
+        if (preg_match('~@meta\s*\((.+)\)~si', $annotations, $match)) {
+            $lines = preg_split('~\n~', $match[1], -1, 1);
+
+            // Converting to JSON.
+            foreach ($lines as &$line) {
+                $line = preg_replace('~^[*\s]+|[\s]+$~', '', $line);
+
+                // Comment-outs.
+                if (str_starts_with($line, '//')) {
+                    $line = '';
+                    continue;
+                }
+
+                // Prepare entity class & JSON field names.
+                $line = preg_replace('~\\\\(?!["])~', '\\\\\\\\\1', $line);
+                $line = preg_replace('~(\w{2,})\s*[:=](?![=])~', '"\1":', $line);
+            }
+
+            $json = '{'. trim(join(' ', array_filter($lines)), ',') .'}';
+            $data = json_decode($json, true);
+
+            if ($error = json_error_message()) {
+                // Prepare a fully-qualified name & reflection type.
+                $refName = isset($ref->class) ? $ref->class . '.' . $ref->name : $ref->name;
+                $refType = isset($ref->class) ? 'property' : 'class';
+
+                throw new MetaException(
+                    'Failed to parse meta annotation of `%s` %s [error: %s]',
+                    [$refName, $refType, strtolower($error)]
+                );
+            }
+
+            return $data;
+        }
+
+        return null;
     }
 }
