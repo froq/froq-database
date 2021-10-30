@@ -7,13 +7,13 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{MetaException, MetaFactory, Meta};
+use froq\database\entity\{MetaException, MetaFactory, Meta, EntityClassMeta, EntityPropertyMeta};
 use froq\util\Objects;
 use ReflectionClass, ReflectionProperty, ReflectionException;
 
 final class MetaParser
 {
-    public static function parseClassMeta(string|object $class, bool $withProperties = true): Meta
+    public static function parseClassMeta(string|object $class, bool $withProperties = true): EntityClassMeta|null
     {
         // When an object given.
         is_string($class) || $class = get_class($class);
@@ -29,10 +29,10 @@ final class MetaParser
             throw new MetaException($e);
         }
 
-        $data = self::dataFromReflection($classRef);
-        $data || throw new MetaException(
-            'No meta attribute/annotation exists on class `%s`', $class
-        );
+        $data = self::getMetaData($classRef);
+        if (!$data) {
+            return null;
+        }
 
         /** @var froq\database\entity\EntityClassMeta */
         $meta = MetaFactory::init(
@@ -62,7 +62,7 @@ final class MetaParser
                      type: Meta::TYPE_PROPERTY,
                     class: $propClass,
                      name: $propClass . '.' . $propName, // Fully-qualified property name.
-                     data: self::dataFromReflection($propRef),
+                     data: self::getMetaData($propRef),
                 );
                 $prop->setReflector($propRef);
 
@@ -75,9 +75,50 @@ final class MetaParser
         return $meta;
     }
 
-    public static function dataFromReflection(ReflectionClass|ReflectionProperty $ref): array
+    public static function parsePropertyMeta(object|string $class, string $property): EntityPropertyMeta|null
     {
-        $data = [];
+        // When an object given.
+        is_string($class) || $class = get_class($class);
+
+        // Check MetaFactory cache.
+        if (MetaFactory::hasCacheItem($name = ($class .'.'. $property))) {
+            return MetaFactory::getCacheItem($name);
+        }
+
+        try {
+            $propRef = new ReflectionProperty($class, $property);
+        } catch (ReflectionException $e) {
+            throw new MetaException($e);
+        }
+
+        // We don't use static & private vars.
+        if ($propRef->isStatic() || $propRef->isPrivate()) {
+            return null;
+        }
+
+        $data = self::getMetaData($classRef);
+        if (!$data) {
+            return null;
+        }
+
+        $propName  = $propRef->name;
+        $propClass = $propRef->class;
+
+        /** @var froq\database\entity\EntityPropertyMeta */
+        $meta = MetaFactory::init(
+             type: Meta::TYPE_PROPERTY,
+            class: $propClass,
+             name: $propClass . '.' . $propName, // Fully-qualified property name.
+             data: $data,
+        );
+        $meta->setReflector($propRef);
+
+        return $meta;
+    }
+
+    public static function getMetaData(ReflectionClass|ReflectionProperty $ref): array|null
+    {
+        $data = null;
 
         if ($attributes = $ref->getAttributes()) {
             // Eg: #[meta(id:"id", table:"users", ..)]
