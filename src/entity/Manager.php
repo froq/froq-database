@@ -359,10 +359,6 @@ final class Manager
         $propEntity     = new $class();
         $propEntityList = ($listClass = $epMeta->getEntityListClass()) ? new $listClass() : null;
 
-        // Nope..
-        // $propEntity->setOwner($entity);
-        // $propEntityList?->setOwner($entity);
-
         // An entity list.
         if ($propEntityList != null) {
             $data = (array) $query->getArrayAll($pager, $limit);
