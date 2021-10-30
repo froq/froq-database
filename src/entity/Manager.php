@@ -45,7 +45,7 @@ final class Manager
         return $this->db->transaction($call, $callError);
     }
 
-    public function createEntity(string $class, array $properties = null): object
+    public function createEntity(string $class, ...$properties): object
     {
         $entity = new $class();
         if ($properties != null) {
