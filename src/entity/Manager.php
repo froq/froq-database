@@ -73,7 +73,7 @@ final class Manager
             $value = self::getPropertyValue($epMeta->getReflector(), $entity);
 
             // Collect & skip entity properties to save later.
-            if ($epMeta->hasEntity()) {
+            if ($epMeta->hasEntity() && $epMeta->isLinkedCascadesFor('save')) {
                 // We can't save empty entities.
                 if ($value != null) {
                     $entityProps[] = $value;
