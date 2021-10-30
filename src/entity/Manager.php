@@ -53,6 +53,8 @@ final class Manager
         }
 
         $ecMeta = MetaParser::parseClassMeta($entity);
+        $ecMeta || throw new ManagerException('Null entity class meta');
+
         $record = $this->initRecord($ecMeta, $entity);
 
         $this->assignEntityProperties($entity, $record, $ecMeta);
@@ -64,6 +66,7 @@ final class Manager
     public function save(object $entity): object
     {
         $ecMeta = MetaParser::parseClassMeta($entity);
+        $ecMeta || throw new ManagerException('Null entity class meta');
 
         $entityData = $entityProps = [];
         foreach ($ecMeta->getProperties() as $name => $epMeta) {
@@ -107,6 +110,7 @@ final class Manager
     public function find(object $entity, int|string $id = null): object
     {
         $ecMeta = MetaParser::parseClassMeta($entity);
+        $ecMeta || throw new ManagerException('Null entity class meta');
 
         $id   ??= self::getEntityPrimaryValue($entity, $ecMeta);
         $fields = self::getEntityFields($entity);
@@ -134,6 +138,7 @@ final class Manager
         Pager &$pager = null): object|null
     {
         $ecMeta = MetaParser::parseClassMeta($entityClass);
+        $ecMeta || throw new ManagerException('Null entity class meta');
 
         $entity = new $entityClass();
         $record = $this->initRecord($ecMeta);
@@ -174,6 +179,7 @@ final class Manager
     public function remove(object $entity, int|string $id = null): object
     {
         $ecMeta = MetaParser::parseClassMeta($entity);
+        $ecMeta || throw new ManagerException('Null entity class meta');
 
         $id   ??= self::getEntityPrimaryValue($entity, $ecMeta);
         $fields = self::getEntityFields($entity);
@@ -200,6 +206,7 @@ final class Manager
     public function removeBy(string $entityClass, string|array $where): object|null
     {
         $ecMeta = MetaParser::parseClassMeta($entityClass);
+        $ecMeta || throw new ManagerException('Null entity class meta');
 
         $entity = new $entityClass();
         $record = $this->initRecord($ecMeta);
@@ -323,6 +330,7 @@ final class Manager
 
         // Parse linked property class meta.
         $ecLinkedMeta = MetaParser::parseClassMeta($class);
+        $ecLinkedMeta || throw new ManagerException('Null entity class meta');
 
         // Given or default limit (if not disabled as "-1").
         $limit = ($limit != -1) ? $limit : null;
@@ -339,6 +347,8 @@ final class Manager
 
                 // Get value from property's class.
                 $epClassMeta  = MetaParser::parseClassMeta($epMeta->getClass());
+                $epClassMeta || throw new ManagerException('Null entity class meta');
+
                 $primaryValue = self::getPropertyValue($epClassMeta->getTablePrimary(), $entity);
 
                 unset($epClassMeta); // Free.
@@ -433,7 +443,10 @@ final class Manager
             $epMeta->getName()
         );
 
-        $primaryField = MetaParser::parseClassMeta($class)->getTablePrimary();
+        $ecMeta = MetaParser::parseClassMeta($class);
+        $ecMeta || throw new ManagerException('Null entity class meta');
+
+        $primaryField = $ecMeta->getTablePrimary();
         $primaryValue = self::getPropertyValue($primaryField, $entity);
 
         // Create a delete query & apply link criteria.
