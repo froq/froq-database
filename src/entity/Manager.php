@@ -45,6 +45,22 @@ final class Manager
         return $this->db->transaction($call, $callError);
     }
 
+    public function createEntity(string $class, array $properties = null): object
+    {
+        $entity = new $class();
+        if ($properties != null) {
+            $entity->fill(...$properties);
+        }
+
+        $ecMeta = MetaParser::parseClassMeta($entity);
+        $record = $this->initRecord($ecMeta, $entity);
+
+        $this->assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityInternalProperties($entity, $record);
+
+        return $entity;
+    }
+
     public function save(object $entity): object
     {
         $ecMeta = MetaParser::parseClassMeta($entity);
