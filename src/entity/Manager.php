@@ -70,8 +70,8 @@ final class Manager
                 ->setData($entityData)
                 ->save();
 
-        self::assignEntityRecord($entity, $record);
-        self::assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityInternalProperties($entity, $record);
 
         if ($record->isSaved()) {
             // Also save if any entity property exists.
@@ -101,8 +101,8 @@ final class Manager
                 ->return($fields)
                 ->find();
 
-        self::assignEntityRecord($entity, $record);
-        self::assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityInternalProperties($entity, $record);
 
         if ($record->isFinded()) {
             // Fill linked properties.
@@ -132,8 +132,8 @@ final class Manager
 
             foreach ($rows as $row) {
                 $entityClone = clone $entity;
-                self::assignEntityRecord($entityClone, $record);
-                self::assignEntityProperties($entityClone, $row, $ecMeta);
+                $this->assignEntityProperties($entityClone, $row, $ecMeta);
+                $this->assignEntityInternalProperties($entityClone, $record);
 
                 // Fill linked properties.
                 foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
@@ -168,8 +168,8 @@ final class Manager
                 ->return($fields)
                 ->remove();
 
-        self::assignEntityRecord($entity, $record);
-        self::assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityInternalProperties($entity, $record);
 
         if ($record->isRemoved()) {
             // Drop linked properties (records actually).
@@ -193,8 +193,8 @@ final class Manager
         if ($rows != null) {
             foreach ($rows as $row) {
                 $entityClone = clone $entity;
-                self::assignEntityRecord($entityClone, $record);
-                self::assignEntityProperties($entityClone, $row, $ecMeta);
+                $this->assignEntityProperties($entityClone, $row, $ecMeta);
+                $this->assignEntityInternalProperties($entityClone, $record);
 
                 // Drop linked properties (records actually).
                 foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
@@ -427,24 +427,26 @@ final class Manager
                  ->run();
     }
 
-    private static function assignEntityRecord(object $entity, Record $record): void
-    {
-        // When entity extends AbstractEntity.
-        if ($entity instanceof AbstractEntity) {
-            $entity->setRecord($record);
-        }
-    }
-    private static function assignEntityProperties(object $entity, array|Record $record, EntityClassMeta $ecMeta): void
+    private function assignEntityProperties(object $entity, array|Record $record, EntityClassMeta $ecMeta): void
     {
         $data = is_array($record) ? $record : $record->getData();
 
         if ($data) {
             $props = $ecMeta->getProperties();
             foreach ($data as $name => $value) {
+                // Set existsing (defined/parsed) properties only.
                 isset($props[$name]) && self::setPropertyValue(
                     $props[$name]->getReflector(), $entity, $value
                 );
             }
+        }
+    }
+    private function assignEntityInternalProperties(object $entity, Record $record): void
+    {
+        // When entity extends AbstractEntity.
+        if ($entity instanceof AbstractEntity) {
+            $entity->setManager($this);
+            $entity->setRecord($record);
         }
     }
 
