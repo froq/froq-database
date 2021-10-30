@@ -7,22 +7,23 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
+use froq\database\entity\Manager;
 use froq\database\record\Record;
 
 abstract class AbstractEntity
 {
-    // private AbstractEntity $owner;
-    private $owner;
+    private Manager $manager;
     private Record $record;
 
     public function __debugInfo()
     {
-        $ret = (array) $this;
+        [$data, $class] = [(array) $this, self::class];
 
-        // Drop (self) record property. @temp?
-        unset($ret["\0" . self::class . "\0record"]);
+        // Drop internals.
+        unset($data["\0{$class}\0manager"]);
+        unset($data["\0{$class}\0record"]);
 
-        return $ret;
+        return $data;
     }
 
     public final function fill(...$properties): static
@@ -36,16 +37,15 @@ abstract class AbstractEntity
         return $this;
     }
 
-    // public final function setOwner(AbstractEntity $owner): static
-    public final function setOwner($owner): static
+    public final function setManager(Manager $manager): static
     {
-        $this->owner = $owner;
+        $this->manager = $manager;
 
         return $this;
     }
-    public final function getOwner()//: AbstractEntity|null
+    public final function getManager(): Manager|null
     {
-        return $this->owner ?? null;
+        return $this->manager ?? null;
     }
 
     public final function setRecord(Record $record): static

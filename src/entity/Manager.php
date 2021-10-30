@@ -445,8 +445,8 @@ final class Manager
     {
         // When entity extends AbstractEntity.
         if ($entity instanceof AbstractEntity) {
-            $entity->setManager($this);
-            $entity->setRecord($record);
+            $entity->setManager($this)
+                   ->setRecord($record);
         }
     }
 

@@ -7,36 +7,36 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
+use froq\database\entity\Manager;
 use froq\database\record\Record;
 use froq\collection\ItemCollection;
 use froq\pager\Pager;
 
 abstract class AbstractEntityList extends ItemCollection
 {
-    // private AbstractEntity|AbstractEntityList $owner;
-    private $owner;
+    private Manager $manager;
     private Pager|null $pager = null;
 
     public function __debugInfo()
     {
-        $ret = (array) $this;
+        [$data, $class] = [(array) $this, self::class];
 
-        // Drop (self) record property. @temp?
-        unset($ret["\0" . self::class . "\0pager"]);
+        // Drop internals.
+        unset($data["\0{$class}\0manager"]);
+        unset($data["\0{$class}\0record"]);
 
-        return $ret;
+        return $data;
     }
 
-    // public final function setOwner(AbstractEntity|AbstractEntityList $owner): static
-    public final function setOwner($owner): static
+    public final function setManager(Manager $manager): static
     {
-        $this->owner = $owner;
+        $this->manager = $manager;
 
         return $this;
     }
-    public final function getOwner()//: AbstractEntity|AbstractEntityList|null
+    public final function getManager(): Manager|null
     {
-        return $this->owner ?? null;
+        return $this->manager ?? null;
     }
 
     public final function setPager(Pager $pager): static
