@@ -14,8 +14,8 @@ use Reflector;
 class Meta
 {
     public const TYPE_CLASS    = 1,
-                 TYPE_METHOD   = 2, // Not implemented (reserved).
-                 TYPE_PROPERTY = 3;
+                 TYPE_PROPERTY = 2,
+                 TYPE_METHOD   = 3; // Not implemented (reserved).
 
     protected int $type;
     protected string $name;
