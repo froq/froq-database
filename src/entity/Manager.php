@@ -164,12 +164,12 @@ final class Manager
                 //     $this->loadLinkedProperty($epMeta, $entityClone, 'find');
                 // }
 
-                $data[] = $entityClone;
+                $entityClones[] = $entityClone;
             }
 
             // Create & fill entity list.
             $entityList = $this->initEntityList($ecMeta->getListClass());
-            $entityList->setData($data);
+            $entityList->resetData($entityClones);
 
             $pager && $entityList->setPager($pager);
 
@@ -229,12 +229,12 @@ final class Manager
                 //     $this->unloadLinkedProperty($epMeta, $entityClone);
                 // }
 
-                $data[] = $entityClone;
+                $entityClones[] = $entityClone;
             }
 
             // Create & fill entity list.
             $entityList = $this->initEntityList($ecMeta->getListClass());
-            $entityList->setData($data);
+            $entityList->resetData($entityClones);
 
             return $entityList;
         }
