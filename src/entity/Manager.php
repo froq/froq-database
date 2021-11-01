@@ -115,8 +115,7 @@ final class Manager
         }
 
         if ($init && is_array($entityList)) {
-            $entityList = $this->initEntityList(null)
-                               ->resetData($entityList);
+            $entityList = $this->initEntityList(null, $entityList);
         }
 
         return $entityList;
@@ -157,8 +156,7 @@ final class Manager
         }
 
         if ($init && is_array($entityList)) {
-            $entityList = $this->initEntityList(null)
-                               ->resetData($entityList);
+            $entityList = $this->initEntityList(null, $entityList);
         }
 
         return $entityList;
@@ -196,8 +194,7 @@ final class Manager
             }
 
             // Create & fill entity list.
-            $entityList = $this->initEntityList($ecMeta->getListClass());
-            $entityList->resetData($entityClones);
+            $entityList = $this->initEntityList($ecMeta->getListClass(), $entityClones);
 
             $pager && $entityList->setPager($pager);
 
@@ -242,8 +239,7 @@ final class Manager
         }
 
         if ($init && is_array($entityList)) {
-            $entityList = $this->initEntityList(null)
-                               ->resetData($entityList);
+            $entityList = $this->initEntityList(null, $entityList);
         }
 
         return $entityList;
@@ -275,8 +271,7 @@ final class Manager
             }
 
             // Create & fill entity list.
-            $entityList = $this->initEntityList($ecMeta->getListClass());
-            $entityList->resetData($entityClones);
+            $entityList = $this->initEntityList($ecMeta->getListClass(), $entityClones);
 
             return $entityList;
         }
@@ -331,7 +326,7 @@ final class Manager
         );
     }
 
-    private function initEntityList(string|null $class): AbstractEntityList
+    private function initEntityList(string|null $class, array $entities = null): AbstractEntityList
     {
         if ($class != null) {
             // Check class validity.
@@ -346,6 +341,9 @@ final class Manager
         } else {
             $entityList = new class() extends AbstractEntityList {};
         }
+
+        // Set stack items.
+        $entities && $entityList->resetData($entities);
 
         // Set manager.
         $entityList->setManager($this);
