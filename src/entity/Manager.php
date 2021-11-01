@@ -305,6 +305,9 @@ final class Manager
             $entityList = new class() extends AbstractEntityList {};
         }
 
+        // Set manager.
+        $entityList->setManager($this);
+
         return $entityList;
     }
 
