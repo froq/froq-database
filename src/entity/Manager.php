@@ -167,9 +167,9 @@ final class Manager
                 $data[] = $entityClone;
             }
 
-            // Create, fill & lock entity list.
+            // Create & fill entity list.
             $entityList = $this->initEntityList($ecMeta->getListClass());
-            $entityList->setData($data)->readOnly(true);
+            $entityList->setData($data);
 
             $pager && $entityList->setPager($pager);
 
@@ -232,9 +232,9 @@ final class Manager
                 $data[] = $entityClone;
             }
 
-            // Create, fill & lock entity list.
+            // Create & fill entity list.
             $entityList = $this->initEntityList($ecMeta->getListClass());
-            $entityList->setData($data)->readOnly(true);
+            $entityList->setData($data);
 
             return $entityList;
         }
