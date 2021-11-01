@@ -47,10 +47,7 @@ final class Manager
 
     public function createEntity(string $class, ...$properties): object
     {
-        $entity = new $class();
-        if ($properties != null) {
-            $entity->fill(...$properties);
-        }
+        $entity = $this->initEntity($class, $properties);
 
         $ecMeta = MetaParser::parseClassMeta($entity);
         $ecMeta || throw new ManagerException('Null entity class meta');
@@ -61,6 +58,11 @@ final class Manager
         $this->assignEntityInternalProperties($entity, $record);
 
         return $entity;
+    }
+
+    public function createEntityList(string $class, ...$entities): object
+    {
+        return $this->initEntityList($class, $entities);
     }
 
     public function save(object $entity): object
@@ -326,13 +328,36 @@ final class Manager
         );
     }
 
+    private function initEntity(string|null $class, array $properties = null): AbstractEntity
+    {
+        if ($class !== null) {
+            // Check class validity.
+            if (!class_extends($class, AbstractEntity::class)) {
+                throw new ManagerException(
+                    'Entity list class `%s` must extend `%s`',
+                    [$class, AbstractEntity::class]
+                );
+            }
+
+            $entity = new $class();
+        } else {
+            $entity = new class() extends AbstractEntity {};
+        }
+
+        // Set manager & properties.
+        $entity->setManager($this);
+        $properties && $entity->fill(...$properties);
+
+        return $entity;
+    }
+
     private function initEntityList(string|null $class, array $entities = null): AbstractEntityList
     {
-        if ($class != null) {
+        if ($class !== null) {
             // Check class validity.
             if (!class_extends($class, AbstractEntityList::class)) {
                 throw new ManagerException(
-                    'Entity list class %s must extend %s',
+                    'Entity list class `%s` must extend `%s`',
                     [$class, AbstractEntityList::class]
                 );
             }
@@ -342,11 +367,9 @@ final class Manager
             $entityList = new class() extends AbstractEntityList {};
         }
 
-        // Set stack items.
-        $entities && $entityList->resetData($entities);
-
-        // Set manager.
+        // Set manager & stack items.
         $entityList->setManager($this);
+        $entities && $entityList->resetData($entities);
 
         return $entityList;
     }
