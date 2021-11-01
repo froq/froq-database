@@ -108,6 +108,20 @@ final class Manager
         return $entity;
     }
 
+    public function saveAll(array|AbstractEntityList $entityList, bool $init = false): array|AbstractEntityList
+    {
+        foreach ($entityList as $entity) {
+            $this->save($entity);
+        }
+
+        if ($init && is_array($entityList)) {
+            $entityList = $this->initEntityList(null)
+                               ->resetData($entityList);
+        }
+
+        return $entityList;
+    }
+
     public function find(object $entity, int|string $id = null): object
     {
         $ecMeta = MetaParser::parseClassMeta($entity);
@@ -134,6 +148,20 @@ final class Manager
         // }
 
         return $entity;
+    }
+
+    public function findAll(array|AbstractEntityList $entityList, bool $init = false): array|AbstractEntityList
+    {
+        foreach ($entityList as $entity) {
+            $this->find($entity);
+        }
+
+        if ($init && is_array($entityList)) {
+            $entityList = $this->initEntityList(null)
+                               ->resetData($entityList);
+        }
+
+        return $entityList;
     }
 
     public function findBy(string $entityClass, string|array $where = null, int $limit = null, string $order = null,
@@ -205,6 +233,20 @@ final class Manager
         // }
 
         return $entity;
+    }
+
+    public function removeAll(array|AbstractEntityList $entityList, bool $init = false): array|AbstractEntityList
+    {
+        foreach ($entityList as $entity) {
+            $this->remove($entity);
+        }
+
+        if ($init && is_array($entityList)) {
+            $entityList = $this->initEntityList(null)
+                               ->resetData($entityList);
+        }
+
+        return $entityList;
     }
 
     public function removeBy(string $entityClass, string|array $where): object|null
