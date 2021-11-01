@@ -17,6 +17,11 @@ abstract class AbstractEntityList extends ItemCollection
     private Manager $manager;
     private Pager|null $pager = null;
 
+    public function __construct(...$entities)
+    {
+        $entities && $this->resetData($entities);
+    }
+
     public function __debugInfo()
     {
         [$data, $class] = [(array) $this, self::class];

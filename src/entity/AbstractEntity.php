@@ -15,6 +15,11 @@ abstract class AbstractEntity
     private Manager $manager;
     private Record $record;
 
+    public function __construct(...$properties)
+    {
+        $properties && $this->fill(...$properties);
+    }
+
     public function __debugInfo()
     {
         [$data, $class] = [(array) $this, self::class];
