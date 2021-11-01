@@ -59,6 +59,25 @@ abstract class AbstractEntity
         return $this->record;
     }
 
+    public final function save(): static
+    {
+        $this->manager->save($this);
+
+        return $this;
+    }
+    public final function find(): static
+    {
+        $this->manager->find($this);
+
+        return $this;
+    }
+    public final function remove(): static
+    {
+        $this->manager->remove($this);
+
+        return $this;
+    }
+
     public final function isSaved(): bool
     {
         return $this->record->isSaved();

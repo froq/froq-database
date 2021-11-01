@@ -49,4 +49,23 @@ abstract class AbstractEntityList extends ItemCollection
     {
         return $this->pager;
     }
+
+    public final function saveAll(): static
+    {
+        $this->manager->saveAll($this);
+
+        return $this;
+    }
+    public final function findAll(): static
+    {
+        $this->manager->findAll($this);
+
+        return $this;
+    }
+    public final function removeAll(): static
+    {
+        $this->manager->removeAll($this);
+
+        return $this;
+    }
 }
