@@ -49,6 +49,7 @@ final class Manager
     {
         $entity = $this->initEntity($class, $properties);
 
+        /* @var froq\database\entity\EntityClassMeta */
         $ecMeta = MetaParser::parseClassMeta($entity);
         $ecMeta || throw new ManagerException('Null entity class meta');
 
@@ -67,6 +68,7 @@ final class Manager
 
     public function save(object $entity): object
     {
+        /* @var froq\database\entity\EntityClassMeta */
         $ecMeta = MetaParser::parseClassMeta($entity);
         $ecMeta || throw new ManagerException('Null entity class meta');
 
@@ -136,6 +138,7 @@ final class Manager
 
     public function find(object $entity, int|string $id = null): object
     {
+        /* @var froq\database\entity\EntityClassMeta */
         $ecMeta = MetaParser::parseClassMeta($entity);
         $ecMeta || throw new ManagerException('Null entity class meta');
 
@@ -183,6 +186,7 @@ final class Manager
     public function findBy(string $entityClass, string|array $where = null, int $limit = null, string $order = null,
         Pager &$pager = null): object|null
     {
+        /* @var froq\database\entity\EntityClassMeta */
         $ecMeta = MetaParser::parseClassMeta($entityClass);
         $ecMeta || throw new ManagerException('Null entity class meta');
 
@@ -229,6 +233,7 @@ final class Manager
 
     public function remove(object $entity, int|string $id = null): object
     {
+        /* @var froq\database\entity\EntityClassMeta */
         $ecMeta = MetaParser::parseClassMeta($entity);
         $ecMeta || throw new ManagerException('Null entity class meta');
 
@@ -275,6 +280,7 @@ final class Manager
 
     public function removeBy(string $entityClass, string|array $where): object|null
     {
+        /* @var froq\database\entity\EntityClassMeta */
         $ecMeta = MetaParser::parseClassMeta($entityClass);
         $ecMeta || throw new ManagerException('Null entity class meta');
 
@@ -434,6 +440,7 @@ final class Manager
         $limit = ($limit != -1) ? $limit : null;
 
         // Parse linked property class meta.
+        /* @var froq\database\entity\EntityClassMeta */
         $ecLinkedMeta = MetaParser::parseClassMeta($class);
         $ecLinkedMeta || throw new ManagerException('Null entity class meta');
 
@@ -448,6 +455,7 @@ final class Manager
                 $primaryField = $column; // Reference.
 
                 // Get value from property's class.
+                /* @var froq\database\entity\EntityClassMeta */
                 $epClassMeta  = MetaParser::parseClassMeta($epMeta->getClass());
                 $epClassMeta || throw new ManagerException('Null entity class meta');
 
@@ -542,6 +550,7 @@ final class Manager
         );
 
         // Parse linked property class meta.
+        /* @var froq\database\entity\EntityClassMeta */
         $ecLinkedMeta = MetaParser::parseClassMeta($class);
         $ecLinkedMeta || throw new ManagerException('Null entity class meta');
 
@@ -554,6 +563,7 @@ final class Manager
                 $primaryField = $column; // Reference.
 
                 // Get value from property's class.
+                /* @var froq\database\entity\EntityClassMeta */
                 $epClassMeta  = MetaParser::parseClassMeta($epMeta->getClass());
                 $epClassMeta || throw new ManagerException('Null entity class meta');
 
