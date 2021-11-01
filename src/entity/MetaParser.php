@@ -45,11 +45,12 @@ final class MetaParser
 
         // And add properties.
         if ($withProperties) {
+            // We use only "public/protected" properties, not "static/private" ones.
             $types = ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED;
             $props = [];
 
             foreach ($classRef->getProperties($types) as $propRef) {
-                // We don't use static vars.
+                // We don't use static properties.
                 if ($propRef->isStatic()) {
                     continue;
                 }
@@ -91,7 +92,7 @@ final class MetaParser
             throw new MetaException($e);
         }
 
-        // We don't use static & private vars.
+        // We don't use static & private properties.
         if ($propRef->isStatic() || $propRef->isPrivate()) {
             return null;
         }
