@@ -84,6 +84,12 @@ final class Manager
             //     continue;
             // }
 
+            // Working without this, hmmm...
+            // // Skip entity properties.
+            // if ($epMeta->isLinked() || $epMeta->hasEntity()) {
+            //     continue;
+            // }
+
             $entityData[$name] = $value ?? $epMeta->getValidationDefault();
         }
 
