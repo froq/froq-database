@@ -72,14 +72,15 @@ final class Manager
         foreach ($ecMeta->getProperties() as $name => $epMeta) {
             $value = self::getPropertyValue($epMeta->getReflector(), $entity);
 
-            // Collect & skip entity properties to save later.
-            if ($epMeta->hasEntity() && $epMeta->isLinkedCascadesFor('save')) {
-                // We can't save empty entities.
-                if ($value != null) {
-                    $entityProps[] = $value;
-                }
-                continue;
-            }
+            // @cancel
+            // // Collect & skip entity properties to save later.
+            // if ($epMeta->hasEntity() && $epMeta->isLinkedCascadesFor('save')) {
+            //     // We can't save empty entities.
+            //     if ($value != null) {
+            //         $entityProps[] = $value;
+            //     }
+            //     continue;
+            // }
 
             $entityData[$name] = $value ?? $epMeta->getValidationDefault();
         }
@@ -92,17 +93,17 @@ final class Manager
         $this->assignEntityProperties($entity, $record, $ecMeta);
         $this->assignEntityInternalProperties($entity, $record);
 
-        if ($record->isSaved()) {
-            // Also save if any entity property exists.
-            foreach ($entityProps as $entityProp) {
-                $this->save($entityProp);
-            }
-
-            // Fill linked properties.
-            foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-                $this->loadLinkedProperty($epMeta, $entity, 'save');
-            }
-        }
+        // @cancel
+        // if ($record->isSaved()) {
+        //     // Also save if any entity property exists.
+        //     foreach ($entityProps as $entityProp) {
+        //         $this->save($entityProp);
+        //     }
+        //     // Fill linked properties.
+        //     foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
+        //         $this->loadLinkedProperty($epMeta, $entity, 'save');
+        //     }
+        // }
 
         return $entity;
     }
@@ -124,12 +125,13 @@ final class Manager
         $this->assignEntityProperties($entity, $record, $ecMeta);
         $this->assignEntityInternalProperties($entity, $record);
 
-        if ($record->isFinded()) {
-            // Fill linked properties.
-            foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-                $this->loadLinkedProperty($epMeta, $entity, 'find');
-            }
-        }
+        // @cancel
+        // if ($record->isFinded()) {
+        //     // Fill linked properties.
+        //     foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
+        //         $this->loadLinkedProperty($epMeta, $entity, 'find');
+        //     }
+        // }
 
         return $entity;
     }
@@ -156,10 +158,11 @@ final class Manager
                 $this->assignEntityProperties($entityClone, $row, $ecMeta);
                 $this->assignEntityInternalProperties($entityClone, $record);
 
-                // Fill linked properties.
-                foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-                    $this->loadLinkedProperty($epMeta, $entityClone, 'find');
-                }
+                // @cancel
+                // // Fill linked properties.
+                // foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
+                //     $this->loadLinkedProperty($epMeta, $entityClone, 'find');
+                // }
 
                 $data[] = $entityClone;
             }
@@ -193,12 +196,13 @@ final class Manager
         $this->assignEntityProperties($entity, $record, $ecMeta);
         $this->assignEntityInternalProperties($entity, $record);
 
-        if ($record->isRemoved()) {
-            // Drop linked properties (records actually).
-            foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-                $this->unloadLinkedProperty($epMeta, $entity);
-            }
-        }
+        // @cancel
+        // if ($record->isRemoved()) {
+        //     // Drop linked properties (records actually).
+        //     foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
+        //         $this->unloadLinkedProperty($epMeta, $entity);
+        //     }
+        // }
 
         return $entity;
     }
@@ -219,10 +223,11 @@ final class Manager
                 $this->assignEntityProperties($entityClone, $row, $ecMeta);
                 $this->assignEntityInternalProperties($entityClone, $record);
 
-                // Drop linked properties (records actually).
-                foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-                    $this->unloadLinkedProperty($epMeta, $entityClone);
-                }
+                // @cancel
+                // // Drop linked properties (records actually).
+                // foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
+                //     $this->unloadLinkedProperty($epMeta, $entityClone);
+                // }
 
                 $data[] = $entityClone;
             }
@@ -328,12 +333,12 @@ final class Manager
             $epMeta->getName()
         );
 
+        // Given or default limit (if not disabled as "-1").
+        $limit = ($limit != -1) ? $limit : null;
+
         // Parse linked property class meta.
         $ecLinkedMeta = MetaParser::parseClassMeta($class);
         $ecLinkedMeta || throw new ManagerException('Null entity class meta');
-
-        // Given or default limit (if not disabled as "-1").
-        $limit = ($limit != -1) ? $limit : null;
 
         switch ($method) {
             case 'one-to-one':
@@ -352,10 +357,6 @@ final class Manager
                 $primaryValue = self::getPropertyValue($epClassMeta->getTablePrimary(), $entity);
 
                 unset($epClassMeta); // Free.
-                break;
-            case 'many-to-one':
-                $primaryField = $ecLinkedMeta->getTablePrimary();
-                $primaryValue = self::getPropertyValue($column, $entity);
                 break;
             default:
                 throw new ManagerException(
@@ -435,7 +436,7 @@ final class Manager
             $epMeta->getName()
         );
 
-        [$table, $column, $condition, $method, $limit] = $epMeta->packLinkStuff();
+        [$table, $column, , $method] = $epMeta->packLinkStuff();
 
         // Check non-link / non-valid properties.
         ($table && $column) ?: throw new ManagerException(
@@ -443,16 +444,37 @@ final class Manager
             $epMeta->getName()
         );
 
-        $ecMeta = MetaParser::parseClassMeta($class);
-        $ecMeta || throw new ManagerException('Null entity class meta');
+        // Parse linked property class meta.
+        $ecLinkedMeta = MetaParser::parseClassMeta($class);
+        $ecLinkedMeta || throw new ManagerException('Null entity class meta');
 
-        $primaryField = $ecMeta->getTablePrimary();
-        $primaryValue = self::getPropertyValue($primaryField, $entity);
+        switch ($method) {
+            case 'one-to-one':
+                $primaryField = $ecLinkedMeta->getTablePrimary();
+                $primaryValue = self::getPropertyValue($column, $entity);
+                break;
+            case 'one-to-many':
+                $primaryField = $column; // Reference.
+
+                // Get value from property's class.
+                $epClassMeta  = MetaParser::parseClassMeta($epMeta->getClass());
+                $epClassMeta || throw new ManagerException('Null entity class meta');
+
+                $primaryValue = self::getPropertyValue($epClassMeta->getTablePrimary(), $entity);
+
+                unset($epClassMeta); // Free.
+                break;
+            default:
+                throw new ManagerException(
+                    'Unimplemented link method `%s` on `%s` property',
+                    [$method, $epMeta->getName()]
+                );
+        }
 
         // Create a delete query & apply link criteria.
-        $this->db->initQuery($table)
+        $q=$this->db->initQuery($table)
                  ->delete()
-                 ->equal($column, $primaryValue)
+                 ->equal($primaryField, $primaryValue)
                  ->run();
     }
 
