@@ -107,6 +107,11 @@ final class Manager
         //     }
         // }
 
+        // Call on-save method when provided.
+        if (method_exists($entity, 'onSave')) {
+            $entity->onSave();
+        }
+
         return $entity;
     }
 
@@ -147,6 +152,11 @@ final class Manager
         //         $this->loadLinkedProperty($epMeta, $entity, 'find');
         //     }
         // }
+
+        // Call on-find method when provided.
+        if (method_exists($entity, 'onFind')) {
+            $entity->onFind();
+        }
 
         return $entity;
     }
@@ -192,6 +202,11 @@ final class Manager
                 //     $this->loadLinkedProperty($epMeta, $entityClone, 'find');
                 // }
 
+                // Call on-save method when provided.
+                if (method_exists($entityClone, 'onFind')) {
+                    $entityClone->onFind();
+                }
+
                 $entityClones[] = $entityClone;
             }
 
@@ -231,6 +246,11 @@ final class Manager
         //     }
         // }
 
+        // Call on-remove method when provided.
+        if (method_exists($entity, 'onRemove')) {
+            $entity->onRemove();
+        }
+
         return $entity;
     }
 
@@ -268,6 +288,11 @@ final class Manager
                 // foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
                 //     $this->unloadLinkedProperty($epMeta, $entityClone);
                 // }
+
+                // Call on-remove method when provided.
+                if (method_exists($entityClone, 'onRemove')) {
+                    $entityClone->onRemove();
+                }
 
                 $entityClones[] = $entityClone;
             }
