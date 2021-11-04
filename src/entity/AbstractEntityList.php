@@ -73,4 +73,17 @@ abstract class AbstractEntityList extends ItemCollection
 
         return $this;
     }
+
+    public final function isSavedAll(): bool
+    {
+        return (bool) array_filter($this->data, fn($entity) => $entity->isSaved());
+    }
+    public final function isFindedAll(): bool
+    {
+        return (bool) array_filter($this->data, fn($entity) => $entity->isFinded());
+    }
+    public final function isRemovedAll(): bool
+    {
+        return (bool) array_filter($this->data, fn($entity) => $entity->isRemoved());
+    }
 }
