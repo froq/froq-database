@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\Meta;
-use froq\collection\ItemCollection;
 
 /**
  * Entity Class Meta.
