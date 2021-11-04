@@ -9,7 +9,7 @@ namespace froq\database\entity;
 
 use froq\database\entity\MetaException;
 use froq\util\Objects;
-use Reflector;
+use ReflectionClass, ReflectionProperty;
 
 class Meta
 {
@@ -22,7 +22,7 @@ class Meta
     protected string $class;
     protected array $data = [];
 
-    private Reflector $reflector;
+    private ReflectionClass|ReflectionProperty $reflector;
 
     public function __construct(int $type, string $name, string $class, array $data = null)
     {
@@ -108,11 +108,11 @@ class Meta
         return (bool) $this->getDataField($name, $default);
     }
 
-    public final function setReflector(Reflector $reflector): void
+    public final function setReflector(ReflectionClass|ReflectionProperty $reflector): void
     {
         $this->reflector = $reflector;
     }
-    public final function getReflector(): Reflector|null
+    public final function getReflector(): ReflectionClass|ReflectionProperty|null
     {
         return $this->reflector ?? null;
     }

@@ -9,7 +9,7 @@ namespace froq\database\entity;
 
 use froq\database\entity\{MetaException, MetaFactory, Meta, EntityClassMeta, EntityPropertyMeta};
 use froq\util\Objects;
-use Reflector, ReflectionClass, ReflectionProperty, ReflectionException;
+use ReflectionClass, ReflectionProperty, ReflectionException;
 
 final class MetaParser
 {
@@ -145,7 +145,7 @@ final class MetaParser
         return null;
     }
 
-    private static function getDataFromAnnotations(string $annotations, Reflector $ref): array|null
+    private static function getDataFromAnnotations(string $annotations, ReflectionClass|ReflectionProperty $ref): array|null
     {
         // Eg: @meta(id:"id", table:"users", ..)
         // Eg: @meta(id="id", table="users", ..)
