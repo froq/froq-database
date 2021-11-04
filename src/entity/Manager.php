@@ -78,7 +78,7 @@ final class Manager
 
             // @cancel
             // // Collect & skip entity properties to save later.
-            // if ($epMeta->hasEntity() && $epMeta->isLinkedCascadesFor('save')) {
+            // if ($epMeta->hasEntity() && $epMeta->isLinkCascadesFor('save')) {
             //     // We can't save empty entities.
             //     if ($value != null) {
             //         $entityProps[] = $value;
@@ -419,7 +419,7 @@ final class Manager
     private function loadLinkedProperty(EntityPropertyMeta $epMeta, object $entity, string $action = null): void
     {
         // Check whether cascade op allows given action.
-        if ($action && !$epMeta->isLinkedCascadesFor($action)) {
+        if ($action && !$epMeta->isLinkCascadesFor($action)) {
             return;
         }
 
@@ -532,7 +532,7 @@ final class Manager
     private function unloadLinkedProperty(EntityPropertyMeta $epMeta, object $entity): void
     {
         // Check whether cascade op allows remove action.
-        if (!$epMeta->isLinkedCascadesFor('remove')) {
+        if (!$epMeta->isLinkCascadesFor('remove')) {
             return;
         }
 

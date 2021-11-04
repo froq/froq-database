@@ -11,19 +11,47 @@ use froq\database\entity\MetaException;
 use froq\util\Objects;
 use ReflectionClass, ReflectionProperty;
 
+/**
+ * Meta.
+ *
+ * Represents a base metadata class entity that used internally for EntityClassMeta & EntityPropertyMeta.
+ *
+ * @package froq\database\entity
+ * @object  froq\database\entity\Meta
+ * @author  Kerem Güneş
+ * @since   5.0
+ * @internal
+ */
 class Meta
 {
+    /** @const int */
     public const TYPE_CLASS    = 1,
                  TYPE_PROPERTY = 2,
                  TYPE_METHOD   = 3; // Not implemented (reserved).
 
-    protected int $type;
-    protected string $name;
-    protected string $class;
-    protected array $data = [];
-
+    /** @var ReflectionClass|ReflectionProperty */
     private ReflectionClass|ReflectionProperty $reflector;
 
+    /** @var int */
+    private int $type;
+
+    /** @var string */
+    private string $name;
+
+    /** @var string */
+    private string $class;
+
+    /** @var array */
+    protected array $data = [];
+
+    /**
+     * Constructor.
+     *
+     * @param int        $type
+     * @param string     $name
+     * @param string     $class
+     * @param array|null $data
+     */
     public function __construct(int $type, string $name, string $class, array $data = null)
     {
         $this->type  = $type;
@@ -34,36 +62,56 @@ class Meta
         $data && $this->setData($data);
     }
 
+    /**
+     * Get type.
+     *
+     * @return int
+     */
     public final function getType(): int
     {
         return $this->type;
     }
+
+    /**
+     * Get name.
+     *
+     * @return int
+     */
     public final function getName(): string
     {
         return $this->name;
     }
+
+    /**
+     * Get short name.
+     *
+     * @return int
+     */
     public final function getShortName(): string
     {
         return explode('.', $this->name)[1];
     }
+
+    /**
+     * Get class.
+     *
+     * @return int
+     */
     public final function getClass(): string
     {
         return $this->class;
     }
 
-    public final function isTypeClass(): bool
-    {
-        return ($this->type == self::TYPE_CLASS);
-    }
-    public final function isTypeProperty(): bool
-    {
-        return ($this->type == self::TYPE_PROPERTY);
-    }
-
+    /**
+     * Set data.
+     *
+     * @param  array $data
+     * @return void
+     */
     public final function setData(array $data): void
     {
         // Annotation "list" is for only classes.
-        if (isset($data['list']) && $this->isTypeProperty()) {
+        if (isset($data['list']) && ($this->type == self::TYPE_PROPERTY)) {
             throw new MetaException(
                 'Invalid annotation directive `list` for property `%s`',
                 $this->name
@@ -89,29 +137,68 @@ class Meta
 
         $this->data = $data;
     }
-    public final function getData(): array|null
+
+    /**
+     * Get data.
+     *
+     * @return array
+     */
+    public final function getData(): array
     {
-        return $this->data ?: null;
+        return $this->data;
     }
 
+    /**
+     * Check a data field by given key.
+     *
+     * @param  string $key
+     * @return bool
+     */
     public final function hasDataField(string $key): bool
     {
         return array_isset($this->data, $key);
     }
+
+    /**
+     * Get a data field by given key.
+     *
+     * @param  string   $key
+     * @param  any|null $default
+     * @return any|null
+     */
     public final function getDataField(string $key, $default = null)
     {
         return array_fetch($this->data, $key, $default);
     }
 
+    /**
+     * Get a data field by given key as a bool option.
+     *
+     * @param  string   $key
+     * @param  any|null $default
+     * @return bool
+     */
     public final function getOption(string $name, $default = null): bool
     {
         return (bool) $this->getDataField($name, $default);
     }
 
+    /**
+     * Set reflector.
+     *
+     * @param  ReflectionClass|ReflectionProperty $reflector
+     * @return void
+     */
     public final function setReflector(ReflectionClass|ReflectionProperty $reflector): void
     {
         $this->reflector = $reflector;
     }
+
+    /**
+     * Get reflector.
+     *
+     * @return ReflectionClass|ReflectionProperty|null
+     */
     public final function getReflector(): ReflectionClass|ReflectionProperty|null
     {
         return $this->reflector ?? null;
