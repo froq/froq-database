@@ -41,7 +41,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null)
     {
-        if ($pdoStatement->errorCode() == '00000') {
+        if ($pdo->errorCode() == '00000' && $pdoStatement->errorCode() == '00000') {
             // Assign count (affected rows etc).
             $this->count = $pdoStatement->rowCount();
 
