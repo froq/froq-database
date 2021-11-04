@@ -10,16 +10,41 @@ namespace froq\database\entity;
 use froq\database\entity\Manager;
 use froq\database\record\Record;
 
+/**
+ * Abstract Entity.
+ *
+ * Represents an abstract entity class that may be extended by entity classes used for
+ * accessing & modifiying data via its utility methods such as save(), find(), remove()
+ * and checkers for these methods.
+ *
+ * @package froq\database\entity
+ * @object  froq\database\entity\AbstractEntity
+ * @author  Kerem Güneş
+ * @since   5.0, Replaced with "object" subpackage.
+ */
 abstract class AbstractEntity
 {
+    /** @var froq\database\entity\Manager */
     private Manager $manager;
+
+    /** @var froq\database\record\Record */
     private Record $record;
 
+    /**
+     * Constructor.
+     *
+     * @param ... $properties
+     */
     public function __construct(...$properties)
     {
         $properties && $this->fill(...$properties);
     }
 
+    /**
+     * Magic - debug info.
+     *
+     * @return array
+     */
     public function __debugInfo()
     {
         [$data, $class] = [(array) $this, self::class];
@@ -31,51 +56,81 @@ abstract class AbstractEntity
         return $data;
     }
 
-    public final function fill(...$properties): static
-    {
-        foreach ($properties as $name => $value) {
-            if (property_exists(static::class, $name)) {
-                $this->{$name} = $value;
-            }
-        }
-
-        return $this;
-    }
-
+    /**
+     * Set manager property.
+     *
+     * @param  froq\database\entity\Manager $manager
+     * @return static
+     */
     public final function setManager(Manager $manager): static
     {
         $this->manager = $manager;
 
         return $this;
     }
+
+    /**
+     * Get manager property.
+     *
+     * @return froq\database\entity\Manager|null $manager
+     */
     public final function getManager(): Manager|null
     {
         return $this->manager ?? null;
     }
 
+    /**
+     * Set record property.
+     *
+     * @param  froq\database\record\Record $record
+     * @return static
+     */
     public final function setRecord(Record $record): static
     {
         $this->record = $record;
 
         return $this;
     }
-    public final function getRecord(): Record
+
+    /**
+     * Get record property.
+     *
+     * @return froq\database\record\Record|null $record
+     */
+    public final function getRecord(): Record|null
     {
-        return $this->record;
+        return $this->record ?? null;
     }
 
+    /**
+     * Run a "save" action using manager.
+     *
+     * @return static.
+     */
     public final function save(): static
     {
         $this->manager->save($this);
 
         return $this;
     }
+
+    /**
+     * Run a "find" action using manager.
+     *
+     * @return static.
+     */
     public final function find(): static
     {
         $this->manager->find($this);
 
         return $this;
     }
+
+    /**
+     * Run a "remove" action using manager.
+     *
+     * @return static.
+     */
     public final function remove(): static
     {
         $this->manager->remove($this);
@@ -83,16 +138,50 @@ abstract class AbstractEntity
         return $this;
     }
 
+    /**
+     * Check for last "save" action result.
+     *
+     * @return bool
+     */
     public final function isSaved(): bool
     {
         return $this->record->isSaved();
     }
+
+    /**
+     * Check for last "find" action result.
+     *
+     * @return bool
+     */
     public final function isFinded(): bool
     {
         return $this->record->isFinded();
     }
+
+    /**
+     * Check for last "remove" action result.
+     *
+     * @return bool
+     */
     public final function isRemoved(): bool
     {
         return $this->record->isRemoved();
+    }
+
+    /**
+     * Fill the entity object with given properties.
+     *
+     * @param  ... $properties
+     * @return static
+     */
+    public final function fill(...$properties): static
+    {
+        foreach ($properties as $name => $value) {
+            if (property_exists(static::class, $name)) {
+                $this->$name = $value;
+            }
+        }
+
+        return $this;
     }
 }
