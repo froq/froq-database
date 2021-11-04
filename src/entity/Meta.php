@@ -107,6 +107,7 @@ class Meta
      *
      * @param  array $data
      * @return void
+     * @throws froq\database\entity\MetaException
      */
     public final function setData(array $data): void
     {
