@@ -14,11 +14,28 @@ use froq\validation\Rule as ValidationRule;
 use froq\pager\Pager;
 use ReflectionClass, ReflectionProperty, Throwable;
 
+/**
+ * Manager.
+ *
+ * Represents a class entity that creates & manages data entities using attributes/annotations of these entities,
+ * also dial with current open database for queries, executions and transactions.
+ *
+ * @package froq\database\entity
+ * @object  froq\database\entity\Manager
+ * @author  Kerem Güneş
+ * @since   5.0
+ */
 final class Manager
 {
     /** @see froq\database\trait\DbTrait */
     use DbTrait;
 
+    /**
+     * Constructor.
+     *
+     * @param  froq\database\Database|null $db
+     * @throws froq\database\entity\ManagerException
+     */
     public function __construct(Database $db = null)
     {
         // Try to use active app database object.
@@ -30,21 +47,52 @@ final class Manager
         $this->db = $db;
     }
 
+    /**
+     * Run a raw SQL query.
+     *
+     * @param  string     $query
+     * @param  array|null $params
+     * @param  array|null $options
+     * @return froq\database\Result
+     */
     public function query(string $query, array $params = null, array $options = null): Result
     {
         return $this->db->query($query, $params, $options);
     }
 
-    public function execute(string $query, array $params = null): int|null
+    /**
+     * Run a raw SQL execution.
+     *
+     * @param  string     $query
+     * @param  array|null $params
+     * @return int
+     */
+    public function execute(string $query, array $params = null): int
     {
         return $this->db->execute($query, $params);
     }
 
+    /**
+     * Run a SQL transaction or return a Transaction instance.
+     *
+     * @param  callable|null $call
+     * @param  callable|null $callError
+     * @return any
+     */
     public function transaction(callable $call = null, callable $callError = null)
     {
         return $this->db->transaction($call, $callError);
     }
 
+    /**
+     * Create an entity with/without given properties.
+     *
+     * @param  string    $class
+     * @param  any    ...$properties
+     * @return object
+     * @throws froq\database\entity\ManagerException
+     * @causes froq\database\entity\ManagerException
+     */
     public function createEntity(string $class, ...$properties): object
     {
         $entity = $this->initEntity($class, $properties);
@@ -61,11 +109,26 @@ final class Manager
         return $entity;
     }
 
-    public function createEntityList(string $class, ...$entities): object
+    /**
+     * Create an entity list.
+     *
+     * @param  string    $class
+     * @param  object ...$entities
+     * @return object
+     * @causes froq\database\entity\ManagerException
+     */
+    public function createEntityList(string $class, object ...$entities): object
     {
         return $this->initEntityList($class, $entities);
     }
 
+    /**
+     * Save an entity.
+     *
+     * @param  object $entity
+     * @return object
+     * @throws froq\database\entity\ManagerException
+     */
     public function save(object $entity): object
     {
         /* @var froq\database\entity\EntityClassMeta|null */
@@ -123,6 +186,14 @@ final class Manager
         return $entity;
     }
 
+    /**
+     * Save all given entities.
+     *
+     * @param  array|froq\database\entity\AbstractEntityList $entityList
+     * @param  bool                                          $init
+     * @return array|froq\database\entity\AbstractEntityList
+     * @causes froq\database\entity\ManagerException
+     */
     public function saveAll(array|AbstractEntityList $entityList, bool $init = false): array|AbstractEntityList
     {
         foreach ($entityList as $entity) {
@@ -136,6 +207,14 @@ final class Manager
         return $entityList;
     }
 
+    /**
+     * Find an entity related record & fill given entity with found record data.
+     *
+     * @param  object      $entity
+     * @param  string|null $id
+     * @return object
+     * @throws froq\database\entity\ManagerException
+     */
     public function find(object $entity, int|string $id = null): object
     {
         /* @var froq\database\entity\EntityClassMeta|null */
@@ -170,6 +249,15 @@ final class Manager
         return $entity;
     }
 
+    /**
+     * Find all entity list related records & fill given entity list with found records data.
+     *
+     * @param  array|froq\database\entity\AbstractEntityList $entityList
+     * @param  bool                                          $init
+     * @return array|froq\database\entity\AbstractEntityList
+     * @throws froq\database\entity\ManagerException
+     * @causes froq\database\entity\ManagerException
+     */
     public function findAll(array|AbstractEntityList $entityList, bool $init = false): array|AbstractEntityList
     {
         foreach ($entityList as $entity) {
@@ -183,6 +271,18 @@ final class Manager
         return $entityList;
     }
 
+    /**
+     * Find all entity records by given conditions & init/fill given entity class with found records data
+     * when db supports, returning an entity list on success or null on failure.
+     *
+     * @param  string                 $entityClass
+     * @param  array|null             $where
+     * @param  int|null               $limit
+     * @param  string|null            $order
+     * @param  froq\pager\Pager|null &$pager
+     * @return object|null
+     * @throws froq\database\entity\ManagerException
+     */
     public function findBy(string $entityClass, string|array $where = null, int $limit = null, string $order = null,
         Pager &$pager = null): object|null
     {
@@ -231,6 +331,14 @@ final class Manager
         return null;
     }
 
+    /**
+     * Remove an entity related record & fill given entity with found record data.
+     *
+     * @param  object      $entity
+     * @param  string|null $id
+     * @return object
+     * @throws froq\database\entity\ManagerException
+     */
     public function remove(object $entity, int|string $id = null): object
     {
         /* @var froq\database\entity\EntityClassMeta|null */
@@ -265,6 +373,15 @@ final class Manager
         return $entity;
     }
 
+    /**
+     * Remove all entity list related records & fill given entity list with removed records data.
+     *
+     * @param  array|froq\database\entity\AbstractEntityList $entityList
+     * @param  bool                                          $init
+     * @return array|froq\database\entity\AbstractEntityList
+     * @throws froq\database\entity\ManagerException
+     * @causes froq\database\entity\ManagerException
+     */
     public function removeAll(array|AbstractEntityList $entityList, bool $init = false): array|AbstractEntityList
     {
         foreach ($entityList as $entity) {
@@ -278,6 +395,15 @@ final class Manager
         return $entityList;
     }
 
+    /**
+     * Remove all entity records by given conditions & init/fill given entity class with removed records data
+     * when db supports, returning an entity list on success or null on failure.
+     *
+     * @param  string $entityClass
+     * @param  array  $where
+     * @return object|null
+     * @throws froq\database\entity\ManagerException
+     */
     public function removeBy(string $entityClass, string|array $where): object|null
     {
         /* @var froq\database\entity\EntityClassMeta|null */
@@ -318,6 +444,13 @@ final class Manager
         return null;
     }
 
+    /**
+     * Init a record by given entity class meta.
+     *
+     * @param  froq\database\entity\EntityClassMeta $ecMeta
+     * @param  object|null                          $entity
+     * @return froq\database\record\Record
+     */
     private function initRecord(EntityClassMeta $ecMeta, object $entity = null): Record
     {
         $validations = null;
@@ -365,6 +498,14 @@ final class Manager
         );
     }
 
+    /**
+     * Init an entity with/without given class & with/without given properties.
+     *
+     * @param  string|null $class
+     * @param  array|null  $properties
+     * @return froq\database\entity\AbstractEntity
+     * @throws froq\database\entity\ManagerException
+     */
     private function initEntity(string|null $class, array $properties = null): AbstractEntity
     {
         if ($class !== null) {
@@ -388,6 +529,14 @@ final class Manager
         return $entity;
     }
 
+    /**
+     * Init an entity list with/without given class & with/without given entities.
+     *
+     * @param  string|null $class
+     * @param  array|null  $entities
+     * @return froq\database\entity\AbstractEntity
+     * @throws froq\database\entity\ManagerException
+     */
     private function initEntityList(string|null $class, array $entities = null): AbstractEntityList
     {
         if ($class !== null) {
@@ -411,11 +560,27 @@ final class Manager
         return $entityList;
     }
 
+    /**
+     * Get linked properties from given entity class meta.
+     *
+     * @param  froq\database\entity\EntityClassMeta $ecMeta
+     * @return array
+     */
     private function getLinkedProperties(EntityClassMeta $ecMeta): array
     {
         return array_filter($ecMeta->getProperties(), fn($p) => $p->isLinked());
     }
 
+    /**
+     * Load a linked property.
+     *
+     * @param  froq\database\entity\EntityPropertyMeta $pmeta
+     * @param  object                                  $entity
+     * @param  string|null                             $action
+     * @return void
+     * @throws froq\database\entity\ManagerException
+     * @cancel Not in use.
+     */
     private function loadLinkedProperty(EntityPropertyMeta $epMeta, object $entity, string $action = null): void
     {
         // Check whether cascade op allows given action.
@@ -529,6 +694,19 @@ final class Manager
         }
     }
 
+    /**
+     * Unload a linked property (drops a record from database actually).
+     *
+     * Note: seems it's nonsence loading whole dropped linked data on entities, this method does
+     * not create and fill dropped records data as new entities. So, a property (eg. User$logins)
+     * can contain a plenty records on a database.
+     *
+     * @param  froq\database\entity\EntityPropertyMeta $pmeta
+     * @param  object                                  $entity
+     * @return void
+     * @throws froq\database\entity\ManagerException
+     * @cancel Not in use.
+     */
     private function unloadLinkedProperty(EntityPropertyMeta $epMeta, object $entity): void
     {
         // Check whether cascade op allows remove action.
@@ -585,6 +763,14 @@ final class Manager
                  ->run();
     }
 
+    /**
+     * Assign an entity's properties.
+     *
+     * @param  object                               $entity
+     * @param  array|froq\database\record\Record    $record
+     * @param  froq\database\entity\EntityClassMeta $ecMeta
+     * @return void
+     */
     private function assignEntityProperties(object $entity, array|Record $record, EntityClassMeta $ecMeta): void
     {
         $data = is_array($record) ? $record : $record->getData();
@@ -599,6 +785,14 @@ final class Manager
             }
         }
     }
+
+    /**
+     * Assign an entity's internal properties.
+     *
+     * @param  object                      $entity
+     * @param  froq\database\record\Record $record
+     * @return void
+     */
     private function assignEntityInternalProperties(object $entity, Record $record): void
     {
         // When entity extends AbstractEntity.
@@ -608,7 +802,15 @@ final class Manager
         }
     }
 
-    private static function setPropertyValue(string|ReflectionProperty $ref, object $entity, $value)
+    /**
+     * Set an entity's property value.
+     *
+     * @param  string|ReflectionProperty $ref
+     * @param  object                    $entity
+     * @param  any                       $value
+     * @return void
+     */
+    private static function setPropertyValue(string|ReflectionProperty $ref, object $entity, $value): void
     {
         is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
 
@@ -622,6 +824,14 @@ final class Manager
 
         $ref->setValue($entity, $value);
     }
+
+    /**
+     * Get an entity's property value.
+     *
+     * @param  string|ReflectionProperty $ref
+     * @param  object                    $entity
+     * @return any
+     */
     private static function getPropertyValue(string|ReflectionProperty $ref, object $entity)
     {
         is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
@@ -636,6 +846,13 @@ final class Manager
         return $ref->getValue($entity);
     }
 
+    /**
+     * Get an entity's fields when defined `fields()` method as static or return `*`.
+     *
+     * @param  object|string $entity
+     * @return array|string
+     * @throws froq\database\entity\ManagerException
+     */
     private static function getEntityFields(object|string $entity): array|string
     {
         // Default is all.
@@ -658,6 +875,13 @@ final class Manager
         return $fields;
     }
 
+    /**
+     * Get an entity's primary value from given entity class meta when available.
+     *
+     * @param  object                               $entity
+     * @param  froq\database\entity\EntityClassMeta $ecMeta
+     * @return int|string|null
+     */
     private static function getEntityPrimaryValue(object $entity, EntityClassMeta $ecMeta): int|string|null
     {
         $primary = (string) $ecMeta->getTablePrimary();
