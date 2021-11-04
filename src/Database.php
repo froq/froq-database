@@ -113,7 +113,7 @@ final class Database
      * @param  array|null $params
      * @param  array|null $options
      * @return froq\database\Result
-     * @throws froq\database\DatabaseException|DatabaseQueryException
+     * @throws froq\database\{DatabaseException|DatabaseQueryException}
      */
     public function query(string $query, array $params = null, array $options = null): Result
     {
@@ -151,7 +151,7 @@ final class Database
      * @param  string     $query
      * @param  array|null $params
      * @return int
-     * @throws froq\database\DatabaseException|DatabaseQueryException
+     * @throws froq\database\{DatabaseException|DatabaseQueryException}
      * @since  4.3
      */
     public function execute(string $query, array $params = null): int
