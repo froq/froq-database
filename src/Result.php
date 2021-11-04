@@ -24,11 +24,11 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /** @var int */
     private int $count = 0;
 
-    /** @var ?array<int> */
-    private ?array $ids = null;
+    /** @var array<int>|null */
+    private array|null $ids = null;
 
-    /** @var ?array<array|object> */
-    private ?array $rows = null;
+    /** @var array<array|object>|null */
+    private array|null $rows = null;
 
     /** @var array @since 5.0 */
     private static array $fetchTypes = ['array', 'object', 'class'];
