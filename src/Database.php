@@ -150,11 +150,11 @@ final class Database
      *
      * @param  string     $query
      * @param  array|null $params
-     * @return int|null
+     * @return int
      * @throws froq\database\DatabaseException|DatabaseQueryException
      * @since  4.3
      */
-    public function execute(string $query, array $params = null): int|null
+    public function execute(string $query, array $params = null): int
     {
         $query = $params ? $this->prepare($query, $params) : trim($query);
         $query || throw new DatabaseException('Empty query given to %s()', __method__);
@@ -177,7 +177,15 @@ final class Database
                 }
             }
 
-            return ($pdoResult !== false) ? $pdoResult : null;
+            // Extra check for unknown stuff.
+            if ($pdoResult === false) {
+                $errorCode = $pdo->errorCode();
+                if ($errorCode != '00000' || $errorCode != '01000') {
+                    throw new PDOException('Unknown error');
+                }
+            }
+
+            return $pdoResult;
         } catch (PDOException $e) {
             throw new DatabaseQueryException($e);
         }

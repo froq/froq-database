@@ -1296,10 +1296,10 @@ final class Query
     /**
      * Execute a query stringifying current query stack.
 
-     * @return int|null
+     * @return int
      * @since  4.3
      */
-    public function runExec(): int|null
+    public function runExec(): int
     {
         return $this->db->execute($this->toString());
     }
