@@ -97,7 +97,7 @@ final class MetaParser
             return null;
         }
 
-        $data = self::getData($classRef);
+        $data = self::getData($propRef->getDeclaringClass());
         if (!$data) {
             return null;
         }
