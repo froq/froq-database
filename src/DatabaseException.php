@@ -37,11 +37,11 @@ class DatabaseException extends Exception
     {
         if ($message != null) {
             if (is_string($message)) {
-                $errorInfo = $this->parseMessageInfo($message);
+                $errorInfo = self::parseMessageInfo($message);
             } else {
                 $errorInfo = isset($message->errorInfo)
-                    ? ($message->errorInfo ?: $this->parseMessageInfo($message->getMessage()))
-                    : $this->parseMessageInfo($message->getMessage());
+                    ? ($message->errorInfo ?: self::parseMessageInfo($message->getMessage()))
+                    : self::parseMessageInfo($message->getMessage());
             }
 
             // Update sql-state & code.
@@ -73,19 +73,22 @@ class DatabaseException extends Exception
      * Parse message info.
      *
      * @param  string $message
-     * @return array<string, string>
+     * @return array<string>
      */
-    private function parseMessageInfo(string $message): array
+    private static function parseMessageInfo(string $message): array
     {
         // For all those FUCKs..
         // SQLSTATE[08006] [7] FATAL:  password authentication failed for user "root
         // SQLSTATE[HY000] [1045] Access denied for user 'root'@'localhost' (using password: YES)
         // SQLSTATE[42601]: Syntax error: 7 ERROR:  unterminated quoted identifier at or near ...
         // SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax ...
-        if (preg_match('~^(?:
-            SQLSTATE\[(\w+)\]\s+\[(\d+)\]\s+(?:.*) |
-            SQLSTATE\[(\w+)\]:?\s+(?:.*):\s+(\d+)\s+(?:.*)
-        )~x', $message, $match)) {
+        if (preg_match(
+            '~^(?:
+                SQLSTATE\[(\w+)\]\s+\[(\d+)\]\s+(?:.*) |
+                SQLSTATE\[(\w+)\]:?\s+(?:.*):\s+(\d+)\s+(?:.*)
+            )~x',
+            $message, $match
+        )) {
             $match = array_values(array_filter($match, 'strlen'));
 
             return [$match[1], $match[2]];
