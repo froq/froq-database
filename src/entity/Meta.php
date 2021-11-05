@@ -75,7 +75,7 @@ class Meta
     /**
      * Get name.
      *
-     * @return int
+     * @return string
      */
     public final function getName(): string
     {
@@ -85,17 +85,20 @@ class Meta
     /**
      * Get short name.
      *
-     * @return int
+     * @return string
      */
     public final function getShortName(): string
     {
-        return explode('.', $this->name)[1];
+        return match ($this->type) {
+            self::TYPE_CLASS    => array_last(explode('\\', $this->name)),
+            self::TYPE_PROPERTY => array_last(explode('.', $this->name)),
+        };
     }
 
     /**
      * Get class.
      *
-     * @return int
+     * @return string
      */
     public final function getClass(): string
     {
