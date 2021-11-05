@@ -814,50 +814,6 @@ final class Manager
     }
 
     /**
-     * Set an entity's property value.
-     *
-     * @param  string|ReflectionProperty $ref
-     * @param  object                    $entity
-     * @param  any                       $value
-     * @return void
-     */
-    private static function setPropertyValue(string|ReflectionProperty $ref, object $entity, $value): void
-    {
-        is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
-
-        // When a property-specific setter is available.
-        if (is_callable_method($entity, $method = ('set' . $ref->name))) {
-            $entity->$method($value);
-            return;
-        }
-
-        $ref->isPublic() || $ref->setAccessible(true);
-
-        $ref->setValue($entity, $value);
-    }
-
-    /**
-     * Get an entity's property value.
-     *
-     * @param  string|ReflectionProperty $ref
-     * @param  object                    $entity
-     * @return any
-     */
-    private static function getPropertyValue(string|ReflectionProperty $ref, object $entity)
-    {
-        is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
-
-        // When a property-specific getter is available.
-        if (is_callable_method($entity, $method = ('get' . $ref->name))) {
-            return $entity->$method();
-        }
-
-        $ref->isPublic() || $ref->setAccessible(true);
-
-        return $ref->getValue($entity);
-    }
-
-    /**
      * Get an entity's fields when defined `fields()` method as static or return `*`.
      *
      * @param  object|string $entity
@@ -907,6 +863,50 @@ final class Manager
         }
 
         return null;
+    }
+
+    /**
+     * Set an entity's property value.
+     *
+     * @param  string|ReflectionProperty $ref
+     * @param  object                    $entity
+     * @param  any                       $value
+     * @return void
+     */
+    private static function setPropertyValue(string|ReflectionProperty $ref, object $entity, $value): void
+    {
+        is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
+
+        // When a property-specific setter is available.
+        if (is_callable_method($entity, $method = ('set' . $ref->name))) {
+            $entity->$method($value);
+            return;
+        }
+
+        $ref->isPublic() || $ref->setAccessible(true);
+
+        $ref->setValue($entity, $value);
+    }
+
+    /**
+     * Get an entity's property value.
+     *
+     * @param  string|ReflectionProperty $ref
+     * @param  object                    $entity
+     * @return any
+     */
+    private static function getPropertyValue(string|ReflectionProperty $ref, object $entity)
+    {
+        is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
+
+        // When a property-specific getter is available.
+        if (is_callable_method($entity, $method = ('get' . $ref->name))) {
+            return $entity->$method();
+        }
+
+        $ref->isPublic() || $ref->setAccessible(true);
+
+        return $ref->getValue($entity);
     }
 
     /**
