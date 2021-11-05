@@ -22,7 +22,7 @@ use froq\database\entity\{MetaException, Meta, EntityClassMeta, EntityPropertyMe
 final class MetaFactory
 {
     /** @var array */
-    private static array $cache;
+    private static array $cache = [];
 
     /**
      * Init a meta class.
@@ -100,5 +100,16 @@ final class MetaFactory
     public static function getCacheItem(string $name): Meta|null
     {
         return self::$cache[$name] ?? null;
+    }
+
+    /**
+     * Delete a cache item.
+     *
+     * @param  string $name
+     * @return void
+     */
+    public static function delCacheItem(string $name): void
+    {
+        unset(self::$cache[$name]);
     }
 }
