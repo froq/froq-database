@@ -16,15 +16,15 @@ final class MetaFactory
     public static function init(int $type, string $name, string $class, array $data = null): Meta
     {
         return self::$cache[$name] ??= match ($type) {
-            Meta::TYPE_CLASS    => new EntityClassMeta($type, $name, $class, $data),
-            Meta::TYPE_PROPERTY => new EntityPropertyMeta($type, $name, $class, $data),
+            Meta::TYPE_CLASS    => new EntityClassMeta($class, $data),
+            Meta::TYPE_PROPERTY => new EntityPropertyMeta($name, $class, $data),
             default             => throw new MetaException('Invalid type `%s`', $type)
         };
     }
 
-    public static function initEntityClassMeta(string $name, string $class, array $data = null): EntityClassMeta
+    public static function initEntityClassMeta(string $class, array $data = null): EntityClassMeta
     {
-        return self::init(Meta::TYPE_CLASS, $name, $class, $data);
+        return self::init(Meta::TYPE_CLASS, $class, $class, $data);
     }
     public static function initEntityPropertyMeta(string $name, string $class, array $data = null):  EntityPropertyMeta
     {
