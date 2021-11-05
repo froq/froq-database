@@ -776,7 +776,7 @@ final class Manager
     }
 
     /**
-     * Assign an entity's properties.
+     * Assign an entity properties.
      *
      * @param  object                            $entity
      * @param  array|froq\database\record\Record $record
@@ -798,7 +798,7 @@ final class Manager
     }
 
     /**
-     * Assign an entity's internal properties.
+     * Assign an entity internal properties.
      *
      * @param  object                      $entity
      * @param  froq\database\record\Record $record
@@ -814,7 +814,7 @@ final class Manager
     }
 
     /**
-     * Get an entity's fields when defined `fields()` method as static or return `*`.
+     * Get an entity fields when defined `fields()` method as static or return `*`.
      *
      * @param  object|string $entity
      * @return array|string
@@ -843,7 +843,7 @@ final class Manager
     }
 
     /**
-     * Get an entity's primary value from given entity class meta when available.
+     * Get an entity primary value from given entity class meta when available.
      *
      * @param  object                         $entity
      * @param  froq\database\entity\ClassMeta $classMeta
@@ -866,7 +866,7 @@ final class Manager
     }
 
     /**
-     * Set an entity's property value.
+     * Set an entity property value.
      *
      * @param  string|ReflectionProperty $ref
      * @param  object                    $entity
@@ -889,7 +889,7 @@ final class Manager
     }
 
     /**
-     * Get an entity's property value.
+     * Get an entity property value.
      *
      * @param  string|ReflectionProperty $ref
      * @param  object                    $entity
