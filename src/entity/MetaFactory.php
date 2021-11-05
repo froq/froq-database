@@ -25,6 +25,16 @@ final class MetaFactory
     private static array $cache = [];
 
     /**
+     * Cache getter.
+     *
+     * @return array
+     */
+    public static function cache(): array
+    {
+        return self::$cache;
+    }
+
+    /**
      * Init a meta class.
      *
      * @param  int        $type
