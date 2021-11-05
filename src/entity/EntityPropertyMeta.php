@@ -22,6 +22,23 @@ use froq\database\entity\Meta;
 final class EntityPropertyMeta extends Meta
 {
     /**
+     * Constructor.
+     *
+     * @param string     $name
+     * @param string     $class
+     * @param array|null $data
+     */
+    public function __construct(string $name, string $class, array $data = null)
+    {
+        // Fully-qualified name.
+        strpos($name, '.') || (
+            $name = $class . '.' . $name
+        );
+
+        parent::__construct(parent::TYPE_PROPERTY, $name, $class, $data);
+    }
+
+    /**
      * Get entity class.
      *
      * @return string|null

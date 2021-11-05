@@ -25,6 +25,17 @@ final class EntityClassMeta extends Meta
     private array $properties = [];
 
     /**
+     * Constructor.
+     *
+     * @param string     $class
+     * @param array|null $data
+     */
+    public function __construct(string $class, array $data = null)
+    {
+        parent::__construct(parent::TYPE_CLASS, $class, $class, $data);
+    }
+
+    /**
      * Set all properties.
      *
      * @param  array<froq\database\entity\EntityPropertyMeta> $properties
