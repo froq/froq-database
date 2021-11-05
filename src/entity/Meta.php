@@ -130,6 +130,11 @@ class Meta
                 case 'entityList':
                 case 'repository':
                 case 'list':
+                    $value = trim($value);
+                    if ($value === '') {
+                        continue 2;
+                    }
+
                     // Dots mean namespace separator ("\").
                     $value = str_replace('.', '\\', $value);
 
