@@ -756,7 +756,7 @@ class Record implements Arrayable, ArrayAccess
     /**
      * Select record(s) from own table by given conditions.
      *
-     * @param  string|array|null $where
+     * @param  string|array      $where
      * @param  array|null        $params
      * @param  string|null       $op
      * @param  string            $fields
@@ -786,10 +786,10 @@ class Record implements Arrayable, ArrayAccess
     /**
      * Update record(s) on own table by given conditions.
      *
-     * @param  array             $data
-     * @param  string|array|null $where
-     * @param  array|null        $params
-     * @param  string|null       $op
+     * @param  array        $data
+     * @param  string|array $where
+     * @param  array|null   $params
+     * @param  string|null  $op
      * @return int|null
      */
     public final function update(array $data, string|array $where, array $params = null, string $op = null): int|null
@@ -808,9 +808,9 @@ class Record implements Arrayable, ArrayAccess
     /**
      * Delete record(s) from own table by given conditions.
      *
-     * @param  string|array|null $where
-     * @param  array|null        $params
-     * @param  string|null       $op
+     * @param  string|array where
+     * @param  array|null   $params
+     * @param  string|null  $op
      * @return int|null
      */
     public final function delete(string|array $where, array $params = null, string $return = '', string $op = null): int|array|null
