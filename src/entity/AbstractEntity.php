@@ -184,4 +184,12 @@ abstract class AbstractEntity
 
         return $this;
     }
+
+    /**
+     * @alias of isFinded()
+     */
+    public final function isFound(): bool
+    {
+        return $this->isFinded();
+    }
 }

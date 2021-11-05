@@ -169,4 +169,12 @@ abstract class AbstractEntityList extends ItemCollection
     {
         return !!array_filter($this->data, fn($entity) => $entity->isRemoved());
     }
+
+    /**
+     * @alias of isFindedAll()
+     */
+    public final function isFoundAll(): bool
+    {
+        return $this->isFindedAll();
+    }
 }
