@@ -29,17 +29,13 @@ final class MetaParser
             throw new MetaException($e);
         }
 
-        $data = self::getData($classRef);
+        $data = self::getDataFrom($classRef);
         if (!$data) {
             return null;
         }
 
         /** @var froq\database\entity\EntityClassMeta */
-        $meta = MetaFactory::initEntityClassMeta(
-            class: $class,
-             name: $class,
-             data: $data
-        );
+        $meta = MetaFactory::initEntityClassMeta($class, $data);
         $meta->setReflector($classRef);
 
         // And add properties.
@@ -58,11 +54,7 @@ final class MetaParser
                 $propClass = $propRef->class;
 
                 /** @var froq\database\entity\EntityPropertyMeta */
-                $prop = MetaFactory::initEntityPropertyMeta(
-                    class: $propClass,
-                     name: $propClass . '.' . $propName,
-                     data: self::getData($propRef)
-                );
+                $prop = MetaFactory::initEntityPropertyMeta($propName, $propClass, self::getDataFrom($propRef));
                 $prop->setReflector($propRef);
 
                 $props[$propName] = $prop;
@@ -95,7 +87,7 @@ final class MetaParser
             return null;
         }
 
-        $data = self::getData($propRef->getDeclaringClass());
+        $data = self::getDataFrom($propRef->getDeclaringClass());
         if (!$data) {
             return null;
         }
@@ -104,17 +96,13 @@ final class MetaParser
         $propClass = $propRef->class;
 
         /** @var froq\database\entity\EntityPropertyMeta */
-        $meta = MetaFactory::initEntityPropertyMeta(
-            class: $propClass,
-             name: $propClass . '.' . $propName,
-             data: $data
-        );
+        $meta = MetaFactory::initEntityPropertyMeta($propName, $propClass, $data);
         $meta->setReflector($propRef);
 
         return $meta;
     }
 
-    public static function getData(ReflectionClass|ReflectionProperty $ref): array|null
+    public static function getDataFrom(ReflectionClass|ReflectionProperty $ref): array|null
     {
         // Eg: #[meta(id:"id", table:"users", ..)]
         if ($attributes = $ref->getAttributes()) {
