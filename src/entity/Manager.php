@@ -111,7 +111,7 @@ final class Manager
     }
 
     /**
-     * Create an entity list.
+     * Create an entity list with/without given entities.
      *
      * @param  string    $class
      * @param  object ...$entities
@@ -520,14 +520,14 @@ final class Manager
      */
     private function initEntity(string|null $class, array $properties = null): AbstractEntity
     {
-        if ($class !== null) {
-            // Check class validity.
-            if (!class_extends($class, AbstractEntity::class)) {
-                throw new ManagerException(
-                    'Entity list class `%s` must extend `%s`',
-                    [$class, AbstractEntity::class]
-                );
-            }
+        // Check class validity.
+        if ($class != null) {
+            class_exists($class) || throw new ManagerException(
+                'Entity list class `%s` not exists', $class
+            );
+            class_extends($class, AbstractEntity::class) || throw new ManagerException(
+                'Entity list class `%s` must extend `%s`', [$class, AbstractEntity::class]
+            );
 
             $entity = new $class();
         } else {
@@ -546,19 +546,19 @@ final class Manager
      *
      * @param  string|null $class
      * @param  array|null  $entities
-     * @return froq\database\entity\AbstractEntity
+     * @return froq\database\entity\AbstractEntityList
      * @throws froq\database\entity\ManagerException
      */
     private function initEntityList(string|null $class, array $entities = null): AbstractEntityList
     {
-        if ($class !== null) {
-            // Check class validity.
-            if (!class_extends($class, AbstractEntityList::class)) {
-                throw new ManagerException(
-                    'Entity list class `%s` must extend `%s`',
-                    [$class, AbstractEntityList::class]
-                );
-            }
+        // Check class validity.
+        if ($class != null) {
+            class_exists($class) || throw new ManagerException(
+                'Entity list class `%s` not exists', $class
+            );
+            class_extends($class, AbstractEntityList::class) || throw new ManagerException(
+                'Entity list class `%s` must extend `%s`', [$class, AbstractEntityList::class]
+            );
 
             $entityList = new $class();
         } else {
