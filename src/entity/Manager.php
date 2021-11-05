@@ -273,29 +273,37 @@ final class Manager
     }
 
     /**
-     * Find all entity records by given conditions & init/fill given entity class with found records data
-     * when db supports, returning an entity list on success or null on failure.
+     * Find all entity records by given conditions or using given entity properties as condition & init/fill
+     * given entity/entity class with found records data when db supports, returning an entity list.
      *
-     * @param  string                 $entityClass
+     * @param  string|object          $entity
      * @param  array|null             $where
      * @param  int|null               $limit
      * @param  string|null            $order
      * @param  froq\pager\Pager|null &$pager
-     * @return object|null
+     * @return froq\database\entity\AbstractEntityList
      * @throws froq\database\entity\ManagerException
      */
-    public function findBy(string $entityClass, string|array $where = null, int $limit = null, string $order = null,
-        Pager &$pager = null): object|null
+    public function findBy(string|object $entity, string|array $where = null, int $limit = null, string $order = null,
+        Pager &$pager = null): AbstractEntityList
     {
+        // When no entity instance given.
+        is_string($entity) && $entity = new $entity();
+
         /* @var froq\database\entity\ClassMeta|null */
-        $classMeta = MetaParser::parseClassMeta($entityClass);
+        $classMeta = MetaParser::parseClassMeta($entity);
         $classMeta || throw new ManagerException('Null entity class meta');
 
-        $entity = new $entityClass();
         $record = $this->initRecord($classMeta);
         $fields = self::getEntityFields($entity);
 
-        $rows = $record->select($where ?? [], fields: $fields, limit: $limit, order: $order);
+        $entityList = $this->initEntityList($classMeta->getListClass());
+
+        $rows = $record->select(
+            self::prepareWhereCondition($where, $entity, $classMeta),
+            fields: $fields, limit: $limit, order: $order
+        );
+
         if ($rows != null) {
             // For a proper list to loop below.
             if ($limit == 1) {
@@ -321,15 +329,12 @@ final class Manager
                 $entityClones[] = $entityClone;
             }
 
-            // Create & fill entity list.
-            $entityList = $this->initEntityList($classMeta->getListClass(), $entityClones);
-
+            // Fill entity list & set pager.
+            $entityList->resetData($entityClones);
             $pager && $entityList->setPager($pager);
-
-            return $entityList;
         }
 
-        return null;
+        return $entityList;
     }
 
     /**
@@ -397,25 +402,33 @@ final class Manager
     }
 
     /**
-     * Remove all entity records by given conditions & init/fill given entity class with removed records data
-     * when db supports, returning an entity list on success or null on failure.
+     * Remove all entity records by given conditions or using given entity properties as condition & init/fill
+     * given entity class with removed records data when db supports, returning an entity list.
      *
-     * @param  string $entityClass
-     * @param  array  $where
-     * @return object|null
+     * @param  string|object $entity
+     * @param  array|null    $where
+     * @return froq\database\entity\AbstractEntityList
      * @throws froq\database\entity\ManagerException
      */
-    public function removeBy(string $entityClass, string|array $where): object|null
+    public function removeBy(string|object $entity, string|array $where = null): AbstractEntityList
     {
+        // When no entity instance given.
+        is_string($entity) && $entity = new $entity();
+
         /* @var froq\database\entity\ClassMeta|null */
-        $classMeta = MetaParser::parseClassMeta($entityClass);
+        $classMeta = MetaParser::parseClassMeta($entity);
         $classMeta || throw new ManagerException('Null entity class meta');
 
-        $entity = new $entityClass();
         $record = $this->initRecord($classMeta);
         $return = self::getEntityFields($entity);
 
-        $rows = $record->delete($where, return: $return);
+        $entityList = $this->initEntityList($classMeta->getListClass());
+
+        $rows = $record->delete(
+            self::prepareWhereCondition($where, $entity, $classMeta),
+            return: $return
+        );
+
         if ($rows != null) {
             foreach ($rows as $row) {
                 $entityClone = clone $entity;
@@ -436,13 +449,11 @@ final class Manager
                 $entityClones[] = $entityClone;
             }
 
-            // Create & fill entity list.
-            $entityList = $this->initEntityList($classMeta->getListClass(), $entityClones);
-
-            return $entityList;
+            // Fill entity list.
+            $entityList->resetData($entityClones);
         }
 
-        return null;
+        return $entityList;
     }
 
     /**
@@ -774,8 +785,7 @@ final class Manager
      */
     private function assignEntityProperties(object $entity, array|Record $record, ClassMeta $classMeta): void
     {
-        $data = is_array($record) ? $record : $record->getData();
-
+        $data = is_array($record) ? $record : $record->toArray();
         if ($data) {
             $props = $classMeta->getProperties();
             foreach ($data as $name => $value) {
@@ -897,5 +907,31 @@ final class Manager
         }
 
         return null;
+    }
+
+    /**
+     * Prepare given where condition appending given entity properties.
+     *
+     * @param  array|null                     $where
+     * @param  object                         $entity
+     * @param  froq\database\entity\ClassMeta $classMeta
+     * @return array
+     */
+    public static function prepareWhereCondition(array|null $where, object $entity, ClassMeta $classMeta): array
+    {
+        $where ??= [];
+
+        foreach ($classMeta->getProperties() as $name => $propertyMeta) {
+            // When "where" does not contains a rule already.
+            if (!is_array_key($name, $where)) {
+                $value = self::getPropertyValue($propertyMeta->getReflector(), $entity);
+                // Skip null values.
+                if (!is_null($value)) {
+                    $where[$name] = $value;
+                }
+            }
+        }
+
+        return $where;
     }
 }
