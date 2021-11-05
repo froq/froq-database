@@ -10,9 +10,9 @@ namespace froq\database\entity;
 use froq\database\entity\{MetaException, Meta, ClassMeta, PropertyMeta};
 
 /**
- * Meta.
+ * Meta Factory.
  *
- * Represents a factory entity that used for creating ClassMeta & PropertyMeta instances.
+ * Represents a factory class that used for creating ClassMeta & PropertyMeta instances.
  *
  * @package froq\database\entity
  * @object  froq\database\entity\MetaFactory

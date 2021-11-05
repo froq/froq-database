@@ -11,12 +11,31 @@ use froq\database\entity\{MetaException, MetaFactory, Meta, ClassMeta, PropertyM
 use froq\util\Objects;
 use ReflectionClass, ReflectionProperty, ReflectionException;
 
+/**
+ * Meta Parser.
+ *
+ * Represents a parser class that used for parsing entity classes's metadata info into ClassMeta/PropertyMeta
+ * classes.
+ *
+ * @package froq\database\entity
+ * @object  froq\database\entity\MetaParser
+ * @author  Kerem Güneş
+ * @since   5.0
+ */
 final class MetaParser
 {
+    /**
+     * Parse a class metadata.
+     *
+     * @param  object $class
+     * @param  bool   $withProperties
+     * @return froq\database\entity\ClassMeta|null
+     * @throws froq\database\entity\MetaException
+     */
     public static function parseClassMeta(string|object $class, bool $withProperties = true): ClassMeta|null
     {
-        // When an object given.
-        is_string($class) || $class = get_class($class);
+        // When an object given as class.
+        is_object($class) && $class = get_class($class);
 
         // Check MetaFactory cache for only "withProperties" parsing.
         if ($withProperties && MetaFactory::hasCacheItem($class)) {
@@ -66,10 +85,18 @@ final class MetaParser
         return $meta;
     }
 
+    /**
+     * Parse a property metadata.
+     *
+     * @param  object $class
+     * @param  string $property
+     * @return froq\database\entity\PropertyMeta|null
+     * @throws froq\database\entity\MetaException
+     */
     public static function parsePropertyMeta(object|string $class, string $property): PropertyMeta|null
     {
-        // When an object given.
-        is_string($class) || $class = get_class($class);
+        // When an object given as class.
+        is_object($class) && $class = get_class($class);
 
         // Check MetaFactory cache.
         if (MetaFactory::hasCacheItem($name = ($class .'.'. $property))) {
@@ -102,7 +129,13 @@ final class MetaParser
         return $meta;
     }
 
-    public static function getDataFrom(ReflectionClass|ReflectionProperty $ref): array|null
+    /**
+     * Get data from a reflection class/property.
+     *
+     * @param  ReflectionClass|ReflectionProperty $ref
+     * @return array|null
+     */
+    private static function getDataFrom(ReflectionClass|ReflectionProperty $ref): array|null
     {
         // Eg: #[meta(id:"id", table:"users", ..)]
         if ($attributes = $ref->getAttributes()) {
@@ -118,8 +151,15 @@ final class MetaParser
         return null;
     }
 
+    /**
+     * Get data from given attributes.
+     *
+     * @param  array $attributes
+     * @return array|null
+     */
     private static function getDataFromAttributes(array $attributes): array|null
     {
+        // Eg: #[meta(id:"id", table:"users", ..)]
         foreach ($attributes as $attribute) {
             $name = Objects::getShortName($attribute->getName());
             if (strtolower($name) == 'meta') {
@@ -130,6 +170,13 @@ final class MetaParser
         return null;
     }
 
+    /**
+     * Get data from given annotations.
+     *
+     * @param  string                             $annotations
+     * @param  ReflectionClass|ReflectionProperty $ref
+     * @return array|null
+     */
     private static function getDataFromAnnotations(string $annotations, ReflectionClass|ReflectionProperty $ref): array|null
     {
         // Eg: @meta(id:"id", table:"users", ..)
