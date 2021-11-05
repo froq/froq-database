@@ -7,21 +7,21 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\Meta;
+use froq\database\entity\{Meta, PropertyMeta};
 
 /**
- * Entity Class Meta.
+ * Class Meta.
  *
  * Represents a metadata class entity that keeps a parsed class metadata details.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\EntityClassMeta
+ * @object  froq\database\entity\ClassMeta
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class EntityClassMeta extends Meta
+final class ClassMeta extends Meta
 {
-    /** @var array<froq\database\entity\EntityPropertyMeta> */
+    /** @var array<froq\database\entity\PropertyMeta> */
     private array $properties = [];
 
     /**
@@ -38,7 +38,7 @@ final class EntityClassMeta extends Meta
     /**
      * Set all properties.
      *
-     * @param  array<froq\database\entity\EntityPropertyMeta> $properties
+     * @param  array<froq\database\entity\PropertyMeta> $properties
      * @return void
      */
     public function setProperties(array $properties): void
@@ -49,7 +49,7 @@ final class EntityClassMeta extends Meta
     /**
      * Get all properties.
      *
-     * @return array<froq\database\entity\EntityPropertyMeta|void>
+     * @return array<froq\database\entity\PropertyMeta|void>
      */
     public function getProperties(): array
     {
@@ -60,9 +60,9 @@ final class EntityClassMeta extends Meta
      * Get a property by given name.
      *
      * @param  string $name
-     * @return froq\database\entity\EntityPropertyMeta|null
+     * @return froq\database\entity\PropertyMeta|null
      */
-    public function getProperty(string $name): EntityPropertyMeta|null
+    public function getProperty(string $name): PropertyMeta|null
     {
         return $this->properties[$name] ?? null;
     }

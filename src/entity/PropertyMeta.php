@@ -10,16 +10,16 @@ namespace froq\database\entity;
 use froq\database\entity\Meta;
 
 /**
- * Entity Property Meta.
+ * Property Meta.
  *
  * Represents a metadata class entity that keeps a parsed property metadata details.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\EntityPropertyMeta
+ * @object  froq\database\entity\PropertyMeta
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class EntityPropertyMeta extends Meta
+final class PropertyMeta extends Meta
 {
     /**
      * Constructor.

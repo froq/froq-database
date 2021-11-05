@@ -14,7 +14,7 @@ use ReflectionClass, ReflectionProperty;
 /**
  * Meta.
  *
- * Represents a base metadata class entity that used internally for EntityClassMeta & EntityPropertyMeta.
+ * Represents a base metadata class entity that used internally for ClassMeta & PropertyMeta.
  *
  * @package froq\database\entity
  * @object  froq\database\entity\Meta

@@ -7,13 +7,13 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{MetaException, MetaFactory, Meta, EntityClassMeta, EntityPropertyMeta};
+use froq\database\entity\{MetaException, MetaFactory, Meta, ClassMeta, PropertyMeta};
 use froq\util\Objects;
 use ReflectionClass, ReflectionProperty, ReflectionException;
 
 final class MetaParser
 {
-    public static function parseClassMeta(string|object $class, bool $withProperties = true): EntityClassMeta|null
+    public static function parseClassMeta(string|object $class, bool $withProperties = true): ClassMeta|null
     {
         // When an object given.
         is_string($class) || $class = get_class($class);
@@ -34,8 +34,8 @@ final class MetaParser
             return null;
         }
 
-        /** @var froq\database\entity\EntityClassMeta */
-        $meta = MetaFactory::initEntityClassMeta($class, $data);
+        /** @var froq\database\entity\ClassMeta */
+        $meta = MetaFactory::initClassMeta($class, $data);
         $meta->setReflector($classRef);
 
         // And add properties.
@@ -53,8 +53,8 @@ final class MetaParser
                 $propName  = $propRef->name;
                 $propClass = $propRef->class;
 
-                /** @var froq\database\entity\EntityPropertyMeta */
-                $prop = MetaFactory::initEntityPropertyMeta($propName, $propClass, self::getDataFrom($propRef));
+                /** @var froq\database\entity\PropertyMeta */
+                $prop = MetaFactory::initPropertyMeta($propName, $propClass, self::getDataFrom($propRef));
                 $prop->setReflector($propRef);
 
                 $props[$propName] = $prop;
@@ -66,7 +66,7 @@ final class MetaParser
         return $meta;
     }
 
-    public static function parsePropertyMeta(object|string $class, string $property): EntityPropertyMeta|null
+    public static function parsePropertyMeta(object|string $class, string $property): PropertyMeta|null
     {
         // When an object given.
         is_string($class) || $class = get_class($class);
@@ -95,8 +95,8 @@ final class MetaParser
         $propName  = $propRef->name;
         $propClass = $propRef->class;
 
-        /** @var froq\database\entity\EntityPropertyMeta */
-        $meta = MetaFactory::initEntityPropertyMeta($propName, $propClass, $data);
+        /** @var froq\database\entity\PropertyMeta */
+        $meta = MetaFactory::initPropertyMeta($propName, $propClass, $data);
         $meta->setReflector($propRef);
 
         return $meta;

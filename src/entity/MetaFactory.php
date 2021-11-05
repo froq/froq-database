@@ -7,12 +7,12 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{MetaException, Meta, EntityClassMeta, EntityPropertyMeta};
+use froq\database\entity\{MetaException, Meta, ClassMeta, PropertyMeta};
 
 /**
  * Meta.
  *
- * Represents a factory entity that used for creating EntityClassMeta & EntityPropertyMeta.
+ * Represents a factory entity that used for creating ClassMeta & PropertyMeta instances.
  *
  * @package froq\database\entity
  * @object  froq\database\entity\MetaFactory
@@ -49,8 +49,8 @@ final class MetaFactory
         $name = Meta::prepareName($type, $name, $class);
 
         return self::$cache[$name] ??= match ($type) {
-            Meta::TYPE_CLASS    => new EntityClassMeta($class, $data),
-            Meta::TYPE_PROPERTY => new EntityPropertyMeta($name, $class, $data),
+            Meta::TYPE_CLASS    => new ClassMeta($class, $data),
+            Meta::TYPE_PROPERTY => new PropertyMeta($name, $class, $data),
             default             => throw new MetaException('Invalid type `%s`', $type)
         };
     }
@@ -60,9 +60,9 @@ final class MetaFactory
      *
      * @param  string     $class
      * @param  array|null $data
-     * @return froq\entity\EntityClassMeta
+     * @return froq\entity\ClassMeta
      */
-    public static function initEntityClassMeta(string $class, array $data = null): EntityClassMeta
+    public static function initClassMeta(string $class, array $data = null): ClassMeta
     {
         return self::init(Meta::TYPE_CLASS, $class, $class, $data);
     }
@@ -73,9 +73,9 @@ final class MetaFactory
      * @param  string     $name
      * @param  string     $class
      * @param  array|null $data
-     * @return froq\entity\EntityPropertyMeta
+     * @return froq\entity\PropertyMeta
      */
-    public static function initEntityPropertyMeta(string $name, string $class, array $data = null):  EntityPropertyMeta
+    public static function initPropertyMeta(string $name, string $class, array $data = null):  PropertyMeta
     {
         return self::init(Meta::TYPE_PROPERTY, $name, $class, $data);
     }

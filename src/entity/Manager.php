@@ -7,7 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{ManagerException, MetaParser, AbstractEntity, AbstractEntityList};
+use froq\database\entity\{ManagerException, MetaParser, AbstractEntity, AbstractEntityList,
+    ClassMeta, PropertyMeta};
 use froq\database\record\{Form, Record};
 use froq\database\{Database, Query, Result, trait\DbTrait};
 use froq\validation\Rule as ValidationRule;
@@ -97,13 +98,13 @@ final class Manager
     {
         $entity = $this->initEntity($class, $properties);
 
-        /* @var froq\database\entity\EntityClassMeta|null */
-        $ecMeta = MetaParser::parseClassMeta($entity);
-        $ecMeta || throw new ManagerException('Null entity class meta');
+        /* @var froq\database\entity\ClassMeta|null */
+        $classMeta = MetaParser::parseClassMeta($entity);
+        $classMeta || throw new ManagerException('Null entity class meta');
 
-        $record = $this->initRecord($ecMeta, $entity);
+        $record = $this->initRecord($classMeta, $entity);
 
-        $this->assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityProperties($entity, $record, $classMeta);
         $this->assignEntityInternalProperties($entity, $record);
 
         return $entity;
@@ -131,17 +132,17 @@ final class Manager
      */
     public function save(object $entity): object
     {
-        /* @var froq\database\entity\EntityClassMeta|null */
-        $ecMeta = MetaParser::parseClassMeta($entity);
-        $ecMeta || throw new ManagerException('Null entity class meta');
+        /* @var froq\database\entity\ClassMeta|null */
+        $classMeta = MetaParser::parseClassMeta($entity);
+        $classMeta || throw new ManagerException('Null entity class meta');
 
         $entityData = $entityProps = [];
-        foreach ($ecMeta->getProperties() as $name => $epMeta) {
-            $value = self::getPropertyValue($epMeta->getReflector(), $entity);
+        foreach ($classMeta->getProperties() as $name => $propertyMeta) {
+            $value = self::getPropertyValue($propertyMeta->getReflector(), $entity);
 
             // @cancel
             // // Collect & skip entity properties to save later.
-            // if ($epMeta->hasEntity() && $epMeta->isLinkCascadesFor('save')) {
+            // if ($propertyMeta->hasEntity() && $propertyMeta->isLinkCascadesFor('save')) {
             //     // We can't save empty entities.
             //     if ($value != null) {
             //         $entityProps[] = $value;
@@ -151,19 +152,19 @@ final class Manager
 
             // Working without this, hmmm...
             // // Skip entity properties.
-            // if ($epMeta->isLinked() || $epMeta->hasEntity()) {
+            // if ($propertyMeta->isLinked() || $propertyMeta->hasEntity()) {
             //     continue;
             // }
 
-            $entityData[$name] = $value ?? $epMeta->getValidationDefault();
+            $entityData[$name] = $value ?? $propertyMeta->getValidationDefault();
         }
 
         // No try/catch, so allow exceptions in Record.
-        $record = $this->initRecord($ecMeta, $entity)
+        $record = $this->initRecord($classMeta, $entity)
                 ->setData($entityData)
                 ->save();
 
-        $this->assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityProperties($entity, $record, $classMeta);
         $this->assignEntityInternalProperties($entity, $record);
 
         // @cancel
@@ -173,8 +174,8 @@ final class Manager
         //         $this->save($entityProp);
         //     }
         //     // Fill linked properties.
-        //     foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-        //         $this->loadLinkedProperty($epMeta, $entity, 'save');
+        //     foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
+        //         $this->loadLinkedProperty($propertyMeta, $entity, 'save');
         //     }
         // }
 
@@ -217,27 +218,27 @@ final class Manager
      */
     public function find(object $entity, int|string $id = null): object
     {
-        /* @var froq\database\entity\EntityClassMeta|null */
-        $ecMeta = MetaParser::parseClassMeta($entity);
-        $ecMeta || throw new ManagerException('Null entity class meta');
+        /* @var froq\database\entity\ClassMeta|null */
+        $classMeta = MetaParser::parseClassMeta($entity);
+        $classMeta || throw new ManagerException('Null entity class meta');
 
-        $id   ??= self::getEntityPrimaryValue($entity, $ecMeta);
+        $id   ??= self::getEntityPrimaryValue($entity, $classMeta);
         $fields = self::getEntityFields($entity);
 
         // No try/catch, so allow exceptions in Record.
-        $record = $this->initRecord($ecMeta)
+        $record = $this->initRecord($classMeta)
                 ->setId($id)
                 ->return($fields)
                 ->find();
 
-        $this->assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityProperties($entity, $record, $classMeta);
         $this->assignEntityInternalProperties($entity, $record);
 
         // @cancel
         // if ($record->isFinded()) {
         //     // Fill linked properties.
-        //     foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-        //         $this->loadLinkedProperty($epMeta, $entity, 'find');
+        //     foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
+        //         $this->loadLinkedProperty($propertyMeta, $entity, 'find');
         //     }
         // }
 
@@ -286,12 +287,12 @@ final class Manager
     public function findBy(string $entityClass, string|array $where = null, int $limit = null, string $order = null,
         Pager &$pager = null): object|null
     {
-        /* @var froq\database\entity\EntityClassMeta|null */
-        $ecMeta = MetaParser::parseClassMeta($entityClass);
-        $ecMeta || throw new ManagerException('Null entity class meta');
+        /* @var froq\database\entity\ClassMeta|null */
+        $classMeta = MetaParser::parseClassMeta($entityClass);
+        $classMeta || throw new ManagerException('Null entity class meta');
 
         $entity = new $entityClass();
-        $record = $this->initRecord($ecMeta);
+        $record = $this->initRecord($classMeta);
         $fields = self::getEntityFields($entity);
 
         $rows = $record->select($where ?? [], fields: $fields, limit: $limit, order: $order);
@@ -303,13 +304,13 @@ final class Manager
 
             foreach ($rows as $row) {
                 $entityClone = clone $entity;
-                $this->assignEntityProperties($entityClone, $row, $ecMeta);
+                $this->assignEntityProperties($entityClone, $row, $classMeta);
                 $this->assignEntityInternalProperties($entityClone, $record);
 
                 // @cancel
                 // // Fill linked properties.
-                // foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-                //     $this->loadLinkedProperty($epMeta, $entityClone, 'find');
+                // foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
+                //     $this->loadLinkedProperty($propertyMeta, $entityClone, 'find');
                 // }
 
                 // Call on-save method when provided.
@@ -321,7 +322,7 @@ final class Manager
             }
 
             // Create & fill entity list.
-            $entityList = $this->initEntityList($ecMeta->getListClass(), $entityClones);
+            $entityList = $this->initEntityList($classMeta->getListClass(), $entityClones);
 
             $pager && $entityList->setPager($pager);
 
@@ -341,27 +342,27 @@ final class Manager
      */
     public function remove(object $entity, int|string $id = null): object
     {
-        /* @var froq\database\entity\EntityClassMeta|null */
-        $ecMeta = MetaParser::parseClassMeta($entity);
-        $ecMeta || throw new ManagerException('Null entity class meta');
+        /* @var froq\database\entity\ClassMeta|null */
+        $classMeta = MetaParser::parseClassMeta($entity);
+        $classMeta || throw new ManagerException('Null entity class meta');
 
-        $id   ??= self::getEntityPrimaryValue($entity, $ecMeta);
+        $id   ??= self::getEntityPrimaryValue($entity, $classMeta);
         $fields = self::getEntityFields($entity);
 
         // No try/catch, so allow exceptions in Record.
-        $record = $this->initRecord($ecMeta)
+        $record = $this->initRecord($classMeta)
                 ->setId($id)
                 ->return($fields)
                 ->remove();
 
-        $this->assignEntityProperties($entity, $record, $ecMeta);
+        $this->assignEntityProperties($entity, $record, $classMeta);
         $this->assignEntityInternalProperties($entity, $record);
 
         // @cancel
         // if ($record->isRemoved()) {
         //     // Drop linked properties (records actually).
-        //     foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-        //         $this->unloadLinkedProperty($epMeta, $entity);
+        //     foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
+        //         $this->unloadLinkedProperty($propertyMeta, $entity);
         //     }
         // }
 
@@ -406,25 +407,25 @@ final class Manager
      */
     public function removeBy(string $entityClass, string|array $where): object|null
     {
-        /* @var froq\database\entity\EntityClassMeta|null */
-        $ecMeta = MetaParser::parseClassMeta($entityClass);
-        $ecMeta || throw new ManagerException('Null entity class meta');
+        /* @var froq\database\entity\ClassMeta|null */
+        $classMeta = MetaParser::parseClassMeta($entityClass);
+        $classMeta || throw new ManagerException('Null entity class meta');
 
         $entity = new $entityClass();
-        $record = $this->initRecord($ecMeta);
+        $record = $this->initRecord($classMeta);
         $return = self::getEntityFields($entity);
 
         $rows = $record->delete($where, return: $return);
         if ($rows != null) {
             foreach ($rows as $row) {
                 $entityClone = clone $entity;
-                $this->assignEntityProperties($entityClone, $row, $ecMeta);
+                $this->assignEntityProperties($entityClone, $row, $classMeta);
                 $this->assignEntityInternalProperties($entityClone, $record);
 
                 // @cancel
                 // // Drop linked properties (records actually).
-                // foreach ($this->getLinkedProperties($ecMeta) as $epMeta) {
-                //     $this->unloadLinkedProperty($epMeta, $entityClone);
+                // foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
+                //     $this->unloadLinkedProperty($propertyMeta, $entityClone);
                 // }
 
                 // Call on-remove method when provided.
@@ -436,7 +437,7 @@ final class Manager
             }
 
             // Create & fill entity list.
-            $entityList = $this->initEntityList($ecMeta->getListClass(), $entityClones);
+            $entityList = $this->initEntityList($classMeta->getListClass(), $entityClones);
 
             return $entityList;
         }
@@ -447,17 +448,17 @@ final class Manager
     /**
      * Init a record by given entity class meta.
      *
-     * @param  froq\database\entity\EntityClassMeta $ecMeta
-     * @param  object|null                          $entity
+     * @param  froq\database\entity\ClassMeta $classMeta
+     * @param  object|null                    $entity
      * @return froq\database\record\Record
      */
-    private function initRecord(EntityClassMeta $ecMeta, object $entity = null): Record
+    private function initRecord(ClassMeta $classMeta, object $entity = null): Record
     {
         $validations = null;
 
         // Assign validations if available.
         if ($entity != null) {
-            $ref = $ecMeta->getReflector();
+            $ref = $classMeta->getReflector();
             // When "validations" property is defined on entity class.
             if ($ref->hasProperty('validations')) {
                 $validations = self::getPropertyValue(
@@ -471,28 +472,28 @@ final class Manager
             }
             // When propties have "validation" metadata on entity class.
             else {
-                foreach ($ecMeta->getProperties() as $name => $epMeta) {
+                foreach ($classMeta->getProperties() as $name => $propertyMeta) {
                     // Skip entity properties.
-                    if ($epMeta->hasEntity()) {
+                    if ($propertyMeta->hasEntity()) {
                         continue;
                     }
 
-                    $validations[$name] = $epMeta->getValidation();
+                    $validations[$name] = $propertyMeta->getValidation();
                 }
             }
         }
 
         // Use annotated record class or default.
-        $record = $ecMeta->getRecordClass() ?: Record::class;
+        $record = $classMeta->getRecordClass() ?: Record::class;
 
         return new $record(
             $this->db,
-            table: $ecMeta->getTable(),
-            tablePrimary: ($id = $ecMeta->getTablePrimary()),
+            table: $classMeta->getTable(),
+            tablePrimary: ($id = $classMeta->getTablePrimary()),
             options: [
-                'transaction' => $ecMeta->getOption('transaction', true),
-                'sequence'    => $ecMeta->getOption('sequence', !!$id),
-                'validate'    => $ecMeta->getOption('validate', !!$validations),
+                'transaction' => $classMeta->getOption('transaction', true),
+                'sequence'    => $classMeta->getOption('sequence', !!$id),
+                'validate'    => $classMeta->getOption('validate', !!$validations),
             ],
             validations: $validations,
         );
@@ -563,55 +564,55 @@ final class Manager
     /**
      * Get linked properties from given entity class meta.
      *
-     * @param  froq\database\entity\EntityClassMeta $ecMeta
+     * @param  froq\database\entity\ClassMeta $classMeta
      * @return array
      */
-    private function getLinkedProperties(EntityClassMeta $ecMeta): array
+    private function getLinkedProperties(ClassMeta $classMeta): array
     {
-        return array_filter($ecMeta->getProperties(), fn($p) => $p->isLinked());
+        return array_filter($classMeta->getProperties(), fn($propertyMeta) => $propertyMeta->isLinked());
     }
 
     /**
      * Load a linked property.
      *
-     * @param  froq\database\entity\EntityPropertyMeta $pmeta
-     * @param  object                                  $entity
-     * @param  string|null                             $action
+     * @param  froq\database\entity\PropertyMeta $propertyMeta
+     * @param  object                            $entity
+     * @param  string|null                       $action
      * @return void
      * @throws froq\database\entity\ManagerException
      * @cancel Not in use.
      */
-    private function loadLinkedProperty(EntityPropertyMeta $epMeta, object $entity, string $action = null): void
+    private function loadLinkedProperty(PropertyMeta $propertyMeta, object $entity, string $action = null): void
     {
         // Check whether cascade op allows given action.
-        if ($action && !$epMeta->isLinkCascadesFor($action)) {
+        if ($action && !$propertyMeta->isLinkCascadesFor($action)) {
             return;
         }
 
-        $class = $epMeta->getEntityClass() ?: throw new ManagerException(
+        $class = $propertyMeta->getEntityClass() ?: throw new ManagerException(
             'No valid link entity provided in `%s` meta',
-            $epMeta->getName()
+            $propertyMeta->getName()
         );
 
-        [$table, $column, $condition, $method, $limit] = $epMeta->packLinkStuff();
+        [$table, $column, $condition, $method, $limit] = $propertyMeta->packLinkStuff();
 
         // Check non-link / non-valid properties.
         ($table && $column) ?: throw new ManagerException(
             'No valid link table/column provided in `%s` meta',
-            $epMeta->getName()
+            $propertyMeta->getName()
         );
 
         // Given or default limit (if not disabled as "-1").
         $limit = ($limit != -1) ? $limit : null;
 
         // Parse linked property class meta.
-        /* @var froq\database\entity\EntityClassMeta|null */
-        $ecLinkedMeta = MetaParser::parseClassMeta($class);
-        $ecLinkedMeta || throw new ManagerException('Null entity class meta');
+        /* @var froq\database\entity\ClassMeta|null */
+        $linkedClassMeta = MetaParser::parseClassMeta($class);
+        $linkedClassMeta || throw new ManagerException('Null entity class meta');
 
         switch ($method) {
             case 'one-to-one':
-                $primaryField = $ecLinkedMeta->getTablePrimary();
+                $primaryField = $linkedClassMeta->getTablePrimary();
                 $primaryValue = self::getPropertyValue($column, $entity);
 
                 $limit = 1; // Update limit.
@@ -620,18 +621,18 @@ final class Manager
                 $primaryField = $column; // Reference.
 
                 // Get value from property's class.
-                /* @var froq\database\entity\EntityClassMeta|null */
-                $epClassMeta  = MetaParser::parseClassMeta($epMeta->getClass());
-                $epClassMeta || throw new ManagerException('Null entity class meta');
+                /* @var froq\database\entity\ClassMeta|null */
+                $propertyClassMeta  = MetaParser::parseClassMeta($propertyMeta->getClass());
+                $propertyClassMeta || throw new ManagerException('Null entity class meta');
 
-                $primaryValue = self::getPropertyValue($epClassMeta->getTablePrimary(), $entity);
+                $primaryValue = self::getPropertyValue($propertyClassMeta->getTablePrimary(), $entity);
 
-                unset($epClassMeta); // Free.
+                unset($propertyClassMeta); // Free.
                 break;
             default:
                 throw new ManagerException(
                     'Unimplemented link method `%s` on `%s` property',
-                    [$method, $epMeta->getName()]
+                    [$method, $propertyMeta->getName()]
                 );
         }
 
@@ -654,7 +655,7 @@ final class Manager
         }
 
         $propEntity     = new $class();
-        $propEntityList = ($listClass = $epMeta->getEntityListClass()) ? new $listClass() : null;
+        $propEntityList = ($listClass = $propertyMeta->getEntityListClass()) ? new $listClass() : null;
 
         // An entity list.
         if ($propEntityList != null) {
@@ -662,7 +663,7 @@ final class Manager
             foreach ($data as $dat) {
                 $propEntityClone = clone $propEntity;
                 foreach ($dat as $name => $value) {
-                    $prop = $ecLinkedMeta->getProperty($name);
+                    $prop = $linkedClassMeta->getProperty($name);
                     $prop ? self::setPropertyValue($prop->getReflector(), $propEntityClone, $value)
                           : throw new ManagerException('Property `%s.%s` not exists or private', [$class, $name]);
                 }
@@ -673,24 +674,24 @@ final class Manager
             $pager && $propEntityList->setPager($pager);
 
             // Set property value as an entity list.
-            self::setPropertyValue($epMeta->getReflector(), $entity, $propEntityList);
+            self::setPropertyValue($propertyMeta->getReflector(), $entity, $propEntityList);
         }
         // An entity.
         else {
             $data = (array) $query->getArray();
             foreach ($data as $name => $value) {
-                $prop = $ecLinkedMeta->getProperty($name);
+                $prop = $linkedClassMeta->getProperty($name);
                 $prop ? self::setPropertyValue($prop->getReflector(), $propEntity, $value)
                       : throw new ManagerException('Property `%s.%s` not exists or private', [$class, $name]);
             }
 
             // Recursion for other linked stuff.
-            foreach ($this->getLinkedProperties($ecLinkedMeta) as $prop) {
+            foreach ($this->getLinkedProperties($linkedClassMeta) as $prop) {
                 $this->loadLinkedProperty($prop, $propEntity, $action);
             }
 
             // Set property value as an entity.
-            self::setPropertyValue($epMeta->getReflector(), $entity, $propEntity);
+            self::setPropertyValue($propertyMeta->getReflector(), $entity, $propEntity);
         }
     }
 
@@ -701,63 +702,63 @@ final class Manager
      * not create and fill dropped records data as new entities. So, a property (eg. User$logins)
      * can contain a plenty records on a database.
      *
-     * @param  froq\database\entity\EntityPropertyMeta $pmeta
-     * @param  object                                  $entity
+     * @param  froq\database\entity\PropertyMeta $propertyMeta
+     * @param  object                            $entity
      * @return void
      * @throws froq\database\entity\ManagerException
      * @cancel Not in use.
      */
-    private function unloadLinkedProperty(EntityPropertyMeta $epMeta, object $entity): void
+    private function unloadLinkedProperty(PropertyMeta $propertyMeta, object $entity): void
     {
         // Check whether cascade op allows remove action.
-        if (!$epMeta->isLinkCascadesFor('remove')) {
+        if (!$propertyMeta->isLinkCascadesFor('remove')) {
             return;
         }
 
-        $class = $epMeta->getEntityClass() ?: throw new ManagerException(
+        $class = $propertyMeta->getEntityClass() ?: throw new ManagerException(
             'No valid link entity provided in `%s` meta',
-            $epMeta->getName()
+            $propertyMeta->getName()
         );
 
-        [$table, $column, , $method] = $epMeta->packLinkStuff();
+        [$table, $column, , $method] = $propertyMeta->packLinkStuff();
 
         // Check non-link / non-valid properties.
         ($table && $column) ?: throw new ManagerException(
             'No valid link table/column provided in `%s` meta',
-            $epMeta->getName()
+            $propertyMeta->getName()
         );
 
         // Parse linked property class meta.
-        /* @var froq\database\entity\EntityClassMeta|null */
-        $ecLinkedMeta = MetaParser::parseClassMeta($class);
-        $ecLinkedMeta || throw new ManagerException('Null entity class meta');
+        /* @var froq\database\entity\ClassMeta|null */
+        $linkedClassMeta = MetaParser::parseClassMeta($class);
+        $linkedClassMeta || throw new ManagerException('Null entity class meta');
 
         switch ($method) {
             case 'one-to-one':
-                $primaryField = $ecLinkedMeta->getTablePrimary();
+                $primaryField = $linkedClassMeta->getTablePrimary();
                 $primaryValue = self::getPropertyValue($column, $entity);
                 break;
             case 'one-to-many':
                 $primaryField = $column; // Reference.
 
                 // Get value from property's class.
-                /* @var froq\database\entity\EntityClassMeta|null */
-                $epClassMeta  = MetaParser::parseClassMeta($epMeta->getClass());
-                $epClassMeta || throw new ManagerException('Null entity class meta');
+                /* @var froq\database\entity\ClassMeta|null */
+                $propertyClassMeta  = MetaParser::parseClassMeta($propertyMeta->getClass());
+                $propertyClassMeta || throw new ManagerException('Null entity class meta');
 
-                $primaryValue = self::getPropertyValue($epClassMeta->getTablePrimary(), $entity);
+                $primaryValue = self::getPropertyValue($propertyClassMeta->getTablePrimary(), $entity);
 
-                unset($epClassMeta); // Free.
+                unset($propertyClassMeta); // Free.
                 break;
             default:
                 throw new ManagerException(
                     'Unimplemented link method `%s` on `%s` property',
-                    [$method, $epMeta->getName()]
+                    [$method, $propertyMeta->getName()]
                 );
         }
 
         // Create a delete query & apply link criteria.
-        $q=$this->db->initQuery($table)
+        $this->db->initQuery($table)
                  ->delete()
                  ->equal($primaryField, $primaryValue)
                  ->run();
@@ -766,17 +767,17 @@ final class Manager
     /**
      * Assign an entity's properties.
      *
-     * @param  object                               $entity
-     * @param  array|froq\database\record\Record    $record
-     * @param  froq\database\entity\EntityClassMeta $ecMeta
+     * @param  object                            $entity
+     * @param  array|froq\database\record\Record $record
+     * @param  froq\database\entity\ClassMeta    $classMeta
      * @return void
      */
-    private function assignEntityProperties(object $entity, array|Record $record, EntityClassMeta $ecMeta): void
+    private function assignEntityProperties(object $entity, array|Record $record, ClassMeta $classMeta): void
     {
         $data = is_array($record) ? $record : $record->getData();
 
         if ($data) {
-            $props = $ecMeta->getProperties();
+            $props = $classMeta->getProperties();
             foreach ($data as $name => $value) {
                 // Set existsing (defined/parsed) properties only.
                 isset($props[$name]) && self::setPropertyValue(
@@ -878,13 +879,13 @@ final class Manager
     /**
      * Get an entity's primary value from given entity class meta when available.
      *
-     * @param  object                               $entity
-     * @param  froq\database\entity\EntityClassMeta $ecMeta
+     * @param  object                         $entity
+     * @param  froq\database\entity\ClassMeta $classMeta
      * @return int|string|null
      */
-    private static function getEntityPrimaryValue(object $entity, EntityClassMeta $ecMeta): int|string|null
+    private static function getEntityPrimaryValue(object $entity, ClassMeta $classMeta): int|string|null
     {
-        $primary = (string) $ecMeta->getTablePrimary();
+        $primary = (string) $classMeta->getTablePrimary();
 
         // When defined as public.
         if (isset($entity->{$primary})) {
