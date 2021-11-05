@@ -46,6 +46,8 @@ final class MetaFactory
      */
     public static function init(int $type, string $name, string $class, array $data = null): Meta
     {
+        $name = Meta::prepareName($type, $name, $class);
+
         return self::$cache[$name] ??= match ($type) {
             Meta::TYPE_CLASS    => new EntityClassMeta($class, $data),
             Meta::TYPE_PROPERTY => new EntityPropertyMeta($name, $class, $data),

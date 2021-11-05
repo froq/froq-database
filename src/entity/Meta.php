@@ -54,6 +54,8 @@ class Meta
      */
     public function __construct(int $type, string $name, string $class, array $data = null)
     {
+        $name = self::prepareName($type, $name, $class);
+
         $this->type  = $type;
         $this->name  = $name;
         $this->class = $class;
@@ -206,5 +208,25 @@ class Meta
     public final function getReflector(): ReflectionClass|ReflectionProperty|null
     {
         return $this->reflector ?? null;
+    }
+
+    /**
+     * Prepare a meta object name.
+     *
+     * @param  int    $type
+     * @param  string $name
+     * @param  string $class
+     * @return string
+     */
+    public static function prepareName(int $type, string $name, string $class): string
+    {
+        [$name, $class] = array_map('trim', [$name, $class]);
+
+        // Fully-qualified name for properties.
+        if ($type == self::TYPE_PROPERTY && !strpos($name, '.')) {
+            $name = $class . '.' . $name;
+        }
+
+        return $name;
     }
 }

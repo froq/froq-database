@@ -30,11 +30,6 @@ final class EntityPropertyMeta extends Meta
      */
     public function __construct(string $name, string $class, array $data = null)
     {
-        // Fully-qualified name.
-        strpos($name, '.') || (
-            $name = $class . '.' . $name
-        );
-
         parent::__construct(parent::TYPE_PROPERTY, $name, $class, $data);
     }
 
