@@ -7,9 +7,9 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{MetaException, Meta};
+use froq\database\entity\{MetaException, Meta, EntityClassMeta, EntityPropertyMeta};
 
-class MetaFactory
+final class MetaFactory
 {
     private static array $cache;
 
@@ -20,6 +20,15 @@ class MetaFactory
             Meta::TYPE_PROPERTY => new EntityPropertyMeta($type, $name, $class, $data),
             default             => throw new MetaException('Invalid type `%s`', $type)
         };
+    }
+
+    public static function initEntityClassMeta(string $name, string $class, array $data = null): EntityClassMeta
+    {
+        return self::init(Meta::TYPE_CLASS, $name, $class, $data);
+    }
+    public static function initEntityPropertyMeta(string $name, string $class, array $data = null):  EntityPropertyMeta
+    {
+        return self::init(Meta::TYPE_PROPERTY, $name, $class, $data);
     }
 
     public static function hasCacheItem(string $name): bool

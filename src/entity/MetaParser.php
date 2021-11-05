@@ -35,11 +35,10 @@ final class MetaParser
         }
 
         /** @var froq\database\entity\EntityClassMeta */
-        $meta = MetaFactory::init(
-            type: Meta::TYPE_CLASS,
-           class: $class,
-            name: $class,
-            data: $data,
+        $meta = MetaFactory::initEntityClassMeta(
+            class: $class,
+             name: $class,
+             data: $data
         );
         $meta->setReflector($classRef);
 
@@ -59,11 +58,10 @@ final class MetaParser
                 $propClass = $propRef->class;
 
                 /** @var froq\database\entity\EntityPropertyMeta */
-                $prop = MetaFactory::init(
-                     type: Meta::TYPE_PROPERTY,
+                $prop = MetaFactory::initEntityPropertyMeta(
                     class: $propClass,
-                     name: $propClass . '.' . $propName, // Fully-qualified property name.
-                     data: self::getData($propRef),
+                     name: $propClass . '.' . $propName,
+                     data: self::getData($propRef)
                 );
                 $prop->setReflector($propRef);
 
@@ -106,11 +104,10 @@ final class MetaParser
         $propClass = $propRef->class;
 
         /** @var froq\database\entity\EntityPropertyMeta */
-        $meta = MetaFactory::init(
-             type: Meta::TYPE_PROPERTY,
+        $meta = MetaFactory::initEntityPropertyMeta(
             class: $propClass,
-             name: $propClass . '.' . $propName, // Fully-qualified property name.
-             data: $data,
+             name: $propClass . '.' . $propName,
+             data: $data
         );
         $meta->setReflector($propRef);
 
