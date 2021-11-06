@@ -16,7 +16,6 @@ namespace froq\database\trait;
  * @object  froq\database\trait\TableTrait
  * @author  Kerem Güneş
  * @since   5.0
- * @internal
  */
 trait TableTrait
 {

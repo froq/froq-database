@@ -19,7 +19,6 @@ use froq\validation\Validation;
  * @object  froq\database\trait\ValidationTrait
  * @author  Kerem Güneş
  * @since   5.0
- * @internal
  */
 trait ValidationTrait
 {

@@ -18,7 +18,6 @@ use froq\database\Database;
  * @object  froq\database\trait\DbTrait
  * @author  Kerem Güneş
  * @since   5.0
- * @internal
  */
 trait DbTrait
 {
