@@ -1,76 +1,56 @@
 <?php
 /**
- * MIT License <https://opensource.org/licenses/mit>
- *
- * Copyright (c) 2015 Kerem Güneş
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished
- * to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Copyright (c) 2015 · Kerem Güneş
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\{DatabaseException, DatabaseConnectionException, DatabaseQueryException,
+use froq\database\{DatabaseException, DatabaseLinkException, DatabaseQueryException,
     Link, LinkException, Result, Profiler, Query};
-use froq\database\sql\{Sql, Name, Date, DateTime};
-use froq\pager\Pager;
-use froq\logger\Logger;
+use froq\database\sql\{Sql, Name};
+use froq\{pager\Pager, logger\Logger};
 use PDO, PDOStatement, PDOException, Throwable;
 
 /**
  * Database.
+ *
+ * Represents a database worker that contains some util methods for such operations CRUD'ing and
+ * query preparing, querying/executing commands.
+ *
  * @package froq\database
  * @object  froq\database\Database
- * @author  Kerem Güneş <k-gun@mail.com>
+ * @author  Kerem Güneş
  * @since   1.0, 4.0 Refactored.
  */
 final class Database
 {
-    /**
-     * Link.
-     * @var froq\database\Link
-     */
+    /** @var froq\database\Link */
     private Link $link;
 
-    /**
-     * Logger.
-     * @var froq\logger\Logger|null
-     * @since 4.9
-     */
-    private Logger $logger;
+    /** @var froq\logger\Logger|null */
+    private Logger|null $logger = null;
 
-    /**
-     * Profiler.
-     * @var froq\database\Profiler|null.
-     */
-    private Profiler $profiler;
+    /** @var froq\database\Profiler|null. */
+    private Profiler|null $profiler = null;
 
     /**
      * Constructor.
+     *
+     * Init a `Database` object initing a `Link` object and auto-connecting, or throw a
+     * `DatabaseLinkException` if any connection error occurs.
+     *
      * @param  array $options
-     * @throws froq\database\DatabaseConnectionException
+     * @throws froq\database\DatabaseLinkException
      */
     public function __construct(array $options)
     {
+        // Default is null (no logging).
         $logging = $options['logging'] ?? null;
         if ($logging) {
             $this->logger = new Logger($logging);
+            $this->logger->setOption('slowQuery', $options['logging']['slowQuery'] ?? null);
         }
 
         // Default is false (no profiling).
@@ -84,208 +64,278 @@ final class Database
             empty($this->profiler) ? $this->link->connect()
                 : $this->profiler->profileConnection(fn() => $this->link->connect());
         } catch (LinkException $e) {
-            throw new DatabaseConnectionException($e->getMessage());
+            throw new DatabaseLinkException($e);
         }
     }
 
     /**
-     * Get link.
+     * Get link property.
+     *
      * @return froq\database\Link
      */
-    public function getLink(): Link
+    public function link(): Link
     {
         return $this->link;
     }
 
     /**
-     * Get logger.
+     * Get logger property or throw a `DatabaseException` if no logger.
+     *
      * @return froq\logger\Logger
      * @throws froq\database\DatabaseException
      * @since  4.9
      */
-    public function getLogger(): Logger
+    public function logger(): Logger
     {
-        if (empty($this->logger)) {
-            throw new DatabaseException('Database object has no logger, be sure "logging" '.
-                'field is not empty in options');
-        }
-
-        return $this->logger;
+        return $this->logger ?? throw new DatabaseException(
+            'Database object has no logger, be sure `logging` field is not empty in options'
+        );
     }
 
     /**
-     * Get profiler.
+     * Get profiler property or throw a `DatabaseException` if no profiler.
+     *
      * @return froq\database\Profiler
      * @throws froq\database\DatabaseException
      */
-    public function getProfiler(): Profiler
+    public function profiler(): Profiler
     {
-        if (empty($this->profiler)) {
-            throw new DatabaseException('Database object has no profiler, be sure "profiling" '.
-                'field is not empty or false in options');
-        }
-
-        return $this->profiler;
+        return $this->profiler ?? throw new DatabaseException(
+            'Database object has no profiler, be sure `profiling` field is not empty or false in options'
+        );
     }
 
     /**
-     * Query.
+     * Run an SQL query and returning its result as `Result` object, or throw a
+     * `DatabaseQueryException` if any query error occurs.
+     *
      * @param  string     $query
-     * @param  array|null $queryParams
+     * @param  array|null $params
      * @param  array|null $options
      * @return froq\database\Result
-     * @throws froq\database\DatabaseException, froq\database\DatabaseQueryException
+     * @throws froq\database\{DatabaseException|DatabaseQueryException}
      */
-    public function query(string $query, array $queryParams = null, array $options = null): Result
+    public function query(string $query, array $params = null, array $options = null): Result
     {
-        $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
-        if ($query == '') {
-            throw new DatabaseException('Empty query given to "%s()", non-empty query required',
-                [__method__]);
-        }
+        $query = $params ? $this->prepare($query, $params) : trim($query);
+        $query || throw new DatabaseException('Empty query given to %s()', __method__);
 
         try {
-            $pdo = $this->link->getPdo();
-            $pdoStatement = empty($this->profiler) ? $pdo->query($query)
+            $timeop = $this->logger?->getOption('slowQuery');
+            if ($timeop) {
+                $marker = Profiler::marker('slowQuery');
+                Profiler::mark($marker);
+            }
+
+            $pdo          = $this->link->pdo();
+            $pdoStatement = !$this->profiler ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
+
+            if ($timeop) {
+                $time = Profiler::unmark($marker);
+                if ($time > $timeop) {
+                    $this->logger->logWarn('Slow query: time '. $time .', '. $query);
+                }
+            }
 
             return new Result($pdo, $pdoStatement, $options);
         } catch (PDOException $e) {
-            throw new DatabaseQueryException($e->getMessage());
+            throw new DatabaseQueryException($e);
         }
     }
 
     /**
-     * Execute.
+     * Run an SQL query and returning its result as `int` or `null`, or throw a
+     * `DatabaseQueryException` if any error occurs.
+     *
      * @param  string     $query
-     * @param  array|null $queryParams
-     * @return ?int
+     * @param  array|null $params
+     * @return int
+     * @throws froq\database\{DatabaseException|DatabaseQueryException}
      * @since  4.3
      */
-    public function execute(string $query, array $queryParams = null): ?int
+    public function execute(string $query, array $params = null): int
     {
-        $query = $queryParams ? $this->prepare($query, $queryParams) : trim($query);
-        if ($query == '') {
-            throw new DatabaseException('Empty query given to "%s()", non-empty query required',
-                [__method__]);
-        }
+        $query = $params ? $this->prepare($query, $params) : trim($query);
+        $query || throw new DatabaseException('Empty query given to %s()', __method__);
 
         try {
-            $pdo = $this->link->getPdo();
-            $pdoResult = empty($this->profiler) ? $pdo->exec($query)
+            $timeop = $this->logger?->getOption('slowQuery');
+            if ($timeop) {
+                $marker = Profiler::marker('slowQuery');
+                Profiler::mark($marker);
+            }
+
+            $pdo       = $this->link->pdo();
+            $pdoResult = !$this->profiler ? $pdo->exec($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
 
-            return ($pdoResult !== false) ? $pdoResult : null;
+            if ($timeop) {
+                $time = Profiler::unmark($marker);
+                if ($time > $timeop) {
+                    $this->logger->logWarn('Slow query: time '. $time .', '. $query);
+                }
+            }
+
+            // Extra check for unknown stuff.
+            if ($pdoResult === false) {
+                $errorCode = $pdo->errorCode();
+                if ($errorCode != '00000' || $errorCode != '01000') {
+                    throw new PDOException('Unknown error');
+                }
+            }
+
+            return $pdoResult;
         } catch (PDOException $e) {
-            throw new DatabaseQueryException($e->getMessage());
+            throw new DatabaseQueryException($e);
         }
     }
 
     /**
-     * Get.
-     * @param  string                    $query
-     * @param  array|null                $queryParams
-     * @param  string|array<string>|null $fetch
-     * @return ?array|?object
+     * Get a single row running given query as `array|object` or return `null` if no match.
+     *
+     * @param  string            $query
+     * @param  array|null        $params
+     * @param  string|array|null $fetch
+     * @param  string|bool|null  $flat
+     * @return array|object|scalar|null
      */
-    public function get(string $query, array $queryParams = null, $fetch = null)
+    public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null)
     {
-        return $this->query($query, $queryParams, ['fetch' => $fetch])->row(0);
+        $result = $this->query($query, $params, ['fetch' => $fetch])->rows(0);
+
+        // When a single column value wanted.
+        if ($result && $flat) {
+            $result = (array) $result;
+            $result = array_select($result, is_string($flat) ? $flat : key($result));
+        }
+
+        return $result;
     }
 
     /**
-     * Get all.
-     * @param  string                    $query
-     * @param  array|null                $queryParams
-     * @param  string|array<string>|null $fetch
-     * @return ?array
+     * Get all rows running given query as `array` or return `null` if no matches.
+     *
+     * @param  string            $query
+     * @param  array|null        $params
+     * @param  string|array|null $fetch
+     * @param  string|bool|null  $flat
+     * @param  string|null       $index
+     * @return array|null
      */
-    public function getAll(string $query, array $queryParams = null, $fetch = null): ?array
+    public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null,
+        string $index = null): array|null
     {
-        return $this->query($query, $queryParams, ['fetch' => $fetch])->rows();
+        $result = $this->query($query, $params, ['fetch' => $fetch, 'index' => $index])->rows();
+
+        // When a single column value wanted.
+        if ($result && $flat) {
+            $result = (array) $result;
+            $result = array_column($result, is_string($flat) ? $flat : key($result[0]));
+        }
+
+        return $result;
     }
 
     /**
-     * Select.
-     * @param  string                    $table
-     * @param  string                    $fields
-     * @param  string|array|null         $where
-     * @param  any|null                  $whereParams
-     * @param  string|null               $order
-     * @param  string|array<string>|null $fetch
-     * @return ?array|?object
+     * Select a row from given table as `array|object` or return `null` if no match.
+     *
+     * @param  string            $table
+     * @param  string            $fields
+     * @param  string|array|null $where
+     * @param  array|null        $params
+     * @param  string|null       $order
+     * @param  string|array|null $fetch
+     * @param  string|bool|null  $flat
+     * @param  string|null       $op
+     * @return array|object|scalar|null
      */
-    public function select(string $table, string $fields = '*', $where = null, $whereParams = null,
-        string $order = null, $fetch = null)
+    public function select(string $table, string $fields = '*', string|array $where = null, array $params = null,
+        string $order = null, string|array $fetch = null, string|bool $flat = null, string $op = null)
     {
         $query = $this->initQuery($table)->select($fields);
 
-        if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
-        }
-
+        $where && $query->where(...$this->prepareWhereInput($where, $params, $op));
         $order && $query->orderBy($order);
         $query->limit(1);
 
-        return $query->run($fetch)->row(0);
+        $result = $query->run($fetch)->row(0);
+
+        // When a single column value wanted.
+        if ($result && $flat) {
+            $result = (array) $result;
+            $result = array_select($result, is_string($flat) ? $flat : key($result));
+        }
+
+        return $result;
     }
 
     /**
-     * Select all.
-     * @param  string                    $table
-     * @param  string                    $fields
-     * @param  string|array|null         $where
-     * @param  any|null                  $whereParams
-     * @param  string|null               $order
-     * @param  int|array<int>|null       $limit
-     * @param  string|array<string>|null $fetch
-     * @return ?array
+     * Select all rows from given table as `array` or return `null` if no matches.
+     *
+     * @param  string            $table
+     * @param  string            $fields
+     * @param  string|array|null $where
+     * @param  array|null        $params
+     * @param  string|null       $order
+     * @param  int|array|null    $limit
+     * @param  string|array|null $fetch
+     * @param  string|bool|null  $flat
+     * @param  string|null       $op
+     * @return array|null
      */
-    public function selectAll(string $table, string $fields = '*', $where = null, $whereParams = null,
-        string $order = null, $limit = null, $fetch = null): ?array
+    public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,
+        string $order = null, int|array $limit = null, string|array $fetch = null, string|bool $flat = null, string $op = null)
     {
         $query = $this->initQuery($table)->select($fields);
 
-        if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
-        }
-
+        $where && $query->where(...$this->prepareWhereInput($where, $params, $op));
         $order && $query->orderBy($order);
         $limit && $query->limit(...(array) $limit);
 
-        return $query->run($fetch)->rows();
+        $result = $query->run($fetch)->rows();
+
+        // When a single column value wanted.
+        if ($result && $flat) {
+            $result = (array) $result;
+            $result = array_column($result, is_string($flat) ? $flat : key($result[0]));
+        }
+
+        return $result;
     }
 
     /**
-     * Insert.
+     * Insert row/rows to given table.
+     *
      * @param  string $table
      * @param  array  $data
      * @param  array  $options
-     * @return int|array|object|null
+     * @return int|string|array|object|null
      */
     public function insert(string $table, array $data, array $options = null)
     {
         $return = $fetch = $batch = $conflict = $sequence = null;
         if ($options != null) {
-            @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
-                'conflict' => $conflict, 'sequence' => $sequence] = $options;
+            [$return, $fetch, $batch, $conflict, $sequence] = array_select(
+                $options, ['return', 'fetch', 'batch', 'conflict', 'sequence']
+            );
         }
 
         $query = $this->initQuery($table)->insert($data, $batch, $sequence);
 
         if ($conflict) {
+            $conflict = (array) $conflict;
+
             if (isset($conflict['fields']) || isset($conflict['action'])) {
-                @ ['fields' => $fields, 'action' => $action] = $conflict;
+                [$fields, $action] = array_select($conflict, ['fields', 'action']);
             } else {
-                @ [$fields, $action, $update, $where] = $conflict;
+                [$fields, $action, $update, $where] = array_select($conflict, [0, 1, 2, 3]);
             }
 
             // Eg: 'conflict' => ['id', 'action' => 'nothing'] or ['id', 'update' => [..], 'where' => [..]].
-            $fields ??= $conflict[0] ?? null;
+            $fields ??= $conflict[0]        ?? null;
             $update ??= $conflict['update'] ?? null;
-            $where ??= $conflict['where'] ?? null;
+            $where  ??= $conflict['where']  ?? null;
 
             // Can be skipped with update.
             $update && $action = 'update';
@@ -294,7 +344,7 @@ final class Database
                 throw new DatabaseException('Conflict action is not given');
             }
             if (!$update && strtolower($action) == 'update') {
-                throw new DatabaseException('Conflict action is "update", but no update data given');
+                throw new DatabaseException('Conflict action is update, but no update data given');
             }
 
             $query->conflict($fields, $action, $update, $where);
@@ -311,44 +361,50 @@ final class Database
             } else {
                 // If single row wanted as return.
                 $result = $result->row(0);
-                $resultArray = (array) $result;
-                if (isset($resultArray[$return])) {
-                    $result = $resultArray[$return];
+                if (is_string($return)) {
+                    $resultArray = (array) $result;
+                    if (isset($resultArray[$return])) {
+                        $result = $resultArray[$return];
+                    }
                 }
             }
 
             return $result;
         }
 
-        return $batch ? $result->ids() : $result->id();
+        if ($sequence !== false) {
+            return $batch ? $result->ids() : $result->id();
+        }
+
+        return $result->count();
     }
 
     /**
-      * Update.
+     * Update row/rows on given table.
+     *
      * @param  string            $table
      * @param  array             $data
      * @param  string|array|null $where
-     * @param  any|null          $whereParams
+     * @param  array|null        $params
      * @param  array|null        $options
-     * @return int|array|object|null
+     * @param  string|null       $op
+     * @return int|string|array|object|null
      */
-    public function update(string $table, array $data, $where = null, $whereParams = null, array $options = null)
+    public function update(string $table, array $data, string|array $where = null, array $params = null, array $options = null,
+        string $op = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
-            @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
-                'limit' => $limit] = $options;
+            [$return, $fetch, $batch, $limit] = array_select(
+                $options, ['return', 'fetch', 'batch', 'limit']
+            );
         }
 
         $query = $this->initQuery($table)->update($data);
 
-        if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
-        }
-
+        $where  && $query->where(...$this->prepareWhereInput($where, $params, $op));
         $return && $query->return($return, $fetch);
-        $limit && $query->limit($limit);
+        $limit  && $query->limit($limit);
 
         $result = $query->run();
 
@@ -359,9 +415,11 @@ final class Database
             } else {
                 // If single row wanted as return.
                 $result = $result->row(0);
-                $resultArray = (array) $result;
-                if (isset($resultArray[$return])) {
-                    $result = $resultArray[$return];
+                if (is_string($return)) {
+                    $resultArray = (array) $result;
+                    if (isset($resultArray[$return])) {
+                        $result = $resultArray[$return];
+                    }
                 }
             }
 
@@ -372,30 +430,30 @@ final class Database
     }
 
     /**
-     * Delete.
+     * Delete row/rows from given table.
+     *
      * @param  string            $table
      * @param  string|array|null $where
-     * @param  array|null        $whereParams
+     * @param  array|null        $params
      * @param  array|null        $options
-     * @return int|array|object|null
+     * @param  string|null       $op
+     * @return int|string|array|object|null
      */
-    public function delete(string $table, $where = null, $whereParams = null, array $options = null)
+    public function delete(string $table, string|array $where = null, array $params = null, array $options = null,
+        string $op = null)
     {
         $return = $fetch = $batch = $limit = null;
         if ($options != null) {
-            @ ['return' => $return, 'fetch' => $fetch, 'batch' => $batch,
-                'limit' => $limit] = $options;
+            [$return, $fetch, $batch, $limit] = array_select(
+                $options, ['return', 'fetch', 'batch', 'limit']
+            );
         }
 
         $query = $this->initQuery($table)->delete();
 
-        if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
-        }
-
+        $where  && $query->where(...$this->prepareWhereInput($where, $params, $op));
         $return && $query->return($return, $fetch);
-        $limit && $query->limit($limit);
+        $limit  && $query->limit($limit);
 
         $result = $query->run();
 
@@ -406,9 +464,11 @@ final class Database
             } else {
                 // If single row wanted as return.
                 $result = $result->row(0);
-                $resultArray = (array) $result;
-                if (isset($resultArray[$return])) {
-                    $result = $resultArray[$return];
+                if (is_string($return)) {
+                    $resultArray = (array) $result;
+                    if (isset($resultArray[$return])) {
+                        $result = $resultArray[$return];
+                    }
                 }
             }
 
@@ -419,159 +479,261 @@ final class Database
     }
 
     /**
-     * Count.
+     * Count all rows on given table with/without given conditions.
+     *
      * @param  string            $table
      * @param  string|array|null $where
-     * @param  array|null        $whereParams
+     * @param  array|null        $params
      * @return int
      */
-    public function count(string $table, $where = null, $whereParams = null): int
+    public function count(string $table, string|array $where = null, array $params = null): int
     {
         $query = $this->initQuery($table);
 
-        if ($where) {
-            [$where, $whereParams] = $this->prepareWhereInput($where, $whereParams);
-            $query->where($where, $whereParams);
-        }
+        $where && $query->where(...$this->prepareWhereInput($where, $params));
 
         return $query->count();
     }
 
     /**
-     * Count query.
-     * @param  string     $query
-     * @param  array|null $queryParams
+     * Run a count query with/without given conditions.
+     *
+     * @param  string|Query $query
+     * @param  array|null   $params
      * @return int
      */
-    public function countQuery(string $query, array $queryParams = null): int
+    public function countQuery(string|Query $query, array $params = null): int
     {
-        $result = $this->get('SELECT count(*) AS c FROM ('. $query .') AS t',
-            $queryParams, 'array');
+        $result = $this->get('SELECT count(*) AS c FROM (' . $query . ') AS t', $params, 'array');
 
         return (int) ($result['c'] ?? 0);
     }
 
     /**
-     * Transaction.
-     * @param  callable      $call
+     * Increase given field/fields value, optionally returning current value or affected rows count.
+     *
+     * @param  string     $table
+     * @param  array      $field
+     * @param  int|float  $value
+     * @param  array|null $where
+     * @param  array|null $params
+     * @param  array|null $options
+     * @return int|float|array|null
+     */
+    public function increase(string $table, string|array $field, int|float $value = 1, string|array $where = null,
+        array $params = null, array $options = null)
+    {
+        $return = $fetch = $batch = $limit = null;
+        if ($options != null) {
+            [$return, $fetch, $batch, $limit] = array_select(
+                $options, ['return', 'fetch', 'batch', 'limit']
+            );
+        }
+
+        $query = $this->initQuery($table)->increase($field, $value, $return);
+
+        $where && $query->where(...$this->prepareWhereInput($where, $params));
+        $limit && $query->limit($limit);
+
+        $result = $query->run();
+
+        // If rows wanted as return.
+        if ($return) {
+            if ($batch) {
+                $result = $result->rows();
+            } else {
+                // If single row wanted as return.
+                $result      = $result->row(0);
+                $resultArray = (array) $result;
+                if (is_string($field)) {
+                    $result = $resultArray[$field];
+                } else {
+                    $fields = array_keys($field);
+                    $result = array_combine($fields, array_select($resultArray, $fields));
+                }
+            }
+
+            return $result;
+        }
+
+        return $result->count();
+    }
+
+    /**
+     * Decrease given field/fields value, optionally returning current value or affected rows count.
+     *
+     * @param  string     $table
+     * @param  array      $field
+     * @param  int|float  $value
+     * @param  array|null $where
+     * @param  array|null $params
+     * @param  array|null $options
+     * @return int|float|array|null
+     */
+    public function decrease(string $table, string|array $field, int|float $value = 1, string|array $where = null,
+        array $params = null, array $options = null)
+    {
+        $return = $fetch = $batch = $limit = null;
+        if ($options != null) {
+            [$return, $fetch, $batch, $limit] = array_select(
+                $options, ['return', 'fetch', 'batch', 'limit']
+            );
+        }
+
+        $query = $this->initQuery($table)->decrease($field, $value, $return);
+
+        $where && $query->where(...$this->prepareWhereInput($where, $params));
+        $limit && $query->limit($limit);
+
+        $result = $query->run();
+
+        // If rows wanted as return.
+        if ($return) {
+            if ($batch) {
+                $result = $result->rows();
+            } else {
+                // If single row wanted as return.
+                $result      = $result->row(0);
+                $resultArray = (array) $result;
+                if (is_string($field)) {
+                    $result = $resultArray[$field];
+                } else {
+                    $fields = array_keys($field);
+                    $result = array_combine($fields, array_select($resultArray, $fields));
+                }
+            }
+
+            return $result;
+        }
+
+        return $result->count();
+    }
+
+    /**
+     * Run a transaction in a try/catch block or return a `Transaction` object.
+     *
+     * @param  callable|null $call
      * @param  callable|null $callError
      * @return any
-     * @throws froq\database\DatabaseException
+     * @throws Throwable
      */
-    public function transaction(callable $call, callable $callError = null)
+    public function transaction(callable $call = null, callable $callError = null)
     {
-        $pdo = $this->link->getPdo();
+        $transaction = new Transaction($this->link->pdo());
 
-        try {
-            if (!$pdo->beginTransaction()) {
-                throw new DatabaseException('Failed to start transaction');
-            }
-            // And for all others.
-        } catch (Throwable $e) {
-            throw new DatabaseException($e->getMessage());
+        // Return transaction object.
+        if ($call == null) {
+            return $transaction;
         }
 
         try {
+            $transaction->begin();
             $ret = $call($this);
-            $pdo->commit();
+            $transaction->commit();
 
             return $ret;
         } catch (Throwable $e) {
-            $pdo->rollback();
+            $transaction->rollback();
 
-            // Blocks exception below.
-            if ($callError) {
-                return $callError($e);
+            // Block throw.
+            if ($callError != null) {
+                return $callError($e, $this);
             }
 
-            throw new DatabaseException($e->getMessage());
+            throw $e;
         }
     }
 
     /**
-     * Quote.
-     * @param  string $input
+     * Quote an input.
+     *
+     * @param  string $in
      * @return string
      */
-    public function quote(string $input): string
+    public function quote(string $in): string
     {
-        return '\''. $input .'\'';
+        return "'" . $in . "'";
     }
 
     /**
-     * Quote name.
-     * @param  string $input
+     * Quote a name input.
+     *
+     * @param  string $in
      * @return string
      */
-    public function quoteName(string $input): string
+    public function quoteName(string $in): string
     {
-        if ($input == '*') {
-            return $input;
+        if ($in == '*') {
+            return $in;
         }
 
-        if ($input && $input[0] == '@') {
-            $input = substr($input, 1);
+        if ($in && $in[0] == '@') {
+            $in = substr($in, 1);
         }
 
         // For row(..) or other parenthesis stuff.
-        if (strpos($input, '(') === 0) {
-            $rpos = strpos($input, ')');
-            if (!$rpos) { // Not parsed array[(foo, ..)] stuff, sorry.
-                throw new DatabaseException('Unclosed parenthesis in "%s" input', [$input]);
-            }
+        if (strpos($in, '(') === 0) {
+            $rpos = strpos($in, ')'); // Not parsed array[(foo, ..)] stuff, sorry.
+            $rpos || throw new DatabaseException('Unclosed parenthesis in `%s` input', $in);
 
-            $name = substr($input, 1, $rpos - 1); // Eg: part foo of (foo).
-            $rest = substr($input, $rpos + 1) ?: ''; // Eg: part ::int of (foo)::int.
+            $name = substr($in, 1, $rpos - 1); // Eg: part foo of (foo).
+            $rest = substr($in, $rpos + 1) ?: ''; // Eg: part ::int of (foo)::int.
 
-            return '('. $this->quoteNames($name) .')'. $rest;
+            return '(' . $this->quoteNames($name) . ')' . $rest;
         }
 
         // Dot notations (eg: foo.id => "foo"."id").
-        $pos = strpos($input, '.');
+        $pos = strpos($in, '.');
         if ($pos) {
-            return $this->quoteNames(substr($input, 0, $pos)) .'.'.
-                   $this->quoteNames(substr($input, $pos + 1));
+            return $this->quoteNames(substr($in, 0, $pos)) . '.' .
+                   $this->quoteNames(substr($in, $pos + 1));
         }
 
-        $pdoDriver = $this->link->getPdoDriver();
-        if ($pdoDriver == 'pgsql') {
+        $driver = $this->link->driver();
+        if ($driver == 'pgsql') {
             // Cast notations (eg: foo::int).
-            if ($pos = strpos($input, '::')) {
-                return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
+            if ($pos = strpos($in, '::')) {
+                return $this->quoteName(substr($in, 0, $pos)) . substr($in, $pos);
             }
 
             // Array notations (eg: foo[], foo[1] or array[foo, bar]).
-            if ($pos = strpos($input, '[')) {
-                $name = substr($input, 0, $pos);
-                $rest = substr($input, $pos + 1);
+            if ($pos = strpos($in, '[')) {
+                $name = substr($in, 0, $pos);
+                $rest = substr($in, $pos + 1);
+                $last = '';
+                if (strpos($rest, ']')) {
+                    $rest = substr($in, $pos + 1, -1);
+                    $last = ']';
+                }
 
                 return (strtolower($name) == 'array')
-                     ? $name .'['. $this->quoteNames($rest)
-                     : $this->quoteName($name) .'['. $rest;
+                     ? $name . '[' . $this->quoteNames($rest) . $last
+                     : $this->quoteName($name) . '[' . $rest . $last;
             }
         }
 
-        switch ($pdoDriver) {
-            case 'mysql': return '`'. $input .'`';
-            case 'mssql': return '['. $input .']';
-                 default: return '"'. $input .'"';
-        }
+        return match ($driver) {
+            'mysql' => '`' . trim($in, '`')  . '`',
+            'mssql' => '[' . trim($in, '[]') . ']',
+            default => '"' . trim($in, '"')  . '"'
+        };
     }
 
     /**
-     * Quote names.
-     * @param  string $input
+     * Quote names in given input.
+     *
+     * @param  string $in
      * @return string
      * @since  4.14
      */
-    public function quoteNames(string $input): string
+    public function quoteNames(string $in): string
     {
         // Eg: "id, name ..." or "id as ID, ...".
-        preg_match_all('~([^\s,]+)~i', $input, $match);
+        preg_match_all('~([^\s,]+)~i', $in, $match);
 
         $names = array_filter($match[1], 'strlen');
         if (!$names) {
-            return $input;
+            return $in;
         }
 
         foreach ($names as $i => $name) {
@@ -582,132 +744,119 @@ final class Database
     }
 
     /**
-     * Escape.
-     * @param  any         $input
-     * @param  string|null $inputFormat
+     * Escape an input with/without given format.
+     *
+     * @param  any         $in
+     * @param  string|null $format
      * @return any
      * @throws froq\database\DatabaseException
      */
-    public function escape($input, string $inputFormat = null)
+    public function escape($in, string $format = null)
     {
-        $inputType = gettype($input);
-
-        if ($inputType == 'array' && $inputFormat != '?a') {
-            return array_map(
-                fn($input) => $this->escape($input, $inputFormat),
-                $input
-            );
-        } elseif ($inputType == 'object') {
-            $inputClass = get_class($input);
-            switch ($inputClass) {
-                case Sql::class:      return $input->content();
-                case Name::class:     return $this->escapeName($input->content());
-                case Date::class:
-                case DateTime::class: return $this->escapeString($input->content());
-                case Query::class:    return $input->toString();
-                default:
-                    throw new DatabaseException('Invalid input object "%s" given, valids are: '.
-                        'Query, sql\{Sql, Name, Date, DateTime}', [$inputClass]);
-            }
+        if (is_array($in) && $format != '?a') {
+            return array_map(fn($in) => $this->escape($in, $format), $in);
+        }
+        if (is_object($in)) {
+            return match (true) {
+                ($in instanceof Sql)   => $in->content(),
+                ($in instanceof Name)  => $this->escapeName($in->content()),
+                ($in instanceof Query) => '(' . $in->toString() . ')',
+                default                => throw new DatabaseException('Invalid input object `%s`,'
+                    . ' valids are: Query, sql\{Sql, Name}', $in::class)
+            };
         }
 
-        // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a".
-        if ($inputFormat) {
-            if ($inputFormat == '?' || $inputFormat == '??') {
-                return ($inputFormat == '?') ? $this->escape($input)
-                                             : $this->escapeName($input);
-            }
-
-            switch ($inputFormat) {
-                case '?s': return $this->escapeString((string) $input);
-                case '?i': return (int) $input;
-                case '?f': return (float) $input;
-                case '?b': return $input ? 'true' : 'false';
-                case '?r': return $input; // Raw.
-                case '?n': return $this->escapeName($input);
-                case '?a': return join(', ', (array) $this->escape($input)); // Array.
-            }
-
-            throw new DatabaseException('Unimplemented input format "%s" encountered',
-                [$inputFormat]);
+        // Available placeholders: ?, ??, ?s, ?i, ?f, ?b, ?r, ?n, ?a.
+        if ($format != null) {
+            return match ($format) {
+                '?'     => $this->escape($in),
+                '??'    => $this->escapeName($in),
+                '?s'    => $this->escapeString((string) $in),
+                '?i'    => (int) $in,
+                '?f'    => (float) $in,
+                '?b'    => $in ? 'true' : 'false',
+                '?r'    => $in, // Raw input.
+                '?n'    => $this->escapeName($in),
+                '?a'    => join(', ', (array) $this->escape($in)), // Array input.
+                default => throw new DatabaseException('Unimplemented input format `%s`', $format)
+            };
         }
 
-        switch ($inputType) {
-            case 'NULL':    return 'NULL';
-            case 'string':  return $this->escapeString($input);
-            case 'integer': return $input;
-            case 'double':  return $input;
-            case 'boolean': return $input ? 'true' : 'false';
-            default:
-                throw new DatabaseException('Unimplemented input type "%s" encountered',
-                    [$inputType]);
-        }
+        $type = get_type($in);
+
+        return match ($type) {
+            'null'         => 'NULL',
+            'string'       => $this->escapeString($in),
+            'int', 'float' => $in,
+            'bool'         => $in ? 'true' : 'false',
+            default        => throw new DatabaseException('Unimplemented input type `%s`', $type)
+        };
     }
 
     /**
-     * Escape string.
-     * @param  string $input
+     * Escape a string input.
+     *
+     * @param  string $in
      * @param  bool   $quote
      * @param  string $extra
      * @return string
      */
-    public function escapeString(string $input, bool $quote = true, string $extra = ''): string
+    public function escapeString(string $in, bool $quote = true, string $extra = ''): string
     {
-        $input = $this->link->getPdo()->quote($input);
+        $out = $this->link->pdo()->quote($in);
 
-        if (!$quote) {
-            $input = trim($input, '\'');
-        }
-        if ($extra) {
-            $input = addcslashes($input, $extra);
-        }
+        $quote || $out = trim($out, "'");
+        $extra && $out = addcslashes($out, $extra);
 
-        return $input;
+        return $out;
     }
 
     /**
-     * Escape like string.
-     * @param  string $input
+     * Escape like string input.
+     *
+     * @param  string $in
      * @param  bool   $quote
      * @return string
      */
-    public function escapeLikeString(string $input, bool $quote = true): string
+    public function escapeLikeString(string $in, bool $quote = true): string
     {
-        return $this->escapeString($input, $quote, '%_');
+        return $this->escapeString($in, $quote, '%_');
     }
 
     /**
-     * Escape name.
-     * @param  string $input
+     * Escape a name input.
+     *
+     * @param  string $in
      * @return string
      */
-    public function escapeName(string $input): string
+    public function escapeName(string $in): string
     {
-        switch ($this->link->getPdoDriver()) {
-            case 'mysql': $input = str_replace('`', '``', $input); break;
-            case 'mssql': $input = str_replace(']', ']]', $input); break;
-                 default: $input = str_replace('"', '""', $input);
-        }
+        $in = match ($this->link->driver()) {
+            'mysql' => str_replace('`', '``', $in),
+            'mssql' => str_replace(']', ']]', $in),
+            default => str_replace('"', '""', $in)
+        };
 
-        return $this->quoteName($input);
+        return $this->quoteName($in);
     }
 
     /**
-     * Escape names.
-     * @param  string $input
+     * Escape names in given input.
+     *
+     * @param  string $in
      * @return string
      */
-    public function escapeNames(string $input): string
+    public function escapeNames(string $in): string
     {
         // Eg: "id, name ..." or "id as ID, ...".
-        preg_match_all('~([^\s,]+)(?:\s+(?:(AS)\s+)?([^\s,]+))?~i', $input, $match);
+        preg_match_all('~([^\s,]+)(?:\s+(?:(AS)\s+)?([^\s,]+))?~i', $in, $match);
 
         $names = array_filter($match[1], 'strlen');
-        $aliases = array_filter($match[3], 'strlen');
         if (!$names) {
-            return $input;
+            return $in;
         }
 
+        $aliases = array_filter($match[3], 'strlen');
         foreach ($names as $i => $name) {
             $names[$i] = $this->escapeName($name);
             if (isset($aliases[$i])) {
@@ -719,149 +868,159 @@ final class Database
     }
 
     /**
-     * Prepare.
-     * @param  string     $input
-     * @param  array|null $inputParams
+     * Prepare given input returning a string output.
+     *
+     * @param  string     $in
+     * @param  array|null $params
      * @return string
      * @throws froq\database\DatabaseException
      */
-    public function prepare(string $input, array $inputParams = null): string
+    public function prepare(string $in, array $params = null): string
     {
-        $input = $this->preparePrepareInput($input);
-        if ($input == '') {
-            throw new DatabaseException('Empty input given to "%s()" for preparation', [__method__]);
-        }
+        $out = $this->prepareNameInput($in);
+        $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
 
         // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a / :foo, :foo_bar".
         static $pattern = '~
-              \?[sifbnra](?![\w]) # Scalars/(n)ame/(r)aw. Eg: ("id = ?i", ["1"]) or ("?n = ?i", ["id", "1"]).
-            | \?\?                # Names (identifier).   Eg: ("?? = ?", ["id", 1]).
-            | \?(?![\w&|])        # Any type.             Eg: ("id = ?", [1]), but not "id ?| array[..]" for PgSQL.
-            | (?<!:):\w+          # Named parameters.     Eg: ("id = :id", [1]), but not "id::int" casts for PgSQL.
-        ~xu';
+            # Scalars/(n)ame/(r)aw. Eg: ("id = ?i", ["1"]) or ("?n = ?i", ["id", "1"]).
+            \?[sifbnra](?![\w])
+            # Names (identifier). Eg: ("?? = ?", ["id", 1]).
+            | \?\?
+            # Any type with/without format. Eg: ("id = ?", [1]), ("id = ?1 OR id = ?1", [1]), not "id ?| array[..]" for PgSQL.
+            | \?(?![a-z&|])([\d][sifbnra]?)?
+            # Named parameters. Eg: ("id = :id", [1]), but not "id::int" casts for PgSQL.
+            | (?<!:):\w+
+        ~x';
 
-        if (preg_match_all($pattern, $input, $match)) {
-            if ($inputParams == null) {
-                throw new DatabaseException('Empty input parameters given to "%s()", non-empty '.
-                    'input parameters required when input contains parameter placeholders like '.
-                    '"?", "??" or ":foo"', [__method__]);
+        if (preg_match_all($pattern, $out, $match)) {
+            if ($params == null) {
+                throw new DatabaseException('Empty input parameters given to %s(), non-empty input parameters'
+                    . ' required when input contains parameter placeholders like ?, ?? or :foo', __method__);
             }
 
             $i = 0;
-            $keys = $values = [];
+            $keys = $values = $used = [];
             $holders = array_filter($match[0]);
+
+            // For those usages, eg: ('id = ?1 OR id = ?1', [123]).
+            foreach ($holders as $ii => $holder) {
+                $pos = $holder[1] ?? '';
+                if (ctype_digit($pos)) {
+                    $ipos = $pos - 1;
+                    if (!array_key_exists($ipos, $params)) {
+                        throw new DatabaseException('Replacement `%s` not found in given parameters', $ipos);
+                    }
+
+                    $format = $holder[2] ?? '';
+                    $format && $format = '?' . $format;
+
+                    $value = $this->escape($params[$ipos], $format);
+                    while (($pos = strpos($out, $holder)) !== false) {
+                        $out = substr_replace($out, strval($value), $pos, strlen($holder));
+                        array_push($used, $ipos);
+                    }
+
+                    // Drop used holder.
+                    unset($holders[$ii]);
+                }
+            }
+
+            // Drop used items by their indexes & re-form params.
+            if ($used != null) {
+                array_unset($params, ...$used);
+                $params = array_slice($params, 0);
+            }
 
             foreach ($holders as $holder) {
                 $pos = strpos($holder, ':');
-                if ($pos > -1) { // Named.
+                // Named.
+                if ($pos !== false) {
                     $key = trim($holder, ':');
-                    if (!array_key_exists($key, $inputParams)) {
-                        throw new DatabaseException('Replacement key "%s" not found in given '.
-                            'parameters', [$key]);
+                    if (!array_key_exists($key, $params)) {
+                        throw new DatabaseException('Replacement key `%s` not found in given parameters', $key);
                     }
 
-                    $value = $this->escape($inputParams[$key]);
+                    $value = $this->escape($params[$key]);
                     if (is_array($value)) {
                         $value = join(', ', $value);
                     }
 
-                    $keys[] = '~:'. $key .'~';
+                    $keys[]   = '~:' . $key . '~';
                     $values[] = $value;
-                } else { // Question-mark.
-                    if (!array_key_exists($i, $inputParams)) {
-                        throw new DatabaseException('Replacement index "%s" not found in given '.
-                            'parameters', [$i]);
+                }
+                // Question-mark.
+                else {
+                    if (!array_key_exists($i, $params)) {
+                        throw new DatabaseException('Replacement index `%s` not found in given parameters', $i);
                     }
 
-                    $value = $this->escape($inputParams[$i++], $holder);
+                    $value = $this->escape($params[$i++], $holder);
                     if (is_array($value)) {
                         $value = join(', ', $value);
                     }
 
-                    $keys[] = '~'. preg_quote($holder) .'(?![|&])~';
+                    $keys[]   = '~' . preg_quote($holder) . '(?![|&])~'; // PgSQL operators.
                     $values[] = $value;
                 }
             }
 
-            $input = preg_replace($keys, $values, $input, 1);
+            $out = preg_replace($keys, $values, $out, 1);
         }
 
-        return $input;
+        return $out;
     }
 
     /**
-     * Prepare statement.
-     * @param  string $input
+     * Prepare given input returning a string output with escaped names.
+     *
+     * @param  string $in
+     * @return string
+     * @since  5.0
+     */
+    public function prepareName(string $in): string
+    {
+        $out = $this->prepareNameInput($in);
+        $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
+
+        return $out;
+    }
+
+    /**
+     * Prepare statement input returning a `PDOStatement` object.
+     *
+     * @param  string $in
      * @return PDOStatement
      * @throws froq\database\DatabaseException
      */
-    public function prepareStatement(string $input): PDOStatement
+    public function prepareStatement(string $in): PDOStatement
     {
-        $input = $this->preparePrepareInput($input);
-        if ($input == '') {
-            throw new DatabaseException('Empty input given to "%s()" for preparation', [__method__]);
-        }
+        $out = $this->prepareNameInput($in);
+        $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
 
         try {
-            return $this->link->getPdo()->prepare($input);
+            return $this->link->pdo()->prepare($out);
         } catch (PDOException $e) {
             throw new DatabaseException($e);
         }
     }
 
     /**
-     * Init pager.
-     * @param  int|null $totalRecords
-     * @param  int|null $limit
-     * @return froq\pager\Pager
-     */
-    public function initPager(int $totalRecords = null, int $limit = null): Pager
-    {
-        $pager = new Pager();
-        $pager->run($totalRecords, $limit);
-
-        return $pager;
-    }
-
-    /**
-     * Init sql.
-     * @param  string     $input
-     * @param  array|null $inputParams
+     * Init a `Sql` object with/without given params.
+     *
+     * @param  string     $in
+     * @param  array|null $params
      * @return froq\database\sql\Sql
      */
-    public function initSql(string $input, array $inputParams = null): Sql
+    public function initSql(string $in, array $params = null): Sql
     {
-        if ($inputParams) {
-            $input = $this->prepare($input, $inputParams);
-        }
+        $params && $in = $this->prepare($in, $params);
 
-        return new Sql($input);
+        return new Sql($in);
     }
 
     /**
-     * Init date.
-     * @param  string|int|null $date
-     * @param  string|null     $timezone
-     * @return froq\database\sql\Date
-     */
-    public function initDate($date = null, string $timezone = null): Date
-    {
-        return new Date($date, $timezone);
-    }
-
-    /**
-     * Init date time.
-     * @param  string|int|null $datetime
-     * @param  string|null     $timezone
-     * @return froq\database\sql\DateTime
-     */
-    public function initDateTime($datetime = null, string $timezone = null): DateTime
-    {
-        return new DateTime($datetime, $timezone);
-    }
-
-    /**
-     * Init query.
+     * Init a `Query` object.
+     *
      * @param  string|null $table
      * @return froq\database\Query
      */
@@ -871,73 +1030,110 @@ final class Database
     }
 
     /**
-     * Prepare where input.
-     * @param  string|array $input
-     * @param  any|null     $inputParams
-     * @return array
-     * @since  4.15
-     * @throws froq\database\DatabaseException
+     * Init a `Pager` object.
+     *
+     * @param  int|null $count
+     * @param  int|null $limit
+     * @return froq\pager\Pager
      */
-    private function prepareWhereInput($input, $inputParams = null): array
+    public function initPager(int $count = null, int $limit = null): Pager
     {
-        [$where, $whereParams] = [$input, $inputParams];
+        $pager = new Pager();
+        $pager->run($count, $limit);
 
-        if ($where != null) {
-            // Note: "where" must not be combined when array given, eg: (["a = ? AND b = ?" => [1, 2]])
-            // will not be prepared and prepare() method will throw exception about replacement index. So
-            // use ("a = ? AND b = ?", [1, 2]) convention instead for multiple conditions.
-            if (is_array($where)) {
-                $temp = [];
-                foreach ($where as $key => $value) {
-                    if (!is_string($key)) {
-                        throw new DatabaseException('Invalid $where input, use ("a = ? AND b = ?", [1, 2])'
-                            .' convention');
-                    }
-
-                    // Check whether a placeholder given or not (eg: ["a" => 1]).
-                    if (strpbrk($key, '?:') === false) {
-                        $key = $key .' = ?';
-                    }
-
-                    $temp[$key] = $value;
-                }
-
-                $where = join(' AND ', array_keys($temp));
-                $whereParams = array_values($temp);
-            } elseif (is_string($where)) {
-                $where = trim($where);
-                $whereParams = (array) $whereParams;
-            } else {
-                throw new DatabaseException('Invalid $where input "%s", valids are: string, array',
-                    gettype($where));
-            }
-        }
-
-        return [$where, $whereParams];
+        return $pager;
     }
 
     /**
-     * Prepare prepare input.
-     * @param  string $input
+     * Prepare a prepare input escaping names only eg. `@id`.
+     *
+     * @param  string $in
      * @return string
      */
-    private function preparePrepareInput(string $input): string
+    private function prepareNameInput(string $in): string
     {
-        $input = trim($input);
+        $out = trim($in);
 
-        if ($input != '') {
-            // Prepare names (eg: '@id = ?', 1 or '@[id,..]') .
-            $pos = strpos($input, '@');
-            if ($pos > -1) {
-                $input = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
+        if ($out != '') {
+            // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
+            $pos = strpos($out, '@');
+            if ($pos !== false) {
+                $out = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
                     if (count($match) == 1) {
                         return $this->escapeNames(substr($match[0], 2, -1));
                     }
                     return $this->escapeName($match[1]);
-                }, $input);
+                }, $out);
             }
         }
 
-        return $input;
+        return $out;
+    }
+
+    /**
+     * Prepare a where input.
+     *
+     * @param  string|array $in
+     * @param  array|null   $params
+     * @param  string|null  $op
+     * @return array
+     * @since  4.15
+     * @throws froq\database\DatabaseException
+     */
+    private function prepareWhereInput(string|array $in, array $params = null, string $op = null): array
+    {
+        $where = $in;
+
+        if ($where != null) {
+            if (is_string($where)) {
+                $where  = trim($where);
+                $params = (array) $params;
+            } else {
+                static $signs = ['!', '<', '>'];
+                // Note: "where" must not be combined when array given, eg: (["a = ? AND b = ?" => [1, 2]])
+                // will not be prepared and prepare() method will throw exception about replacement index. So
+                // use ("a = ? AND b = ?", [1, 2]) convention instead for multiple conditions.
+                $temp = [];
+                foreach ($where as $field => $value) {
+                    is_string($field) || throw new DatabaseException(
+                        'Invalid where input, use ("a = ? AND b = ?", [1, 2]) convention'
+                    );
+
+                    $sign = ' = ';
+                    if (in_array($field[-1], $signs)) {
+                        $sign  = format(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
+                        $field = substr($field, 0, -1);
+                    }
+
+                    // $type = '';
+                    // if (str_contains($field, '::')) {
+                    //     [$field, $type] = explode('::', $field);
+                    // }
+
+                    // ctype_alnum($field) || throw new DatabaseException(
+                    //     'Invalid field name `%s` in where input, use an alphanumeric name', $field
+                    // );
+
+                    if (is_array($value)) {
+                        $value = !str_contains($sign, '!')
+                            ? new Sql('IN (' . join(', ', $this->escape($value)) . ')')
+                            : new Sql('NOT IN (' . join(', ', $this->escape($value)) . ')');
+                        $sign  = ' ';
+                    }
+
+                    // $type && $field .= '::' . $type;
+
+                    // Add placeholders.
+                    $field = $this->quoteName($field) . $sign . '?';
+
+                    $temp[$field] = $value;
+                }
+
+                $where  = join(' ' . ($op ?: 'AND') . ' ', array_keys($temp));
+                $params = array_values($temp);
+            }
+        }
+
+        return [$where, $params];
     }
 }

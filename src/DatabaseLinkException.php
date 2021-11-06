@@ -10,12 +10,12 @@ namespace froq\database;
 use froq\database\DatabaseException;
 
 /**
- * Result Exception.
+ * Database Link Exception.
  *
  * @package froq\database
- * @object  froq\database\ResultException
+ * @object  froq\database\DatabaseLinkException
  * @author  Kerem Güneş
- * @since   4.0
+ * @since   4.0, 5.0 Replaced with DatabaseConnectionException.
  */
-class ResultException extends DatabaseException
+class DatabaseLinkException extends DatabaseException
 {}

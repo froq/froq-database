@@ -5,17 +5,17 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\sql;
+namespace froq\database\object;
 
 use froq\database\DatabaseException;
 
 /**
- * Sql Exception.
+ * Object Exception.
  *
- * @package froq\database\sql
- * @object  froq\database\sql\SqlException
+ * @package froq\database\object
+ * @object  froq\database\object\ObjectException
  * @author  Kerem Güneş
- * @since   4.0
+ * @since   4.2, 5.0
  */
-class SqlException extends DatabaseException
+class ObjectException extends DatabaseException
 {}

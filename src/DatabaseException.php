@@ -1,26 +1,7 @@
 <?php
 /**
- * MIT License <https://opensource.org/licenses/mit>
- *
- * Copyright (c) 2015 Kerem Güneş
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished
- * to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Copyright (c) 2015 · Kerem Güneş
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
@@ -31,54 +12,56 @@ use Throwable, PDOException;
 
 /**
  * Database Exception.
+ *
  * @package froq\database
  * @object  froq\database\DatabaseException
- * @author  Kerem Güneş <k-gun@mail.com>
+ * @author  Kerem Güneş
  * @since   1.0
  */
 class DatabaseException extends Exception
 {
-    /**
-     * SQL State.
-     * @var string
-     */
+    /** @var string */
     private string $sqlState = '';
 
     /**
      * Constructor.
-     * @param string|PDOException $message
-     * @param string|array|null   $messageParams
-     * @param int|null            $code
-     * @param Throwable|null      $previous
+     *
+     * @param string|Throwable $message
+     * @param any|null         $messageParams
+     * @param int|string|null  $code
+     * @param Throwable|null   $previous
+     * @param Throwable|null   $cause
      */
-    public function __construct($message = null, $messageParams = null, int $code = null,
-        ?Throwable $previous = null)
+    public function __construct(string|Throwable $message = null, $messageParams = null, int|string $code = null,
+        Throwable $previous = null, Throwable $cause = null)
     {
-        if ($message) {
+        if ($message != null) {
             if (is_string($message)) {
-                $errorInfo = $this->parseMessageInfo($message);
-            } elseif (is_object($message) && $message instanceof PDOException) {
-                $errorInfo = $message->errorInfo ?: $this->parseMessageInfo($message->getMessage());
+                $errorInfo = self::parseMessageInfo($message);
             } else {
-                throw new Exception(
-                    'Invalid message type "%s" given to "%s", valids are: string, PDOException',
-                    [is_object($message) ? get_class($message) : gettype($message), static::class]
-                );
+                $errorInfo = isset($message->errorInfo)
+                    ? ($message->errorInfo ?: self::parseMessageInfo($message->getMessage()))
+                    : self::parseMessageInfo($message->getMessage());
             }
 
+            // Update sql-state & code.
             $this->sqlState = (string) $errorInfo[0];
 
-            // Override.
-            if (is_null($code)) {
-                $code = (int) $errorInfo[1];
+            if (is_string($code)) {
+                $this->sqlState = $code;
+                $code = 0;
             }
+
+            // Override if null.
+            $code ??= (int) $errorInfo[1];
         }
 
-        parent::__construct($message, $messageParams, $code, $previous);
+        parent::__construct($message, $messageParams, $code, $previous, $cause);
     }
 
     /**
      * Get sql state.
+     *
      * @return string.
      */
     public function getSqlState(): string
@@ -88,20 +71,24 @@ class DatabaseException extends Exception
 
     /**
      * Parse message info.
+     *
      * @param  string $message
-     * @return array<string, string>
+     * @return array<string>
      */
-    private function parseMessageInfo(string $message): array
+    private static function parseMessageInfo(string $message): array
     {
         // For all those FUCKs..
         // SQLSTATE[08006] [7] FATAL:  password authentication failed for user "root
         // SQLSTATE[HY000] [1045] Access denied for user 'root'@'localhost' (using password: YES)
         // SQLSTATE[42601]: Syntax error: 7 ERROR:  unterminated quoted identifier at or near ...
         // SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax ...
-        if (preg_match('~^(?:
-            SQLSTATE\[(\w+)\]\s+\[(\d+)\]\s+(?:.*) |
-            SQLSTATE\[(\w+)\]:?\s+(?:.*):\s+(\d+)\s+(?:.*)
-        )~x', $message, $match)) {
+        if (preg_match(
+            '~^(?:
+                SQLSTATE\[(\w+)\]\s+\[(\d+)\]\s+(?:.*) |
+                SQLSTATE\[(\w+)\]:?\s+(?:.*):\s+(\d+)\s+(?:.*)
+            )~x',
+            $message, $match
+        )) {
             $match = array_values(array_filter($match, 'strlen'));
 
             return [$match[1], $match[2]];

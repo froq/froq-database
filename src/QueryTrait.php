@@ -1,291 +1,265 @@
 <?php
 /**
- * MIT License <https://opensource.org/licenses/mit>
- *
- * Copyright (c) 2015 Kerem Güneş
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished
- * to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Copyright (c) 2015 · Kerem Güneş
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\DatabaseException;
-
 /**
  * Query Trait.
+ *
+ * Represents a query builder trait entity which mostly fulfills all building needs with short and
+ * descriptive methods.
+ *
  * @package froq\database
  * @object  froq\database\QueryTrait
- * @author  Kerem Güneş <k-gun@mail.com>
+ * @author  Kerem Güneş
  * @since   4.0
  */
 trait QueryTrait
 {
     /**
-     * Equal.
-     * @aliasOf whereEqual()
+     * @alias of whereEqual()
      */
-    public function equal(...$arguments)
+    public function equal(...$args)
     {
-        return $this->whereEqual(...$arguments);
+        return $this->whereEqual(...$args);
     }
 
     /**
-     * Not equal.
-     * @aliasOf whereNotEqual()
+     * @alias of whereNotEqual()
      */
-    public function notEqual(...$arguments)
+    public function notEqual(...$args)
     {
-        return $this->whereNotEqual(...$arguments);
+        return $this->whereNotEqual(...$args);
     }
 
     /**
-     * Null.
-     * @aliasOf whereNull()
+     * @alias of whereNull()
      */
-    public function null(...$arguments)
+    public function null(...$args)
     {
-        return $this->whereNull(...$arguments);
+        return $this->whereNull(...$args);
     }
 
     /**
-     * Not nuull.
-     * @aliasOf whereNotNull()
+     * @alias of whereNotNull()
      */
-    public function notNull(...$arguments)
+    public function notNull(...$args)
     {
-        return $this->whereNotNull(...$arguments);
+        return $this->whereNotNull(...$args);
     }
 
     /**
-     * In.
-     * @aliasOf whereIn()
+     * @alias of whereIs()
+     * @since 5.0
      */
-    public function in(...$arguments)
+    public function is(...$args)
     {
-        return $this->whereIn(...$arguments);
+        return $this->whereIs(...$args);
     }
 
     /**
-     * Not in.
-     * @aliasOf whereNotIn()
+     * @alias of whereIsNot()
+     * @since 5.0
      */
-    public function notIn(...$arguments)
+    public function isNot(...$args)
     {
-        return $this->whereNotIn(...$arguments);
+        return $this->whereIsNot(...$args);
     }
 
     /**
-     * Between.
-     * @aliasOf whereBetween()
+     * @alias of whereIn()
      */
-    public function between(...$arguments)
+    public function in(...$args)
     {
-        return $this->whereBetween(...$arguments);
+        return $this->whereIn(...$args);
     }
 
     /**
-     * Not between.
-     * @aliasOf whereNotBetween()
+     * @alias of whereNotIn()
      */
-    public function notBetween(...$arguments)
+    public function notIn(...$args)
     {
-        return $this->whereNotBetween(...$arguments);
+        return $this->whereNotIn(...$args);
     }
 
     /**
-     * Less than.
-     * @aliasOf whereLessThan()
+     * @alias of whereBetween()
      */
-    public function lessThan(...$arguments)
+    public function between(...$args)
     {
-        return $this->whereLessThan(...$arguments);
+        return $this->whereBetween(...$args);
     }
 
     /**
-     * Less than equal.
-     * @aliasOf whereLessThanEqual()
+     * @alias of whereNotBetween()
      */
-    public function lessThanEqual(...$arguments)
+    public function notBetween(...$args)
     {
-        return $this->whereLessThanEqual(...$arguments);
+        return $this->whereNotBetween(...$args);
     }
 
     /**
-     * Greater than.
-     * @aliasOf whereGreaterThan()
+     * @alias of whereLessThan()
      */
-    public function greaterThan(...$arguments)
+    public function lessThan(...$args)
     {
-        return $this->whereGreaterThan(...$arguments);
+        return $this->whereLessThan(...$args);
     }
 
     /**
-     * Greater than equal.
-     * @aliasOf whereGreaterThanEqual()
+     * @alias of whereLessThanEqual()
      */
-    public function greaterThanEqual(...$arguments)
+    public function lessThanEqual(...$args)
     {
-        return $this->whereGreaterThanEqual(...$arguments);
+        return $this->whereLessThanEqual(...$args);
     }
 
     /**
-     * Like.
-     * @aliasOf whereLike()
+     * @alias of whereGreaterThan()
      */
-    public function like(...$arguments)
+    public function greaterThan(...$args)
     {
-        return $this->whereLike(...$arguments);
+        return $this->whereGreaterThan(...$args);
     }
 
     /**
-     * Not like.
-     * @aliasOf whereNotLike()
+     * @alias of whereGreaterThanEqual()
      */
-    public function notLike(...$arguments)
+    public function greaterThanEqual(...$args)
     {
-        return $this->whereNotLike(...$arguments);
+        return $this->whereGreaterThanEqual(...$args);
     }
 
     /**
-     * Like start.
-     * @aliasOf whereLike()
+     * @alias of whereLike()
      */
-    public function likeStart(...$arguments)
+    public function like(...$args)
     {
-        $arguments[1] = ['', $arguments[1], '%'];
-
-        return $this->whereLike(...$arguments);
+        return $this->whereLike(...$args);
     }
 
     /**
-     * Not like start.
-     * @aliasOf whereNotLike()
+     * @alias of whereNotLike()
      */
-    public function notLikeStart(...$arguments)
+    public function notLike(...$args)
     {
-        $arguments[1] = ['', $arguments[1], '%'];
-
-        return $this->whereNotLike(...$arguments);
+        return $this->whereNotLike(...$args);
     }
 
     /**
-     * Like end.
-     * @aliasOf whereLike()
+     * @alias of whereLike()
      */
-    public function likeEnd(...$arguments)
+    public function likeStart(...$args)
     {
-        $arguments[1] = ['%', $arguments[1], ''];
+        $args[1] = ['', $args[1], '%'];
 
-        return $this->whereLike(...$arguments);
+        return $this->whereLike(...$args);
     }
 
     /**
-     * Not like end.
-     * @aliasOf whereNotLike()
+     * @alias of whereNotLike()
      */
-    public function notLikeEnd(...$arguments)
+    public function notLikeStart(...$args)
     {
-        $arguments[1] = ['%', $arguments[1], ''];
+        $args[1] = ['', $args[1], '%'];
 
-        return $this->whereNotLike(...$arguments);
+        return $this->whereNotLike(...$args);
     }
 
     /**
-     * Like both.
-     * @aliasOf whereLike()
+     * @alias of whereLike()
      */
-    public function likeBoth(...$arguments)
+    public function likeEnd(...$args)
     {
-        $arguments[1] = ['%', $arguments[1], '%'];
+        $args[1] = ['%', $args[1], ''];
 
-        return $this->whereLike(...$arguments);
+        return $this->whereLike(...$args);
     }
 
     /**
-     * Not like both.
-     * @aliasOf whereNotLike()
+     * @alias of whereNotLike()
      */
-    public function notLikeBoth(...$arguments)
+    public function notLikeEnd(...$args)
     {
-        $arguments[1] = ['%', $arguments[1], '%'];
+        $args[1] = ['%', $args[1], ''];
 
-        return $this->whereNotLike(...$arguments);
+        return $this->whereNotLike(...$args);
     }
 
     /**
-     * Exists.
-     * @aliasOf whereExists()
+     * @alias of whereLike()
      */
-    public function exists(...$arguments)
+    public function likeBoth(...$args)
     {
-        return $this->whereExists(...$arguments);
+        $args[1] = ['%', $args[1], '%'];
+
+        return $this->whereLike(...$args);
     }
 
     /**
-     * Not exists.
-     * @aliasOf whereNotExists()
+     * @alias of whereNotLike()
      */
-    public function notExists(...$arguments)
+    public function notLikeBoth(...$args)
     {
-        return $this->whereNotExists(...$arguments);
+        $args[1] = ['%', $args[1], '%'];
+
+        return $this->whereNotLike(...$args);
     }
 
     /**
-     * Random.
-     * @aliasOf whereRandom()
+     * @alias of whereExists()
      */
-    public function random(...$arguments)
+    public function exists(...$args)
     {
-        return $this->whereRandom(...$arguments);
+        return $this->whereExists(...$args);
     }
 
     /**
-     * Group.
-     * @aliasOf groupBy()
+     * @alias of whereNotExists()
      */
-    public function group(...$arguments)
+    public function notExists(...$args)
     {
-        return $this->groupBy(...$arguments);
+        return $this->whereNotExists(...$args);
     }
 
     /**
-     * Order.
-     * @aliasOf orderBy()
+     * @alias of whereRandom()
      */
-    public function order(...$arguments)
+    public function random(...$args)
     {
-        return $this->orderBy(...$arguments);
+        return $this->whereRandom(...$args);
     }
 
     /**
-     * Sort.
-     * @aliasOf orderBy()
+     * @alias of groupBy()
      */
-    public function sort(...$arguments)
+    public function group(...$args)
     {
-        return $this->orderBy(...$arguments);
+        return $this->groupBy(...$args);
     }
 
     /**
-     * Sort random.
-     * @aliasOf orderByRandom()
+     * @alias of orderBy()
+     */
+    public function order(...$args)
+    {
+        return $this->orderBy(...$args);
+    }
+
+    /**
+     * @alias of orderBy()
+     */
+    public function sort(...$args)
+    {
+        return $this->orderBy(...$args);
+    }
+
+    /**
+     * @alias of orderByRandom()
      */
     public function sortRandom()
     {
@@ -293,114 +267,119 @@ trait QueryTrait
     }
 
     /**
-     * Eq.
-     * @aliasOf whereEqual()
+     * @alias of indexBy()
      */
-    public function eq(...$arguments)
+    public function index(...$args)
     {
-        return $this->whereEqual(...$arguments);
+        return $this->indexBy(...$args);
     }
 
     /**
-     * Neq.
-     * @aliasOf whereNotEqual()
+     * @alias of whereEqual()
      */
-    public function neq(...$arguments)
+    public function eq(...$args)
     {
-        return $this->whereNotEqual(...$arguments);
+        return $this->whereEqual(...$args);
     }
 
     /**
-     * Lt.
-     * @aliasOf whereLessThan()
+     * @alias of whereNotEqual()
      */
-    public function lt(...$arguments)
+    public function neq(...$args)
     {
-        return $this->whereLessThan(...$arguments);
+        return $this->whereNotEqual(...$args);
     }
 
     /**
-     * Lte.
-     * @aliasOf whereLessThanEqual()
+     * @alias of whereLessThan()
      */
-    public function lte(...$arguments)
+    public function lt(...$args)
     {
-        return $this->whereLessThanEqual(...$arguments);
+        return $this->whereLessThan(...$args);
     }
 
     /**
-     * Gt.
-     * @aliasOf whereGreaterThan()
+     * @alias of whereLessThanEqual()
      */
-    public function gt(...$arguments)
+    public function lte(...$args)
     {
-        return $this->whereGreaterThan(...$arguments);
+        return $this->whereLessThanEqual(...$args);
     }
 
     /**
-     * Gte.
-     * @aliasOf whereGreaterThanEqual()
+     * @alias of whereGreaterThan()
      */
-    public function gte(...$arguments)
+    public function gt(...$args)
     {
-        return $this->whereGreaterThanEqual(...$arguments);
+        return $this->whereGreaterThan(...$args);
     }
 
     /**
-     * Min.
-     * @aliasOf selectMin()
-     * @since   4.4
+     * @alias of whereGreaterThanEqual()
      */
-    public function min(...$arguments)
+    public function gte(...$args)
     {
-        return $this->selectMin(...$arguments);
+        return $this->whereGreaterThanEqual(...$args);
     }
 
     /**
-     * Max.
-     * @aliasOf selectMax()
-     * @since   4.4
+     * @alias of selectMin()
+     * @since 4.4
      */
-    public function max(...$arguments)
+    public function min(...$args)
     {
-        return $this->selectMax(...$arguments);
+        return $this->selectMin(...$args);
     }
 
     /**
-     * Avg.
-     * @aliasOf selectAvg()
-     * @since   4.4
+     * @alias of selectMax()
+     * @since 4.4
      */
-    public function avg(...$arguments)
+    public function max(...$args)
     {
-        return $this->selectAvg(...$arguments);
+        return $this->selectMax(...$args);
     }
 
     /**
-     * Sum.
-     * @aliasOf selectSum()
-     * @since   4.4
+     * @alias of selectAvg()
+     * @since 4.4
      */
-    public function sum(...$arguments)
+    public function avg(...$args)
     {
-        return $this->selectSum(...$arguments);
+        return $this->selectAvg(...$args);
     }
 
     /**
-     * Esc.
-     * @aliasOf db.escape()
+     * @alias of selectSum()
+     * @since 4.4
      */
-    public function esc(...$arguments)
+    public function sum(...$args)
     {
-        return $this->db->escape(...$arguments);
+        return $this->selectSum(...$args);
     }
 
     /**
-     * Esc name.
-     * @aliasOf db.escapeName()
+     * @alias of aggregate()
+     * @since 5.0
      */
-    public function escName(...$arguments)
+    public function agg(...$args)
     {
-        return $this->db->escapeName(...$arguments);
+        return $this->aggregate(...$args);
+    }
+
+    /**
+     * @alias of Database.escape()
+     */
+    public function esc(...$args)
+    {
+        return $this->db->escape(...$args);
+    }
+
+    /**
+     * @alias of Database.escapeName()
+     */
+    public function escName(...$args)
+    {
+        return $this->db->escapeName(...$args);
     }
 }

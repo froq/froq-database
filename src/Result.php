@@ -1,125 +1,115 @@
 <?php
 /**
- * MIT License <https://opensource.org/licenses/mit>
- *
- * Copyright (c) 2015 Kerem Güneş
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished
- * to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Copyright (c) 2015 · Kerem Güneş
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\{ResultException};
-use PDO, PDOStatement, PDOException, Countable, IteratorAggregate, ArrayIterator;
+use froq\database\ResultException;
+use froq\collection\Collection;
+use PDO, PDOStatement, PDOException, ArrayIterator, Countable, IteratorAggregate, ArrayAccess;
 
 /**
  * Result.
+ *
  * @package froq\database
  * @object  froq\database\Result
- * @author  Kerem Güneş <k-gun@mail.com>
+ * @author  Kerem Güneş
  * @since   4.0
  */
-final class Result implements Countable, IteratorAggregate
+final class Result implements Countable, IteratorAggregate, ArrayAccess
 {
-    /**
-     * Count.
-     * @var int
-     */
+    /** @var int */
     private int $count = 0;
 
-    /**
-     * Ids.
-     * @var ?array<int>
-     */
-    private ?array $ids = null;
+    /** @var array<int>|null */
+    private array|null $ids = null;
 
-    /**
-     * Rows.
-     * @var ?array<array|object>
-     */
-    private ?array $rows = null;
+    /** @var array<array|object>|null */
+    private array|null $rows = null;
+
+    /** @var array @since 5.0 */
+    private static array $fetchTypes = ['array', 'object', 'class'];
 
     /**
      * Constructor.
-     * @param PDO           $pdo
-     * @param PDOStatement  $pdoStatement
-     * @param array|null    $options
+     * @param PDO          $pdo
+     * @param PDOStatement $pdoStatement
+     * @param array|null   $options
      */
     public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null)
     {
-        if ($pdoStatement->errorCode() == '00000') {
+        if ($pdo->errorCode() == '00000' && $pdoStatement->errorCode() == '00000') {
             // Assign count (affected rows etc).
             $this->count = $pdoStatement->rowCount();
 
-            // Defaults.
-            [$fetch, $sequence] = [null, true];
-
-            // Update fetch option if given.
+            // Check fetch option.
             if (isset($options['fetch'])) {
-                @ [$fetchType, $fetchClass] = (array) $options['fetch'];
+                $fetch     = (array) $options['fetch'];
+                $fetchType = $fetch[0] ?? null;
 
                 switch ($fetchType) {
                     case  'array': $fetchType = PDO::FETCH_ASSOC; break;
                     case 'object': $fetchType = PDO::FETCH_OBJ;   break;
                     case  'class':
-                        if (!$fetchClass) {
-                            throw new ResultException('No fetch class given, fetch class is required'.
-                                ' when fetch type is "class"');
-                        } elseif (!class_exists($fetchClass)) {
-                            throw new ResultException('No fetch class found such "%s"', [$fetchClass]);
-                        }
+                        $fetchClass = $fetch[1] ?? null;
+                        $fetchClass || throw new ResultException(
+                            'No fetch class given, it is required when fetch type is `class`'
+                        );
 
                         $fetchType = PDO::FETCH_CLASS;
                         break;
                     default:
-                        static $fetchTypes = ['array', 'object', 'class'];
-
-                        if ($fetchType && !in_array($fetchType, $fetchTypes)) {
-                            throw new ResultException('Invalid fetch type "%s" given, valids are: %s',
-                                [$fetchType, join(', ', $fetchTypes)]);
+                        if ($fetchType && !in_array($fetchType, self::$fetchTypes)) {
+                            throw new ResultException('Invalid fetch type `%s`, valids are: %s',
+                                [$fetchType, join(', ', self::$fetchTypes)]
+                            );
                         }
 
-                        $fetchType = $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
+                        unset($fetchType);
                 }
             }
 
-            // Update sequence option to prevent transaction errors that comes from lastInsertId()
+            // Set/update sequence option to prevent transaction errors that comes from lastInsertId()
             // calls but while commit() returning true when sequence field not exists.
+            $sequence = true;
             if (isset($options['sequence'])) {
                 $sequence = (bool) $options['sequence'];
             }
 
-            $query = trim($pdoStatement->queryString);
+            $query = ltrim($pdoStatement->queryString);
 
-            // Select queries & Returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
-            if (stripos($query, 'SELECT') === 0 || (
+            // Select queries & returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
+            if (stripos($query, 'SELECT') !== false || (
                 stripos($query, 'RETURNING') && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
             )) {
                 // Set or get default.
                 $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
-                $rows = ($fetchType == PDO::FETCH_CLASS)
-                      ? $pdoStatement->fetchAll($fetchType, $fetchClass)
-                      : $pdoStatement->fetchAll($fetchType);
+                $this->rows = (
+                    ($fetchType == PDO::FETCH_CLASS)
+                        ? $pdoStatement->fetchAll($fetchType, $fetchClass)
+                        : $pdoStatement->fetchAll($fetchType)
+                ) ?: null;
 
-                $this->rows = $rows ?: null;
+                // Indexing by given index field.
+                if (isset($options['index']) && $this->rows != null) {
+                    $index = $options['index'];
+                    if (!array_key_exists($index, (array) $this->rows[0])) {
+                        throw new ResultException('Given index `%s` not found in row set', $index);
+                    }
+
+                    $rows  = [];
+                    $array = is_array($this->rows[0]);
+                    foreach ($this->rows as $row) {
+                        $rows[$array ? $row[$index] : $row->{$index}] = $row;
+                    }
+
+                    // Re-assign.
+                    $this->rows = $rows;
+                }
             }
 
             // Insert queries.
@@ -131,7 +121,7 @@ final class Result implements Countable, IteratorAggregate
                 // prevent transaction commits when no sequence field exists.
                 try {
                     $id = (int) $pdo->lastInsertId();
-                } catch (PDOException $e) {}
+                } catch (PDOException) {}
 
                 if ($id) {
                     $ids = [$id];
@@ -160,8 +150,9 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * To array.
-     * @return array<int, array>
+     * Get rows as array.
+     *
+     * @return array<array|object>
      */
     public function toArray(): array
     {
@@ -169,28 +160,33 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * To object.
-     * @return array<int, object>
+     * Get rows as object.
+     *
+     * @return array<object>
      */
     public function toObject(): array
     {
         $rows = [];
+
         foreach ($this->toArray() as $row) {
             $rows[] = (object) $row;
         }
+
         return $rows;
     }
 
     /**
-     * To class.
+     * Get rows as given class instance.
+     *
      * @param  string $class
      * @param  bool   $ctor
      * @param  array  $ctorArgs
-     * @return array<int, class>
+     * @return array<object>
      */
     public function toClass(string $class, bool $ctor = false, array $ctorArgs = []): array
     {
         $rows = [];
+
         if (!$ctor) {
             foreach ($this->toArray() as $row) {
                 $class = new $class(...$ctorArgs);
@@ -204,14 +200,27 @@ final class Result implements Countable, IteratorAggregate
                 $rows[] = new $class($row, ...$ctorArgs);
             }
         }
+
         return $rows;
     }
 
     /**
-     * Id.
-     * @return ?int
+     * Create a collection with rows, for map/filter etc.
+     *
+     * @return froq\collection\Collection
+     * @since  5.0
      */
-    public function id(): ?int
+    public function toCollection(): Collection
+    {
+        return new Collection($this->rows);
+    }
+
+    /**
+     * Get last insert id when available.
+     *
+     * @return int|null
+     */
+    public function id(): int|null
     {
         $ids = $this->ids ?? [];
 
@@ -219,54 +228,109 @@ final class Result implements Countable, IteratorAggregate
     }
 
     /**
-     * Ids.
-     * @return ?array<int>
+     * Get all insert ids when available.
+     *
+     * @return array<int>|null
      */
-    public function ids(): ?array
+    public function ids(): array|null
     {
         return $this->ids ?? null;
     }
 
     /**
-     * Row.
+     * Get a single row.
+     *
      * @param  int $i
-     * @return ?array|?object
+     * @return array|object|null
      */
-    public function row(int $i)
+    public function row(int $i): array|object|null
     {
-        // Reverse, eg: -1 for last.
-        if ($i < 0) {
-            $i = $this->count + $i;
-        }
-
         return $this->rows[$i] ?? null;
     }
 
     /**
-     * Rows.
-     * @return ?array<array|object>
+     * Get all rows.
+     *
+     * @param  int|null $i
+     * @return array<array|object>|object|null
      */
-    public function rows(): ?array
+    public function rows(int $i = null): array|object|null
     {
-        return $this->rows ?? null;
+        if ($i !== null) {
+            return $this->row($i);
+        }
+        return $this->rows;
     }
 
     /**
-     * First.
-     * @return ?array|?object
+     * Get first row.
+     *
+     * @return array|object|null
      */
-    public function first()
+    public function first(): array|object|null
     {
-        return $this->row(0);
+        return $this->rows ? current($this->rows) : null;
     }
 
     /**
-     * Last.
-     * @return ?array|?object
+     * Get last row.
+     *
+     * @return array|object|null
      */
-    public function last()
+    public function last(): array|object|null
     {
-        return $this->row(-1);
+        return $this->rows ? end($this->rows) : null;
+    }
+
+    /**
+     * Filter.
+     *
+     * @param  callable $func
+     * @param  bool     $keepKeys
+     * @return self
+     * @since  5.0
+     */
+    public function filter(callable $func, bool $keepKeys = false): self
+    {
+        // Stay in here.
+        $func = $func->bindTo($this, $this);
+
+        $this->rows = $this->toCollection()->filter($func, $keepKeys)->toArray();
+
+        return $this;
+    }
+
+    /**
+     * Map.
+     *
+     * @param  callable $func
+     * @return self
+     * @since  5.0
+     */
+    public function map(callable $func): self
+    {
+        // Stay in here.
+        $func = $func->bindTo($this, $this);
+
+        $this->rows = $this->toCollection()->map($func)->toArray();
+
+        return $this;
+    }
+
+    /**
+     * Reduce.
+     *
+     * @param  any      $carry
+     * @param  callable $func
+     * @return any
+     * @since  5.0
+     */
+    public function reduce($carry, callable $func)
+    {
+        // Stay in here.
+        $func = $func->bindTo($this, $this);
+
+        return $this->toCollection()->reduce($carry, $func);
     }
 
     /**
@@ -283,5 +347,39 @@ final class Result implements Countable, IteratorAggregate
     public function getIterator(): iterable
     {
         return new ArrayIterator($this->toArray());
+    }
+
+    /**
+     * @inheritDoc ArrayAccess
+     */
+    public function offsetExists($i)
+    {
+        return isset($this->rows[$i]);
+    }
+
+    /**
+     * @inheritDoc ArrayAccess
+     */
+    public function offsetGet($i)
+    {
+        return $this->row($i);
+    }
+
+    /**
+     * @inheritDoc ArrayAccess
+     * @throws     froq\database\ResultException
+     */
+    public function offsetSet($i, $row)
+    {
+        throw new ResultException('No set() allowed for ' . $this::class);
+    }
+
+    /**
+     * @inheritDoc ArrayAccess
+     * @throws     froq\database\ResultException
+     */
+    public function offsetUnset($i)
+    {
+        throw new ResultException('No unset() allowed for ' . $this::class);
     }
 }

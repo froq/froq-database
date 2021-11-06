@@ -1,96 +1,100 @@
 <?php
 /**
- * MIT License <https://opensource.org/licenses/mit>
- *
- * Copyright (c) 2015 Kerem Güneş
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished
- * to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Copyright (c) 2015 · Kerem Güneş
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
 namespace froq\database;
 
 use froq\database\ProfilerException;
+use PDOStatement;
 
 /**
  * Profiler.
+ *
  * @package froq\database
  * @object  froq\database\Profiler
- * @author  Kerem Güneş <k-gun@mail.com>
+ * @author  Kerem Güneş
  * @since   4.0
  */
 final class Profiler
 {
-    /**
-     * Profiles.
-     * @var array
-     */
+    /** @var array */
     private array $profiles = [];
 
-    /**
-     * Query count.
-     * @var int
-     */
+    /** @var int */
     private int $queryCount = 0;
+
+    /** @var array @since 5.0 */
+    private static array $marks;
 
     /**
      * Constructor.
      */
     public function __construct()
+    {
+        self::$marks = [];
+    }
+
+    /**
+     * Hide all debug info.
+     *
+     * @return void
+     */
+    public function __debugInfo()
     {}
 
     /**
      * Get profiles.
+     *
      * @return array
      */
-    public function getProfiles(): array
+    public function profiles(): array
     {
         return $this->profiles;
     }
 
     /**
      * Get query count.
+     *
      * @return int
      */
-    public function getQueryCount(): int
+    public function queryCount(): int
     {
         return $this->queryCount;
     }
 
     /**
+     * Get marks.
+     *
+     * @return array
+     */
+    public static function marks(): array
+    {
+        return self::$marks;
+    }
+
+    /**
      * Profile.
-     * @param  string   $type
+     *
+     * @param  string   $mark
      * @param  callable $call
      * @param  ...      $callArgs
-     * @return PDOStatement|int
+     * @return PDOStatement|int|null
      */
-    public function profile(string $type, callable $call, ...$callArgs)
+    public function profile(string $mark, callable $call, ...$callArgs): PDOStatement|int|null
     {
-        $this->start($type);
+        $this->start($mark);
         $ret = $call(...$callArgs);
-        $this->end($type);
+        $this->end($mark);
 
         return $ret;
     }
 
     /**
-     * Profile connection.
+     * Profile a connection.
+     *
      * @param  callable $call
      * @param  ...      $callArgs
      * @return void
@@ -101,13 +105,14 @@ final class Profiler
     }
 
     /**
-     * Profile query.
+     * Profile a query.
+     *
      * @param  string   $query
      * @param  callable $call
      * @param  ...      $callArgs
-     * @return PDOStatement|int
+     * @return PDOStatement|int|null
      */
-    public function profileQuery(string $query, callable $call, ...$callArgs)
+    public function profileQuery(string $query, callable $call, ...$callArgs): PDOStatement|int|null
     {
         $this->profiles['query'][++$this->queryCount]['string'] = $query;
 
@@ -116,47 +121,54 @@ final class Profiler
 
     /**
      * Get last query.
-     * @return ?float|?string|?array
+     *
+     * @return float|string|array|null
      */
-    public function getLastQuery(string $key = null)
+    public function lastQuery(string $key = null): float|string|array|null
     {
         return $key ? $this->profiles['query'][$this->queryCount][$key] ?? null
-            : $this->profiles['query'][$this->queryCount] ?? null;
+             : $this->profiles['query'][$this->queryCount] ?? null;
     }
 
     /**
      * Get last query time.
-     * @return ?float
+     *
+     * @return float|null
      */
-    public function getLastQueryTime(): ?float
+    public function lastQueryTime(): float|null
     {
-        return $this->getLastQuery('time');
+        return $this->lastQuery('time');
     }
 
     /**
      * Get last query string.
-     * @return ?string
+     *
+     * @return string|null
      */
-    public function getLastQueryString(): ?string
+    public function lastQueryString(): string|null
     {
-        return $this->getLastQuery('string');
+        return $this->lastQuery('string');
     }
 
     /**
-     * Get total time.
+     * Get total time of existing profiles.
+     *
      * @param  bool $timeOnly
-     * @return float|string
+     * @return float|string|null
      */
-    public function getTotalTime(bool $timeOnly = true)
+    public function totalTime(bool $timeOnly = true): float|string|null
     {
-        if (!$this->profiles) return;
+        if (empty($this->profiles)) {
+            return null;
+        }
 
-        $totalTime = 0.00;
-        $totalTimeString = '';
+        $totalTime  = 0.0;
+        $totalTimes = [];
+
         if (isset($this->profiles['connection'])) {
             $totalTime += $this->profiles['connection']['time'];
             if (!$timeOnly) {
-                $totalTimeString .= 'connection('. $totalTime .')';
+                $totalTimes[] = 'connection('. $totalTime .')';
             }
         }
 
@@ -164,69 +176,120 @@ final class Profiler
             foreach ($this->profiles['query'] as $i => $profile) {
                 $totalTime += $profile['time'];
                 if (!$timeOnly) {
-                    $totalTimeString .= ' query('. $i .', '. $profile['time'] .')';
+                    $totalTimes[] = 'query('. $i .': '. $profile['time'] .')';
                 }
             }
         }
 
         if (!$timeOnly) {
-            $totalTimeString .= ' total('. $totalTime .')';
+            $totalTimes[] = 'total('. $totalTime .')';
         }
 
-        return $timeOnly ? $totalTime : $totalTimeString;
+        return $timeOnly ? $totalTime : join(' ', $totalTimes);
     }
 
     /**
-     * Start.
-     * @param  string $type
+     * Create a marker (to prevent name collusion).
+     *
+     * @param  string $name
+     * @return string
+     * @since  5.0
+     */
+    public static function marker(string $name): string
+    {
+        return sprintf('%s-%.10F', $name, microtime(true));
+    }
+
+    /**
+     * Mark a profile entry returning its started time.
+     *
+     * @param  string $name
+     * @return float
+     * @throws froq\database\ProfilerException
+     * @since  5.0
+     */
+    public static function mark(string $name): float
+    {
+        if (isset(self::$marks[$name])) {
+            throw new ProfilerException('Existing mark name `%s` given, call unmark() to drop it', $name);
+        }
+
+        return self::$marks[$name] = microtime(true);
+    }
+
+    /**
+     * Unmark a profile entry returning its elapsed time.
+     *
+     * @param  string $name
+     * @return float
+     * @throws froq\database\ProfilerException
+     * @since  5.0
+     */
+    public static function unmark(string $name): float
+    {
+        if (!isset(self::$marks[$name])) {
+            throw new ProfilerException('Could not find a mark with given name `%s`', $name);
+        }
+
+        $time = round(microtime(true) - self::$marks[$name], 10);
+        unset(self::$marks[$name]);
+
+        return $time;
+    }
+
+    /**
+     * Start a profile entry for a connection or query.
+     *
+     * @param  string $mark
      * @return void
      * @throws froq\database\ProfilerException
      */
-    private function start(string $type): void
+    private function start(string $mark): void
     {
         $start = microtime(true);
-        switch ($type) {
+        switch ($mark) {
             case 'connection':
-                $this->profiles[$type] = ['start' => $start, 'end' => 0.00, 'time' => 0.00];
+                $this->profiles[$mark] = ['start' => $start, 'end' => 0.0, 'time' => 0.0];
                 break;
             case 'query':
                 $i = $this->queryCount;
-                if (isset($this->profiles[$type][$i])) {
-                    $this->profiles[$type][$i] += ['start' => $start, 'end' => 0.00, 'time' => 0.00];
+                if (isset($this->profiles[$mark][$i])) {
+                    $this->profiles[$mark][$i] += ['start' => $start, 'end' => 0.0, 'time' => 0.0];
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid type "%s" given, valids are: connection, query', [$type]);
+                throw new ProfilerException('Invalid mark `%s`, valids are: connection, query', $mark);
         }
     }
 
     /**
-     * End.
-     * @param  string $type
+     * End a profile entry for a connection or query.
+     *
+     * @param  string $mark
      * @return void
      * @throws froq\database\ProfilerException
      */
-    private function end(string $type): void
+    private function end(string $mark): void
     {
-        if (!isset($this->profiles[$type])) {
-            throw new ProfilerException('Could not find a profile with given "%s" type', [$type]);
+        if (!isset($this->profiles[$mark])) {
+            throw new ProfilerException('Could not find a profile with given `%s` mark', $mark);
         }
 
         $end = microtime(true);
-        switch ($type) {
+        switch ($mark) {
             case 'connection':
-                $this->profiles[$type]['end'] = $end;
-                $this->profiles[$type]['time'] = round($end - $this->profiles[$type]['start'], 10);
+                $this->profiles[$mark]['end']  = $end;
+                $this->profiles[$mark]['time'] = round($end - $this->profiles[$mark]['start'], 10);
                 break;
             case 'query':
                 $i = $this->queryCount;
-                if (isset($this->profiles[$type][$i])) {
-                    $this->profiles[$type][$i]['end'] = $end;
-                    $this->profiles[$type][$i]['time'] = round($end - $this->profiles[$type][$i]['start'], 10);
+                if (isset($this->profiles[$mark][$i])) {
+                    $this->profiles[$mark][$i]['end']  = $end;
+                    $this->profiles[$mark][$i]['time'] = round($end - $this->profiles[$mark][$i]['start'], 10);
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid type "%s" given, valids are: connection, query', [$type]);
+                throw new ProfilerException('Invalid mark `%s`, valids are: connection, query', $mark);
         }
     }
 }

@@ -1,157 +1,143 @@
 <?php
 /**
- * MIT License <https://opensource.org/licenses/mit>
- *
- * Copyright (c) 2015 Kerem Güneş
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished
- * to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Copyright (c) 2015 · Kerem Güneş
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
 namespace froq\database;
 
 use froq\database\LinkException;
+use froq\common\trait\InstanceTrait;
 use PDO, PDOException;
 
 /**
  * Link.
+ *
+ * Represents a PDO wrapper with some util methods.
+ *
  * @package froq\database
  * @object  froq\database\Link
- * @author  Kerem Güneş <k-gun@mail.com>
+ * @author  Kerem Güneş
  * @since   4.0
  */
 final class Link
 {
     /**
-     * Instance.
-     * @var self
+     * @see froq\common\trait\InstanceTrait
+     * @since 5.0
      */
-    private static self $instance;
+    use InstanceTrait;
 
-    /**
-     * PDO.
-     * @var ?PDO
-     */
-    private ?PDO $pdo = null;
+    /** @var PDO|null */
+    private PDO|null $pdo;
 
-    /**
-     * PDO driver.
-     * @var ?string
-     */
-    private ?string $pdoDriver = null;
+    /** @var string */
+    private string $driver;
 
-    /**
-     * Options.
-     * @var array<string, any>
-     */
-    private array $options;
+    /** @var array */
+    private array $options = [
+        'dsn'     => null, 'driver'   => null,
+        'user'    => null, 'pass'     => null,
+        'charset' => null, 'timezone' => null,
+        'options' => null
+    ];
 
     /**
      * Constructor.
-     * @param array<string, any> $options
+     *
+     * @param array $options
      */
     private function __construct(array $options)
     {
-        $this->options = self::prepareOptions($options);
+        $this->options = array_merge($this->options, self::prepareOptions($options));
     }
 
     /**
-     * Get pdo.
-     * @return ?PDO
+     * Hide all debug info.
+     *
+     * @return void
      */
-    public function getPdo(): ?PDO
+    public function __debugInfo()
+    {}
+
+    /**
+     * Get pdo property.
+     *
+     * @return PDO|null
+     */
+    public function pdo(): PDO|null
     {
-        return $this->pdo;
+        return $this->pdo ?? null;
     }
 
     /**
-     * Get pdo driver.
-     * @return ?string
+     * Get pdo driver property.
+     *
+     * @return string|null
      */
-    public function getPdoDriver(): ?string
+    public function driver(): string|null
     {
-        return $this->pdoDriver;
+        return $this->driver ?? null;
     }
 
     /**
-     * Get options.
-     * @return array<string, any>
+     * Get options property.
+     *
+     * @return array
      */
-    public function getOptions(): array
+    public function options(): array
     {
         return $this->options;
     }
 
     /**
-     * Init.
-     * @param  array<string, any> $options
-     * @return self
-     */
-    public static function init(array $options): self
-    {
-        return self::$instance ??= new self($options);
-    }
-
-    /**
-     * Connect.
+     * Connect with given options, set timezone & charset if provided.
+     *
      * @return void
      */
     public function connect(): void
     {
-        if (!$this->isConnected()) {
-            ['dsn'     => $dsn,     'driver'   => $driver,
-             'user'    => $user,    'pass'     => $pass,
-             'charset' => $charset, 'timezone' => $timezone,
-             'options' => $options] = $this->options;
-
-            $options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
-            $options[PDO::ATTR_EMULATE_PREPARES] ??= true;
-            $options[PDO::ATTR_DEFAULT_FETCH_MODE] ??= PDO::FETCH_ASSOC;
-
-            // For a proper return that gives "1" always even with identical values in UPDATE queries.
-            if ($driver == 'mysql') {
-                $options[PDO::MYSQL_ATTR_FOUND_ROWS] ??= true;
-            }
-
-            try {
-                $this->pdo = new PDO($dsn, $user, $pass, $options);
-                $this->pdoDriver = $driver;
-            } catch (PDOException $e) {
-                // Which driver the FUCK?
-                if ($e->getMessage() == 'could not find driver') {
-                    throw new LinkException('Could not find driver "%s"', [$driver]);
-                }
-                throw new LinkException($e);
-            } finally {
-                // Safety (for dumping etc.)..
-                $this->options['dsn']  = preg_replace('~dbname=[^;]+~', 'dbname=<****>', $this->options['dsn']);
-                $this->options['user'] = '<****>';
-                $this->options['pass'] = '<****>';
-            }
-
-            $charset && $this->setCharset($charset);
-            $timezone && $this->setTimezone($timezone);
+        if ($this->isAlive()) {
+            return;
         }
+
+        ['dsn'     => $dsn,     'driver'   => $driver,
+         'user'    => $user,    'pass'     => $pass,
+         'charset' => $charset, 'timezone' => $timezone,
+         'options' => $options] = $this->options;
+
+        $options[PDO::ATTR_ERRMODE]              = PDO::ERRMODE_EXCEPTION;
+        $options[PDO::ATTR_EMULATE_PREPARES]   ??= true;
+        $options[PDO::ATTR_DEFAULT_FETCH_MODE] ??= PDO::FETCH_ASSOC;
+
+        // For a proper return that gives '1' always even with identical values in UPDATE queries.
+        if ($driver == 'mysql') {
+            $options[PDO::MYSQL_ATTR_FOUND_ROWS] ??= true;
+        }
+
+        try {
+            $this->pdo    = new PDO($dsn, $user, $pass, $options);
+            $this->driver = $driver;
+        } catch (PDOException $e) {
+            $code         = $e->getCode();
+            $message      = $e->getMessage();
+
+            // Which driver the FUCK?
+            if ($message == 'could not find driver') {
+                throw new LinkException('Could not find driver `%s`', $driver, code: $code, cause: $e);
+            }
+
+            throw new LinkException($message, code: $code, cause: $e);
+        }
+
+        $charset  && $this->setCharset($charset);
+        $timezone && $this->setTimezone($timezone);
     }
 
     /**
-     * Disconnect.
+     * Disconnect and set pdo property to null.
+     *
      * @return void
      */
     public function disconnect(): void
@@ -160,48 +146,59 @@ final class Link
     }
 
     /**
-     * Is connected.
+     * Check connection state.
+     *
      * @return bool
+     * @since  5.0 Replaced with isConnected().
      */
-    public function isConnected(): bool
+    public function isAlive(): bool
     {
-        return $this->pdo != null;
+        return isset($this->pdo);
     }
 
     /**
-     * Set charset.
+     * Set charset for current link.
+     *
      * @param  string $charset
      * @return void
+     * @throws froq\database\LinkException
      */
     public function setCharset(string $charset): void
     {
-        $this->pdo->exec('SET NAMES '. $this->pdo->quote($charset));
+        $this->isAlive() || throw new LinkException('Link is gone');
+
+        $this->pdo->exec('SET NAMES ' . $this->pdo->quote($charset));
     }
 
     /**
-     * Set timezone.
+     * Set timezone for current link.
+     *
      * @param  string $timezone
      * @return void
+     * @throws froq\database\LinkException
      */
     public function setTimezone(string $timezone): void
     {
-        if ($this->pdoDriver == 'mysql') {
-            $this->pdo->exec('SET time_zone = '. $this->pdo->quote($timezone));
+        $this->isAlive() || throw new LinkException('Link is gone');
+
+        if ($this->driver == 'mysql') {
+            $this->pdo->exec('SET time_zone = ' . $this->pdo->quote($timezone));
         } else {
-            $this->pdo->exec('SET TIME ZONE '. $this->pdo->quote($timezone));
+            $this->pdo->exec('SET TIME ZONE ' . $this->pdo->quote($timezone));
         }
     }
 
     /**
      * Prepare options.
-     * @param  array<string, any> $options
-     * @return array<string, any>
+     *
+     * @param  array $options
+     * @return array
      * @throws froq\database\LinkException
      */
     private static function prepareOptions(array $options): array
     {
         if (empty($options['dsn'])) {
-            throw new LinkException('Empty "dsn" option given');
+            throw new LinkException('Empty `dsn` option given');
         }
 
         $dsn = trim((string) $options['dsn'], ';');
@@ -209,23 +206,11 @@ final class Link
             $driver = $match[1];
         }
 
+        // Throw a proper exeption instead of PDOException('could not find driver').
         if (empty($driver)) {
-            // Throw a proper exeption instead of PDOException("could not find driver").
-            throw new LinkException('Invalid scheme given in "dsn" option, no driver specified');
+            throw new LinkException('Invalid scheme given in `dsn` option, no driver specified');
         }
 
-        if (empty($options['timezone'])) {
-            // Timezone could already be given in "dsn" option (but not like ...;options=\'--timezone="+00:00"\').
-            if (preg_match('~;timezone=([^;]+)~', $dsn, $match)) {
-                $options['timezone'] = $match[1];
-            }
-        }
-
-        return [
-            'dsn'     => $dsn,                      'driver'   => $driver,
-            'user'    => $options['user'] ?? '',    'pass'     => $options['pass'] ?? '',
-            'charset' => $options['charset'] ?? '', 'timezone' => $options['timezone'] ?? '',
-            'options' => $options['options'] ?? []
-        ];
+        return ['dsn' => $dsn, 'driver' => $driver] + $options;
     }
 }

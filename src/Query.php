@@ -1,64 +1,49 @@
 <?php
 /**
- * MIT License <https://opensource.org/licenses/mit>
- *
- * Copyright (c) 2015 Kerem Güneş
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished
- * to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Copyright (c) 2015 · Kerem Güneş
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\pager\Pager;
 use froq\database\{QueryTrait, QueryException, Database, Result};
 use froq\database\sql\{Sql, Name};
+use froq\database\trait\DbTrait;
+use froq\collection\Collection;
+use froq\pager\Pager;
 
 /**
  * Query.
+ *
+ * Represents a query builder entity which mostly fulfills all building needings with descriptive methods.
+ *
  * @package froq\database
  * @object  froq\database\Query
- * @author  Kerem Güneş <k-gun@mail.com>
+ * @author  Kerem Güneş
  * @since   4.0
  */
 final class Query
 {
     /**
-     * Query trait.
      * @see froq\database\QueryTrait
+     * @see froq\database\trait\DbTrait
      */
-    use QueryTrait;
+    use QueryTrait, DbTrait;
 
     /**
-     * Db.
-     * @var froq\database\Database
+     * Key, tick for last call via add().
+     * @var string
+     * @since 5.0
      */
-    private Database $db;
+    private string $key;
 
-    /**
-     * Stack.
-     * @var array
-     */
+    /** @var array */
     private array $stack = [];
 
     /**
      * Constructor.
+     *
      * @param froq\database\Database $db
      * @param string|null            $table
      */
@@ -70,7 +55,7 @@ final class Query
     }
 
     /**
-     * String magic.
+     * Magic - string.
      */
     public function __toString()
     {
@@ -78,646 +63,917 @@ final class Query
     }
 
     /**
-     * Get db.
-     * @return froq\database\Database
-     */
-    public function getDb(): Database
-    {
-        return $this->db;
-    }
-
-    /**
-     * Db.
-     * @aliasOf getDb()
-     */
-    public function db()
-    {
-        return $this->getDb();
-    }
-
-    /**
-     * Table.
+     * Set/reset the target table.
+     *
      * @param  string $table
      * @param  bool   $prepare
      * @return self
      */
     public function table(string $table, bool $prepare = true): self
     {
-        if ($prepare) {
-            $table = $this->prepareFields($table);
-        }
+        $prepare && $table = $this->prepareFields($table);
 
         return $this->add('table', $table, false);
     }
 
     /**
-     * From.
+     * Add a "FROM" query into query stack.
+     *
      * @param  string|Query $from
      * @param  string|null  $as
      * @param  bool         $prepare
      * @return self
      * @throws froq\database\QueryException
      */
-    public function from($from, string $as = null, bool $prepare = true): self
+    public function from(string|Query $from, string $as = null, bool $prepare = true): self
     {
         if (is_string($from)) {
-            if ($as != '') {
-                $from .= ' AS '. $this->prepareField($as);
-            }
-            return $this->table($from, $prepare);
+            $prepare && $from = $this->prepareFields($from);
+        } else {
+            $from = '(' . $from->toString() . ')';
         }
 
-        if ($from instanceof Query) {
-            $from = '('. $from->toString() .')';
-            if ($as != '') {
-                $from .= ' AS '. $this->prepareField($as);
-            }
-            return $this->table($from, false);
-        }
-
-        throw new QueryException('Invalid from type "%s", valids are: string, %s',
-                [gettype($query), Query::class]);
-    }
-
-    /**
-     * Select.
-     * @param  string $select
-     * @param  bool   $prepare
-     * @return self
-     * @throws froq\database\QueryException
-     */
-    public function select(string $select, bool $prepare = true): self
-    {
-        $select = trim($select);
-        if ($select == '') {
-            throw new QueryException('Empty select given');
-        }
-
-        if ($prepare) {
-            $select = $this->prepareFields($select);
-        }
-
-        return $this->add('select', $select);
-    }
-
-    /**
-     * Select raw.
-     * @param  string      $select
-     * @param  string|null $as
-     * @return self
-     * @throws froq\database\QueryException
-     */
-    public function selectRaw(string $select, string $as = null): self
-    {
-        $select = trim($select);
-        if ($select == '') {
-            throw new QueryException('Empty select given');
-        }
-
-        $select = '('. $select .')';
         if ($as != '') {
-            $select .= ' AS '. $this->prepareField($as);
+            $from .= ' AS ' . $this->prepareField($as);
+        }
+
+        return $this->add('from', $from, false);
+    }
+
+    /**
+     * Add/append a "SELECT" query into query stack.
+     *
+     * @param  string|array|Query $select
+     * @param  bool               $prepare
+     * @param  bool               $wrap
+     * @param  string|null        $as
+     * @return self
+     * @throws froq\database\QueryException
+     */
+    public function select(string|array|Query $select = '*', bool $prepare = true, bool $wrap = false, string $as = null): self
+    {
+        if ($select instanceof Query) {
+            $select = $select->toString(); $wrap = true;
+        } else {
+            if (is_array($select)) {
+                $select = join(', ', $select);
+            }
+
+            $select = trim($select);
+            $select || throw new QueryException('Empty select given');
+
+            if ($prepare && $select != '*') {
+                $select = $this->prepareFields($select);
+            }
+        }
+
+        $select = $wrap ? '(' . $select . ')' : $select;
+
+        if ($as != '') {
+            $select .= ' AS ' . $this->prepareField($as);
         }
 
         return $this->add('select', $select);
     }
 
     /**
-     * Select query.
+     * Add/append a "SELECT" query into query stack from a raw query or Query instance.
+     *
      * @param  string|Query $query
-     * @param  string       $as
+     * @param  array|null   $params
+     * @param  string|null  $as
+     * @param  bool         $wrap
      * @return self
-     * @throws froq\database\QueryException
+     * @causes froq\database\QueryException
      */
-    public function selectQuery($query, string $as): self
+    public function selectQuery(string|Query $query, array $params = null, string $as = null, bool $wrap = true): self
     {
         if (is_string($query)) {
-            return $this->selectRaw($query, $as);
+            $query = $this->prepare($query, $params);
         }
 
-        if ($query instanceof Query) {
-            return $this->selectRaw($query->toString(), $as);
-        }
-
-        throw new QueryException('Invalid query type "%s", valids are: string, %s',
-            [gettype($query), Query::class]);
+        return $this->select($query, false, $wrap, $as);
     }
 
     /**
-     * Select json.
-     * @param  array  $fields
-     * @param  string $as
+     * Add/append a "SELECT" query into query stack with a JSON function.
+     *
+     * @param  string|array<string> $fields
+     * @param  string|null          $as
+     * @param  bool                 $prepare
      * @return self
      * @throws froq\database\QueryException
      */
-    public function selectJson(array $fields, string $as): self
+    public function selectJson(string|array $fields, string $as = null, bool $prepare = true): self
     {
-        $select = null;
-        $selectType = isset($fields[0]) ? 1 : 2; // Simple check set/map array.
+        // Eg: ('id:foo.id, ..').
+        if (is_string($fields)) {
+            $parts  = mb_split('\s*,\s*', trim($fields, ', '));
+            $fields = [];
 
-        switch ($this->db->getLink()->getPdoDriver()) {
-            case 'pgsql':
-                $func = ($selectType == 1) ? 'json_build_array' : 'json_build_object';
-                break;
-            case 'mysql':
-                $func = ($selectType == 1) ? 'json_array' : 'json_object';
-                break;
-            default:
-                throw new QueryException('Method "%s()" available for PgSQL & MySQL only', [__method__]);
+            foreach ($parts as $part) {
+                [$key, $name] = mb_split('\s*:\s*', $part, 2);
+                $fields[$key] = $name;
+            }
+
+            unset($parts, $part);
         }
 
-        if ($selectType == 1) {
-            $select = $this->prepareFields(join(',', $fields));
+        $list = isset($fields[0]); // Simple check for set/map array.
+
+        $func = match ($this->db->link()->driver()) {
+            'pgsql' => $list ? 'json_build_array' : 'json_build_object',
+            'mysql' => $list ? 'json_array'       : 'json_object',
+            default => throw new QueryException('Method %s() available for PgSQL & MySQL only', __method__)
+        };
+
+        if ($list) {
+            $select = $this->prepareFields($fields);
         } else {
-            foreach ($fields as $fieldKey => $fieldName) {
-                $select[] = sprintf("'%s', %s", $fieldKey, $this->prepareField($fieldName));
+            foreach ($fields as $key => $field) {
+                if ($field instanceof Query || $field instanceof Sql) {
+                    $field = '(' . $field . ')'; // For raw/query fields.
+                    $prepare = false;
+                }
+
+                $select[] = sprintf("'%s', %s", $key, (
+                    $prepare ? $this->prepareField((string) $field) : $field
+                ));
             }
+
             $select = join(', ', $select);
         }
 
         $select = trim((string) $select);
-        if ($select == '') {
-            throw new QueryException('Empty select fields given');
+        $select || throw new QueryException('Empty select fields given');
+
+        $select = $func . '(' . $select . ')';
+
+        if ($as != '') {
+            $select .= ' AS ' . $this->prepareField($as);
         }
 
-        return $this->select($func .'('. $select .') AS '. $this->prepareField($as), false);
+        return $this->select($select, false);
     }
 
     /**
-     * Select agg.
-     * @aliasOf aggregate()
-     * @since   4.14
+     * Add/append a "SELECT ..agg()" query into query stack.
+     *
+     * @alias of aggregate()
+     * @since 4.14
      */
-    public function selectAgg(...$arguments): self
+    public function selectAgg(...$args): self
     {
-        return $this->aggregate(...$arguments);
+        return $this->aggregate(...$args);
     }
 
     /**
-     * Select count.
-     * @aliasOf aggregate() (for count())
-     * @since  4.14
+     * Add/append a "SELECT count(..)" query into query stack.
+     *
+     * @alias of aggregate(), for count()
+     * @since 4.14
      */
-    public function selectCount(...$arguments): self
+    public function selectCount(...$args): self
     {
-        return $this->aggregate('count', ...$arguments);
+        return $this->aggregate('count', ...$args);
     }
 
     /**
-     * Select min.
-     * @aliasOf aggregate() (for min())
-     * @since  4.4
+     * Add/append a "SELECT min(..)" query into query stack.
+     *
+     * @alias of aggregate(), for min()
+     * @since 4.4
      */
-    public function selectMin(...$arguments): self
+    public function selectMin(...$args): self
     {
-        return $this->aggregate('min', ...$arguments);
+        return $this->aggregate('min', ...$args);
     }
 
     /**
-     * Select max.
-     * @aliasOf aggregate() (for max())
-     * @since  4.4
+     * Add/append "SELECT max(..)" query into query stack.
+     *
+     * @alias of aggregate(), for max()
+     * @since 4.4
      */
-    public function selectMax(...$arguments): self
+    public function selectMax(...$args): self
     {
-        return $this->aggregate('max', ...$arguments);
+        return $this->aggregate('max', ...$args);
     }
 
     /**
-     * Select avg.
-     * @aliasOf aggregate() (for avg())
-     * @since  4.4
+     * Add/append a "SELECT avg(..)" query into query stack.
+     *
+     * @alias of aggregate(), for avg()
+     * @since 4.4
      */
-    public function selectAvg(...$arguments): self
+    public function selectAvg(...$args): self
     {
-        return $this->aggregate('avg', ...$arguments);
+        return $this->aggregate('avg', ...$args);
     }
 
     /**
-     * Select sum.
-     * @aliasOf aggregate() (for sum())
-     * @since  4.4
+     * Add/append a "SELECT sum(..)" query into query stack.
+     *
+     * @alias of aggregate(), for sum()
+     * @since 4.4
      */
-    public function selectSum(...$arguments): self
+    public function selectSum(...$args): self
     {
-        return $this->aggregate('sum', ...$arguments);
+        return $this->aggregate('sum', ...$args);
     }
 
     /**
-     * Insert.
-     * @param  array     $data
-     * @param  bool|null $batch
-     * @param  bool|null $sequence
+     * Add an "INSERT" query into query stack.
+     *
+     * @param  array|null            $data
+     * @param  bool|null             $batch
+     * @param  bool|null             $sequence
+     * @param bool|string|array|null $return
      * @return self
      * @throws froq\database\QueryException
      */
-    public function insert(array $data, bool $batch = null, bool $sequence = null): self
+    public function insert(array $data = null, bool $batch = null, bool $sequence = null, bool|string|array $return = null): self
     {
+        $return && $this->return($return);
+
+        // For with()/into() calls.
+        if ($data === null) {
+            return $this->add('insert', '1', false);
+        }
+
         $fields = $values = [];
 
         if (!$batch) {
             // Eg: ["name" => "Kerem", ..].
             $fields = array_keys($data);
             $values = [array_values($data)];
-        } else {
+        } elseif (isset($data['fields'], $data['values'])) {
             // Eg: ["fields" => ["name", ..], "values" => ["Kerem", ..]].
             $fields = (array) ($data['fields'] ?? []);
             $values = (array) ($data['values'] ?? []);
+        } elseif (isset($data[0])) {
+            // Eg: [["name" => "Kerem", ..], ..].
+            $fields = array_keys($data[0]);
+            $values = array_map(fn($d) => array_values($d), $data);
         }
 
         if (!$fields || !$values) {
-            throw new QueryException('Both fields & values should not be empty for insert');
+            throw new QueryException('Both fields & values must not be empty for insert');
         }
 
         $fieldsCount = count($fields);
         foreach ($values as $i => $value) {
             $value = (array) $value;
             if (count($value) != $fieldsCount) {
-                throw new QueryException('Count of value set "%s" not matched with fields count', [$i]);
+                throw new QueryException('Count of value set `%s` not matched with fields count', $i);
             }
-            $values[$i] = '('. join(', ', $this->db->escape($value)) .')';
+
+            $values[$i] = '(' . join(', ', $this->db->escape($value)) . ')';
         }
 
-        $fields = $this->prepareFields(join(', ', $fields));
+        $fields = $this->prepareFields($fields);
 
         return $this->add('insert', [$fields, $values, 'sequence' => $sequence], false);
     }
 
     /**
-     * Update.
-     * @param  array $data
+     * Add an "UPDATE" query into query stack.
+     *
+     * @param  array|null            $data
+     * @param  bool                  $escape
+     * @param bool|string|array|null $return
      * @return self
      * @throws froq\database\QueryException
      */
-    public function update(array $data): self
+    public function update(array $data = null, bool $escape = true, bool|string|array $return = null): self
     {
-        if (!$data) {
-            throw new QueryException('Empty data given for update');
+        $return && $this->return($return);
+
+        // For with() calls.
+        if ($data === null) {
+            return $this->add('update', '1', false);
         }
 
-        $set = [];
-        foreach ($data as $name => $value) {
-            $set[] = $this->db->escapeName($name) .' = '. $this->db->escape($value);
+        $data || throw new QueryException('Empty data given for update');
+
+        $sets = [];
+        foreach ($data as $field => $value) {
+            $sets[] = $this->db->escapeName($field)
+                . ' = ' . ($escape ? $this->db->escape($value) : $value);
         }
 
-        return $this->add('update', join(', ', $set), false);
+        return $this->add('update', $sets, false);
     }
 
     /**
-     * Delete.
+     * Add/append "DELETE" query into query stack.
+     *
+     * @param bool|string|array|null $return
      * @return self
      */
-    public function delete(): self
+    public function delete(bool|string|array $return = null): self
     {
-        return $this->add('delete', '', false);
+        $return && $this->return($return);
+
+        return $this->add('delete', '1', false);
     }
 
     /**
-     * Return (for "RETURNING" clause).
-     * @param  string                    $fields
+     * Add an "INTO" clause into query stack for inserts.
+     *
+     * @param  string $table
+     * @return self
+     * @since  5.0
+     */
+    public function into(string $table): self
+    {
+        $table = $this->prepareField($table);
+
+        return $this->add('into', $table, false);
+    }
+
+    /**
+     * Add an "SET" clause into query stack for updates.
+     *
+     * @param  array $data
+     * @param  bool  $escape
+     * @return self
+     * @since  5.0
+     */
+    public function set(array $data, bool $escape = true)
+    {
+        return $this->update($data, $escape);
+    }
+
+    /**
+     * Add a "RETURNING" clause into query stack.
+     *
+     * @param  string|array<string>|bool $fields
      * @param  string|array<string>|null $fetch
      * @return self
      * @since  4.18
      */
-    public function return(string $fields, $fetch = null): self
+    public function return(string|array|bool $fields, string|array $fetch = null): self
     {
-        $fields = $this->prepareFields($fields);
+        // For PostgreSQL & Oracle only.
+        if (!in_array($this->db->link()->driver(), ['pgsql', 'oci'])) {
+            return $this;
+        }
+
+        $fields = ($fields === true) ? '*' : $this->prepareFields($fields);
+
+        $fetch ??= $this->stack['return']['fetch'] ?? null;
 
         return $this->add('return', ['fields' => $fields, 'fetch' => $fetch], false);
     }
 
     /**
-     * Conflict (for "CONFLICT" clause).
-     * @param  string     $fields
-     * @param  string     $action
-     * @param  array|null $update
-     * @param  array|null $where
+     * Add a "CONFLICT" clause into query stack.
+     *
+     * @param  string            $fields
+     * @param  string            $action
+     * @param  string|array|null $update
+     * @param  array|null        $where
      * @return self
      * @throws froq\database\QueryException
      * @since  4.18
      */
-    public function conflict(string $fields, string $action, array $update = null, array $where = null): self
+    public function conflict(string $fields, string $action, string|array $update = null, array $where = null): self
     {
         $action = strtoupper($action);
+
         if (!in_array($action, ['NOTHING', 'UPDATE'])) {
-            throw new QueryException('Invalid action "%s" for conflict, valids are: NOTHING, UPDATE',
-                [$action]);
+            throw new QueryException('Invalid conflict action `%s`, valids are: NOTHING, UPDATE',
+                $action);
+        }
+
+        if (is_string($update) && $update != '*') {
+            $update = mb_split('\s+', $update);
+        }
+
+        if ($update == null && $action == 'UPDATE') {
+            throw new DatabaseException('Conflict action is `update`, but no update data given');
         }
 
         $fields = $this->prepareFields($fields);
 
         return $this->add('conflict', ['fields' => $fields, 'action' => $action,
-                                       'update' => $update, 'where' => $where], false);
+                                       'update' => $update, 'where'  => $where], false);
     }
 
     /**
-     * Join.
+     * Set sequence directive of query stack.
+     *
+     * @param  string|array $option
+     * @return self
+     * @since  5.0
+     */
+    public function sequence(bool $option): self
+    {
+        $this->stack['insert']['sequence'] = $option;
+
+        return $this;
+    }
+
+    /**
+     * Set fetch directive of query stack.
+     *
+     * @param  string|array $option
+     * @return self
+     * @since  5.0
+     */
+    public function fetch(string|array $option): self
+    {
+        $this->stack['return']['fetch'] = $option;
+
+        return $this;
+    }
+
+    /**
+     * Add an increase command into query stack.
+     *
+     * @param  array     $field
+     * @param  float|int $value
+     * @param  bool      $return
+     * @return self
+     * @since  5.0
+     */
+    public function increase(string|array $field, int|float $value = 1, bool $return = false): self
+    {
+        $data = $this->prepareIncreaseDecrease('+', $field, $value, $return);
+
+        return $this->update($data, false);
+    }
+
+    /**
+     * Add a decrease command into query stack.
+     *
+     * @param  array     $field
+     * @param  float|int $value
+     * @param  bool      $return
+     * @return self
+     * @since  5.0
+     */
+    public function decrease(string|array $field, int|float $value = 1, bool $return = false): self
+    {
+        $data = $this->prepareIncreaseDecrease('-', $field, $value, $return);
+
+        return $this->update($data, false);
+    }
+
+    /**
+     * Add/append a "JOIN" query into query stack.
+     *
      * @param  string      $to
-     * @param  string      $on
-     * @param  array|null  $onParams
+     * @param  string|null $on
+     * @param  array|null  $params
      * @param  string|null $type
      * @return self
      */
-    public function join(string $to, string $on, array $onParams = null, string $type = null): self
+    public function join(string $to, string $on = null, array $params = null, string $type = null): self
     {
-        return $this->add('join', sprintf('%sJOIN %s ON %s',
-            $type ? strtoupper($type) .' ' : '',
-            $this->prepareFields($to),
-            $this->prepare($on, $onParams)
-        ));
+        $type && $type = strtoupper($type) . ' ';
+        $on   && $on   = 'ON (' . $this->prepare($on, $params) . ')';
+
+        return $this->add('join', [$type . 'JOIN ' . $this->prepareFields($to), $on]);
     }
 
     /**
-     * Join left.
+     * Add/append a "LEFT JOIN" query into query stack.
+     *
      * @param  string     $to
      * @param  string     $on
-     * @param  array|null $onParams
+     * @param  array|null $params
+     * @param  bool       $outer
      * @return self
      */
-    public function joinLeft(string $to, string $on, array $onParams = null): self
+    public function joinLeft(string $to, string $on, array $params = null, bool $outer = false): self
     {
-        return $this->join($to, $on, $onParams, 'LEFT');
+        return $this->join($to, $on, $params, 'LEFT' . ($outer ? ' OUTER' : ''));
     }
 
     /**
-     * Join right.
+     * Add/append a "RIGHT JOIN" query into query stack.
+     *
      * @param  string     $to
      * @param  string     $on
-     * @param  array|null $onParams
+     * @param  array|null $params
+     * @param  bool       $outer
      * @return self
      */
-    public function joinRight(string $to, string $on, array $onParams = null): self
+    public function joinRight(string $to, string $on, array $params = null, bool $outer = false): self
     {
-        return $this->join($to, $on, $onParams, 'RIGHT');
+        return $this->join($to, $on, $params, 'RIGHT' . ($outer ? ' OUTER' : ''));
     }
 
     /**
-     * Where.
-     * @param  string      $where
-     * @param  array|null  $whereParams
-     * @param  string|null $op
+     * Add/append an "ON" clause into query stack for joins.
+     *
+     * @param  string     $on
+     * @param  array|null $params
      * @return self
+     * @since  5.0
      */
-    public function where(string $where, array $whereParams = null, string $op = null): self
+    public function on(string $on, array $params = null): self
     {
-        if ($whereParams) {
-            $where = $this->prepare($where, $whereParams);
+        return $this->addTo('join', 'ON (' . $this->prepare($on, $params) . ')');
+    }
+
+    /**
+     * Add/append an "USING" clause into query stack for joins.
+     *
+     * @param  string $fields
+     * @return self
+     * @since  5.0
+     */
+    public function using(string $fields): self
+    {
+        return $this->addTo('join', 'USING (' . $this->prepareFields($fields) . ')');
+    }
+
+    /**
+     * Add an "UNION" query into query stack, with/without "ALL" option.
+     *
+     * @param  string|Query $query
+     * @param  array|null   $params
+     * @param  bool         $prepare
+     * @param  bool         $all
+     * @return self
+     * @since  5.0
+     */
+    public function union(string|Query $query, array $params = null, bool $prepare = true, bool $all = false): self
+    {
+        if ($prepare && is_string($query)) {
+            $query = $this->prepare($query, $params);
         }
 
-        return $this->add('where', [$where, $this->prepareOp($op ?: 'AND')]);
+        return $this->add('union', [(string) $query, $all]);
     }
 
     /**
-     * Where equal.
+     * Add a "WITH" query into query stack, with/without "RECURSIVE" & "MATERIALIZED" options.
+     *
+     * @param  string       $name
+     * @param  string|Query $query
+     * @param  array|null   $params
+     * @param  bool         $prepare
+     * @param  string|null  $fields
+     * @param  bool|null    $recursive
+     * @param  bool|null    $materialized
+     * @return self
+     * @since  5.0
+     */
+    public function with(string $name, string|Query $query, array $params = null, bool $prepare = true,
+        string $fields = null, bool $recursive = null, bool $materialized = null): self
+    {
+        $name = $this->prepareField($name);
+
+        // Can be skipped in some situations.
+        $fields && $fields = $this->prepareFields($fields);
+
+        if ($prepare && is_string($query)) {
+            $query = $this->prepare($query, $params);
+        }
+
+        return $this->add('with', [$name, (string) $query, $fields, $recursive, $materialized]);
+    }
+
+    /**
+     * Add/append a "WHERE" query into query stack.
+     *
+     * @param  string|array     $where
+     * @param  array|Query|null $params
+     * @param  string|null      $op
+     * @return self
+     */
+    public function where(string|array $where, array|Query $params = null, string $op = null): self
+    {
+        $op = $this->prepareOp($op ?: 'AND'); // @default=AND
+
+        if (is_string($where)) {
+            // Eg: (id = ?, 1).
+            $this->add('where', [$this->prepare($where, $params), $op]);
+        } else {
+            static $signs = ['!', '<', '>'];
+            // Eg: ([id => 1, active! => false, ..]).
+            foreach ($where as $field => $param) {
+                $sign = ' = ';
+                if (in_array($field[-1], $signs)) {
+                    $sign  = format(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
+                    $field = substr($field, 0, -1);
+                }
+
+                if (is_array($param)) {
+                    $param = !str_contains($sign, '!')
+                        ? new Sql('IN (' . join(', ', $this->escape($param)) . ')')
+                        : new Sql('NOT IN (' . join(', ', $this->escape($param)) . ')');
+                    $sign  = ' ';
+                }
+
+                $field = $this->prepareField($field);
+
+                $this->add('where', [$this->prepare($field . $sign . '?', [$param]), $op]);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add/append a "WHERE" query into query stack for an equality condition.
+     *
      * @param  string      $field
-     * @param  any         $fieldParam
+     * @param  any         $param
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereEqual(string $field, $fieldParam, string $op = null): self
+    public function whereEqual(string $field, $param, string $op = null): self
     {
-        $fieldParam = (array) $fieldParam;
-        if (!$fieldParam) {
-            throw new QueryException('No field parameter given');
+        if (is_array($param)) {
+            return $this->whereIn($field, $param);
+        }
+        if ($param instanceof Query) {
+            return $this->where($this->prepareField($field) . ' = (?r)', $param, $op);
         }
 
-        return $this->where($this->prepareField($field) .' = ?', $fieldParam, $op);
+        $param = (array) $param;
+        $param || throw new QueryException('No parameter given');
+
+        return $this->where($this->prepareField($field) . ' = ?', $param, $op);
     }
 
     /**
-     * Where not equal.
+     * Add/append a "WHERE" query into query stack foor a non-equality condition.
+     *
      * @param  string      $field
-     * @param  any         $fieldParam
+     * @param  any         $param
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereNotEqual(string $field, $fieldParam, string $op = null): self
+    public function whereNotEqual(string $field, $param, string $op = null): self
     {
-        $fieldParam = (array) $fieldParam;
-        if (!$fieldParam) {
-            throw new QueryException('No field parameter given');
+        if (is_array($param)) {
+            return $this->whereNotIn($field, $param);
+        }
+        if ($param instanceof Query) {
+            return $this->where($this->prepareField($field) . ' != (?r)', $param, $op);
         }
 
-        return $this->where($this->prepareField($field) .' != ?', $fieldParam, $op);
+        $param = (array) $param;
+        $param || throw new QueryException('No parameter given');
+
+        return $this->where($this->prepareField($field) . ' != ?', $param, $op);
     }
 
     /**
-     * Where null.
+     * Add/append a "WHERE" query into query stack for a null/true/false condition.
+     *
+     * @param  string      $field
+     * @param  bool|null   $value
+     * @param  string|null $op
+     * @return self
+     * @since  5.0
+     */
+    public function whereIs(string $field, bool|null $value, string $op = null): self
+    {
+        $value = is_null($value) ? 'NULL' : ($value ? 'TRUE' : 'FALSE');
+
+        return $this->where($this->prepareField($field) . ' IS ' . $value, null, $op);
+    }
+
+    /**
+     * Add/append a "WHERE" query into query stack for a not null/true/false condition.
+     *
+     * @param  string      $field
+     * @param  bool|null   $value
+     * @param  string|null $op
+     * @return self
+     * @since  5.0
+     */
+    public function whereIsNot(string $field, bool|null $value, string $op = null): self
+    {
+        $value = is_null($value) ? 'NULL' : ($value ? 'TRUE' : 'FALSE');
+
+        return $this->where($this->prepareField($field) . ' IS NOT ' . $value, null, $op);
+    }
+
+    /**
+     * Add/append a "WHERE .. IN (..)" query into query stack.
+     *
+     * @param  string      $field
+     * @param  array|Query $params
+     * @param  string|null $op
+     * @return self
+     * @throws froq\database\QueryException
+     */
+    public function whereIn(string $field, array|Query $params, string $op = null): self
+    {
+        if ($params instanceof Query) {
+            return $this->where($this->prepareField($field)
+                . ' IN (' . $params->toString() . ')', null, $op);
+        }
+
+        $params || throw new QueryException('No parameters given');
+
+        return $this->where($this->prepareField($field)
+            . ' IN (' . $this->prepareWhereInPlaceholders($params) . ')', $params, $op);
+    }
+
+    /**
+     * Add/append a "WHERE .. NOT IN (..)" query into query stack.
+     *
+     * @param  string      $field
+     * @param  array|Query $params
+     * @param  string|null $op
+     * @return self
+     * @throws froq\database\QueryException
+     */
+    public function whereNotIn(string $field, array|Query $params, string $op = null): self
+    {
+        if ($params instanceof Query) {
+            return $this->where($this->prepareField($field)
+                . ' NOT IN (' . $params->toString() . ')', null, $op);
+        }
+
+        $params || throw new QueryException('No parameters given');
+
+        return $this->where($this->prepareField($field)
+            . ' NOT IN (' . $this->prepareWhereInPlaceholders($params) . ')', $params, $op);
+    }
+
+    /**
+     * Add/append a "WHERE .. NULL" query into query stack.
+     *
      * @param  string      $field
      * @param  string|null $op
      * @return self
      */
     public function whereNull(string $field, string $op = null): self
     {
-        return $this->where($this->prepareField($field) .' IS NULL', null, $op);
+        return $this->whereIs($field, null, $op);
     }
 
     /**
-     * Where not null.
+     * Add/append a "WHERE .. NOT NULL" query into query stack.
+     *
      * @param  string      $field
      * @param  string|null $op
      * @return self
      */
     public function whereNotNull(string $field, string $op = null): self
     {
-        return $this->where($this->prepareField($field) .' IS NOT NULL', null, $op);
+        return $this->whereIsNot($field, null, $op);
     }
 
     /**
-     * Where in.
+     * Add/append "WHERE .. BETWEEN .." query into query stack.
+     *
      * @param  string      $field
-     * @param  any         $fieldParams
+     * @param  array       $params
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereIn(string $field, $fieldParams, string $op = null): self
+    public function whereBetween(string $field, array $params, string $op = null): self
     {
-        $fieldParams = (array) $fieldParams;
-        if (!$fieldParams) {
-            throw new QueryException('No parameters given');
-        }
+        $params || throw new QueryException('No parameters given');
 
-        return $this->where($this->prepareField($field)
-            .' IN ('. $this->prepareWhereInPlaceholders($fieldParams) .')', $fieldParams, $op);
+        return $this->where($this->prepareField($field) . ' BETWEEN ? AND ?', $params, $op);
     }
 
     /**
-     * Where not in.
+     * Add/append "WHERE NOT .. BETWEEN .." query into query stack.
+     *
      * @param  string      $field
-     * @param  any         $fieldParams
+     * @param  array       $params
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereNotIn(string $field, $fieldParams, string $op = null): self
+    public function whereNotBetween(string $field, array $params, string $op = null): self
     {
-        $fieldParams = (array) $fieldParams;
-        if (!$fieldParams) {
-            throw new QueryException('No parameters given');
-        }
+        $params || throw new QueryException('No parameters given');
 
-        return $this->where($this->prepareField($field)
-            .' NOT IN ('. $this->prepareWhereInPlaceholders($fieldParams) .')', $fieldParams, $op);
+        return $this->where($this->prepareField($field) . ' NOT BETWEEN ? AND ?', $params, $op);
     }
 
     /**
-     * Where between.
-     * @param  string      $field
-     * @param  array       $fieldParams
-     * @param  string|null $op
+     * Add/append a "WHERE .. < .." query into query stack.
+     *
+     * @param  string           $field
+     * @param  string|int|float $param
+     * @param  string|null      $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereBetween(string $field, array $fieldParams, string $op = null): self
+    public function whereLessThan(string $field, string|int|float $param, string $op = null): self
     {
-        if (!$fieldParams) {
-            throw new QueryException('No parameters given');
-        }
+        $param = (array) $param;
+        $param || throw new QueryException('No parameter given');
 
-        return $this->where($this->prepareField($field) .' BETWEEN ? AND ?', $fieldParams, $op);
+        return $this->where($this->prepareField($field) . ' < ?', $param, $op);
     }
 
     /**
-     * Where not between.
-     * @param  string      $field
-     * @param  array       $fieldParams
-     * @param  string|null $op
+     * Add/append a "WHERE .. <= .." query into query stack.
+     *
+     * @param  string           $field
+     * @param  string|int|float $param
+     * @param  string|null      $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereNotBetween(string $field, array $fieldParams, string $op = null): self
+    public function whereLessThanEqual(string $field, string|int|float $param, string $op = null): self
     {
-        if (!$fieldParams) {
-            throw new QueryException('No parameters given');
-        }
+        $param = (array) $param;
+        $param || throw new QueryException('No parameter given');
 
-        return $this->where($this->prepareField($field) .' NOT BETWEEN ? AND ?', $fieldParams, $op);
+        return $this->where($this->prepareField($field) . ' <= ?', $param, $op);
     }
 
     /**
-     * Where less than.
-     * @param  string        $field
-     * @param  string|number $fieldParam
-     * @param  string|null $op
-     * @return self
-     * @throws froq\database\QueryException
-     */
-    public function whereLessThan(string $field, $fieldParam, string $op = null): self
-    {
-        $fieldParam = (array) $fieldParam;
-        if (!$fieldParam) {
-            throw new QueryException('No field parameter given');
-        }
-
-        return $this->where($this->prepareField($field) .' < ?', $fieldParam, $op);
-    }
-
-    /**
-     * Where less than equal.
-     * @param  string        $field
-     * @param  string|number $fieldParam
-     * @param  string|null $op
-     * @return self
-     * @throws froq\database\QueryException
-     */
-    public function whereLessThanEqual(string $field, $fieldParam, string $op = null): self
-    {
-        $fieldParam = (array) $fieldParam;
-        if (!$fieldParam) {
-            throw new QueryException('No field parameter given');
-        }
-
-        return $this->where($this->prepareField($field) .' <= ?', $fieldParam, $op);
-    }
-
-    /**
-     * Where greater than.
-     * @param  string        $field
-     * @param  string|number $fieldParam
-     * @param  string|null $op
+     * Add/append a "WHERE .. > .." query into query stack.
+     *
+     * @param  string           $field
+     * @param  string|int|float $param
+     * @param  string|null      $op
      * @return self
      */
-    public function whereGreaterThan(string $field, $fieldParam, string $op = null): self
+    public function whereGreaterThan(string $field, string|int|float $param, string $op = null): self
     {
-        $fieldParam = (array) $fieldParam;
-        if (!$fieldParam) {
-            throw new QueryException('No field parameter given');
-        }
+        $param = (array) $param;
+        $param || throw new QueryException('No parameter given');
 
-        return $this->where($this->prepareField($field) .' > ?', $fieldParam, $op);
+        return $this->where($this->prepareField($field) . ' > ?', $param, $op);
     }
 
     /**
-     * Where greater than equal.
-     * @param  string        $field
-     * @param  string|number $fieldParam
-     * @param  string|null $op
+     * Add/append a "WHERE .. >= .." query into query stack.
+     *
+     * @param  string           $field
+     * @param  string|int|float $param
+     * @param  string|null      $op
      * @return self
      */
-    public function whereGreaterThanEqual(string $field, $fieldParam, string $op = null): self
+    public function whereGreaterThanEqual(string $field, string|int|float $param, string $op = null): self
     {
-        $fieldParam = (array) $fieldParam;
-        if (!$fieldParam) {
-            throw new QueryException('No field parameter given');
-        }
+        $param = (array) $param;
+        $param || throw new QueryException('No parameter given');
 
-        return $this->where($this->prepareField($field) .' >= ?', $fieldParam, $op);
+        return $this->where($this->prepareField($field) . ' >= ?', $param, $op);
     }
 
     /**
-     * Where like.
+     * Add/append a "WHERE .. LIKE/ILIKE .." query into query stack.
+     *
      * @param  string       $field
-     * @param  string|array $fieldParams
+     * @param  string|array $params
      * @param  bool         $ilike
      * @param  string|null  $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereLike(string $field, $fieldParams, bool $ilike = false, string $op = null): self
+    public function whereLike(string $field, string|array $params, bool $ilike = false, string $op = null): self
     {
-        $fieldParams = (array) $fieldParams;
-        if (!$fieldParams) {
-            throw new QueryException('No parameters given');
-        }
+        $params = (array) $params;
+        $params || throw new QueryException('No parameters given');
 
-        [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($fieldParams)];
+        [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($params)];
 
         if (!$ilike) {
-            $where = $field .' LIKE '. $search;
+            $where = $field . ' LIKE ' . $search;
         } else {
-            $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
-                ? sprintf('%s ILIKE %s', $field, $search)
-                : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
+            $where = ($this->db->link()->driver() == 'pgsql')
+                   ? sprintf('%s ILIKE %s', $field, $search)
+                   : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
         }
 
         return $this->where($where, null, $op);
     }
 
     /**
-     * Where not like.
+     * Add/append a "WHERE .. NOT LIKE/NOT ILIKE .." query into query stack.
+     *
      * @param  string       $field
-     * @param  string|array $fieldParams
+     * @param  string|array $params
      * @param  bool         $ilike
      * @param  string|null  $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereNotLike(string $field, $fieldParams, bool $ilike = false, string $op = null): self
+    public function whereNotLike(string $field, string|array $params, bool $ilike = false, string $op = null): self
     {
-        $fieldParams = (array) $fieldParams;
-        if (!$fieldParams) {
-            throw new QueryException('No parameters given');
-        }
+        $params = (array) $params;
+        $param || throw new QueryException('No parameters given');
 
-        [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($fieldParams)];
+        [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($params)];
 
         if (!$ilike) {
-            $where = $field .' NOT LIKE '. $search;
+            $where = $field . ' NOT LIKE ' . $search;
         } else {
-            $where = ($this->db->getLink()->getPdoDriver() == 'pgsql')
+            $where = ($this->db->link()->driver() == 'pgsql')
                 ? sprintf('%s NOT ILIKE %s', $field, $search)
                 : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
         }
@@ -726,261 +982,266 @@ final class Query
     }
 
     /**
-     * Where exists.
-     * @param  string      $query
-     * @param  array|null  $queryParams
-     * @param  string|null $op
+     * Add/append a "WHERE EXISTS (..)" query into query stack.
+     *
+     * @param  string|Query $query
+     * @param  array|null   $params
+     * @param  string|null  $op
      * @return self
      */
-    public function whereExists(string $query, array $queryParams = null, string $op = null): self
+    public function whereExists(string|Query $query, array $params = null, string $op = null): self
     {
-        if ($queryParams) {
-            $query = $this->prepare($query, $queryParams);
+        if (is_string($query)) {
+            $query = $this->prepare($query, $params);
         }
 
-        return $this->where('EXISTS ('. $query .')', null, $op);
+        return $this->where('EXISTS (' . $query . ')', null, $op);
     }
 
     /**
-     * Where not exists.
-     * @param  string     $query
-     * @param  array|null $queryParams
-     * @param  string     $op
+     * Add/append a "WHERE NOT EXISTS (..)" query into query stack.
+     *
+     * @param  string|Query $query
+     * @param  array|null   $params
+     * @param  string       $op
      * @return self
      */
-    public function whereNotExists(string $query, array $queryParams = null, string $op = null): self
+    public function whereNotExists(string|Query $query, array $params = null, string $op = null): self
     {
-        if ($queryParams) {
-            $query = $this->prepare($query, $queryParams);
+        if (is_string($query)) {
+            $query = $this->prepare($query, $params);
         }
 
-        return $this->where('NOT EXISTS ('. $query .')', null, $op);
+        return $this->where('NOT EXISTS (' . $query . ')', null, $op);
     }
 
     /**
-     * Where random.
+     * Add/append a "WHERE random()/rand()" query into query stack.
+     *
      * @param  float       $value
      * @param  string|null $op
      * @return self
      */
     public function whereRandom(float $value = 0.01, string $op = null): self
     {
-        return ($this->db->getLink()->getPdoDriver() == 'pgsql')
-            ? $this->where('random() < '. $value, $op)
-            : $this->where('rand() < '. $value, $op);
+        return ($this->db->link()->driver() == 'pgsql')
+             ? $this->where('random() < ' . $value, $op)
+             : $this->where('rand() < ' . $value, $op);
     }
 
     /**
-     * Having.
-     * @param  string     $query
-     * @param  array|null $queryParams
+     * Add/append a "HAVING" clause into query stack.
+     *
+     * @param  string|Query $query
+     * @param  array|null $params
      * @return self
      */
-    public function having(string $query, array $queryParams = null): self
+    public function having(string|Query $query, array $params = null): self
     {
-        if ($queryParams) {
-            $query = $this->prepare($query, $queryParams);
+        if (is_string($query)) {
+            $query = $this->prepare($query, $params);
         }
 
-        return $this->add('having', $query, false);
+        return $this->add('having', (string) $query, false);
     }
 
     /**
-     * Group by.
+     * Add/append a "GROUP BY .." clause into query stack.
+     *
      * @param  string      $field
      * @param  string|bool $rollup
      * @return self
      */
-    public function groupBy(string $field, $rollup = null): self
+    public function groupBy(string $field, string|bool $rollup = null): self
     {
         $field = $this->prepareFields($field);
 
-        if ($rollup) {
-            if ($this->db->getLink()->getPdoDriver() == 'mysql') {
-                $field .= ' WITH ROLLUP';
-            } else {
-                $field .= ' ROLLUP ('. (
-                    is_string($rollup) ? $this->prepareFields($rollup) : $field
-                ) .')';
-            }
+        if ($rollup != null) {
+            $field .= ($this->db->link()->driver() == 'mysql') ? ' WITH ROLLUP' : ' ROLLUP (' . (
+                is_string($rollup) ? $this->prepareFields($rollup) : $field
+            ) . ')';
         }
 
-        return $this->add('groupBy', $field);
+        return $this->add('group', $field);
     }
 
     /**
-     * Order by.
-     * @param  string|Sql           $field
-     * @param  string|int|bool|null $op
-     * @param  array|null           $options
+     * Add/append an "ORDER BY .." clause into query stack.
+     *
+     * @param  string|Sql      $field
+     * @param  string|int|null $op
+     * @param  array|null      $options
      * @return self
      * @throws froq\database\QueryException
      */
-    public function orderBy($field, $op = null, array $options = null): self
+    public function orderBy(string|Sql $field, string|int $op = null, array $options = null): self
     {
-        if (!is_string($field) && !$check = ($field instanceof Sql)) {
-            throw new QueryException('Invalid field type "%s", valids are: string, %s',
-                [gettype($field), Sql::class]);
-        }
+        $isSql = $field instanceof Sql;
 
         $field = trim((string) $field);
-        if (!$field) {
-            throw new QueryException('No field given');
+        $field || throw new QueryException('No field given');
+
+        // Shortcut for ASC/DESC ops (eg: +id, -id).
+        if ($op == null) {
+            $op = match ($field[0]) {
+                '+' => 1, '-' => -1, default => null,
+            };
+            $op && $field = ltrim($field, '+-');
         }
 
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
-        if ($op !== null && $op !== '') {
-            if (is_string($op)) {
-                $field .= ' '. $this->prepareOp($op, true);
-            } elseif (is_int($op) || is_bool($op)) {
-                $field .= ' '. $this->prepareOp(strval($op ?: '0'), true);
-            }
+        if ($op != null) {
+            $field .= ' ' . $this->prepareOp(strval($op), true);
         }
 
         // Extract options (with defaults).
         [$collate, $nulls] = [
             $options['collate'] ?? null,
-            $options['nulls'] ?? null,
+            $options['nulls']   ?? null,
         ];
 
         // Eg: "tr_TR" or "tr_TR.utf8".
-        if ($collate) {
-            $collate = ' COLLATE '. $this->prepareCollation($collate);
+        if ($collate != null) {
+            $collate = trim($collate);
+            if ($this->db->link()->driver() == 'pgsql') {
+                $collate = '"' . trim($collate, '"') . '"';
+            }
+            $collate = ' COLLATE ' . $collate;
         }
 
         // Eg: "FIRST" or "LAST".
-        if ($nulls) {
-            $nulls = ' NULLS '. strtoupper($nulls);
+        if ($nulls != null) {
+            $nulls = ' NULLS ' . strtoupper($nulls);
         }
 
         // For raw Sql fields.
-        if (!empty($check)) {
-            return $this->add('orderBy', $field . $collate . $nulls);
+        if ($isSql) {
+            return $this->add('order', $field . $collate . $nulls);
         }
 
         // Eg: ("id ASC") or ("id ASC, name DESC").
         if (strpos($field, ' ')) {
             $fields = [];
-            foreach (explode(',', $field) as $i => $field) {
-                @ [$field, $op] = explode(' ', trim($field));
+            foreach (mb_split('\s*,\s*', $field) as $i => $field) {
+                @ [$field, $op] = mb_split('\s+', trim($field), 2);
                 $fields[$i] = $this->prepareField($field) . $collate;
-                if ($op) {
-                    $fields[$i] .= ' '. $this->prepareOp($op, true);
+                if ($op != null) {
+                    $fields[$i] .= ' ' . $this->prepareOp($op, true);
                 }
             }
 
-            return $this->add('orderBy', implode(', ', $fields) . $nulls);
+            return $this->add('order', join(', ', $fields) . $nulls);
         }
 
-        return $this->add('orderBy', $this->prepareField($field) . $collate . $nulls);
+        return $this->add('order', $this->prepareFields($field) . $collate . $nulls);
     }
 
     /**
-     * Order by random.
+     * Add/append an "ORDER BY random()/rand()" clause into query stack.
+     *
      * @return self
      */
     public function orderByRandom(): self
     {
-        return ($this->db->getLink()->getPdoDriver() == 'pgsql')
-            ? $this->add('orderBy', 'random()')
-            : $this->add('orderBy', 'rand()');
+        return ($this->db->link()->driver() == 'pgsql')
+            ? $this->add('order', 'random()') : $this->add('order', 'rand()');
     }
 
     /**
-     * Limit.
+     * Index row set by given field.
+     *
+     * @param  string $field
+     * @return self
+     * @since  5.0
+     */
+    public function indexBy(string $field): self
+    {
+        return $this->add('index', $field, false);
+    }
+
+    /**
+     * Add "LIMIT" clause into query stack.
+     *
      * @param  int      $limit
      * @param  int|null $offset
      * @return self
      */
     public function limit(int $limit, int $offset = null): self
     {
-        return ($offset === null)
-            ? $this->add('limit', abs($limit), false)
+        return ($offset === null) ? $this->add('limit', abs($limit), false)
             : $this->add('limit', abs($limit), false)->add('offset', abs($offset), false);
     }
 
     /**
-     * Offset.
+     * Add "OFFSET" clause into query stack.
+     *
      * @param  int $offset
      * @return self
      * @throws froq\database\QueryException
      */
     public function offset(int $offset): self
     {
-        if (!$this->has('limit')) {
-            throw new QueryException('Limit not set yet, call limit() first for offset');
+        if ($this->has('limit')) {
+            return $this->add('offset', abs($offset), false);
         }
 
-        return $this->add('offset', abs($offset), false);
+        throw new QueryException('Limit not set yet, call limit() first');
     }
 
     /**
-     * As.
+     * Add/append an "AS" operator into query stack for a table or field.
+     *
      * @param  string $as
      * @param  bool   $prepare
      * @return self
      * @throws froq\database\QueryException
-     * @since  4.16
+     * @since  4.16, 5.0 Optimized for table statement.
      */
     public function as(string $as, bool $prepare = true): self
     {
-        if (empty($this->stack['select'])) {
-            throw new QueryException('No "select" statement in query stack to apply AS operator');
+        if (empty($this->key)) {
+            throw new QueryException('No table/select statement yet in query stack to apply AS operator,'
+                . ' call one of them first to apply');
         }
 
-        if ($prepare) {
-            $as = $this->prepareField($as);
-        }
+        $prepare && $as = $this->prepareField($as);
 
-        $this->stack['select'][count($this->stack['select']) - 1] .= ' AS '. $as;
+        match ($this->key) {
+            'table'  => strpos($this->stack['table'], ' AS ')
+                            || $this->stack['table'] .= ' AS ' . $as, // Concat.
+            'select' => strpos($this->stack['select'][count($this->stack['select']) - 1], ' AS ')
+                            || $this->stack['select'][count($this->stack['select']) - 1] .= ' AS ' . $as,
+            default  => throw new QueryException('Invalid key `%s` for as()', $this->key)
+        };
 
         return $this;
     }
 
     /**
-     * Or.
+     * Set last where query operator to "OR".
+     *
      * @return self
      * @throws froq\database\QueryException
      */
     public function or(): self
     {
-        if (empty($this->stack['where'])) {
-            throw new QueryException('No "where" statement in query stack to apply OR operator');
-        }
-
-        $this->stack['where'][count($this->stack['where']) - 1][1] = 'OR';
-
-        return $this;
+        return $this->addTo('where', 'OR');
     }
 
     /**
-     * And.
+     * Set last where query operator to "AND".
+     *
      * @return self
      * @throws froq\database\QueryException
      */
     public function and(): self
     {
-        if (empty($this->stack['where'])) {
-            throw new QueryException('No "where" statement in query stack to apply AND operator');
-        }
-
-        $this->stack['where'][count($this->stack['where']) - 1][1] = 'AND';
-
-        return $this;
+        return $this->addTo('where', 'AND');
     }
 
     /**
-     * Id.
-     * @param  int|string $id
-     * @return self
-     */
-    public function id($id): self
-    {
-        return $this->whereEqual('id', $id);
-    }
-
-    /**
-     * Asc.
+     * Shortcut for orderBy() for "ASC" directive with default "id" field.
+     *
      * @param  string     $field
      * @param  array|null $options
      * @return self
@@ -991,7 +1252,8 @@ final class Query
     }
 
     /**
-     * Desc.
+     * Shortcut for orderBy() for "DESC" directive with default "id" field.
+     *
      * @param  string     $field
      * @param  array|null $options
      * @return self
@@ -1002,179 +1264,318 @@ final class Query
     }
 
     /**
-     * Run.
+     * Shortcut for whereEqual() with "id" field.
+     *
+     * @param  int|string $id
+     * @return self
+     */
+    public function id(int|string $id): self
+    {
+        return $this->whereEqual('id', $id);
+    }
+
+    /**
+     * Run a query stringifying current query stack.
+     *
      * @param  string|array<string>|null $fetch
      * @param  bool|null                 $sequence
      * @return froq\database\Result
      */
-    public function run($fetch = null, bool $sequence = null): Result
+    public function run(string|array $fetch = null, bool $sequence = null): Result
     {
-        // Get from stack if given with return() / insert().
-        $fetch ??= $this->stack['return']['fetch'] ?? null;
+        // From stack if given with return(), insert() etc.
+        $fetch    ??= $this->stack['return']['fetch']    ?? null;
         $sequence ??= $this->stack['insert']['sequence'] ?? null;
+        $index      = $this->stack['index']              ?? null;
 
-        return $this->db->query($this->toString(), null, ['fetch' => $fetch, 'sequence' => $sequence]);
+        return $this->db->query($this->toString(), null, [
+            'fetch' => $fetch, 'sequence' => $sequence, 'index' => $index
+        ]);
     }
 
     /**
-     * Run exec.
-     * @return ?int
+     * Execute a query stringifying current query stack.
+
+     * @return int
      * @since  4.3
      */
-    public function runExec(): ?int
+    public function runExec(): int
     {
         return $this->db->execute($this->toString());
     }
 
     /**
-     * Get.
-     * @param  string|array<string>|null $fetch
-     * @return ?array|?object
+     * Commit a "execute" query, reset stack and return self for next command. Note: this method is useful when
+     * chaining is desired for executing "delete" queries and passing to next query, eg. "insert", "update" etc.
+     *
+     * @return self
+     * @since  5.0
      */
-    public function get($fetch = null)
+    public function commit(): self
     {
-        // Optimize one-record query.
-        $this->has('limit') || $this->limit(1);
+        $this->runExec();
 
-        return $this->db->get($this->toString(), null, $fetch);
+        // Keep target table for next query.
+        $table = $this->stack['table'] ?? $this->stack['from'] ?? $this->stack['into'] ?? '';
+
+        return $this->reset()->table($table);
     }
 
     /**
-     * Get all.
+     * Get a result row stringifying & running current query stack.
+     *
+     * @param  string|array<string>|null $fetch
+     * @return array|object|null
+     */
+    public function get(string|array $fetch = null): array|object|null
+    {
+        // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
+        if (!$this->has('limit')) {
+            $ok = $this->has('select') || ($this->db->link()->driver() != 'pgsql');
+            $ok && $this->limit(1);
+        }
+
+        return $this->run($fetch)->rows(0);
+    }
+
+    /**
+     * Get all result rows stringifying & running current query stack.
+     *
      * @param  string|array<string>|null  $fetch
      * @param  froq\pager\Pager|null     &$pager
      * @param  int|null                   $limit
-     * @return ?array
+     * @return array|null
      */
-    public function getAll($fetch = null, Pager &$pager = null, int $limit = null): ?array
+    public function getAll(string|array $fetch = null, Pager &$pager = null, int $limit = null): array|null
     {
-        if ($limit === null) {
-            return $this->db->getAll($this->toString(), null, $fetch);
+        if ($limit !== null) {
+            $this->paginate($pager, $limit);
         }
 
-        $this->paginate($pager, $limit);
-
-        return $this->db->getAll($this->toString(), null, $fetch);
+        return $this->run($fetch)->rows();
     }
 
     /**
-     * Get array.
-     * @return ?array
+     * Get a result row as array stringifying & running current query stack.
+     *
+     * @return array|null
      * @since  4.7
      */
-    public function getArray(): ?array
+    public function getArray(): array|null
     {
         return $this->get('array');
     }
 
     /**
-     * Get object.
-     * @return ?object
+     * Get a result row as object stringifying & running current query stack.
+     *
+     * @return object|null
      * @since  4.7
      */
-    public function getObject(): ?object
+    public function getObject(): object|null
     {
         return $this->get('object');
     }
 
     /**
-     * Get array all.
+     * Get a result row as class instance stringifying & running current query stack.
+     *
+     * @return object|null
+     * @since  5.0
+     */
+    public function getClass(string $class): object|null
+    {
+        return $this->get(['class', $class]);
+    }
+
+    /**
+     * Get all result rows as array stringifying & running current query stack.
+     *
      * @param  froq\pager\Pager|null &$pager
      * @param  int|null               $limit
-     * @return ?array
+     * @return array|null
      * @since  4.7
      */
-    public function getArrayAll(Pager &$pager = null, int $limit = null): ?array
+    public function getArrayAll(Pager &$pager = null, int $limit = null): array|null
     {
         return $this->getAll('array', $pager, $limit);
     }
 
     /**
-     * Get object all.
+     * Get all result rows as object stringifying & running current query stack.
+     *
      * @param  froq\pager\Pager|null &$pager
      * @param  int|null               $limit
-     * @return ?array
+     * @return array|null
      * @since  4.7
      */
-    public function getObjectAll(Pager &$pager = null, int $limit = null): ?array
+    public function getObjectAll(Pager &$pager = null, int $limit = null): array|null
     {
         return $this->getAll('object', $pager, $limit);
     }
 
     /**
-     * Count.
+     * Get all result rows as class instance stringifying & running current query stack.
+     *
+     * @param  string                 $class
+     * @param  froq\pager\Pager|null &$pager
+     * @param  int|null               $limit
+     * @return array|null
+     * @since  5.0
+     */
+    public function getClassAll(string $class, Pager &$pager = null, int $limit = null): array|null
+    {
+        return $this->getAll(['class', $class], $pager, $limit);
+    }
+
+    /**
+     * Get all result rows as collection.
+     *
+     * @param  string|array<string>|null  $fetch
+     * @param  froq\pager\Pager|null     &$pager
+     * @param  int|null                   $limit
+     * @return froq\collection\Collection
+     * @since  5.0
+     */
+    public function getCollection(string|array $fetch = null, Pager &$pager = null, int $limit = null): Collection
+    {
+        return new Collection($this->getAll($fetch, $pager, $limit));
+    }
+
+    /**
+     * Run an insert query and get last insert id.
+     *
+     * @return int|null
+     * @since  5.0
+     */
+    public function getId(): int|null
+    {
+        return $this->run()->id();
+    }
+
+    /**
+     * Run an insert query and get all insert ids.
+     *
+     * @return array|null
+     * @since  5.0
+     */
+    public function getIds(): array|null
+    {
+        return $this->run()->ids();
+    }
+
+    /**
+     * Alias for getArray()/getArrayAll().
+     *
+     * @param  bool $all
+     * @param  ...  $args
+     * @return array|null
+     * @since  5.0
+     */
+    public function array(bool $all = false, ...$args): array|null
+    {
+        return !$all ? $this->getArray() : $this->getArrayAll(...$args);
+    }
+
+    /**
+     * Alias for getObject()/getObjectAll().
+     *
+     * @param  bool $all
+     * @param  ...  $args
+     * @return object|array|null
+     * @since  5.0
+     */
+    public function object(bool $all = false, ...$args): object|array|null
+    {
+        return !$all ? $this->getObject() : $this->getObjectAll(...$args);
+    }
+
+    /**
+     * @alias of getCollection()
+     * @since  5.0
+     */
+    public function collection(...$args)
+    {
+        return $this->getCollection(...$args);
+    }
+
+    /**
+     * Get count result stringifying & running current query stack.
+     *
      * @return int
      */
     public function count(): int
     {
         // Prevent empty query exception.
-        $this->has('select') || $this->add('select', 1);
+        $this->has('select') || $this->add('select', '1');
 
         return $this->db->countQuery($this->toString());
     }
 
     /**
-     * Aggregate.
-     * @param  string      $func
-     * @param  string      $field
-     * @param  string|null $as
-     * @param  array|null  $options
+     * Add/append a "SELECT" query into query stack for an aggregate function.
+     *
+     * @param  string       $func
+     * @param  string|array $field
+     * @param  string|null  $as
+     * @param  array|null   $options
      * @return self
      * @throws froq\database\QueryException
      * @since  4.4
      */
-    public function aggregate(string $func, string $field, string $as = null, array $options = null): self
+    public function aggregate(string $func, string|array $field, string $as = null, array $options = null): self
     {
         // Extract options (with defaults).
         [$distinct, $prepare, $order] = [
             $options['distinct'] ?? false,
-            $options['prepare'] ?? true,
-            $options['order'] ?? null
+            $options['prepare']  ?? true,
+            $options['order']    ?? null,
         ];
 
-        $distinct = $distinct ? 'DISTINCT ' : '';
-        $field = $prepare ? $this->prepareField($field) : $field;
+        $distinct && $distinct = 'DISTINCT ';
+        $prepare  && $field    = $this->prepareFields($field);
 
         // Dirty hijack..
-        if ($order) {
-            $order = current((clone $this)->reset()
-                   ->orderBy($order)->stack['orderBy']);
-            $order = ' ORDER BY '. $order;
+        if ($order != null) {
+            $order = current((clone $this)->reset()->orderBy($order)->stack['order']);
+            $order = ' ORDER BY ' . $order;
         }
 
         if ($as != '') {
-            $as = ' AS '. $this->prepareField($as);
+            $as = ' AS ' . $this->prepareField($as);
         }
 
         // Base functions.
         if (in_array($func, ['count', 'sum', 'min', 'max', 'avg'])) {
-            return $this->select($func .'('. $distinct . $field . $order .')'. $as, false);
+            return $this->select($func . '(' . $distinct . $field . $order . ')' . $as, false);
         }
 
         // PostgreSQL functions (no "_agg" suffix needed).
         if (in_array($func, ['array', 'string', 'json', 'json_object', 'jsonb', 'jsonb_object'])) {
-            return $this->select($func .'_agg('. $distinct . $field . $order .')'. $as, false);
+            return $this->select($func . '_agg(' . $distinct . $field . $order . ')' . $as, false);
         }
 
-        throw new QueryException('Invalid aggregate function "%s", valids are: count, sum, min, max, avg, '.
-            'array, string, json, json_object, jsonb, jsonb_object', [$func]);
+        throw new QueryException('Invalid aggregate function `%s`, valids are: count, sum, min, max, avg,'
+            . ' array, string, json, json_object, jsonb, jsonb_object', [$func]);
     }
 
     /**
-     * Paginate.
+     * Paginate query result setting ref'ed pager instance.
+     *
      * @param  froq\pager\Pager|null &$pager
      * @param  int|null               $limit
      * @return self
      */
     public function paginate(Pager &$pager = null, int $limit = null): self
     {
-        $pager = $pager ?? $this->db->initPager($this->count(), $limit);
+        $pager ??= $this->db->initPager($this->count(), $limit);
 
         return $this->paginateWith($pager);
     }
 
     /**
-     * Paginate.
+     * Paginate query result with given pager instance.
+     *
      * @param  froq\pager\Pager $pager
      * @return self
      */
@@ -1184,39 +1585,108 @@ final class Query
     }
 
     /**
-     * Sql.
-     * @param  string     $input
-     * @param  array|null $inputParams
+     * Create an Sql instance for a raw query/clause/statement.
+     *
+     * @param  string     $in
+     * @param  array|null $params
      * @return froq\database\sql\Sql
      */
-    public function sql(string $input, array $inputParams = null): Sql
+    public function sql(string $in, array $params = null): Sql
     {
-        return $this->db->initSql($input, $inputParams);
+        return new Sql($this->prepare($in, $params));
     }
 
     /**
-     * Name.
-     * @param  string $input
+     * Create a Name instance for an identifier (table, field etc).
+     *
+     * @param  string $in
      * @return froq\database\sql\Name
      */
-    public function name(string $input): Name
+    public function name(string $in): Name
     {
-        return new Name($input);
+        return new Name($in);
     }
 
     /**
-     * Reset.
+     * Append a raw or prepared query to current query stack, when needed with a with() query etc.
+     *
+     * @param  string|Query|null $query
+     * @param  int|null          $indent
+     * @return self
+     * @since  5.0
+     */
+    public function append(string|Query $query = null, int $indent = null): self
+    {
+        $query ??= $this;
+
+        if ($query instanceof Query) { // Get & clean behind.
+            [$query] = [$this->toString($indent, false), $query->reset()];
+        }
+
+        return $this->add('append', $query);
+    }
+
+    /**
+     * Reset current query stack.
+     *
      * @return self
      */
     public function reset(): self
     {
+        $this->key   = '';
         $this->stack = [];
 
         return $this;
     }
 
     /**
-     * To array.
+     * Check whether a clause/statement in query stack.
+     *
+     * @param  string $key
+     * @return bool
+     */
+    public function has(string $key): bool
+    {
+        return isset($this->stack[$key]);
+    }
+
+    /**
+     * Pull an item from query stack.
+     *
+     * @param  string      $key
+     * @param  string|null $subkey
+     * @return any|null
+     * @since  5.0
+     */
+    public function pull(string $key, string $subkey = null)
+    {
+        if (isset($this->stack[$key])) {
+            $value = $this->stack[$key];
+            if (isset($subkey) && isset($value[$subkey])) {
+                $value = $value[$subkey];
+            }
+            unset($this->stack[$key]);
+        }
+        return $value ?? null;
+    }
+
+    /**
+     * Drop an item from query stack.
+     *
+     * @param  string $key
+     * @return self
+     * @since  5.0
+     */
+    public function drop(string $key): self
+    {
+        unset($this->stack[$key]);
+
+        return $this;
+    }
+
+    /**
+     * Get query stack.
+     *
      * @return array
      */
     public function toArray(): array
@@ -1225,104 +1695,254 @@ final class Query
     }
 
     /**
-     * To string.
-     * @param  bool $pretty
-     * @param  bool $sub
+     * Get query stack as string.
+     *
+     * @param  int|bool|null $indent
+     * @param  bool          $_trim @internal
      * @return string
      * @throws froq\database\QueryException
      */
-    public function toString(bool $pretty = false, bool $sub = false): string
+    public function toString(int|bool $indent = null, bool $_trim = true): string
     {
+        $n = $t = ' ';
+        if ($indent) {
+            $n = "\n"; $t = "\t";
+        }
+
         $ret = '';
 
-        if ($this->has('select')) {
-            $ret = $this->toQueryString('select', $pretty, $sub);
-        } elseif ($this->has('insert')) {
-            $ret = $this->toQueryString('insert', $pretty, $sub);
-        } elseif ($this->has('update')) {
-            $ret = $this->toQueryString('update', $pretty, $sub);
-        } elseif ($this->has('delete')) {
-            $ret = $this->toQueryString('delete', $pretty, $sub);
-        } else {
-            throw new QueryException('No query ready to build, use select(), insert(), '.
-                'update(), delete(), aggregate() etc. first');
+        if ($this->has('with')) {
+            $ret = $this->toQueryString('with', $indent);
         }
+
+        if ($this->has('append')) {
+            $ret .= $n . join($n . $t, $this->stack['append']);
+        }
+
+        foreach (['insert', 'update', 'delete', 'select'] as $key) {
+            $this->has($key) && $ret .= $this->toQueryString($key, $indent);
+        }
+
+        if ($ret == '') {
+            throw new QueryException('No query ready to build, use select(), insert(), update(), delete(),'
+                . ' aggregate() etc. first');
+        }
+
+        $_trim && $ret = trim($ret);
 
         return $ret;
     }
 
     /**
-     * To query string.
-     * @param  string $key
-     * @param  bool   $pretty
-     * @param  bool   $sub
+     * Get a part of query stack as string.
+     *
+     * @param  string        $key
+     * @param  int|bool|null $indent
      * @return string
      * @throws froq\database\QueryException
      */
-    public function toQueryString(string $key, bool $pretty = false, bool $sub = false): string
+    public function toQueryString(string $key, int|bool $indent = null): string
     {
-        $stack = $this->stack;
-        if (empty($stack['table'])) {
-            throw new QueryException('Table is not defined yet, call table() or from() to '.
-                'set target table first.');
-        }
-
-        $n = $t = $nt = $ns = ' ';
-        if ($pretty) {
-            $n = "\n"; $t = "\t";
-            $nt = "\n\t"; $ns = "\n";
-            if ($sub) {
-                $nt = "\n\t\t"; $ns = "\n\t";
+        $n  = ' '; $t  = '';
+        $nt = ' '; $ts = '';
+        if ($indent) {
+            if ($indent == 1) {
+                $n  = "\n"; $t  = "\t";
+                $nt = "\n"; $ts = "\t";
+            } elseif ($indent > 1) {
+                $n  = "\n";      $t  = str_repeat("\t", $indent - 1);
+                $nt = "\n" . $t; $ts = str_repeat("\t", $indent - 1 + 1); // Sub.
             }
         }
 
         $ret = '';
 
+        $stack = $this->stack;
         switch ($key) {
-            case 'select':
-                $select = $stack['select'];
+            case 'with':
+                if (isset($stack['with'])) {
+                    $with = [];
 
-                $ret  = sprintf('SELECT%s%s%sFROM ', $nt, join(','. $nt, $select), $ns);
-                $ret .= trim(
-                      $this->toQueryString('table', $pretty, $sub)
-                    . $this->toQueryString('join', $pretty, $sub)
-                    . $this->toQueryString('where', $pretty, $sub)
-                    . $this->toQueryString('groupBy', $pretty, $sub)
-                    . $this->toQueryString('having', $pretty, $sub)
-                    . $this->toQueryString('orderBy', $pretty, $sub)
-                    . $this->toQueryString('limit', $pretty, $sub)
-                );
+                    foreach ($stack['with'] as [$name, $query, $fields, $recursive, $materialized]) {
+                        $as = $recursive ? 'RECURSIVE ' . $name : $name;
+                        if ($fields != null) {
+                            $as .= ' (' . $fields . ')';
+                        }
 
-                if ($sub) {
-                    $ret = $ns . $ret . $n;
+                        $as .= ' AS ';
+                        if ($materialized !== null) {
+                            $as .= ($materialized ? 'MATERIALIZED ' : 'NOT MATERIALIZED ');
+                        }
+
+                        if ($indent >= 1) {
+                            $qs = explode("\n", $query, 2); // Find first tab space.
+                            $ts = str_repeat("\t", count($qs) < 2 ? 0 : strspn($qs[1], "\t"));
+
+                            $with[] = $as . '(' . $n . $ts . $query . $nt . ')';
+                        } else {
+                            $with[] = $as . '(' . $query . ')';
+                        }
+                    }
+
+                    $ret = $nt . 'WITH ' . join(', ', $with);
                 }
                 break;
-            case 'table':
-                $table = $stack['table'];
-                // Could not remove after writing.. :(
-                // if ($pretty && strpos($table, "\n") > -1) {
-                //     $lines = explode("\n", $table);
-                //     $lines = array_map(function ($line) use ($t) {
-                //         if ($line = trim($line)) {
-                //             switch ($line) {
-                //                 case '(': break;
-                //                 case ')': break;
-                //                  default:
-                //                     $line = ($line[0] == ')')
-                //                         ? $t . $line : $t . $t . $line;
-                //             }
-                //         }
-                //         return $line;
-                //     }, $lines);
-                //     $table = implode("\n", $lines);
-                // }
-                $ret = $table;
+            case 'select':
+                if (isset($stack['select'])) {
+                    $table = $stack['from'] ?? $stack['table'] ?? null;
+                    $table || throw new QueryException('Table is not defined yet, call from() or table() to continue');
+
+                    if ($stack['select'] != '*') {
+                        foreach ($stack['select'] as $field) {
+                            $select[] = $n . $ts . $field;
+                        }
+                        $select = join(',', $select);
+                    }
+
+                    $ret = $nt . 'SELECT ' . trim($select)
+                         . $nt . 'FROM '   . $table;
+
+                    isset($stack['join'])   && $ret .= $nt . $this->toQueryString('join', $indent);
+                    isset($stack['where'])  && $ret .= $nt . $this->toQueryString('where', $indent);
+
+                    if (isset($stack['union'])) {
+                        foreach ($stack['union'] as [$query, $all]) {
+                            $ret .= $nt . 'UNION ' . ($all ? 'ALL ' : '');
+                            if ($indent >= 1) {
+                                $ret .= '(' . $n . $ts . $query . $nt . ')';
+                            } else {
+                                $ret .= '(' . $query . ')';
+                            }
+                        }
+                    }
+
+                    isset($stack['group'])  && $ret .= $nt . $this->toQueryString('group');
+                    isset($stack['having']) && $ret .= $nt . $this->toQueryString('having');
+                    isset($stack['order'])  && $ret .= $nt . $this->toQueryString('order');
+                    isset($stack['limit'])  && $ret .= $nt . $this->toQueryString('limit');
+                }
+                break;
+            case 'insert':
+                if (isset($stack['insert'])) {
+                    $table = $stack['into'] ?? $stack['table'] ?? null;
+                    $table || throw new QueryException('Table is not defined yet, call into() or table() to continue');
+
+                    if ($stack['insert'] == '1') {
+                        $ret = $nt . 'INSERT INTO ' . $table;
+                    } else {
+                        [$fields, $values] = $stack['insert'];
+
+                        $ret = $nt . 'INSERT INTO ' . $table
+                             . $nt . '(' . $fields . ')'
+                             . $nt . 'VALUES' . $nt . join(',' . $nt, $values);
+                    }
+
+                    if (isset($stack['conflict'])) {
+                        ['fields' => $fields, 'action' => $action,
+                         'update' => $update, 'where'  => $where] = $stack['conflict'];
+
+                        $ret .= match ($driver = $this->db->link()->driver()) {
+                            'pgsql' => $nt . 'ON CONFLICT (' . $fields . ') DO ' . $action,
+                            'mysql' => $nt . 'ON DUPLICATE KEY ' . ($action = 'UPDATE'),
+                            default => throw new QueryException('Method conflict() available for PgSQL & MySQL only')
+                        };
+
+                        if ($action == 'UPDATE') {
+                            // Use all insert fields for excluded stuff below.
+                            if ($update == '*') {
+                                $update = [$stack['insert'][0]];
+                            }
+
+                            // Handle PostgreSQL's stuff (eg: update => ['name', ..]).
+                            if (is_list($update)) {
+                                $temp = $this->prepareFields($update);
+                                $sets = [sprintf('(%s) = (%s)', $temp, implode(', ', array_map(
+                                    fn($t) => 'EXCLUDED.' . $t, explode(', ', $temp)))
+                                )];
+                            } else {
+                                $temp = [];
+                                foreach ($update as $field => $value) {
+                                    $field = $this->prepareField($field);
+                                    // Handle PostgreSQL's stuff (eg: update => ['name' => 'excluded.name', ..]).
+                                    if (is_string($value) && str_has_prefix($value, 'EXCLUDED.', true)) {
+                                        $temp[$field] = 'EXCLUDED.' . $this->prepareField(substr($value, 9));
+                                    } else {
+                                        $temp[$field] = $this->escape($value);
+                                    }
+                                }
+
+                                $sets = ($that = clone $this)->reset()->table('@')
+                                      ->update($temp, false)->pull('update');
+                            }
+
+                            $ret .= ($driver == 'pgsql')
+                                  ? $nt . 'SET ' . join(', ', $sets)
+                                  : $nt . join(', ', $sets);
+
+                            if ($where != null) {
+                                $where = (array) $where;
+                                [$where, $params] = array_select($where, [0, 1]);
+                                $ret .= $nt . trim($that->where((string) $where, (array) $params)
+                                    ->toQueryString('where'));
+                            }
+
+                            unset($that);
+                        }
+                    }
+
+                    if (isset($stack['return'])) {
+                        $ret .= $nt . 'RETURNING ' . $stack['return']['fields'];
+                    }
+                }
+                break;
+            case 'update':
+                if (isset($stack['update'])) {
+                    $table = $stack['table'] ?? null;
+                    $table || throw new QueryException('Table is not defined yet, call table() to continue');
+
+                    if (!isset($stack['where'])) {
+                        throw new QueryException('No `where` for update yet, it must be provided for security'
+                            . ' reasons, call at least where("1=1") proving you are aware of what is going on');
+                    }
+
+                    $ret = $nt . 'UPDATE ' . $table
+                         . $nt . 'SET '    . join(',' . $nt . $t, $stack['update']);
+
+                    isset($stack['where']) && $ret .= $nt . $this->toQueryString('where', $indent);
+                    isset($stack['order']) && $ret .= $nt . $this->toQueryString('order');
+                    isset($stack['limit']) && $ret .= $nt . $this->toQueryString('limit');
+
+                    if (isset($stack['return'])) {
+                        $ret .= $nt . 'RETURNING ' . $stack['return']['fields'];
+                    }
+                }
+                break;
+            case 'delete':
+                if (isset($stack['delete'])) {
+                    $table = $stack['from'] ?? $stack['table'] ?? null;
+                    $table || throw new QueryException('Table is not defined yet, call from() or table() to continue');
+
+                    if (!isset($stack['where'])) {
+                        throw new QueryException('No `where` for delete yet, it must be provided for security'
+                            . ' reasons, call at least where("1=1") proving you are aware of what is going on');
+                    }
+
+                    $ret = $nt . 'DELETE FROM ' . $table;
+
+                    isset($stack['where']) && $ret .= $nt . $this->toQueryString('where', $indent);
+                    isset($stack['order']) && $ret .= $nt . $this->toQueryString('order');
+                    isset($stack['limit']) && $ret .= $nt . $this->toQueryString('limit');
+
+                    if (isset($stack['return'])) {
+                        $ret .= $nt . 'RETURNING ' . $stack['return']['fields'];
+                    }
+                }
                 break;
             case 'where':
                 if (isset($stack['where'])) {
                     $wheres = $stack['where'];
                     if (count($wheres) == 1) {
-                        $ret = $ns .'WHERE '. $wheres[0][0];
+                        $ret = 'WHERE ' . $wheres[0][0];
                     } else {
                         $ws = ''; $wsi = 0;
                         foreach ($wheres as $i => [$where, $op]) {
@@ -1332,123 +1952,60 @@ final class Query
 
                             $ws .= $where;
                             if ($nx) {
-                                $ws .= ' '. $op .' ';
+                                $ws .= ' ' . $op . ' ';
                             }
+
                             if ($op != $nxop && $nxop && $nxnx) {
                                 $ws .= '(';
                                 $wsi++;
                             }
                         }
 
-                        $ret = $ws . str_repeat(')', $wsi); // Join & close parentheses.
-                        $ret = $ns .'WHERE ('. $nt . $ret . $ns .')';
-                    }
-                }
-                break;
-            case 'insert':
-                if (isset($stack['insert'])) {
-                    [$fields, $values] = $stack['insert'];
-
-                    $ret = "INSERT INTO {$stack['table']}{$nt}({$fields}){$n}VALUES{$nt}"
-                         . join(','. ($nt ?: $ns), $values);
-
-                    if (isset($stack['conflict'])) {
-                        ['fields' => $fields, 'action' => $action,
-                         'update' => $update, 'where' => $where] = $stack['conflict'];
-
-                        switch ($driver = $this->db->getLink()->getPdoDriver()) {
-                            case 'pgsql': $ret .= $n .'ON CONFLICT ('. $fields .') DO '. $action; break;
-                            case 'mysql': $ret .= $n .'ON DUPLICATE KEY '. ($action = 'UPDATE'); break;
-                                 default: throw new QueryException('Method "conflict()" available for PgSQL & MySQL only');
-                        }
-
-                        if ($action == 'UPDATE') {
-                            $temp = (clone $this)->reset()->table('@');
-
-                            $ret .= ($driver == 'pgsql')
-                                ? $nt .'SET '. $temp->update($update)->stack['update']
-                                : $nt . $temp->update($update)->stack['update'];
-
-                            if ($where != null) {
-                                @ [$where, $whereParams] = (array) $where;
-                                $ret .= $nt . trim($temp->where((string) $where, (array) $whereParams)
-                                    ->toQueryString('where'));
-                            }
-
-                            unset($temp);
+                        $ret = $ws . str_repeat(')', $wsi); // Concat & close parentheses.
+                        if ($indent > 1) {
+                            $ret = 'WHERE (' . $n . $ts . $ret . $nt . ')';
+                        } else {
+                            $ret = 'WHERE (' . $ret . ')';
                         }
                     }
-
-                    if (isset($stack['return'])) {
-                        $ret .= $n .'RETURNING '. $stack['return']['fields'];
-                    }
                 }
                 break;
-            case 'update':
-                if (isset($stack['update'])) {
-                    if (!isset($stack['where'])) {
-                        throw new QueryException('No "where" for "update" yet, it must be provided for '.
-                            'security reasons at least "1=1" that proves you’re aware of what’s going on');
-                    }
-
-                    $ret = trim(
-                        "UPDATE {$stack['table']} SET{$nt}{$stack['update']}"
-                        . $this->toQueryString('where', $pretty, $sub)
-                        . $this->toQueryString('orderBy', $pretty, $sub)
-                        . $this->toQueryString('limit', $pretty, $sub)
-                    );
-
-                    if (isset($stack['return'])) {
-                        $ret .= $n .'RETURNING '. $stack['return']['fields'];
-                    }
+            case 'group':
+                if (isset($stack['group'])) {
+                    $ret = 'GROUP BY ' . join(', ', $stack['group']);
                 }
                 break;
-            case 'delete':
-                if (isset($stack['delete'])) {
-                    if (!isset($stack['where'])) {
-                        throw new QueryException('No "where" for "delete" yet, it must be provided for '.
-                            'security reasons at least "1=1" that proves you’re aware of what’s going on');
-                    }
-
-                    $ret = trim(
-                        "DELETE FROM {$stack['table']}"
-                        . $this->toQueryString('where', $pretty, $sub)
-                        . $this->toQueryString('orderBy', $pretty, $sub)
-                        . $this->toQueryString('limit', $pretty, $sub)
-                    );
-
-                    if (isset($stack['return'])) {
-                        $ret .= $n .'RETURNING '. $stack['return']['fields'];
-                    }
-                }
-                break;
-            case 'groupBy':
-                if (isset($stack['groupBy'])) {
-                    $ret = $ns .'GROUP BY '. join(', ', $stack['groupBy']);
-                }
-                break;
-            case 'orderBy':
-                if (isset($stack['orderBy'])) {
-                    $ret = $ns .'ORDER BY '. join(', ', $stack['orderBy']);
+            case 'order':
+                if (isset($stack['order'])) {
+                    $ret = 'ORDER BY ' . join(', ', $stack['order']);
                 }
                 break;
             case 'limit':
                 if (isset($stack['limit'])) {
                     $ret = isset($stack['offset'])
-                        ? $ns .'LIMIT '. $stack['limit'] .' OFFSET '. $stack['offset']
-                        : $ns .'LIMIT '. $stack['limit'];
+                         ? 'LIMIT ' . $stack['limit'] . ' OFFSET ' . $stack['offset']
+                         : 'LIMIT ' . $stack['limit'];
                 }
                 break;
             case 'join':
                 if (isset($stack['join'])) {
+                    $joins = [];
+
                     foreach ($stack['join'] as $join) {
-                        $ret .= $ns . $join;
+                        @ [$content, $context] = $join;
+                        if (!$context) {
+                            throw new QueryException('No join context yet, use 2. argument of join() or call'
+                                . ' on()/using() method');
+                        }
+                        $joins[] = trim($content . ' ' . $context);
                     }
+
+                    $ret .= join($n, $joins);
                 }
                 break;
             case 'having':
                 if (isset($stack['having'])) {
-                    $ret = $ns .'HAVING ('. $stack['having'] .')';
+                    $ret = 'HAVING (' . $stack['having'] . ')';
                 }
                 break;
         }
@@ -1457,25 +2014,59 @@ final class Query
     }
 
     /**
-     * Prepare.
-     * @param  string     $input
-     * @param  array|null $inputParams
-     * @return string
-     * @throws froq\database\QueryException
+     * Escape an input.
+     *
+     * @param  any         $in
+     * @param  string|null $format
+     * @return any
      */
-    public function prepare(string $input, array $inputParams = null): string
+    public function escape($in, string $format = null)
     {
-        $input = trim($input);
-
-        if ($input === '') {
-            throw new QueryException('Empty input given');
-        }
-
-        return $this->db->prepare($input, $inputParams);
+        return $this->db->escape($in, $format);
     }
 
     /**
-     * Prepare field.
+     * Escape a name input.
+     *
+     * @param  string $in
+     * @return string
+     */
+    public function escapeName(string $in): string
+    {
+        return $this->db->escapeName($in);
+    }
+
+    /**
+     * Prepare an input.
+     *
+     * @param  string           $in
+     * @param  array|Query|null $params
+     * @return string
+     * @throws froq\database\QueryException
+     */
+    public function prepare(string $in, array|Query $params = null): string
+    {
+        if ($params && $params instanceof Query) {
+            $params = [$params->toString()];
+        }
+
+        $out = trim($in);
+
+        if ($out === '') {
+            throw new QueryException('Empty input given');
+        }
+
+        // Check names (eg: '@id ..', 1 or '@[id, ..]').
+        if (str_contains($in, '@')) {
+            return $this->db->prepare($out, $params);
+        }
+
+        return $params ? $this->db->prepare($out, $params) : $out;
+    }
+
+    /**
+     * Prepare a field.
+     *
      * @param  string $field
      * @return string
      * @throws froq\database\QueryException
@@ -1488,32 +2079,45 @@ final class Query
             throw new QueryException('Empty field given');
         }
 
+        // Check names (eg: '@id ..', 1 or '@[id, ..]').
+        if (str_contains($field, '@')) {
+            return $this->db->prepareName($field);
+        }
+
         return $this->db->escapeName($field);
     }
 
     /**
      * Prepare fields.
-     * @param  string $fields
+     *
+     * @param  string|array<string> $fields
      * @return string
      * @throws froq\database\QueryException
      */
-    public function prepareFields(string $fields): string
+    public function prepareFields(string|array $fields): string
     {
+        if (is_array($fields)) {
+            $fields = join(', ', $fields);
+        }
+
         $fields = trim($fields);
 
         if ($fields === '') {
             throw new QueryException('Empty fields given');
         }
 
-        if (!strpbrk($fields, ', ')) {
-            return $this->db->escapeName($fields);
+        // Check names (eg: '@id ..', 1 or '@[id, ..]').
+        if (str_contains($fields, '@')) {
+            return $this->db->prepareName($fields);
         }
 
-        return $this->db->escapeNames($fields);
+        return strpbrk($fields, ', ') ? $this->db->escapeNames($fields)
+                                      : $this->db->escapeName($fields);
     }
 
     /**
-     * Prepare op.
+     * Prepare an operator.
+     *
      * @param  string $op
      * @param  bool   $numerics
      * @return string
@@ -1526,54 +2130,83 @@ final class Query
         $op = strtoupper(trim($op));
         if (in_array($op, $ops)) {
             return $op;
-        } elseif ($numerics && in_array($op, ['1', '-1', '0'])) { // @internal=0
+        } elseif ($numerics && in_array($op, ['1', '-1'])) {
             return ($op == '1') ? 'ASC' : 'DESC';
         }
 
-        throw new QueryException('Invalid op "%s", valids are: %s, 1, -1', [$op, join(', ', $ops)]);
+        throw new QueryException('Invalid op `%s`, valids are: OR, AND for where\'s'
+            . ' and ASC, DESC, 1, -1 for order\'s', $op);
     }
 
     /**
-     * Prepare collation.
-     * @param  string $collation
-     * @return string
+     * Prepare increase/decrease data for update.
+     *
+     * @param  string       $sign
+     * @param  string|array $field
+     * @param  int|float    $value
+     * @param  bool         $return
+     * @return array
+     * @throws froq\database\QueryException
+     * @since  5.0
      */
-    public function prepareCollation(string $collation): string
+    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = false): array
     {
-        $collation = trim($collation);
+        $data = [];
 
-        if ($this->db->getLink()->getPdoDriver() == 'pgsql') {
-            $collation = '"'. trim($collation, '"') .'"';
+        // Eg: (.., "x", 1, ..).
+        if (is_string($field)) {
+            $data[$field] = $this->db->escapeName($field) . ' ' . $sign . ' ' . $value;
+
+            $return && $this->return($field);
+        }
+        // Eg: (.., ["x" => 1, "y" => 1], ..).
+        else {
+            // Cast values as float or leave it exception below.
+            $field  = array_map(fn($v) => is_numeric($v) ? (float) $v : $v, $field);
+            $fields = [];
+
+            foreach ($field as $name => $value) {
+                is_string($name)  || throw new QueryException('Invalid field name `%s`', $name);
+                is_number($value) || throw new QueryException('Invalid field value `%s`', $value);
+
+                $data[$name] = $this->db->escapeName($name) . ' ' . $sign . ' ' . $value;
+
+                $return && $fields[] = $name;
+            }
+
+            $return && $this->return($fields);
         }
 
-        return $collation;
+        return $data;
     }
 
     /**
-     * Prepare where in placeholders.
-     * @param  array $fieldParams
+     * Prepare where-in placeholders.
+     *
+     * @param  array $params
      * @return string
      */
-    private function prepareWhereInPlaceholders(array $fieldParams): string
+    private function prepareWhereInPlaceholders(array $params): string
     {
-        return join(', ', array_fill(0, count($fieldParams), '?'));
+        return join(', ', array_fill(0, count($params), '?'));
     }
 
     /**
-     * Prepare where like search.
-     * @param  array $fieldParams
+     * Prepare where-like search.
+     *
+     * @param  array $params
      * @return string
      * @throws froq\database\QueryException
      */
-    private function prepareWhereLikeSearch(array $fieldParams): string
+    private function prepareWhereLikeSearch(array $params): string
     {
-        $count = count($fieldParams);
-        if ($count == 1) {
-            return $this->db->escapeLikeString($fieldParams[0]);
-        }
+        $count = count($params);
 
+        if ($count == 1) {
+            return $this->db->escapeLikeString($params[0]);
+        }
         if ($count < 3) {
-            throw new QueryException('Like parameters count must be 1 or 3, %s given', [$count]);
+            throw new QueryException('Like parameters count must be 1 or 3, %s given', $count);
         }
 
         // Note to me..
@@ -1584,30 +2217,50 @@ final class Query
         // 'f_%_%' Anything starts with "f" and are at least 3 characters in length
         // 'f%o'   Anything starts with "f" and ends with "o"
 
-        [$end, $search, $start] = $fieldParams;
+        [$end, $search, $start] = $params;
 
-        return $this->db->quote($start . $this->db->escapeLikeString($search, false) . $end);
+        $search = $this->db->escapeLikeString($search, false);
+        $search = $this->db->quote($start . $search . $end);
+
+        return $search;
     }
 
     /**
-     * Has.
+     * Add a clause/statement to query stack.
+     *
      * @param  string $key
-     * @return bool
-     */
-    private function has(string $key): bool
-    {
-        return isset($this->stack[$key]);
-    }
-
-    /**
-     * Add.
-     * @param string $key
-     * @param any    $value
-     * @param bool   $merge
+     * @param  any    $value
+     * @param  bool   $merge
+     * @return self
      */
     private function add(string $key, $value, bool $merge = true): self
     {
-        $this->stack[$key] = $merge ? [...($this->stack[$key] ?? []), $value] : $value;
+        $merge && $value = [...($this->stack[$key] ?? []), $value];
+
+        $this->key         = $key; // Tick for last call.
+        $this->stack[$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Add a clause/statement operator to query stack.
+     *
+     * @param  string $key
+     * @param  string $value
+     * @return self
+     * @throws froq\database\QueryException
+     * @since  5.0
+     */
+    private function addTo(string $key, string $value): self
+    {
+        if (!isset($this->stack[$key])) {
+            $op = substr(trim($value), 0, strpos(trim($value), ' '));
+            throw new QueryException('No `%s` statement yet in query stack to apply `%s` operator, call'
+                . ' %s() first to apply', [$key, $op, $key]);
+        }
+
+        $this->stack[$key][count($this->stack[$key]) - 1][1] = $value;
 
         return $this;
     }

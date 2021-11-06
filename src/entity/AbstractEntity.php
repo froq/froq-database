@@ -1,405 +1,195 @@
 <?php
 /**
- * MIT License <https://opensource.org/licenses/mit>
- *
- * Copyright (c) 2015 Kerem Güneş
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished
- * to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Copyright (c) 2015 · Kerem Güneş
+ * Apache License 2.0 · http://github.com/froq/froq-database
  */
 declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{EntityException, EntityInterface};
-use froq\collection\Collection;
-use ArrayIterator, Traversable, Error;
+use froq\database\entity\Manager;
+use froq\database\record\Record;
 
 /**
  * Abstract Entity.
+ *
+ * Represents an abstract entity class that may be extended by entity classes used for
+ * accessing & modifiying data via its utility methods such as save(), find(), remove()
+ * and checkers for these methods.
+ *
  * @package froq\database\entity
  * @object  froq\database\entity\AbstractEntity
- * @author  Kerem Güneş <k-gun@mail.com>
- * @since   4.2
+ * @author  Kerem Güneş
+ * @since   5.0, Replaced with "object" subpackage.
  */
-abstract class AbstractEntity implements EntityInterface
+abstract class AbstractEntity
 {
+    /** @var froq\database\entity\Manager */
+    private Manager $manager;
+
+    /** @var froq\database\record\Record */
+    private Record $record;
+
     /**
      * Constructor.
-     * @param array|null      $data
-     * @param array|bool|null $drop
+     *
+     * @param ... $properties
      */
-    public function __construct(array $data = null, $drop = null)
+    public function __construct(...$properties)
     {
-        $data = $data ?? [];
-
-        foreach ($data as $var => $value) {
-            $this->{$var} = $value;
-        }
-
-        // Drop unused/unwanted vars.
-        if ($drop) {
-            $vars = $this->getVarNames();
-            $diff = [];
-
-            // Unused vars (all nulls).
-            if ($drop === true) {
-                $diff = count($vars) > count($data)
-                          ? array_diff($vars, array_keys($data))
-                          : array_diff(array_keys($data), $vars);
-            }
-            // Unwanted vars.
-            elseif (is_array($drop)) {
-                $diff = $drop;
-            }
-
-            // Clear unused/unwanted vars.
-            foreach ($diff as $var) {
-                if (!isset($this->{$var}) /* eg: id=null */ or
-                    !!$drop               /* eg: drop=['id'] */) {
-                    try {
-                        unset($this->{$var});
-                    } catch (Error $e) {}
-                }
-            }
-        }
+        $properties && $this->fill(...$properties);
     }
 
     /**
-     * Serialize.
+     * Magic - debug info.
+     *
      * @return array
      */
-    public function __serialize()
+    public function __debugInfo()
     {
-        return $this->getVars();
+        [$data, $class] = [(array) $this, self::class];
+
+        // Drop internals.
+        unset($data["\0{$class}\0manager"]);
+        unset($data["\0{$class}\0record"]);
+
+        return $data;
     }
 
     /**
-     * Unserialize.
-     * @param  array $data
-     * @return void
+     * Set manager property.
+     *
+     * @param  froq\database\entity\Manager $manager
+     * @return static
      */
-    public function __unserialize($data)
+    public final function setManager(Manager $manager): static
     {
-        // First: set all vars (cos PHP creates new entity object with all vars).
-        foreach ($data as $var => $value) {
-            $this->{$var} = $value;
-        }
-
-        // Then drop unused vars.
-        $diff = array_diff($this->getVarNames(), array_keys($data));
-        foreach ($diff as $var) {
-            unset($this->{$var});
-        }
-    }
-
-    /**
-     * Set.
-     * @param  string $var
-     * @param  any    $value
-     * @return self (static)
-     */
-    public function __set($var, $value)
-    {
-        // Prevent "access private property".
-        try {
-            $this->{$var} = $value;
-        } catch (Error $e) {}
+        $this->manager = $manager;
 
         return $this;
     }
 
     /**
-     * Get.
-     * @param  string $var
-     * @return any|null
+     * Get manager property.
+     *
+     * @return froq\database\entity\Manager|null $manager
      */
-    public function __get($var)
+    public final function getManager(): Manager|null
     {
-        // Prevent "access private property".
-        try {
-            return $this->{$var} ?? null;
-        } catch (Error $e) {}
+        return $this->manager ?? null;
     }
 
     /**
-     * Call.
-     * @param  string $call
-     * @param  array  $callArgs
-     * @return any
-     * @throws froq\database\entity\EntityException
+     * Set record property.
+     *
+     * @param  froq\database\record\Record $record
+     * @return static
      */
-    public function __call($call, $callArgs)
+    public final function setRecord(Record $record): static
     {
-        // Eg: id().
-        if (property_exists($this, $call)) {
-            return $callArgs ? $this->__set($call, $callArgs[0])
-                             : $this->__get($call);
-        }
+        $this->record = $record;
 
-        // Eg: setId(), getId().
-        $cmd = substr($call, 0, 3);
-        switch ($cmd) {
-            case 'set':
-                $var = lcfirst(substr($call, 3));
-                if (property_exists($this, $var)) {
-                    if (!$callArgs) {
-                        throw new EntityException('No call argument given for "%s()" call on "%s" object',
-                            [$call, static::class]);
-                    }
-                    return $this->__set($var, $callArgs[0]);
-                }
-                break;
-            case 'get':
-                $var = lcfirst(substr($call, 3));
-                if (property_exists($this, $var)) {
-                    return $this->__get($var);
-                }
-                break;
-            default:
-                throw new EntityException('Invalid call as "%s()" on "%s" object',
-                    [$call, static::class]);
-        }
+        return $this;
     }
 
     /**
-     * Has.
-     * @param  string $var
+     * Get record property.
+     *
+     * @return froq\database\record\Record|null $record
+     */
+    public final function getRecord(): Record|null
+    {
+        return $this->record ?? null;
+    }
+
+    /**
+     * Run a "save" action using manager.
+     *
+     * @return static.
+     */
+    public final function save(): static
+    {
+        $this->manager->save($this);
+
+        return $this;
+    }
+
+    /**
+     * Run a "find" action using manager.
+     *
+     * @return static.
+     */
+    public final function find(): static
+    {
+        $this->manager->find($this);
+
+        return $this;
+    }
+
+    /**
+     * Run a "remove" action using manager.
+     *
+     * @return static.
+     */
+    public final function remove(): static
+    {
+        $this->manager->remove($this);
+
+        return $this;
+    }
+
+    /**
+     * Check for last "save" action result.
+     *
      * @return bool
      */
-    public final function has(string $var): bool
+    public final function isSaved(): bool
     {
-        return isset($this->{$var});
+        return $this->record->isSaved();
     }
 
     /**
-     * Has var.
-     * @param  string $var
+     * Check for last "find" action result.
+     *
      * @return bool
-     * @since  4.11
      */
-    public final function hasVar(string $var): bool
+    public final function isFinded(): bool
     {
-        return property_exists($this, $var);
+        return $this->record->isFinded();
     }
 
     /**
-     * Get.
-     * @param  string $var
-     * @return any|null
-     * @since  4.11
-     */
-    public final function get(string $var)
-    {
-        return isset($this->{$var}) ? $this->{$var} : null;
-    }
-
-    /**
-     * Get vars.
-     * @param  bool $all
-     * @return array
-     * @since  4.11 Replaced with getVarValues().
-     */
-    public final function getVars(bool $all = true): array
-    {
-        // Note: returns defined vars only.
-        $vars = get_object_vars($this);
-
-        // Filter private/protected vars.
-        if (!$all) {
-            $vars = array_filter($vars, fn($v) => $v[0] != '_', 2);
-        }
-
-        return $vars;
-    }
-
-    /**
-     * Get var names.
-     * @param  bool $all
-     * @return array
-     */
-    public final function getVarNames(bool $all = true): array
-    {
-        // Note: returns non-defined vars also.
-        return array_keys($this->getVars($all));
-    }
-
-    /**
-     * Get var values.
-     * @param  bool $all
-     * @return array
-     */
-    public final function getVarValues(bool $all = true): array
-    {
-        // Note: returns defined vars only.
-        return array_values($this->getVars($all));
-    }
-
-    /**
-     * Id (shortcut for IDs).
-     * @return int|string|null
-     */
-    public function id()
-    {
-        return $this->get('id');
-    }
-
-    /**
-     * Is empty.
+     * Check for last "remove" action result.
+     *
      * @return bool
-     * @since  4.11
      */
-    public function isEmpty(): bool
+    public final function isRemoved(): bool
     {
-        return empty($this->getVars());
+        return $this->record->isRemoved();
     }
 
     /**
-     * Filter.
-     * @return self (static)
-     * @since  4.12
+     * Fill the entity object with given properties.
+     *
+     * @param  ... $properties
+     * @return static
      */
-    public function filter(callable $func = null): self
+    public final function fill(...$properties): static
     {
-        $filtered = array_filter(
-            $vars = $this->getVars(),
-            $func ?? fn($v) => $v !== null, // Filter nulls only.
-        );
-
-        foreach (array_keys($vars) as $var) {
-            try {
-                if (!isset($filtered[$var])) {
-                    unset($this->{$var});
-                }
-            } catch (Error $e) {}
+        foreach ($properties as $name => $value) {
+            if (property_exists(static::class, $name)) {
+                $this->$name = $value;
+            }
         }
 
         return $this;
     }
 
     /**
-     * To collection.
-     * @param  bool $deep
-     * @return froq\collection\Collection
-     * @since  4.8
+     * @alias of isFinded()
      */
-    public function toCollection(bool $deep = false): Collection
+    public final function isFound(): bool
     {
-        return new Collection($this->toArray($deep));
-    }
-
-    /**
-     * @inheritDoc froq\common\interfaces\Arrayable
-     * @since      4.5
-     */
-    public function toArray(bool $deep = false): array
-    {
-        return !$deep ? $this->getVars()
-                      : self::toArrayDeep($this->getVars());
-    }
-
-    /**
-     * @inheritDoc Countable
-     */
-    public final function count(): int
-    {
-        return count($this->getVars());
-    }
-
-    /**
-     * @inheritDoc IteratorAggregate
-     */
-    public final function getIterator(bool $deep = false): ArrayIterator
-    {
-        // Note: this method goes to toArray() for iterable check.
-        return new ArrayIterator($this->toArray($deep));
-    }
-
-    /**
-     * @inheritDoc JsonSerializable
-     * @since      4.11
-     */
-    public function jsonSerialize(): array
-    {
-        return $this->toArray(true);
-    }
-
-    /**
-     * @inheritDoc ArrayAccess
-     */
-    public final function offsetExists($var)
-    {
-        return $this->has($var);
-    }
-
-    /**
-     * @inheritDoc ArrayAccess
-     */
-    public final function offsetGet($var)
-    {
-        return $this->get($var);
-    }
-
-    /**
-     * @inheritDoc ArrayAccess
-     * @throws     froq\database\entity\EntityException
-     */
-    public final function offsetSet($var, $value)
-    {
-        throw new EntityException('No set() allowed for "%s"', [static::class]);
-    }
-
-    /**
-     * @inheritDoc ArrayAccess
-     * @throws     froq\database\entity\EntityException
-     */
-    public final function offsetUnset($var)
-    {
-        throw new EntityException('No unset() allowed for "%s"', [static::class]);
-    }
-
-    /**
-     * To array deep.
-     * @param  any $in
-     * @return array
-     * @since  4.11
-     */
-    protected static function toArrayDeep($in): array
-    {
-        if ($in && is_object($in)) {
-            $out = (array) ($in instanceof Traversable ? iterator_to_array($in) : (
-                method_exists($in, 'toArray') ? $in->toArray() : get_object_vars($in)
-            ));
-        } else {
-            $out = (array) $in;
-        }
-
-        // Overwrite.
-        foreach ($out as $var => $value) {
-            if ($value && $value instanceof EntityInterface) {
-                $out[$var] = $value->toArray();
-                continue;
-            }
-
-            $out[$var] = $value && (is_object($value) || is_iterable($value))
-                ? self::toArrayDeep($value) : $value;
-        }
-
-        return $out;
+        return $this->isFinded();
     }
 }
