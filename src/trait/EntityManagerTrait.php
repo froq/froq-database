@@ -17,7 +17,7 @@ use froq\database\entity\Manager;
  * @package froq\database\trait
  * @object  froq\database\trait\EntityManagerTrait
  * @author  Kerem Güneş
- * @since   5.2
+ * @since   5.1
  */
 trait EntityManagerTrait
 {
