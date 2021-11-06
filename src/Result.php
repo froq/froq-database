@@ -256,10 +256,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function rows(int $i = null): array|object|null
     {
-        if ($i !== null) {
-            return $this->row($i);
-        }
-        return $this->rows;
+        return ($i === null) ? $this->rows : $this->rows[$i] ?? null;
     }
 
     /**
@@ -371,7 +368,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function offsetSet($i, $row)
     {
-        throw new ResultException('No set() allowed for ' . $this::class);
+        throw new ResultException('No set() allowed for ' . self::class);
     }
 
     /**
@@ -380,6 +377,6 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function offsetUnset($i)
     {
-        throw new ResultException('No unset() allowed for ' . $this::class);
+        throw new ResultException('No unset() allowed for ' . self::class);
     }
 }

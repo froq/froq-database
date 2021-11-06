@@ -202,7 +202,8 @@ final class Database
      */
     public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null)
     {
-        $result = $this->query($query, $params, ['fetch' => $fetch])->rows(0);
+        $result = $this->query($query, $params, options: ['fetch' => $fetch])
+                       ->rows(0);
 
         // When a single column value wanted.
         if ($result && $flat) {
@@ -226,7 +227,8 @@ final class Database
     public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null,
         string $index = null): array|null
     {
-        $result = $this->query($query, $params, ['fetch' => $fetch, 'index' => $index])->rows();
+        $result = $this->query($query, $params, options: ['fetch' => $fetch, 'index' => $index])
+                       ->rows();
 
         // When a single column value wanted.
         if ($result && $flat) {
