@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
-use froq\database\entity\Manager;
+use froq\database\entity\Manager as EntityManager;
 
 /**
  * Entity Manager Trait.
@@ -22,14 +22,14 @@ use froq\database\entity\Manager;
 trait EntityManagerTrait
 {
     /** @var froq\database\entity\Manager */
-    protected Manager $em;
+    protected EntityManager $em;
 
     /**
      * Get em property.
      *
      * @return froq\database\entity\Manager
      */
-    public final function em(): Manager
+    public final function em(): EntityManager
     {
         return $this->em;
     }
