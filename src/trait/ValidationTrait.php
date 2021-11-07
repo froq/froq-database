@@ -129,10 +129,9 @@ trait ValidationTrait
      */
     public static final function loadValidations(string $file = null): array
     {
-        defined('APP_DIR') || throw new Exception('No APP_DIR defined');
+        // Try to load default file.
+        $file ??= APP_DIR . '/app/config/validations.php';
 
-        // Try to load default file from config directory (or directory, eg: config/validations/user).
-        $file = APP_DIR . '/app/config/' . ($file ?: 'validations') . '.php';
         is_file($file) || throw new Exception('No validations file exists such `%s`', $file);
 
         $validations = include $file;
