@@ -13,7 +13,7 @@ use froq\database\record\{Form, Record};
 use froq\database\{Database, Query, Result, trait\DbTrait};
 use froq\validation\Rule as ValidationRule;
 use froq\pager\Pager;
-use ReflectionClass, ReflectionProperty, Throwable;
+use ReflectionClass, ReflectionProperty;
 
 /**
  * Manager.
