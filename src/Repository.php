@@ -35,7 +35,7 @@ class Repository
      *
      * @param  froq\database\Database|null       $db
      * @param  froq\database\entity\Manager|null $em
-     * @throws froq\mvc\ModelException
+     * @throws froq\database\RepositoryException
      */
     public function __construct(Database $db = null, EntityManager $em = null)
     {
