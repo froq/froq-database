@@ -229,6 +229,27 @@ abstract class AbstractObjectList implements ObjectListInterface
     }
 
     /**
+     * Each.
+     *
+     * @param  callable $func
+     * @return self
+     * @since  5.4
+     */
+    public function each(callable $func): self
+    {
+        // Stay in here.
+        $func = $func->bindTo($this, $this);
+
+        foreach ($this->items as $key => &$value) {
+            $func($value, $key);
+        }
+
+        unset($value); // Drop last ref.
+
+        return $this;
+    }
+
+    /**
      * Filter.
      *
      * @param  callable $func
