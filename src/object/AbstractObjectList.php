@@ -233,10 +233,10 @@ abstract class AbstractObjectList implements ObjectListInterface
      *
      * @param  callable $func
      * @param  bool     $keepKeys
-     * @return static
+     * @return self
      * @since  4.8
      */
-    public function filter(callable $func, bool $keepKeys = false): static
+    public function filter(callable $func, bool $keepKeys = false): self
     {
         // Stay in here.
         $func = $func->bindTo($this, $this);
@@ -250,10 +250,10 @@ abstract class AbstractObjectList implements ObjectListInterface
      * Map.
      *
      * @param  callable $func
-     * @return static
+     * @return self
      * @since  4.8
      */
-    public function map(callable $func): static
+    public function map(callable $func): self
     {
         // Stay in here.
         $func = $func->bindTo($this, $this);
@@ -299,10 +299,10 @@ abstract class AbstractObjectList implements ObjectListInterface
      * Each.
      *
      * @param  callable $func
-     * @return static
+     * @return self
      * @since  5.0
      */
-    public function each(callable $func): static
+    public function each(callable $func): self
     {
         // Stay in here.
         $func = $func->bindTo($this, $this);

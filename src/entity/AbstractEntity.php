@@ -60,9 +60,9 @@ abstract class AbstractEntity
      * Set manager property.
      *
      * @param  froq\database\entity\Manager $manager
-     * @return static
+     * @return self
      */
-    public final function setManager(Manager $manager): static
+    public final function setManager(Manager $manager): self
     {
         $this->manager = $manager;
 
@@ -83,9 +83,9 @@ abstract class AbstractEntity
      * Set record property.
      *
      * @param  froq\database\record\Record $record
-     * @return static
+     * @return self
      */
-    public final function setRecord(Record $record): static
+    public final function setRecord(Record $record): self
     {
         $this->record = $record;
 
@@ -105,9 +105,9 @@ abstract class AbstractEntity
     /**
      * Run a "save" action using manager.
      *
-     * @return static.
+     * @return self.
      */
-    public final function save(): static
+    public final function save(): self
     {
         $this->manager->save($this);
 
@@ -117,9 +117,9 @@ abstract class AbstractEntity
     /**
      * Run a "find" action using manager.
      *
-     * @return static.
+     * @return self.
      */
-    public final function find(): static
+    public final function find(): self
     {
         $this->manager->find($this);
 
@@ -129,9 +129,9 @@ abstract class AbstractEntity
     /**
      * Run a "remove" action using manager.
      *
-     * @return static.
+     * @return self.
      */
-    public final function remove(): static
+    public final function remove(): self
     {
         $this->manager->remove($this);
 
@@ -172,9 +172,9 @@ abstract class AbstractEntity
      * Fill the entity object with given properties.
      *
      * @param  ... $properties
-     * @return static
+     * @return self
      */
-    public final function fill(...$properties): static
+    public final function fill(...$properties): self
     {
         foreach ($properties as $name => $value) {
             if (property_exists(static::class, $name)) {

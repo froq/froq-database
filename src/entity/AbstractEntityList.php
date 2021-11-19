@@ -62,9 +62,9 @@ abstract class AbstractEntityList extends ItemCollection
      * Set manager property.
      *
      * @param  froq\database\entity\Manager $manager
-     * @return static
+     * @return self
      */
-    public final function setManager(Manager $manager): static
+    public final function setManager(Manager $manager): self
     {
         $this->manager = $manager;
 
@@ -85,9 +85,9 @@ abstract class AbstractEntityList extends ItemCollection
      * Set pager property.
      *
      * @param  froq\pager\Pager $pager
-     * @return static
+     * @return self
      */
-    public final function setPager(Pager $pager): static
+    public final function setPager(Pager $pager): self
     {
         $this->pager = $pager;
 
@@ -107,9 +107,9 @@ abstract class AbstractEntityList extends ItemCollection
     /**
      * Run a "save-all" action using manager.
      *
-     * @return static
+     * @return self
      */
-    public final function saveAll(): static
+    public final function saveAll(): self
     {
         $this->manager->saveAll($this);
 
@@ -119,9 +119,9 @@ abstract class AbstractEntityList extends ItemCollection
     /**
      * Run a "find-all" action using manager.
      *
-     * @return static
+     * @return self
      */
-    public final function findAll(): static
+    public final function findAll(): self
     {
         $this->manager->findAll($this);
 
@@ -131,9 +131,9 @@ abstract class AbstractEntityList extends ItemCollection
     /**
      * Run a "remove-all" action using manager.
      *
-     * @return static
+     * @return self
      */
-    public final function removeAll(): static
+    public final function removeAll(): self
     {
         $this->manager->removeAll($this);
 

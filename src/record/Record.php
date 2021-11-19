@@ -839,7 +839,6 @@ class Record implements Arrayable, ArrayAccess
      * @param  bool                              $primary
      * @return array
      * @throws froq\database\record\RecordException
-     * @internal
      */
     private function pack(int|string|array $id = null, bool $primary = false): array
     {
@@ -861,12 +860,11 @@ class Record implements Arrayable, ArrayAccess
      * @param  string|null $table
      * @param  string|null $primary
      * @return static
-     * @internal
      */
     private function copy(string $table = null, string $primary = null): static
     {
         if (static::class == self::class) {
-            $that = new self(db: $this->db);
+            $that = new self($this->db);
         } else {
             $that = new static();
             $that->db = $this->db;
@@ -886,7 +884,6 @@ class Record implements Arrayable, ArrayAccess
      * @param  string|null $primary
      * @param  array       $options
      * @return array
-     * @internal
      */
     private function doInsert(array $data, string $table, string|null $primary, array $options): array
     {
@@ -939,7 +936,6 @@ class Record implements Arrayable, ArrayAccess
      * @param  array       $options
      * @param  int|string  $id
      * @return array
-     * @internal
      */
     private function doUpdate(array $data, string $table, string|null $primary, array $options, int|string $id): array
     {
