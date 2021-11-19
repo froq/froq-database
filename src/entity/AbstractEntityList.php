@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\Manager;
+use froq\database\entity\{Manager, EntityListInterface};
 use froq\database\record\Record;
 use froq\collection\ItemCollection;
 use froq\pager\Pager;
@@ -24,7 +24,7 @@ use froq\pager\Pager;
  * @author  Kerem Güneş
  * @since   5.0, Replaced with "object" subpackage.
  */
-abstract class AbstractEntityList extends ItemCollection
+abstract class AbstractEntityList extends ItemCollection implements EntityListInterface
 {
     /** @var froq\database\entity\Manager */
     private Manager $manager;

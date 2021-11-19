@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\Manager;
+use froq\database\entity\{Manager, EntityInterface};
 use froq\database\record\Record;
 
 /**
@@ -22,7 +22,7 @@ use froq\database\record\Record;
  * @author  Kerem Güneş
  * @since   5.0, Replaced with "object" subpackage.
  */
-abstract class AbstractEntity
+abstract class AbstractEntity implements EntityInterface
 {
     /** @var froq\database\entity\Manager */
     private Manager $manager;
