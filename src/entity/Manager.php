@@ -923,7 +923,7 @@ final class Manager
 
         foreach ($classMeta->getProperties() as $name => $propertyMeta) {
             // When "where" does not contains a rule already.
-            if (!is_array_key($name, $where)) {
+            if (!array_key_exists($name, $where)) {
                 $value = self::getPropertyValue($propertyMeta->getReflector(), $entity);
                 // Skip null values.
                 if (!is_null($value)) {
