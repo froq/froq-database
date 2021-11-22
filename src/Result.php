@@ -9,6 +9,7 @@ namespace froq\database;
 
 use froq\database\ResultException;
 use froq\collection\Collection;
+use froq\util\Arrays;
 use PDO, PDOStatement, PDOException, ArrayIterator, Countable, IteratorAggregate, ArrayAccess;
 
 /**
@@ -288,14 +289,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function each(callable $func): self
     {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        foreach ($this->rows as $key => &$value) {
-            $func($value, $key);
-        }
-
-        unset($value); // Drop last ref.
+        Arrays::each($this->rows, $func);
 
         return $this;
     }
@@ -310,10 +304,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function filter(callable $func, bool $keepKeys = false): self
     {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        $this->rows = $this->toCollection()->filter($func, $keepKeys)->toArray();
+        $this->rows = Arrays::filter($this->rows, $func, $keepKeys);
 
         return $this;
     }
@@ -327,10 +318,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function map(callable $func): self
     {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        $this->rows = $this->toCollection()->map($func)->toArray();
+        $this->rows = Arrays::map($this->rows, $func);
 
         return $this;
     }
@@ -345,10 +333,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function reduce($carry, callable $func)
     {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        return $this->toCollection()->reduce($carry, $func);
+        return Arrays::reduce($this->rows, $carry, $func);
     }
 
     /**

@@ -9,6 +9,7 @@ namespace froq\database\object;
 
 use froq\database\object\{ObjectListException, ObjectListInterface, ObjectInterface};
 use froq\collection\Collection;
+use froq\util\Arrays;
 use froq\pager\Pager;
 use ArrayIterator;
 
@@ -237,14 +238,7 @@ abstract class AbstractObjectList implements ObjectListInterface
      */
     public function each(callable $func): self
     {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        foreach ($this->items as $key => &$value) {
-            $func($value, $key);
-        }
-
-        unset($value); // Drop last ref.
+        Arrays::each($this->items, $func);
 
         return $this;
     }
@@ -259,10 +253,7 @@ abstract class AbstractObjectList implements ObjectListInterface
      */
     public function filter(callable $func, bool $keepKeys = false): self
     {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        $this->items = $this->toCollection()->filter($func, $keepKeys)->toArray();
+        $this->items = Arrays::filter($this->items, $func, $keepKeys);
 
         return $this;
     }
@@ -276,10 +267,7 @@ abstract class AbstractObjectList implements ObjectListInterface
      */
     public function map(callable $func): self
     {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        $this->items = $this->toCollection()->map($func)->toArray();
+        $this->items = Arrays::map($this->items, $func);
 
         return $this;
     }
@@ -294,10 +282,7 @@ abstract class AbstractObjectList implements ObjectListInterface
      */
     public function reduce($carry, callable $func)
     {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        return $this->toCollection()->reduce($carry, $func);
+        return Arrays::reduce($this->items, $carry);
     }
 
     /**
