@@ -9,7 +9,7 @@ namespace froq\database\trait;
 
 use froq\database\trait\{DbTrait, TableTrait, ValidationTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait,
-    DataCountTrait, DataEmptyTrait, OptionTrait};
+    DataCountTrait, DataEmptyTrait, DataToArrayTrait, DataToObjectTrait, OptionTrait};
 use froq\validation\ValidationError;
 
 /**
@@ -37,11 +37,14 @@ trait RecordTrait
      * @see froq\common\trait\DataLoadTrait
      * @see froq\common\trait\DataAccessTrait
      * @see froq\common\trait\DataAccessMagicTrait
-     * @see froq\common\trait\DataCountTrait @since 5.5
-     * @see froq\common\trait\DataEmptyTrait @since 5.5
+     * @see froq\common\trait\DataCountTrait
+     * @see froq\common\trait\DataEmptyTrait
+     * @see froq\common\trait\DataToArrayTrait
+     * @see froq\common\trait\DataToObjectTrait
      * @see froq\common\trait\OptionTrait
      */
     use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait, DataCountTrait, DataEmptyTrait,
+        DataToArrayTrait, DataToObjectTrait,
         OptionTrait;
 
     /** @var array */
