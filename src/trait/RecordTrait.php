@@ -7,8 +7,9 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
-use froq\database\{trait\DbTrait, trait\TableTrait, trait\ValidationTrait};
-use froq\common\trait\{DataTrait, DataLoadTrait, DataMagicTrait, OptionTrait};
+use froq\database\trait\{DbTrait, TableTrait, ValidationTrait};
+use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait,
+    DataCountTrait, DataEmptyTrait, OptionTrait};
 use froq\validation\ValidationError;
 
 /**
@@ -31,8 +32,20 @@ trait RecordTrait
      */
     use DbTrait, TableTrait, ValidationTrait;
 
-    /** @see froq\common\trait\OptionTrait */
-    use OptionTrait;
+    /**
+     * @see froq\common\trait\DataTrait
+     * @see froq\common\trait\DataLoadTrait
+     * @see froq\common\trait\DataAccessTrait
+     * @see froq\common\trait\DataAccessMagicTrait
+     * @see froq\common\trait\DataCountTrait @since 5.5
+     * @see froq\common\trait\DataEmptyTrait @since 5.5
+     * @see froq\common\trait\OptionTrait
+     */
+    use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait, DataCountTrait, DataEmptyTrait,
+        OptionTrait;
+
+    /** @var array */
+    protected array $data = [];
 
     /** @var array */
     protected static array $optionsDefault = [

@@ -7,32 +7,26 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\record\{RecordException, RecordList, FormException, Form};
+use froq\database\record\{RecordException, RecordInterface, RecordList, Form, FormException};
 use froq\database\{Database, Query, trait\RecordTrait};
-use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataMagicTrait};
-use froq\common\interface\Arrayable;
 use froq\validation\ValidationError;
 use froq\pager\Pager;
-use ArrayAccess;
 
 /**
  * Record.
  *
- * Represents a record entity that mimics ActiveRecord pattern and may be extended by many record classes
- * to handle CRUD operations in a safe way via form validation.
+ * Represents a record class that mimics "Active Record" pattern and may be extended by many
+ * record classes to handle CRUD operations in a safe way via form object with validation.
  *
  * @package froq\database\record
  * @object  froq\database\record\Record
  * @author  Kerem Güneş
  * @since   5.0
  */
-class Record implements Arrayable, ArrayAccess
+class Record implements RecordInterface
 {
-    /**
-     * @see froq\database\trait\RecordTrait
-     * @see froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataMagicTrait}
-     */
-    use RecordTrait, DataTrait, DataLoadTrait, DataAccessTrait, DataMagicTrait;
+    /** @see froq\database\trait\RecordTrait */
+    use RecordTrait;
 
     /** @var froq\database\record\Form */
     protected Form $form;
@@ -359,7 +353,7 @@ class Record implements Arrayable, ArrayAccess
     }
 
     /**
-     * Set/get id property and id (primary) field of data stack, cause a `RecordException` if no table primary
+     * Set/get id property and id (primary) field of data array, cause a `RecordException` if no table primary
      * presented yet.
      *
      * @param  int|string|null $id

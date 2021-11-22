@@ -90,7 +90,7 @@ abstract class AbstractObjectList implements ObjectListInterface
     }
 
     /**
-     * Check whether an item set on data stack with given index.
+     * Check whether an item set on data array with given index.
      *
      * @param  int $i
      * @return bool
@@ -101,7 +101,7 @@ abstract class AbstractObjectList implements ObjectListInterface
     }
 
     /**
-     * Add an item into data stack with next index.
+     * Add an item into data array with next index.
      *
      * @param  froq\database\object\ObjectInterface $item
      * @since  5.0
@@ -115,7 +115,7 @@ abstract class AbstractObjectList implements ObjectListInterface
     }
 
     /**
-     * Set an item onto data stack with given index.
+     * Set an item onto data array with given index.
      *
      * @param  int $i
      * @param  froq\database\object\ObjectInterface|null $item
@@ -130,7 +130,7 @@ abstract class AbstractObjectList implements ObjectListInterface
     }
 
     /**
-     * Get an item from data stack with given index.
+     * Get an item from data array with given index.
      *
      * @param  int $i
      * @return froq\database\object\ObjectInterface|null

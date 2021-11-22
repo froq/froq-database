@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\record\{RecordListException, Record};
+use froq\database\record\{RecordListException, RecordListInterface, Record};
 use froq\collection\ItemCollection;
 use froq\pager\Pager;
 
@@ -22,7 +22,7 @@ use froq\pager\Pager;
  * @author  Kerem Güneş
  * @since   5.0
  */
-class RecordList extends ItemCollection
+class RecordList extends ItemCollection implements RecordListInterface
 {
     /** @var froq\pager\Pager|null */
     protected Pager|null $pager;

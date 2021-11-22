@@ -9,29 +9,23 @@ namespace froq\database\record;
 
 use froq\database\record\{FormException, Record};
 use froq\database\{Database, trait\RecordTrait};
-use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait};
-use froq\common\interface\Arrayable;
 use froq\validation\ValidationError;
-use ArrayAccess;
 
 /**
  * Form.
  *
- * Represents a form entity that aims to run validation processes via its validation rules, also is available to
- * save those validated data via a record entity.
+ * Represents a form class that aims to run validation processes via its validation rules,
+ * also is able to save those validated data via a record object.
  *
  * @package froq\database\record
  * @object  froq\database\record\Form
  * @author  Kerem Güneş
  * @since   5.0
  */
-class Form implements Arrayable, ArrayAccess
+class Form implements FormInterface
 {
-    /**
-     * @see froq\database\trait\RecordTrait
-     * @see froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait}
-     */
-    use RecordTrait, DataTrait, DataLoadTrait, DataAccessTrait;
+    /** @see froq\database\trait\RecordTrait */
+    use RecordTrait;
 
     /** @var froq\database\record\Record */
     protected Record $record;
