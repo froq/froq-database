@@ -234,7 +234,7 @@ abstract class AbstractObjectList implements ObjectListInterface
      *
      * @param  callable $func
      * @return self
-     * @since  5.4
+     * @since  5.0
      */
     public function each(callable $func): self
     {
@@ -295,27 +295,7 @@ abstract class AbstractObjectList implements ObjectListInterface
      */
     public function aggregate(callable $func, array $carry = null): array
     {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        return $this->toCollection()->aggregate($func, $carry);
-    }
-
-    /**
-     * Each.
-     *
-     * @param  callable $func
-     * @return self
-     * @since  5.0
-     */
-    public function each(callable $func): self
-    {
-        // Stay in here.
-        $func = $func->bindTo($this, $this);
-
-        $this->toCollection()->each($func);
-
-        return $this;
+        return Arrays::aggregate($this->items, $func, $carry);
     }
 
     /**
