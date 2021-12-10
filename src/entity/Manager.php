@@ -478,7 +478,7 @@ final class Manager
                 );
             }
             // When "validations()" method exists on entity class.
-            elseif (is_callable_method($entity, 'validations')) {
+            elseif (is_callable_method($entity, 'validations', static: true)) {
                 $validations = $entity::validations();
             }
             // When propties have "validation" metadata on entity class.
@@ -826,7 +826,7 @@ final class Manager
         $fields = '*';
 
         // When fields() method available as public & static.
-        if (is_callable_method($entity, 'fields')) {
+        if (is_callable_method($entity, 'fields', static: true)) {
             $fields = $entity::fields();
             is_array($fields) || is_string($fields) || throw new ManagerException(
                 'Method %s.fields() must return array|string, %s returned',
