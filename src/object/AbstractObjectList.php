@@ -367,7 +367,7 @@ abstract class AbstractObjectList implements ObjectListInterface
      */
     public final function offsetExists($i)
     {
-        return $this->has($i);
+        return $this->get($i) !== null;
     }
 
     /**

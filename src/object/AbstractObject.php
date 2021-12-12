@@ -395,7 +395,7 @@ abstract class AbstractObject implements ObjectInterface
      */
     public final function offsetExists($var)
     {
-        return $this->has($var);
+        return $this->get($var) !== null;
     }
 
     /**
