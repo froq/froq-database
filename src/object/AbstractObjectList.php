@@ -91,26 +91,27 @@ abstract class AbstractObjectList implements ObjectListInterface
     }
 
     /**
-     * Check whether an item set in data array with given index.
-     *
-     * @param  int $i
-     * @return bool
-     */
-    public final function has(int $i): bool
-    {
-        return isset($this->items[$i]);
-    }
-
-    /**
      * Check whether given item is in data array
      *
      * @param  ObjectInterface $item
      * @return bool
-     * @since  5.6
+     * @since  5.6, 5.7 Swapped with hasItem().
      */
-    public final function hasItem(ObjectInterface $item): bool
+    public final function has(ObjectInterface $item): bool
     {
-        return in_array($item, $this->items, true);
+        return array_value_exists($item, $this->items);
+    }
+
+    /**
+     * Check whether an item set in data array with given index.
+     *
+     * @param  int $i
+     * @return bool
+     * @since  *, 5.7 Swapped with has(), named as hasIndex() from hasItem().
+     */
+    public final function hasIndex(int $i): bool
+    {
+        return array_key_exists($i, $this->items);
     }
 
     /**
