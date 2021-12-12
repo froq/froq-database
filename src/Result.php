@@ -357,7 +357,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function offsetExists($i)
     {
-        return isset($this->rows[$i]);
+        return $this->row($i) !== null;
     }
 
     /**
