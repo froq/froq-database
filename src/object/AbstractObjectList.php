@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database\object;
 
 use froq\database\object\{ObjectListException, ObjectListInterface, ObjectInterface};
+use froq\common\exception\UnsupportedOperationException;
 use froq\collection\Collection;
 use froq\util\Arrays;
 use froq\pager\Pager;
@@ -40,10 +41,11 @@ abstract class AbstractObjectList implements ObjectListInterface
     /**
      * Constructor.
      *
-     * @param array|null            $items
-     * @param froq\pager\Pager|null $pager
-     * @param string|null           $itemsClass     The target object.
-     * @param ...                   $itemsClassArgs The target object constructor arguments.
+     * @param  array|null            $items
+     * @param  froq\pager\Pager|null $pager
+     * @param  string|null           $itemsClass     The target object.
+     * @param  ...                   $itemsClassArgs The target object constructor arguments.
+     * @throws froq\database\object\ObjectListException
      */
     public function __construct(array $items = null, Pager $pager = null, string $itemsClass = null,
         ...$itemsClassArgs)
@@ -380,19 +382,19 @@ abstract class AbstractObjectList implements ObjectListInterface
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\object\ObjectListException
+     * @throws     froq\common\exception\UnsupportedOperationException
      */
     public final function offsetSet($i, $item)
     {
-        throw new ObjectListException('No set() allowed for ' . static::class);
+        throw new UnsupportedOperationException('No set() allowed for ' . static::class);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\object\ObjectListException
+     * @throws     froq\common\exception\UnsupportedOperationException
      */
     public final function offsetUnset($i)
     {
-        throw new ObjectListException('No unset() allowed for ' . static::class);
+        throw new UnsupportedOperationException('No unset() allowed for ' . static::class);
     }
 }

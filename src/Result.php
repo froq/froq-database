@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\ResultException;
+use froq\common\exception\UnsupportedOperationException;
 use froq\collection\Collection;
 use froq\util\Arrays;
 use PDO, PDOStatement, PDOException, ArrayIterator, Countable, IteratorAggregate, ArrayAccess;
@@ -370,19 +371,19 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\ResultException
+     * @throws     froq\common\exception\UnsupportedOperationException
      */
     public function offsetSet($i, $row)
     {
-        throw new ResultException('No set() allowed for ' . self::class);
+        throw new UnsupportedOperationException('No set() allowed for ' . self::class);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\ResultException
+     * @throws     froq\common\exception\UnsupportedOperationException
      */
     public function offsetUnset($i)
     {
-        throw new ResultException('No unset() allowed for ' . self::class);
+        throw new UnsupportedOperationException('No unset() allowed for ' . self::class);
     }
 }

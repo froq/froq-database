@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database\object;
 
 use froq\database\object\{ObjectException, ObjectInterface};
+use froq\common\exception\UnsupportedOperationException;
 use froq\collection\Collection;
 use ArrayIterator, Traversable, Error;
 
@@ -105,15 +106,17 @@ abstract class AbstractObject implements ObjectInterface
      * @param  string $var
      * @param  any    $value
      * @return self
+     * @throws froq\database\object\ObjectException
      */
     public function __set(string $var, $value)
     {
-        // Prevent "access private property".
         try {
+            // For "access private property".
             $this->{$var} = $value;
-        } catch (Error) {}
-
-        return $this;
+            return $this;
+        } catch (Error $e) {
+            throw new ObjectException($e);
+        }
     }
 
     /**
@@ -121,13 +124,16 @@ abstract class AbstractObject implements ObjectInterface
      *
      * @param  string $var
      * @return any|null
+     * @throws froq\database\object\ObjectException
      */
     public function __get(string $var)
     {
-        // Prevent "access private property".
         try {
+            // For "access private property".
             return $this->{$var} ?? null;
-        } catch (Error) {}
+        } catch (Error $e) {
+            throw new ObjectException($e);
+        }
     }
 
     /**
@@ -408,20 +414,20 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\object\ObjectException
+     * @throws     froq\common\exception\UnsupportedOperationException
      */
     public final function offsetSet($var, $value)
     {
-        throw new ObjectException('No set() allowed for ' . static::class);
+        throw new UnsupportedOperationException('No set() allowed for ' . static::class);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\database\object\ObjectException
+     * @throws     froq\common\exception\UnsupportedOperationException
      */
     public final function offsetUnset($var)
     {
-        throw new ObjectException('No unset() allowed for ' . static::class);
+        throw new UnsupportedOperationException('No unset() allowed for ' . static::class);
     }
 
     /**
