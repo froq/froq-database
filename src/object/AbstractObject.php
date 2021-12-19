@@ -214,7 +214,7 @@ abstract class AbstractObject implements ObjectInterface
         $vars = get_object_vars($this);
 
         // Filter private/protected vars.
-        $all || $vars = array_filter($vars, fn($v) => $v[0] != '_', 2);
+        $all || $vars = array_filter($vars, fn($k) => $k[0] != '_', 2);
 
         return $vars;
     }
