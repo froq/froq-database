@@ -238,14 +238,14 @@ class Form implements FormInterface
      */
     public final function isValid(array &$data = null, array &$errors = null, array $options = null): bool
     {
-        $data ??= $this->getData() ?? $this->getRecordData();
+        $data ??= $this->getData() ?: $this->getRecordData();
         if (empty($data)) {
             throw new FormException('No data set yet for validation, call setData() first or pass'
                 . ' $data argument to isValid()');
         }
 
-        $rules     = $this->getValidationRules() ?? $this->getRecord()?->getValidationRules();
-        $options ??= $this->getValidationOptions() ?? $this->getRecord()?->getValidationOptions();
+        $rules     = $this->getValidationRules() ?: $this->getRecord()?->getValidationRules();
+        $options ??= $this->getValidationOptions() ?: $this->getRecord()?->getValidationOptions();
 
         if (empty($rules)) {
             throw new FormException('No validation rules set yet, call setValidationRules() or define'

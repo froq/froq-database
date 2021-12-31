@@ -400,7 +400,7 @@ class Record implements RecordInterface
             $this->updateData($data);
         }
 
-        $data ??= $this->getData() ?? $this->getFormData();
+        $data ??= $this->getData() ?: $this->getFormData();
         if ($data == null) {
             throw new RecordException('No data given yet for save(), call setData() or load() first or '
                 . ' try calling save($data)');
