@@ -1331,7 +1331,7 @@ final class Query
     {
         // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
         if (!$this->has('limit')) {
-            $ok = $this->has('select') || ($this->db->link()->driver() != 'pgsql');
+            $ok = $this->has('select') || $this->db->link()->driver() != 'pgsql';
             $ok && $this->limit(1);
         }
 
@@ -1341,17 +1341,12 @@ final class Query
     /**
      * Get all result rows stringifying & running current query stack.
      *
-     * @param  string|array<string>|null  $fetch
-     * @param  froq\pager\Pager|null     &$pager
-     * @param  int|null                   $limit
+     * @note   For pagination purposes, `paginate()` method must be called before this method.
+     * @param  string|array<string>|null $fetch
      * @return array|null
      */
-    public function getAll(string|array $fetch = null, Pager &$pager = null, int $limit = null): array|null
+    public function getAll(string|array $fetch = null): array|null
     {
-        if ($limit !== null) {
-            $this->paginate($pager, $limit);
-        }
-
         return $this->run($fetch)->rows();
     }
 
@@ -1560,17 +1555,34 @@ final class Query
     }
 
     /**
-     * Paginate query result setting ref'ed pager instance.
+     * Paginate query result setting offset/limit stuff & assigning ref'ed pager instance.
      *
-     * @param  froq\pager\Pager|null &$pager
+     * @param  int|null               $page
      * @param  int|null               $limit
+     * @param  froq\pager\Pager|null &$pager
+     * @param  int|null               $count
      * @return self
      */
-    public function paginate(Pager &$pager = null, int $limit = null): self
+    public function paginate(int $page = null, int $limit = null, Pager &$pager = null, int $count = null): self
     {
-        $pager ??= $this->db->initPager($this->count(), $limit);
+        // Limit/offset. @default
+        static $defaults = [10, 0];
 
-        return $this->paginateWith($pager);
+        $page ??= Pager::getStartParam() ?? 1;
+        $limit ??= $this->stack['limit'] ?? $defaults[0];
+        // $offset = $this->stack['offset'] ?? $defaults[1]; // @discard
+
+        $page = abs($page);
+        $limit = abs($limit);
+
+        $page = ($page > 0) ? $page : 1;
+        $offset = ($page * $limit) - $limit;
+
+        // This will also get a count() result if no count given.
+        $pager ??= $this->db->initPager($count ?? $this->count(), ['start' => $page, 'stop' => $limit]);
+
+        // Call limit() without affecting count() above.
+        return $this->limit($limit, $offset);
     }
 
     /**
@@ -1581,7 +1593,7 @@ final class Query
      */
     public function paginateWith(Pager $pager): self
     {
-        return $this->limit($pager->getLimit(), $pager->getOffset());
+        return $this->limit($pager->limit, $pager->offset);
     }
 
     /**

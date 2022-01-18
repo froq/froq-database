@@ -1034,20 +1034,20 @@ final class Database
     /**
      * Init a `Pager` object.
      *
-     * @param  int|null $count
-     * @param  int|null $limit
+     * @param  int|null   $count
+     * @param  array|null $attributes
      * @return froq\pager\Pager
      */
-    public function initPager(int $count = null, int $limit = null): Pager
+    public function initPager(int $count = null, array $attributes = null): Pager
     {
-        $pager = new Pager();
-        $pager->run($count, $limit);
+        $pager = new Pager($attributes);
+        $pager->run($count);
 
         return $pager;
     }
 
     /**
-     * Prepare a prepare input escaping names only eg. `@id`.
+     * Prepare a prepare input escaping names only (eg: @id => "id").
      *
      * @param  string $in
      * @return string
