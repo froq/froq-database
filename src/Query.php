@@ -1581,7 +1581,6 @@ final class Query
         // This will also get a count() result if no count given.
         $pager ??= $this->db->initPager($count ?? $this->count(), ['start' => $page, 'stop' => $limit]);
 
-        // Call limit() without affecting count() above.
         return $this->limit($limit, $offset);
     }
 
