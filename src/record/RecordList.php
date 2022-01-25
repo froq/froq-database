@@ -40,7 +40,7 @@ class RecordList extends ItemCollection implements RecordListInterface
 
         foreach ($items as $item) {
             ($item instanceof Record) || throw new RecordListException(
-                'Each item must extend class %s, %s given', [Record::class, get_type($item)]
+                'Each item must extend class %s, %t given', [Record::class, $item]
             );
         }
 
