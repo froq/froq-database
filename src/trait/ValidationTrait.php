@@ -132,11 +132,14 @@ trait ValidationTrait
         // Try to load default file.
         $file ??= APP_DIR . '/app/config/validations.php';
 
-        is_file($file) || throw new Exception('No validations file exists such `%s`', $file);
+        is_file($file) || throw new Exception(
+            'No validations file exists such `%s`', $file
+        );
 
         $validations = include $file;
-        is_array($validations) || throw new Exception('Validation files must return an array, %s returned',
-            get_type($validations));
+        is_array($validations) || throw new Exception(
+            'Validation files must return an array, %t returned', $validations
+        );
 
         return $validations;
     }
@@ -153,14 +156,16 @@ trait ValidationTrait
     {
         $validations = self::loadValidations($file);
 
-        empty($validations[$key]) && throw new Exception('No rules found for key `%s`', $key);
+        empty($validations[$key]) && throw new Exception(
+            'No rules found for key `%s`', $key
+        );
 
         return $validations[$key];
     }
 
     /**
-     * Run a validation for given data by rules & options, filtering/sanitizing `$data` argument and filling
-     * `$errors` argument when validation fails.
+     * Run a validation for given data by rules & options, filtering/sanitizing `$data` argument
+     * and filling `$errors` argument when validation fails.
      *
      * @param  ?array &$data
      * @param  ?array  $rules
@@ -172,15 +177,19 @@ trait ValidationTrait
      */
     protected final function runValidation(?array &$data, ?array $rules, ?array $options, ?array &$errors): bool
     {
-        $rules || throw new Exception('No validation rules set yet, call setValidationRules() or define'
-            . ' $validationRules property on %s class', static::class);
+        $rules || throw new Exception(
+            'No validation rules set yet, call setValidationRules() or '.
+            'define $validationRules property on class %s '. static::class
+        );
 
-        $this->validated = (new Validation($rules, $options))->validate($data, $errors);
+        $errors = null;
+        $result = (new Validation($rules, $options))->validate($data, $errors);
 
+        $this->validated = $result;
         if ($errors !== null) {
             $this->validationErrors = $errors;
         }
 
-        return $this->validated;
+        return $result;
     }
 }
