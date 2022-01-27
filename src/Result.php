@@ -356,7 +356,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /**
      * @inheritDoc ArrayAccess
      */
-    public function offsetExists($i)
+    public function offsetExists(mixed $i): bool
     {
         return $this->row($i) !== null;
     }
@@ -364,7 +364,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /**
      * @inheritDoc ArrayAccess
      */
-    public function offsetGet($i)
+    public function offsetGet(mixed $i): array|object|null
     {
         return $this->row($i);
     }
@@ -373,7 +373,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      * @inheritDoc ArrayAccess
      * @throws     froq\common\exception\UnsupportedOperationException
      */
-    public function offsetSet($i, $row)
+    public function offsetSet(mixed $i, mixed $row): never
     {
         throw new UnsupportedOperationException('No set() allowed for ' . self::class);
     }
@@ -382,7 +382,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      * @inheritDoc ArrayAccess
      * @throws     froq\common\exception\UnsupportedOperationException
      */
-    public function offsetUnset($i)
+    public function offsetUnset(mixed $i): never
     {
         throw new UnsupportedOperationException('No unset() allowed for ' . self::class);
     }
