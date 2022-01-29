@@ -769,7 +769,7 @@ final class Database
         }
 
         // Available placeholders: ?, ??, ?s, ?i, ?f, ?b, ?r, ?n, ?a.
-        if ($format != null) {
+        if ($format) {
             return match ($format) {
                 '?'     => $this->escape($in),
                 '??'    => $this->escapeName($in),
@@ -779,14 +779,12 @@ final class Database
                 '?b'    => $in ? 'true' : 'false',
                 '?r'    => $in, // Raw input.
                 '?n'    => $this->escapeName($in),
-                '?a'    => join(', ', (array) $this->escape($in)), // Array input.
+                '?a'    => join(', ', (array) $this->escape($in)),
                 default => throw new DatabaseException('Unimplemented input format `%s`', $format)
             };
         }
 
-        $type = get_type($in);
-
-        return match ($type) {
+        return match ($type = get_type($in)) {
             'null'         => 'NULL',
             'string'       => $this->escapeString($in),
             'int', 'float' => $in,
