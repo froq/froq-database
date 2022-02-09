@@ -371,19 +371,19 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\common\exception\UnsupportedOperationException
+     * @throws froq\common\exception\UnsupportedOperationException
      */
     public function offsetSet(mixed $i, mixed $row): never
     {
-        throw new UnsupportedOperationException('No set() allowed for ' . self::class);
+        throw new UnsupportedOperationException('Cannot modify read-only object ' . self::class);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\common\exception\UnsupportedOperationException
+     * @throws froq\common\exception\UnsupportedOperationException
      */
     public function offsetUnset(mixed $i): never
     {
-        throw new UnsupportedOperationException('No unset() allowed for ' . self::class);
+        throw new UnsupportedOperationException('Cannot modify read-only object ' . self::class);
     }
 }
