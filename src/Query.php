@@ -1532,7 +1532,7 @@ final class Query
 
         // Dirty hijack..
         if ($order != null) {
-            $order = current((clone $this)->reset()->orderBy($order)->stack['order']);
+            $order = current($this->clone(true)->orderBy($order)->stack['order']);
             $order = ' ORDER BY ' . $order;
         }
 
@@ -1638,7 +1638,25 @@ final class Query
     }
 
     /**
-     * Reset current query stack.
+     * Clone query.
+     *
+     * @param  bool $reset
+     * @return self
+     */
+    public function clone(bool $reset = false): self
+    {
+        $that = new self($this->db);
+
+        if (!$reset) {
+            $that->key   = $this->key;
+            $that->stack = $this->stack;
+        }
+
+        return $that;
+    }
+
+    /**
+     * Reset current key & stack.
      *
      * @return self
      */
@@ -1673,7 +1691,7 @@ final class Query
     {
         if (isset($this->stack[$key])) {
             $value = $this->stack[$key];
-            if (isset($subkey) && isset($value[$subkey])) {
+            if (isset($subkey, $value[$subkey])) {
                 $value = $value[$subkey];
             }
             unset($this->stack[$key]);
@@ -1864,6 +1882,8 @@ final class Query
                                 $update = [$stack['insert'][0]];
                             }
 
+                            $that = $this->clone(true)->table('@');
+
                             // Handle PostgreSQL's stuff (eg: update => ['name', ..]).
                             if (is_list($update)) {
                                 $temp = $this->prepareFields($update);
@@ -1882,8 +1902,7 @@ final class Query
                                     }
                                 }
 
-                                $sets = ($that = clone $this)->reset()->table('@')
-                                      ->update($temp, false)->pull('update');
+                                $sets = $that->update($temp, false)->pull('update');
                             }
 
                             $ret .= ($driver == 'pgsql')
