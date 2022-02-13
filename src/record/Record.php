@@ -91,8 +91,8 @@ class Record implements RecordInterface
 
         // Validations can be combined or simple array'ed.
         if ($validations != null) {
-            isset($validations['@rules'])   && $validationRules   = array_pluck($validations, '@rules');
-            isset($validations['@options']) && $validationOptions = array_pluck($validations, '@options');
+            isset($validations['@rules'])   && $validationRules   = array_pull($validations, '@rules');
+            isset($validations['@options']) && $validationOptions = array_pull($validations, '@options');
 
             // Simple array'ed if no "@rules" field given.
             $validationRules ??= $validations;
