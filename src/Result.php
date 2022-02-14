@@ -347,7 +347,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * @inheritDoc IteratorAggregate
-     */
+     */ #[\ReturnTypeWillChange]
     public function getIterator(): iterable
     {
         return new ArrayIterator($this->toArray());
