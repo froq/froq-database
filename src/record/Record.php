@@ -452,11 +452,14 @@ class Record implements RecordInterface
         // Drop unwanted fields.
         if (isset($options['drop']) || $drop) {
             $fields = $options['drop'] ?? $drop;
+
+            // Collect null field keys.
             if ($fields == '@null') {
-                $fields = array_keys(array_filter($data, fn($v) => $v === null));
+                $fields = array_keys(array_filter($data, 'is_null');
             }
 
-            $fields = is_string($fields) ? explode(' ', $fields) : $fields;
+            // Comma-separated list.
+            $fields = is_string($fields) ? split('[, ]', $fields) : $fields;
             foreach ((array) $fields as $field) {
                 unset($data[$field]);
             }
