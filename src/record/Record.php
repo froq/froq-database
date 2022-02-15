@@ -455,7 +455,7 @@ class Record implements RecordInterface
 
             // Collect null field keys.
             if ($fields == '@null') {
-                $fields = array_keys(array_filter($data, 'is_null');
+                $fields = array_keys(array_filter($data, 'is_null'));
             }
 
             // Comma-separated list.
