@@ -268,7 +268,7 @@ abstract class AbstractObjectList implements ObjectListInterface
      */
     public function filter(callable $func, bool $keepKeys = false): self
     {
-        $this->items = Arrays::filter($this->items, $func, $keepKeys);
+        $this->items = Arrays::filter($this->items, $func, keepKeys: $keepKeys);
 
         return $this;
     }
