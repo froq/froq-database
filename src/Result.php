@@ -305,7 +305,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function filter(callable $func, bool $keepKeys = false): self
     {
-        $this->rows = Arrays::filter($this->rows, $func, $keepKeys);
+        $this->rows = Arrays::filter($this->rows, $func, keepKeys: $keepKeys);
 
         return $this;
     }
