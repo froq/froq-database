@@ -168,11 +168,11 @@ final class Query
     {
         // Eg: ('id:foo.id, ..').
         if (is_string($fields)) {
-            $parts  = mb_split('\s*,\s*', trim($fields, ', '));
+            $parts  = split('\s*,\s*', trim($fields, ', '));
             $fields = [];
 
             foreach ($parts as $part) {
-                [$key, $name] = mb_split('\s*:\s*', $part, 2);
+                [$key, $name] = split('\s*:\s*', $part, 2);
                 $fields[$key] = $name;
             }
 
@@ -448,7 +448,7 @@ final class Query
         }
 
         if (is_string($update) && $update != '*') {
-            $update = mb_split('\s+', $update);
+            $update = split('\s+', $update);
         }
 
         if ($update == null && $action == 'UPDATE') {
@@ -1122,8 +1122,8 @@ final class Query
         // Eg: ("id ASC") or ("id ASC, name DESC").
         if (strpos($field, ' ')) {
             $fields = [];
-            foreach (mb_split('\s*,\s*', $field) as $i => $field) {
-                @ [$field, $op] = mb_split('\s+', trim($field), 2);
+            foreach (split('\s*,\s*', $field) as $i => $field) {
+                @ [$field, $op] = split('\s+', trim($field), 2);
                 $fields[$i] = $this->prepareField($field) . $collate;
                 if ($op != null) {
                     $fields[$i] .= ' ' . $this->prepareOp($op, true);
