@@ -649,62 +649,62 @@ final class Database
     /**
      * Quote an input.
      *
-     * @param  string $in
+     * @param  string $input
      * @return string
      */
-    public function quote(string $in): string
+    public function quote(string $input): string
     {
-        return "'" . $in . "'";
+        return "'" . $input . "'";
     }
 
     /**
      * Quote a name input.
      *
-     * @param  string $in
+     * @param  string $input
      * @return string
      */
-    public function quoteName(string $in): string
+    public function quoteName(string $input): string
     {
-        if ($in == '*') {
-            return $in;
+        if ($input == '*') {
+            return $input;
         }
 
-        if ($in && $in[0] == '@') {
-            $in = substr($in, 1);
+        if ($input && $input[0] == '@') {
+            $input = substr($input, 1);
         }
 
         // For row(..) or other parenthesis stuff.
-        if (strpos($in, '(') === 0) {
-            $rpos = strpos($in, ')'); // Not parsed array[(foo, ..)] stuff, sorry.
-            $rpos || throw new DatabaseException('Unclosed parenthesis in `%s` input', $in);
+        if (strpos($input, '(') === 0) {
+            $rpos = strpos($input, ')'); // Not parsed array[(foo, ..)] stuff, sorry.
+            $rpos || throw new DatabaseException('Unclosed parenthesis in `%s` input', $input);
 
-            $name = substr($in, 1, $rpos - 1); // Eg: part foo of (foo).
-            $rest = substr($in, $rpos + 1) ?: ''; // Eg: part ::int of (foo)::int.
+            $name = substr($input, 1, $rpos - 1); // Eg: part foo of (foo).
+            $rest = substr($input, $rpos + 1) ?: ''; // Eg: part ::int of (foo)::int.
 
             return '(' . $this->quoteNames($name) . ')' . $rest;
         }
 
         // Dot notations (eg: foo.id => "foo"."id").
-        $pos = strpos($in, '.');
+        $pos = strpos($input, '.');
         if ($pos) {
-            return $this->quoteNames(substr($in, 0, $pos)) . '.' .
-                   $this->quoteNames(substr($in, $pos + 1));
+            return $this->quoteNames(substr($input, 0, $pos)) . '.' .
+                   $this->quoteNames(substr($input, $pos + 1));
         }
 
         $driver = $this->link->driver();
         if ($driver == 'pgsql') {
             // Cast notations (eg: foo::int).
-            if ($pos = strpos($in, '::')) {
-                return $this->quoteName(substr($in, 0, $pos)) . substr($in, $pos);
+            if ($pos = strpos($input, '::')) {
+                return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
             }
 
             // Array notations (eg: foo[], foo[1] or array[foo, bar]).
-            if ($pos = strpos($in, '[')) {
-                $name = substr($in, 0, $pos);
-                $rest = substr($in, $pos + 1);
+            if ($pos = strpos($input, '[')) {
+                $name = substr($input, 0, $pos);
+                $rest = substr($input, $pos + 1);
                 $last = '';
                 if (strpos($rest, ']')) {
-                    $rest = substr($in, $pos + 1, -1);
+                    $rest = substr($input, $pos + 1, -1);
                     $last = ']';
                 }
 
@@ -715,27 +715,27 @@ final class Database
         }
 
         return match ($driver) {
-            'mysql' => '`' . trim($in, '`')  . '`',
-            'mssql' => '[' . trim($in, '[]') . ']',
-            default => '"' . trim($in, '"')  . '"'
+            'mysql' => '`' . trim($input, '`')  . '`',
+            'mssql' => '[' . trim($input, '[]') . ']',
+            default => '"' . trim($input, '"')  . '"'
         };
     }
 
     /**
      * Quote names in given input.
      *
-     * @param  string $in
+     * @param  string $input
      * @return string
      * @since  4.14
      */
-    public function quoteNames(string $in): string
+    public function quoteNames(string $input): string
     {
         // Eg: "id, name ..." or "id as ID, ...".
-        preg_match_all('~([^\s,]+)~i', $in, $match);
+        preg_match_all('~([^\s,]+)~i', $input, $match);
 
         $names = array_filter($match[1], 'strlen');
         if (!$names) {
-            return $in;
+            return $input;
         }
 
         foreach ($names as $i => $name) {
@@ -748,119 +748,131 @@ final class Database
     /**
      * Escape an input with/without given format.
      *
-     * @param  any         $in
+     * @param  mixed       $input
      * @param  string|null $format
-     * @return any
+     * @return mixed
      * @throws froq\database\DatabaseException
      */
-    public function escape($in, string $format = null)
+    public function escape(mixed $input, string $format = null): mixed
     {
-        if (is_array($in) && $format != '?a') {
-            return array_map(fn($in) => $this->escape($in, $format), $in);
+        if (is_array($input) && $format != '?a') {
+            return array_map(fn($input) => $this->escape($input, $format), $input);
         }
-        if (is_object($in)) {
+
+        if (is_object($input)) {
             return match (true) {
-                ($in instanceof Sql)   => $in->content(),
-                ($in instanceof Name)  => $this->escapeName($in->content()),
-                ($in instanceof Query) => '(' . $in->toString() . ')',
-                default                => throw new DatabaseException('Invalid input object `%s`,'
-                    . ' valids are: Query, sql\{Sql, Name}', $in::class)
+                ($input instanceof Sql)   => $input->content(),
+                ($input instanceof Name)  => $this->escapeName($input->content()),
+                ($input instanceof Query) => '(' . $input->toString() . ')',
+
+                default => throw new DatabaseException(
+                    'Invalid input object `%s` [valids: Query, sql\{Sql, Name}]',
+                    $input::class
+                )
             };
         }
 
-        // Available placeholders: ?, ??, ?s, ?i, ?f, ?b, ?r, ?n, ?a.
+        // Available formats: ?, ??, ?s, ?i, ?f, ?b, ?r, ?n, ?a.
         if ($format) {
             return match ($format) {
-                '?'     => $this->escape($in),
-                '??'    => $this->escapeName($in),
-                '?s'    => $this->escapeString((string) $in),
-                '?i'    => (int) $in,
-                '?f'    => (float) $in,
-                '?b'    => $in ? 'true' : 'false',
-                '?r'    => $in, // Raw input.
-                '?n'    => $this->escapeName($in),
-                '?a'    => join(', ', (array) $this->escape($in)),
-                default => throw new DatabaseException('Unimplemented input format `%s`', $format)
+                '?'  => $this->escape($input),
+                '??' => $this->escapeName($input),
+                '?s' => $this->escapeString((string) $input),
+                '?i' => (int) $input,
+                '?f' => (float) $input,
+                '?b' => $input ? 'true' : 'false',
+                '?r' => $input, // Raw input.
+                '?n' => $this->escapeName($input),
+                '?a' => join(', ', (array) $this->escape($input)),
+
+                default => throw new DatabaseException(
+                    'Unimplemented input format `%s`', $format
+                )
             };
         }
 
-        return match ($type = get_type($in)) {
+        $type = get_type($input);
+
+        return match ($type) {
             'null'         => 'NULL',
-            'string'       => $this->escapeString($in),
-            'int', 'float' => $in,
-            'bool'         => $in ? 'true' : 'false',
-            default        => throw new DatabaseException('Unimplemented input type `%s`', $type)
+            'string'       => $this->escapeString($input),
+            'int', 'float' => $input,
+            'bool'         => $input ? 'true' : 'false',
+
+            default => throw new DatabaseException(
+                'Unimplemented input type `%s`', $type
+            )
         };
     }
 
     /**
      * Escape a string input.
      *
-     * @param  string $in
+     * @param  string $input
      * @param  bool   $quote
      * @param  string $extra
      * @return string
      */
-    public function escapeString(string $in, bool $quote = true, string $extra = ''): string
+    public function escapeString(string $input, bool $quote = true, string $extra = ''): string
     {
-        $out = $this->link->pdo()->quote($in);
+        $input = $this->link->pdo()->quote($input);
 
-        $quote || $out = trim($out, "'");
-        $extra && $out = addcslashes($out, $extra);
+        $quote || $input = trim($input, "'");
+        $extra && $input = addcslashes($input, $extra);
 
-        return $out;
+        return $input;
     }
 
     /**
      * Escape like string input.
      *
-     * @param  string $in
+     * @param  string $input
      * @param  bool   $quote
      * @return string
      */
-    public function escapeLikeString(string $in, bool $quote = true): string
+    public function escapeLikeString(string $input, bool $quote = true): string
     {
-        return $this->escapeString($in, $quote, '%_');
+        return $this->escapeString($input, $quote, '%_');
     }
 
     /**
      * Escape a name input.
      *
-     * @param  string $in
+     * @param  string $input
      * @return string
      */
-    public function escapeName(string $in): string
+    public function escapeName(string $input): string
     {
-        $in = match ($this->link->driver()) {
-            'mysql' => str_replace('`', '``', $in),
-            'mssql' => str_replace(']', ']]', $in),
-            default => str_replace('"', '""', $in)
+        $input = match ($this->link->driver()) {
+            'mysql' => str_replace('`', '``', $input),
+            'mssql' => str_replace(']', ']]', $input),
+            default => str_replace('"', '""', $input)
         };
 
-        return $this->quoteName($in);
+        return $this->quoteName($input);
     }
 
     /**
      * Escape names in given input.
      *
-     * @param  string $in
+     * @param  string $input
      * @return string
      */
-    public function escapeNames(string $in): string
+    public function escapeNames(string $input): string
     {
         // Eg: "id, name ..." or "id as ID, ...".
-        preg_match_all('~([^\s,]+)(?:\s+(?:(AS)\s+)?([^\s,]+))?~i', $in, $match);
+        preg_match_all('~([^\s,]+)(?:\s+(?:(AS)\s+)?([^\s,]+))?~i', $input, $match);
 
         $names = array_filter($match[1], 'strlen');
         if (!$names) {
-            return $in;
+            return $input;
         }
 
         $aliases = array_filter($match[3], 'strlen');
         foreach ($names as $i => $name) {
             $names[$i] = $this->escapeName($name);
             if (isset($aliases[$i])) {
-                $names[$i] .= ' AS '. $this->escapeName($aliases[$i]);
+                $names[$i] .= ' AS ' . $this->escapeName($aliases[$i]);
             }
         }
 
@@ -870,17 +882,17 @@ final class Database
     /**
      * Prepare given input returning a string output.
      *
-     * @param  string     $in
+     * @param  string     $input
      * @param  array|null $params
      * @return string
      * @throws froq\database\DatabaseException
      */
-    public function prepare(string $in, array $params = null): string
+    public function prepare(string $input, array $params = null): string
     {
-        $out = $this->prepareNameInput($in);
-        $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
+        $input = $this->prepareNameInput($input);
+        $input || throw new DatabaseException('Empty input');
 
-        // Available placeholders are "?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a / :foo, :foo_bar".
+        // Available placeholders: ?, ?? / ?s, ?i, ?f, ?b, ?n, ?r, ?a / :foo, :foo_bar.
         static $pattern = '~
             # Scalars/(n)ame/(r)aw. Eg: ("id = ?i", ["1"]) or ("?n = ?i", ["id", "1"]).
             \?[sifbnra](?![\w])
@@ -892,7 +904,7 @@ final class Database
             | (?<!:):\w+
         ~x';
 
-        if (preg_match_all($pattern, $out, $match)) {
+        if (preg_match_all($pattern, $input, $match)) {
             if ($params == null) {
                 throw new DatabaseException('Empty input parameters given to %s(), non-empty input parameters'
                     . ' required when input contains parameter placeholders like ?, ?? or :foo', __method__);
@@ -902,7 +914,7 @@ final class Database
             $keys = $values = $used = [];
             $holders = array_filter($match[0]);
 
-            // For those usages, eg: ('id = ?1 OR id = ?1', [123]).
+            // Eg: ('id = ?1 OR id = ?1', [123]) or ('id = ?1i', [123]).
             foreach ($holders as $ii => $holder) {
                 $pos = $holder[1] ?? '';
                 if (ctype_digit($pos)) {
@@ -915,8 +927,8 @@ final class Database
                     $format && $format = '?' . $format;
 
                     $value = $this->escape($params[$ipos], $format);
-                    while (($pos = strpos($out, $holder)) !== false) {
-                        $out = substr_replace($out, strval($value), $pos, strlen($holder));
+                    while (($pos = strpos($input, $holder)) !== false) {
+                        $input = substr_replace($input, strval($value), $pos, strlen($holder));
                         array_push($used, $ipos);
                     }
 
@@ -964,41 +976,41 @@ final class Database
                 }
             }
 
-            $out = preg_replace($keys, $values, $out, 1);
+            $input = preg_replace($keys, $values, $input, 1);
         }
 
-        return $out;
+        return $input;
     }
 
     /**
      * Prepare given input returning a string output with escaped names.
      *
-     * @param  string $in
+     * @param  string $input
      * @return string
      * @since  5.0
      */
-    public function prepareName(string $in): string
+    public function prepareName(string $input): string
     {
-        $out = $this->prepareNameInput($in);
-        $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
+        $input = $this->prepareNameInput($input);
+        $input || throw new DatabaseException('Empty input');
 
-        return $out;
+        return $input;
     }
 
     /**
      * Prepare statement input returning a `PDOStatement` object.
      *
-     * @param  string $in
+     * @param  string $input
      * @return PDOStatement
      * @throws froq\database\DatabaseException
      */
-    public function prepareStatement(string $in): PDOStatement
+    public function prepareStatement(string $input): PDOStatement
     {
-        $out = $this->prepareNameInput($in);
-        $out || throw new DatabaseException('Empty input given to %s() for preparation', __method__);
+        $input = $this->prepareNameInput($input);
+        $input || throw new DatabaseException('Empty input');
 
         try {
-            return $this->link->pdo()->prepare($out);
+            return $this->link->pdo()->prepare($input);
         } catch (PDOException $e) {
             throw new DatabaseException($e);
         }
@@ -1007,15 +1019,15 @@ final class Database
     /**
      * Init a `Sql` object with/without given params.
      *
-     * @param  string     $in
+     * @param  string     $input
      * @param  array|null $params
      * @return froq\database\sql\Sql
      */
-    public function initSql(string $in, array $params = null): Sql
+    public function initSql(string $input, array $params = null): Sql
     {
-        $params && $in = $this->prepare($in, $params);
+        $params && $input = $this->prepare($input, $params);
 
-        return new Sql($in);
+        return new Sql($input);
     }
 
     /**
@@ -1047,42 +1059,42 @@ final class Database
     /**
      * Prepare a prepare input escaping names only (eg: @id => "id").
      *
-     * @param  string $in
+     * @param  string $input
      * @return string
      */
-    private function prepareNameInput(string $in): string
+    private function prepareNameInput(string $input): string
     {
-        $out = trim($in);
+        $input = trim($input);
 
-        if ($out != '') {
+        if ($input != '') {
             // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
-            $pos = strpos($out, '@');
+            $pos = strpos($input, '@');
             if ($pos !== false) {
-                $out = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
+                $input = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
                     if (count($match) == 1) {
                         return $this->escapeNames(substr($match[0], 2, -1));
                     }
                     return $this->escapeName($match[1]);
-                }, $out);
+                }, $input);
             }
         }
 
-        return $out;
+        return $input;
     }
 
     /**
      * Prepare a where input.
      *
-     * @param  string|array $in
+     * @param  string|array $input
      * @param  array|null   $params
      * @param  string|null  $op
      * @return array
      * @since  4.15
      * @throws froq\database\DatabaseException
      */
-    private function prepareWhereInput(string|array $in, array $params = null, string $op = null): array
+    private function prepareWhereInput(string|array $input, array $params = null, string $op = null): array
     {
-        $where = $in;
+        $where = $input;
 
         if ($where != null) {
             if (is_string($where)) {
