@@ -52,13 +52,13 @@ class Repository
     /**
      * Init a `Sql` object with/without given params argument.
      *
-     * @param  string     $in
+     * @param  string     $input
      * @param  array|null $params
      * @return froq\database\sql\Sql
      */
-    public final function sql(string $in, array $params = null): Sql
+    public final function sql(string $input, array $params = null): Sql
     {
-        return $this->db->initSql($in, $params);
+        return $this->db->initSql($input, $params);
     }
 
     /**
