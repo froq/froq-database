@@ -1598,24 +1598,24 @@ final class Query
     /**
      * Create an Sql instance for a raw query/clause/statement.
      *
-     * @param  string     $in
+     * @param  string     $input
      * @param  array|null $params
      * @return froq\database\sql\Sql
      */
-    public function sql(string $in, array $params = null): Sql
+    public function sql(string $input, array $params = null): Sql
     {
-        return new Sql($this->prepare($in, $params));
+        return new Sql($this->prepare($input, $params));
     }
 
     /**
      * Create a Name instance for an identifier (table, field etc).
      *
-     * @param  string $in
+     * @param  string $input
      * @return froq\database\sql\Name
      */
-    public function name(string $in): Name
+    public function name(string $input): Name
     {
-        return new Name($in);
+        return new Name($input);
     }
 
     /**
@@ -2046,52 +2046,52 @@ final class Query
     /**
      * Escape an input.
      *
-     * @param  any         $in
+     * @param  mixed       $input
      * @param  string|null $format
-     * @return any
+     * @return mixed
      */
-    public function escape($in, string $format = null)
+    public function escape(mixed $input, string $format = null): mixed
     {
-        return $this->db->escape($in, $format);
+        return $this->db->escape($input, $format);
     }
 
     /**
      * Escape a name input.
      *
-     * @param  string $in
+     * @param  string $input
      * @return string
      */
-    public function escapeName(string $in): string
+    public function escapeName(string $input): string
     {
-        return $this->db->escapeName($in);
+        return $this->db->escapeName($input);
     }
 
     /**
      * Prepare an input.
      *
-     * @param  string           $in
+     * @param  string           $input
      * @param  array|Query|null $params
      * @return string
      * @throws froq\database\QueryException
      */
-    public function prepare(string $in, array|Query $params = null): string
+    public function prepare(string $input, array|Query $params = null): string
     {
         if ($params && $params instanceof Query) {
             $params = [$params->toString()];
         }
 
-        $out = trim($in);
+        $input = trim($input);
 
-        if ($out === '') {
+        if ($input === '') {
             throw new QueryException('Empty input given');
         }
 
         // Check names (eg: '@id ..', 1 or '@[id, ..]').
-        if (str_contains($in, '@')) {
-            return $this->db->prepare($out, $params);
+        if (str_contains($input, '@')) {
+            return $this->db->prepare($input, $params);
         }
 
-        return $params ? $this->db->prepare($out, $params) : $out;
+        return $params ? $this->db->prepare($input, $params) : $input;
     }
 
     /**
