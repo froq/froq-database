@@ -1169,7 +1169,7 @@ final class Query
     public function limit(int $limit, int $offset = null): self
     {
         return ($offset === null) ? $this->add('limit', abs($limit), false)
-            : $this->add('limit', abs($limit), false)->add('offset', abs($offset), false);
+             : $this->add('limit', abs($limit), false)->add('offset', abs($offset), false);
     }
 
     /**
@@ -1596,7 +1596,7 @@ final class Query
     }
 
     /**
-     * Create an Sql instance for a raw query/clause/statement.
+     * Init a `Sql` instance for a raw query/clause/statement.
      *
      * @param  string     $input
      * @param  array|null $params
@@ -1608,7 +1608,7 @@ final class Query
     }
 
     /**
-     * Create a Name instance for an identifier (table, field etc).
+     * Init a `Name` instance for an identifier (table, field etc).
      *
      * @param  string $input
      * @return froq\database\sql\Name
@@ -1976,9 +1976,9 @@ final class Query
                     } else {
                         $ws = ''; $wsi = 0;
                         foreach ($wheres as $i => [$where, $op]) {
-                            $nx   = ($wheres[$i + 1] ?? null);
-                            $nxnx = ($wheres[$i + 2] ?? null);
-                            $nxop = ($nx[1] ?? '');
+                            $nx   = $wheres[$i + 1] ?? null;
+                            $nxnx = $wheres[$i + 2] ?? null;
+                            $nxop = $nx[1] ?? '';
 
                             $ws .= $where;
                             if ($nx) {
@@ -2081,8 +2081,7 @@ final class Query
         }
 
         $input = trim($input);
-
-        if ($input === '') {
+        if ($input == '') {
             throw new QueryException('Empty input given');
         }
 
@@ -2104,8 +2103,7 @@ final class Query
     public function prepareField(string $field): string
     {
         $field = trim($field);
-
-        if ($field === '') {
+        if ($field == '') {
             throw new QueryException('Empty field given');
         }
 
@@ -2131,8 +2129,7 @@ final class Query
         }
 
         $fields = trim($fields);
-
-        if ($fields === '') {
+        if ($fields == '') {
             throw new QueryException('Empty fields given');
         }
 
@@ -2286,8 +2283,10 @@ final class Query
     {
         if (!isset($this->stack[$key])) {
             $op = substr(trim($value), 0, strpos(trim($value), ' '));
-            throw new QueryException('No `%s` statement yet in query stack to apply `%s` operator, call'
-                . ' %s() first to apply', [$key, $op, $key]);
+            throw new QueryException(
+                'No `%s` statement yet in query stack to apply `%s` operator, '.
+                'call %s() first to apply', [$key, $op, $key]
+            );
         }
 
         $this->stack[$key][count($this->stack[$key]) - 1][1] = $value;
