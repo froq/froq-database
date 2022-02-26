@@ -317,7 +317,7 @@ final class Database
     public function insert(string $table, array $data, array $options = null)
     {
         $return = $fetch = $batch = $conflict = $sequence = null;
-        if ($options != null) {
+        if ($options) {
             [$return, $fetch, $batch, $conflict, $sequence] = array_select(
                 $options, ['return', 'fetch', 'batch', 'conflict', 'sequence']
             );
@@ -396,7 +396,7 @@ final class Database
         string $op = null)
     {
         $return = $fetch = $batch = $limit = null;
-        if ($options != null) {
+        if ($options) {
             [$return, $fetch, $batch, $limit] = array_select(
                 $options, ['return', 'fetch', 'batch', 'limit']
             );
@@ -445,7 +445,7 @@ final class Database
         string $op = null)
     {
         $return = $fetch = $batch = $limit = null;
-        if ($options != null) {
+        if ($options) {
             [$return, $fetch, $batch, $limit] = array_select(
                 $options, ['return', 'fetch', 'batch', 'limit']
             );
@@ -526,7 +526,7 @@ final class Database
         array $params = null, array $options = null)
     {
         $return = $fetch = $batch = $limit = null;
-        if ($options != null) {
+        if ($options) {
             [$return, $fetch, $batch, $limit] = array_select(
                 $options, ['return', 'fetch', 'batch', 'limit']
             );
@@ -576,7 +576,7 @@ final class Database
         array $params = null, array $options = null)
     {
         $return = $fetch = $batch = $limit = null;
-        if ($options != null) {
+        if ($options) {
             [$return, $fetch, $batch, $limit] = array_select(
                 $options, ['return', 'fetch', 'batch', 'limit']
             );
@@ -624,7 +624,7 @@ final class Database
         $transaction = new Transaction($this->link->pdo());
 
         // Return transaction object.
-        if ($call == null) {
+        if (!$call) {
             return $transaction;
         }
 
@@ -638,7 +638,7 @@ final class Database
             $transaction->rollback();
 
             // Block throw.
-            if ($callError != null) {
+            if ($callError) {
                 return $callError($e, $this);
             }
 
@@ -905,9 +905,11 @@ final class Database
         ~x';
 
         if (preg_match_all($pattern, $input, $match)) {
-            if ($params == null) {
-                throw new DatabaseException('Empty input parameters given to %s(), non-empty input parameters'
-                    . ' required when input contains parameter placeholders like ?, ?? or :foo', __method__);
+            if (!$params) {
+                throw new DatabaseException(
+                    'Empty input parameters (input parameters required when '.
+                    'input contains parameter placeholders like ?, ?? or :foo)'
+                );
             }
 
             $i = 0;
@@ -938,7 +940,7 @@ final class Database
             }
 
             // Drop used items by their indexes & re-form params.
-            if ($used != null) {
+            if ($used) {
                 array_unset($params, ...$used);
                 $params = array_slice($params, 0);
             }
@@ -971,7 +973,7 @@ final class Database
                         $value = join(', ', $value);
                     }
 
-                    $keys[]   = '~' . preg_quote($holder) . '(?![|&])~'; // PgSQL operators.
+                    $keys[]   = '~' . preg_quote($holder) . '(?![&|])~'; // PgSQL operators.
                     $values[] = $value;
                 }
             }
@@ -1096,7 +1098,7 @@ final class Database
     {
         $where = $input;
 
-        if ($where != null) {
+        if ($where) {
             if (is_string($where)) {
                 $where  = trim($where);
                 $params = (array) $params;
@@ -1127,9 +1129,9 @@ final class Database
                     // );
 
                     if (is_array($value)) {
-                        $value = !str_contains($sign, '!')
-                            ? new Sql('IN (' . join(', ', $this->escape($value)) . ')')
-                            : new Sql('NOT IN (' . join(', ', $this->escape($value)) . ')');
+                        $value = str_contains($sign, '!')
+                            ? new Sql('NOT IN (' . join(', ', $this->escape($value)) . ')')
+                            : new Sql('IN (' . join(', ', $this->escape($value)) . ')');
                         $sign  = ' ';
                     }
 
