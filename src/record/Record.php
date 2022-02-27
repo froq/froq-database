@@ -401,9 +401,11 @@ class Record implements RecordInterface
         }
 
         $data ??= $this->getData() ?: $this->getFormData();
-        if ($data == null) {
-            throw new RecordException('No data given yet for save(), call setData() or load() first or '
-                . ' try calling save($data)');
+        if (empty($data)) {
+            throw new RecordException(
+                'No data given yet for save(), call setData() or load() '.
+                'first or pass $data argument to save()'
+            );
         }
 
         // When primary given id() or setId() before.
@@ -419,8 +421,11 @@ class Record implements RecordInterface
 
         // Run validation.
         if ($_validate && !$this->isValid($data, $errors, $options)) {
-            throw new ValidationError('Cannot save record (%s), validation failed [tip: run save()'
-                . ' in a try/catch block and use errors() to see error details]', $this::class, errors: $errors);
+            throw new ValidationError(
+                'Cannot save record (%s), validation failed [tip: run save() '.
+                'in a try/catch block and use errors() to see error details]',
+                static::class, errors: $errors
+            );
         }
 
         // Detect insert/update.
@@ -429,7 +434,7 @@ class Record implements RecordInterface
         // Check id validity.
         if (!$new) {
             $id = $data[$primary] ?? null;
-            $id || throw new RecordException('Empty primary value given for save()');
+            $id || throw new RecordException('Empty primary value');
         } else {
             unset($data[$primary]);
         }
@@ -497,7 +502,7 @@ class Record implements RecordInterface
 
         [$table, $primary, $id] = $this->pack($id, primary: true);
 
-        $id || throw new RecordException('Empty primary value given for find()');
+        $id || throw new RecordException('Empty primary value');
 
         $query = $this->query()->equal($primary, $id);
         $where = $this->query->pull('where');
@@ -537,7 +542,7 @@ class Record implements RecordInterface
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
-        $ids || throw new RecordException('Empty primary values given for findAll()');
+        $ids || throw new RecordException('Empty primary values');
 
         $query = $this->query()->equal($primary, [$ids]);
         $where = $this->query->pull('where');
@@ -576,7 +581,7 @@ class Record implements RecordInterface
 
         [$table, $primary, $id] = $this->pack($id, primary: true);
 
-        $id || throw new RecordException('Empty primary value given for remove()');
+        $id || throw new RecordException('Empty primary value');
 
         $query = $this->query()->equal($primary, $id);
 
@@ -625,7 +630,7 @@ class Record implements RecordInterface
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
-        $ids || throw new RecordException('Empty primary values given for removeAll()');
+        $ids || throw new RecordException('Empty primary values');
 
         $query = $this->query()->equal($primary, [$ids]);
         $where = $this->query->pull('where');
@@ -840,12 +845,16 @@ class Record implements RecordInterface
     private function pack(int|string|array $id = null, bool $primary = false): array
     {
         if (empty($this->table)) {
-            throw new RecordException('No $table property defined on %s class, call setTable()',
-                static::class);
+            throw new RecordException(
+                'No $table property defined on %s class, call setTable()',
+                static::class
+            );
         }
         if ($primary && empty($this->tablePrimary)) {
-            throw new RecordException('No $tablePrimary property defined on %s class, call setTablePrimary()',
-                static::class);
+            throw new RecordException(
+                'No $tablePrimary property defined on %s class, call setTablePrimary()',
+                static::class
+            );
         }
 
         return [$this->table, $this->tablePrimary ?? null, $id];
