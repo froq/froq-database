@@ -31,20 +31,20 @@ abstract class AbstractSql
     public function __construct(string $content)
     {
         $content = trim($content);
-
-        if ($content === '') {
-            throw new SqlException('Empty content given to `%s` object', static::class);
+        if ($content == '') {
+            throw new SqlException(
+                'Empty content given to `%s` object',
+                static::class
+            );
         }
 
         $this->content = $content;
     }
 
-    /**
-     * Magic - string.
-     */
-    public function __toString()
+    /** @magic */
+    public function __toString(): string
     {
-        return $this->content();
+        return $this->content;
     }
 
     /**
