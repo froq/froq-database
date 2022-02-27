@@ -179,12 +179,12 @@ final class Query
             unset($parts, $part);
         }
 
-        $list = isset($fields[0]); // Simple check for set/map array.
+        $list = is_list($fields);
 
         $func = match ($this->db->link()->driver()) {
             'pgsql' => $list ? 'json_build_array' : 'json_build_object',
             'mysql' => $list ? 'json_array'       : 'json_object',
-            default => throw new QueryException('Method %s() available for PgSQL & MySQL only', __method__)
+            default => throw new QueryException('Method selectJson() available for PgSQL & MySQL only')
         };
 
         if ($list) {
