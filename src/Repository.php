@@ -41,7 +41,7 @@ class Repository
     {
         // Try to use active app database object.
         $db ??= function_exists('app') ? app()->database() : throw new RepositoryException(
-            'No database given to deal, be sure running this module with `froq\app` ' .
+            'No database given to deal, be sure running this module with `froq\app` '.
             'module and be sure `database` option exists in app config or pass $db argument'
         );
 
