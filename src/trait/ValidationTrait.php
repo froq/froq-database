@@ -25,11 +25,11 @@ trait ValidationTrait
     /** @var array, array */
     protected array $validationRules, $validationOptions;
 
-    /** @var array|null */
-    protected array|null $validationErrors = null;
+    /** @var ?array */
+    protected ?array $validationErrors = null;
 
-    /** @var bool|null */
-    protected bool|null $validated = null;
+    /** @var ?bool */
+    protected ?bool $validated = null;
 
     /**
      * Get validated state.
@@ -179,7 +179,7 @@ trait ValidationTrait
     {
         $rules || throw new Exception(
             'No validation rules set yet, call setValidationRules() or '.
-            'define $validationRules property on class %s '. static::class
+            'define $validationRules property on class '. static::class
         );
 
         $errors = null;
