@@ -26,7 +26,7 @@ final class Profiler
     /** @var int */
     private int $queryCount = 0;
 
-    /** @var array @since 5.0 */
+    /** @var array */
     private static array $marks;
 
     /**
@@ -211,7 +211,10 @@ final class Profiler
     public static function mark(string $name): float
     {
         if (isset(self::$marks[$name])) {
-            throw new ProfilerException('Existing mark name `%s` given, call unmark() to drop it', $name);
+            throw new ProfilerException(
+                'Existing mark name `%s` given, call unmark() to drop it',
+                $name
+            );
         }
 
         return self::$marks[$name] = microtime(true);
@@ -228,7 +231,10 @@ final class Profiler
     public static function unmark(string $name): float
     {
         if (!isset(self::$marks[$name])) {
-            throw new ProfilerException('Could not find a mark with given name `%s`', $name);
+            throw new ProfilerException(
+                'Could not find a mark with given name `%s`',
+                $name
+            );
         }
 
         $time = round(microtime(true) - self::$marks[$name], 10);
@@ -249,16 +255,23 @@ final class Profiler
         $start = microtime(true);
         switch ($mark) {
             case 'connection':
-                $this->profiles[$mark] = ['start' => $start, 'end' => 0.0, 'time' => 0.0];
+                $this->profiles[$mark] = [
+                    'start' => $start, 'end' => 0.0, 'time' => 0.0
+                ];
                 break;
             case 'query':
                 $i = $this->queryCount;
                 if (isset($this->profiles[$mark][$i])) {
-                    $this->profiles[$mark][$i] += ['start' => $start, 'end' => 0.0, 'time' => 0.0];
+                    $this->profiles[$mark][$i] += [
+                        'start' => $start, 'end' => 0.0, 'time' => 0.0
+                    ];
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid mark `%s`, valids are: connection, query', $mark);
+                throw new ProfilerException(
+                    'Invalid mark `%s`, valids are: connection, query',
+                    $mark
+                );
         }
     }
 
@@ -272,24 +285,35 @@ final class Profiler
     private function end(string $mark): void
     {
         if (!isset($this->profiles[$mark])) {
-            throw new ProfilerException('Could not find a profile with given `%s` mark', $mark);
+            throw new ProfilerException(
+                'Could not find a profile with given `%s` mark',
+                $mark
+            );
         }
 
         $end = microtime(true);
+
         switch ($mark) {
             case 'connection':
+                $time = round($end - $this->profiles[$mark]['start'], 10);
+
                 $this->profiles[$mark]['end']  = $end;
-                $this->profiles[$mark]['time'] = round($end - $this->profiles[$mark]['start'], 10);
+                $this->profiles[$mark]['time'] = $time;
                 break;
             case 'query':
                 $i = $this->queryCount;
                 if (isset($this->profiles[$mark][$i])) {
+                    $time = round($end - $this->profiles[$mark][$i]['start'], 10);
+
                     $this->profiles[$mark][$i]['end']  = $end;
-                    $this->profiles[$mark][$i]['time'] = round($end - $this->profiles[$mark][$i]['start'], 10);
+                    $this->profiles[$mark][$i]['time'] = $time;
                 }
                 break;
             default:
-                throw new ProfilerException('Invalid mark `%s`, valids are: connection, query', $mark);
+                throw new ProfilerException(
+                    'Invalid mark `%s`, valids are: connection, query',
+                    $mark
+                );
         }
     }
 }
