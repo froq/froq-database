@@ -7,11 +7,10 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\ResultException;
+use froq\common\interface\{Arrayable, Listable, Objectable};
 use froq\common\exception\UnsupportedOperationException;
 use froq\collection\Collection;
-use froq\util\Arrays;
-use PDO, PDOStatement, PDOException, ArrayIterator, Countable, IteratorAggregate, ArrayAccess;
+use PDO, PDOStatement, PDOException;
 
 /**
  * Result.
@@ -21,7 +20,7 @@ use PDO, PDOStatement, PDOException, ArrayIterator, Countable, IteratorAggregate
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Result implements Countable, IteratorAggregate, ArrayAccess
+final class Result implements Arrayable, Listable, Objectable, \Countable, \IteratorAggregate, \ArrayAccess
 {
     /** @const array */
     public const FETCH_TYPES = ['array', 'object', 'class'];
@@ -29,11 +28,11 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /** @var int */
     private int $count = 0;
 
-    /** @var array<int>|null */
-    private array|null $ids = null;
+    /** @var ?array<int> */
+    private ?array $ids = null;
 
-    /** @var array<array|object>|null */
-    private array|null $rows = null;
+    /** @var ?array<array|object> */
+    private ?array $rows = null;
 
     /**
      * Constructor.
@@ -158,9 +157,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     }
 
     /**
-     * Get rows as array.
-     *
-     * @return array<array|object>
+     * @inheritDoc froq\common\interface\Arrayable
      */
     public function toArray(): array
     {
@@ -168,9 +165,15 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     }
 
     /**
-     * Get rows as object.
-     *
-     * @return array<object>
+     * @inheritDoc froq\common\interface\Listable
+     */
+    public function toList(): array
+    {
+        return array_list($this->toArray());
+    }
+
+    /**
+     * @inheritDoc froq\common\interface\Objectable
      */
     public function toObject(): array
     {
@@ -213,7 +216,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     }
 
     /**
-     * Create a collection with rows, for map/filter etc.
+     * Create a collection with rows.
      *
      * @return froq\collection\Collection
      * @since  5.0
@@ -296,7 +299,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function each(callable $func): self
     {
-        Arrays::each($this->rows, $func);
+        each($this->rows, $func);
 
         return $this;
     }
@@ -305,13 +308,12 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      * Filter.
      *
      * @param  callable $func
-     * @param  bool     $keepKeys
      * @return self
      * @since  5.0
      */
-    public function filter(callable $func, bool $keepKeys = false): self
+    public function filter(callable $func): self
     {
-        $this->rows = Arrays::filter($this->rows, $func, keepKeys: $keepKeys);
+        $this->rows = array_filter($this->rows, $func);
 
         return $this;
     }
@@ -325,7 +327,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function map(callable $func): self
     {
-        $this->rows = Arrays::map($this->rows, $func);
+        $this->rows = array_map($func, $this->rows);
 
         return $this;
     }
@@ -333,14 +335,27 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /**
      * Reduce.
      *
-     * @param  any      $carry
+     * @param  mixed    $carry
      * @param  callable $func
-     * @return any
+     * @return mixed
      * @since  5.0
      */
-    public function reduce($carry, callable $func)
+    public function reduce(mixed $carry, callable $func): mixed
     {
-        return Arrays::reduce($this->rows, $carry, $func);
+        return array_reduce($this->rows, $func, $carry);
+    }
+
+    /**
+     * Reverse.
+     *
+     * @return self
+     * @since  6.0
+     */
+    public function reverse(): self
+    {
+        $this->rows = array_reverse($this->rows);
+
+        return $this;
     }
 
     /**
@@ -356,7 +371,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */ #[\ReturnTypeWillChange]
     public function getIterator(): iterable
     {
-        return new ArrayIterator($this->toArray());
+        return new \ArrayIterator($this->toArray());
     }
 
     /**
@@ -381,7 +396,7 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function offsetSet(mixed $i, mixed $row): never
     {
-        throw new UnsupportedOperationException('Cannot modify read-only object ' . self::class);
+        throw new UnsupportedOperationException('Cannot modify read-only object ' . static::class);
     }
 
     /**
@@ -390,6 +405,6 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function offsetUnset(mixed $i): never
     {
-        throw new UnsupportedOperationException('Cannot modify read-only object ' . self::class);
+        throw new UnsupportedOperationException('Cannot modify read-only object ' . static::class);
     }
 }
