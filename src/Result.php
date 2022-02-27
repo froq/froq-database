@@ -23,6 +23,9 @@ use PDO, PDOStatement, PDOException, ArrayIterator, Countable, IteratorAggregate
  */
 final class Result implements Countable, IteratorAggregate, ArrayAccess
 {
+    /** @const array */
+    public const FETCH_TYPES = ['array', 'object', 'class'];
+
     /** @var int */
     private int $count = 0;
 
@@ -32,14 +35,12 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /** @var array<array|object>|null */
     private array|null $rows = null;
 
-    /** @var array @since 5.0 */
-    private static array $fetchTypes = ['array', 'object', 'class'];
-
     /**
      * Constructor.
-     * @param PDO          $pdo
-     * @param PDOStatement $pdoStatement
-     * @param array|null   $options
+     * @param  PDO          $pdo
+     * @param  PDOStatement $pdoStatement
+     * @param  array|null   $options
+     * @throws froq\database\ResultException
      */
     public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null)
     {
@@ -57,20 +58,25 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
                     case 'object': $fetchType = PDO::FETCH_OBJ;   break;
                     case  'class':
                         $fetchClass = $fetch[1] ?? null;
-                        $fetchClass || throw new ResultException(
-                            'No fetch class given, it is required when fetch type is `class`'
-                        );
+                        if (!$fetchClass) {
+                            throw new ResultException(
+                                'No fetch class given, it is required when fetch type '.
+                                'is `class` [tip: give it as second item of `fetch` option]'
+                            );
+                        }
 
                         $fetchType = PDO::FETCH_CLASS;
                         break;
                     default:
-                        if ($fetchType && !in_array($fetchType, self::$fetchTypes)) {
-                            throw new ResultException('Invalid fetch type `%s`, valids are: %s',
-                                [$fetchType, join(', ', self::$fetchTypes)]
+                        if ($fetchType && !in_array($fetchType, self::FETCH_TYPES)) {
+                            throw new ResultException(
+                                'Invalid fetch type `%s` [valids: %s]',
+                                [$fetchType, join(', ', self::FETCH_TYPES)]
                             );
                         }
 
-                        unset($fetchType);
+                        // For default below.
+                        $fetchType = null;
                 }
             }
 
