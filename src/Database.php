@@ -88,7 +88,7 @@ final class Database
     public function logger(): Logger
     {
         return $this->logger ?? throw new DatabaseException(
-            'Database object has no logger, be sure `logging` field is not empty in options'
+            'Database object has no logger, be sure `logging` option is not empty'
         );
     }
 
@@ -101,7 +101,7 @@ final class Database
     public function profiler(): Profiler
     {
         return $this->profiler ?? throw new DatabaseException(
-            'Database object has no profiler, be sure `profiling` field is not empty or false in options'
+            'Database object has no profiler, be sure `profiling` option is not empty or false'
         );
     }
 
@@ -118,7 +118,7 @@ final class Database
     public function query(string $query, array $params = null, array $options = null): Result
     {
         $query = $params ? $this->prepare($query, $params) : trim($query);
-        $query || throw new DatabaseException('Empty query given to %s()', __method__);
+        $query || throw new DatabaseException('Empty query');
 
         try {
             $timeop = $this->logger?->getOption('slowQuery');
@@ -134,7 +134,7 @@ final class Database
             if ($timeop) {
                 $time = Profiler::unmark($marker);
                 if ($time > $timeop) {
-                    $this->logger->logWarn('Slow query: time '. $time .', '. $query);
+                    $this->logger->logWarn("Slow query: time {$time}, {$query}");
                 }
             }
 
@@ -157,7 +157,7 @@ final class Database
     public function execute(string $query, array $params = null): int
     {
         $query = $params ? $this->prepare($query, $params) : trim($query);
-        $query || throw new DatabaseException('Empty query given to %s()', __method__);
+        $query || throw new DatabaseException('Empty query');
 
         try {
             $timeop = $this->logger?->getOption('slowQuery');
@@ -173,7 +173,7 @@ final class Database
             if ($timeop) {
                 $time = Profiler::unmark($marker);
                 if ($time > $timeop) {
-                    $this->logger->logWarn('Slow query: time '. $time .', '. $query);
+                    $this->logger->logWarn("Slow query: time {$time}, {$query}");
                 }
             }
 
@@ -922,7 +922,9 @@ final class Database
                 if (ctype_digit($pos)) {
                     $ipos = $pos - 1;
                     if (!array_key_exists($ipos, $params)) {
-                        throw new DatabaseException('Replacement `%s` not found in given parameters', $ipos);
+                        throw new DatabaseException(
+                            'Replacement `%s` not found in given parameters', $ipos
+                        );
                     }
 
                     $format = $holder[2] ?? '';
@@ -951,7 +953,9 @@ final class Database
                 if ($pos !== false) {
                     $key = trim($holder, ':');
                     if (!array_key_exists($key, $params)) {
-                        throw new DatabaseException('Replacement key `%s` not found in given parameters', $key);
+                        throw new DatabaseException(
+                            'Replacement key `%s` not found in given parameters', $key
+                        );
                     }
 
                     $value = $this->escape($params[$key]);
@@ -965,7 +969,9 @@ final class Database
                 // Question-mark.
                 else {
                     if (!array_key_exists($i, $params)) {
-                        throw new DatabaseException('Replacement index `%s` not found in given parameters', $i);
+                        throw new DatabaseException(
+                            'Replacement index `%s` not found in given parameters', $i
+                        );
                     }
 
                     $value = $this->escape($params[$i++], $holder);
