@@ -464,7 +464,7 @@ class Record implements RecordInterface
             }
 
             // Comma-separated list.
-            $fields = is_string($fields) ? split('[, ]', $fields) : $fields;
+            $fields = is_string($fields) ? split('\s*,\s*', $fields) : $fields;
             foreach ((array) $fields as $field) {
                 unset($data[$field]);
             }
