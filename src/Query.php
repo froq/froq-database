@@ -447,9 +447,9 @@ final class Query
                 $action);
         }
 
-        // Space or comma separated.
+        // Comma separated update (fields).
         if (is_string($update) && $update != '*') {
-            $update = split('\s+|\s*,\s*', $update);
+            $update = split('\s*,\s*', $update);
         }
 
         if ($update == null && $action == 'UPDATE') {
