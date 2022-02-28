@@ -168,7 +168,7 @@ final class Query
     {
         // Eg: ('id:foo.id, ..').
         if (is_string($fields)) {
-            $parts  = split('\s*,\s*', trim($fields, ', '));
+            $parts  = split('\s*,\s*', $fields);
             $fields = [];
 
             foreach ($parts as $part) {
@@ -447,8 +447,9 @@ final class Query
                 $action);
         }
 
+        // Space or comma separated.
         if (is_string($update) && $update != '*') {
-            $update = split('\s+', $update);
+            $update = split('\s+|\s*,\s*', $update);
         }
 
         if ($update == null && $action == 'UPDATE') {
@@ -1123,7 +1124,7 @@ final class Query
         if (strpos($field, ' ')) {
             $fields = [];
             foreach (split('\s*,\s*', $field) as $i => $field) {
-                @ [$field, $op] = split('\s+', trim($field), 2);
+                [$field, $op] = split('\s+', trim($field), 2);
                 $fields[$i] = $this->prepareField($field) . $collate;
                 if ($op != null) {
                     $fields[$i] .= ' ' . $this->prepareOp($op, true);
