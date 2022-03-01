@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\common\interface\{Arrayable, Listable, Objectable};
-use froq\common\exception\UnsupportedOperationException;
 use froq\collection\Collection;
 use PDO, PDOStatement, PDOException;
 
@@ -392,19 +391,19 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws froq\common\exception\UnsupportedOperationException
+     * @throws     ReadonlyError
      */
     public function offsetSet(mixed $i, mixed $row): never
     {
-        throw new UnsupportedOperationException('Cannot modify read-only object ' . static::class);
+        throw new \ReadonlyError('Cannot modify readonly class ' . static::class);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws froq\common\exception\UnsupportedOperationException
+     * @throws     ReadonlyError
      */
     public function offsetUnset(mixed $i): never
     {
-        throw new UnsupportedOperationException('Cannot modify read-only object ' . static::class);
+        throw new \ReadonlyError('Cannot modify readonly class ' . static::class);
     }
 }
