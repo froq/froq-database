@@ -14,7 +14,7 @@ use froq\pager\Pager;
 /**
  * Query.
  *
- * Represents a query builder entity which mostly fulfills all building needings with descriptive methods.
+ * A query (builder) class, fulfills all building needings with descriptive methods.
  *
  * @package froq\database
  * @object  froq\database\Query
@@ -217,7 +217,7 @@ final class Query
     /**
      * Add/append a "SELECT ..agg()" query into query stack.
      *
-     * @alias of aggregate()
+     * @alias aggregate()
      * @since 4.14
      */
     public function selectAgg(...$args): self
@@ -228,7 +228,7 @@ final class Query
     /**
      * Add/append a "SELECT count(..)" query into query stack.
      *
-     * @alias of aggregate(), for count()
+     * @alias aggregate() for count()
      * @since 4.14
      */
     public function selectCount(...$args): self
@@ -239,7 +239,7 @@ final class Query
     /**
      * Add/append a "SELECT min(..)" query into query stack.
      *
-     * @alias of aggregate(), for min()
+     * @alias aggregate() for min()
      * @since 4.4
      */
     public function selectMin(...$args): self
@@ -250,7 +250,7 @@ final class Query
     /**
      * Add/append "SELECT max(..)" query into query stack.
      *
-     * @alias of aggregate(), for max()
+     * @alias aggregate() for max()
      * @since 4.4
      */
     public function selectMax(...$args): self
@@ -261,7 +261,7 @@ final class Query
     /**
      * Add/append a "SELECT avg(..)" query into query stack.
      *
-     * @alias of aggregate(), for avg()
+     * @alias aggregate() avg()
      * @since 4.4
      */
     public function selectAvg(...$args): self
@@ -272,7 +272,7 @@ final class Query
     /**
      * Add/append a "SELECT sum(..)" query into query stack.
      *
-     * @alias of aggregate(), for sum()
+     * @alias aggregate() sum()
      * @since 4.4
      */
     public function selectSum(...$args): self
@@ -1194,7 +1194,7 @@ final class Query
      * @param  bool   $prepare
      * @return self
      * @throws froq\database\QueryException
-     * @since  4.16, 5.0 Optimized for table statement.
+     * @since  4.16, 5.0
      */
     public function as(string $as, bool $prepare = true): self
     {
@@ -1485,8 +1485,8 @@ final class Query
     }
 
     /**
-     * @alias of getCollection()
-     * @since  5.0
+     * @alias getCollection()
+     * @since 5.0
      */
     public function collection(...$args)
     {

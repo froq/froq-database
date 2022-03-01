@@ -14,13 +14,13 @@ use PDO, PDOStatement, PDOException, Throwable;
 /**
  * Database.
  *
- * Represents a database worker that contains some util methods for such operations CRUD'ing and
- * query preparing, querying/executing commands.
+ * A database worker class, contains some util methods for such operations CRUD'ing and
+ * query preparing, querying/executing SQL commands.
  *
  * @package froq\database
  * @object  froq\database\Database
  * @author  Kerem Güneş
- * @since   1.0, 4.0 Refactored.
+ * @since   1.0, 4.0
  */
 final class Database
 {

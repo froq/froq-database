@@ -135,7 +135,7 @@ final class Link
     }
 
     /**
-     * Disconnect and set pdo property to null.
+     * Disconnect and set pdo property as null.
      *
      * @return void
      */
@@ -148,7 +148,7 @@ final class Link
      * Check connection state.
      *
      * @return bool
-     * @since  5.0 Replaced with isConnected().
+     * @since  5.0
      */
     public function isAlive(): bool
     {
