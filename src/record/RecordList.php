@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\record\{RecordListException, RecordListInterface, Record};
 use froq\collection\ItemCollection;
 use froq\pager\Pager;
 

@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace froq\database\record;
 
 use froq\common\interface\{Arrayable, Objectable};
-use ArrayAccess;
 
 /**
  * Form Interface.
@@ -18,5 +17,5 @@ use ArrayAccess;
  * @author  Kerem Güneş
  * @since   5.5
  */
-interface FormInterface extends Arrayable, Objectable, ArrayAccess
+interface FormInterface extends Arrayable, Objectable, \ArrayAccess
 {}

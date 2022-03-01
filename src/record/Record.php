@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\record\{RecordException, RecordInterface, RecordList, Form, FormException};
 use froq\database\{Database, Query, trait\RecordTrait};
 use froq\validation\ValidationError;
 use froq\pager\Pager;

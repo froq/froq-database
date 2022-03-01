@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
-use froq\database\trait\{DbTrait, TableTrait, ValidationTrait};
 use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait,
     DataCountTrait, DataEmptyTrait, DataToArrayTrait, DataToObjectTrait, OptionTrait};
 use froq\validation\ValidationError;

@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\record\{FormException, Record};
 use froq\database\{Database, trait\RecordTrait};
 use froq\validation\ValidationError;
 
