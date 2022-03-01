@@ -7,8 +7,6 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\{DatabaseException, DatabaseLinkException, DatabaseQueryException,
-    Link, LinkException, Result, Profiler, Query};
 use froq\database\sql\{Sql, Name};
 use froq\{pager\Pager, logger\Logger};
 use PDO, PDOStatement, PDOException, Throwable;

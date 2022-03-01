@@ -7,8 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\RepositoryException;
-use froq\database\{Query, sql\Sql, entity\Manager as EntityManager};
+use froq\database\{sql\Sql, entity\Manager as EntityManager};
 use froq\database\trait\{DbTrait, TableTrait, ValidationTrait, EntityManagerTrait};
 
 /**

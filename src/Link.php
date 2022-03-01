@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\LinkException;
 use froq\common\trait\InstanceTrait;
 use PDO, PDOException;
 

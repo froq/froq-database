@@ -26,16 +26,16 @@ class DatabaseException extends Exception
     /**
      * Constructor.
      *
-     * @param string|Throwable $message
-     * @param any|null         $messageParams
-     * @param int|string|null  $code
-     * @param Throwable|null   $previous
-     * @param Throwable|null   $cause
+     * @param string|Throwable|null $message
+     * @param mixed|null            $messageParams
+     * @param int|string|null       $code
+     * @param Throwable|null        $previous
+     * @param Throwable|null        $cause
      */
-    public function __construct(string|Throwable $message = null, $messageParams = null, int|string $code = null,
+    public function __construct(string|Throwable $message = null, mixed $messageParams = null, int|string $code = null,
         Throwable $previous = null, Throwable $cause = null)
     {
-        if ($message != null) {
+        if ($message) {
             if (is_string($message)) {
                 $errorInfo = self::parseMessageInfo($message);
             } else {
@@ -71,9 +71,6 @@ class DatabaseException extends Exception
 
     /**
      * Parse message info.
-     *
-     * @param  string $message
-     * @return array<string>
      */
     private static function parseMessageInfo(string $message): array
     {

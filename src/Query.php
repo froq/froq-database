@@ -7,9 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\{QueryTrait, QueryException, Database, Result};
-use froq\database\sql\{Sql, Name};
-use froq\database\trait\DbTrait;
+use froq\database\{trait\DbTrait, sql\Sql, sql\Name};
 use froq\collection\Collection;
 use froq\pager\Pager;
 
