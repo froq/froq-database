@@ -2156,7 +2156,7 @@ final class Query
         if (in_array($op, $ops, true)) {
             return $op;
         }
-        if ($numerics && in_array($op, ['1', '-1'], true)) {
+        if ($numeric && in_array($op, ['1', '-1'], true)) {
             return ($op == '1') ? 'ASC' : 'DESC';
         }
 
