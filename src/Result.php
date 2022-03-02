@@ -68,8 +68,8 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
                     default:
                         if ($fetchType && !in_array($fetchType, self::FETCH_TYPES)) {
                             throw new ResultException(
-                                'Invalid fetch type `%s` [valids: %s]',
-                                [$fetchType, join(', ', self::FETCH_TYPES)]
+                                'Invalid fetch type `%s` [valids: %a]',
+                                [$fetchType, self::FETCH_TYPES]
                             );
                         }
 
