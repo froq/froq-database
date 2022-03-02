@@ -441,8 +441,7 @@ final class Query
         $action = strtoupper($action);
 
         if (!in_array($action, ['NOTHING', 'UPDATE'], true)) {
-            throw new QueryException('Invalid conflict action `%s`, valids are: NOTHING, UPDATE',
-                $action);
+            throw new QueryException('Invalid conflict action `%s` [valids: NOTHING, UPDATE]', $action);
         }
 
         // Comma separated update (fields).
@@ -1549,8 +1548,8 @@ final class Query
             return $this->select($func . '_agg(' . $distinct . $field . $order . ')' . $as, false);
         }
 
-        throw new QueryException('Invalid aggregate function `%s`, valids are: count, sum, min, max, avg,'
-            . ' array, string, json, json_object, jsonb, jsonb_object', [$func]);
+        throw new QueryException('Invalid aggregate function `%s` [valids: count, sum, min, max, avg,'
+            . ' array, string, json, json_object, jsonb, jsonb_object]', [$func]);
     }
 
     /**
@@ -2151,7 +2150,7 @@ final class Query
      */
     public function prepareOp(string $op, bool $numerics = false): string
     {
-        static $ops = ['OR', 'AND', 'ASC', 'DESC'];
+        static $ops = ['AND', 'OR', 'ASC', 'DESC'];
 
         $op = strtoupper(trim($op));
         if (in_array($op, $ops, true)) {
@@ -2160,8 +2159,7 @@ final class Query
             return ($op == '1') ? 'ASC' : 'DESC';
         }
 
-        throw new QueryException('Invalid op `%s`, valids are: OR, AND for where\'s'
-            . ' and ASC, DESC, 1, -1 for order\'s', $op);
+        throw new QueryException('Invalid op `%s` [valids: AND, OR for where & ASC, DESC, 1, -1 for order]', $op);
     }
 
     /**
