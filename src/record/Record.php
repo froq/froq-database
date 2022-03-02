@@ -77,7 +77,8 @@ class Record implements RecordInterface
 
         $data && $this->data = $data;
 
-        if ($form != null) {
+        // Both form class & instance accepted.
+        if ($form) {
             if ($form instanceof Form) {
                 $this->form      = $form;
                 $this->formClass = $form::class;
@@ -89,15 +90,15 @@ class Record implements RecordInterface
         $this->setOptions($options, self::$optionsDefault);
 
         // Validations can be combined or simple array'ed.
-        if ($validations != null) {
-            isset($validations['@rules'])   && $validationRules   = array_pull($validations, '@rules');
-            isset($validations['@options']) && $validationOptions = array_pull($validations, '@options');
+        if ($validations) {
+            isset($validations['rules'])   && $validationRules   = array_pull($validations, 'rules');
+            isset($validations['options']) && $validationOptions = array_pull($validations, 'options');
 
-            // Simple array'ed if no "@rules" field given.
+            // Simple array'ed if no "rules" field given.
             $validationRules ??= $validations;
         }
 
-        // Set table stuff & validation stuff.
+        // Set table & validation stuff.
         $table             && $this->table             = $table;
         $tablePrimary      && $this->tablePrimary      = $tablePrimary;
         $validationRules   && $this->validationRules   = $validationRules;

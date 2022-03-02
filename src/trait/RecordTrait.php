@@ -14,7 +14,7 @@ use froq\validation\ValidationError;
 /**
  * Record Trait.
  *
- * Represents a trait entity that used in `froq\database\record` and holds record related stuff.
+ * A trait, used in `froq\database\record` only and holds record related stuff.
  *
  * @package froq\database\trait
  * @object  froq\database\trait\RecordTrait
@@ -24,6 +24,9 @@ use froq\validation\ValidationError;
  */
 trait RecordTrait
 {
+    /** @see froq\common\trait\OptionTrait */
+    use OptionTrait;
+
     /**
      * @see froq\database\trait\DbTrait
      * @see froq\database\trait\TableTrait
@@ -40,11 +43,9 @@ trait RecordTrait
      * @see froq\common\trait\DataEmptyTrait
      * @see froq\common\trait\DataToArrayTrait
      * @see froq\common\trait\DataToObjectTrait
-     * @see froq\common\trait\OptionTrait
      */
     use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait, DataCountTrait, DataEmptyTrait,
-        DataToArrayTrait, DataToObjectTrait,
-        OptionTrait;
+        DataToArrayTrait, DataToObjectTrait;
 
     /** @var array */
     protected array $data = [];
@@ -70,7 +71,7 @@ trait RecordTrait
     {
         $this->isValid($data, $errors);
 
-        if ($errors == null) {
+        if (!$errors) {
             return $this;
         }
         if ($silent) {
