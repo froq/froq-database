@@ -13,7 +13,7 @@ use PDO, PDOException;
 /**
  * Link.
  *
- * Represents a PDO wrapper with some util methods.
+ * A wrapper class for PDO with some utilities.
  *
  * @package froq\database
  * @object  froq\database\Link
@@ -22,10 +22,7 @@ use PDO, PDOException;
  */
 final class Link
 {
-    /**
-     * @see froq\common\trait\InstanceTrait
-     * @since 5.0
-     */
+    /** @see froq\common\trait\InstanceTrait */
     use InstanceTrait;
 
     /** @var PDO|null */
