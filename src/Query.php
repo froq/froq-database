@@ -1089,7 +1089,7 @@ final class Query
 
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
         if ($op != null) {
-            $field .= ' ' . $this->prepareOp(strval($op), true);
+            $field .= ' ' . $this->prepareOp($op, true);
         }
 
         // Extract options (with defaults).
@@ -2143,19 +2143,20 @@ final class Query
     /**
      * Prepare an operator.
      *
-     * @param  string $op
-     * @param  bool   $numerics
+     * @param  string|int $op
+     * @param  bool       $numeric
      * @return string
      * @throws froq\database\QueryException
      */
-    public function prepareOp(string $op, bool $numerics = false): string
+    public function prepareOp(string|int $op, bool $numeric = false): string
     {
         static $ops = ['AND', 'OR', 'ASC', 'DESC'];
 
-        $op = strtoupper(trim($op));
+        $op = strtoupper(trim((string) $op));
         if (in_array($op, $ops, true)) {
             return $op;
-        } elseif ($numerics && in_array($op, ['1', '-1'], true)) {
+        }
+        if ($numerics && in_array($op, ['1', '-1'], true)) {
             return ($op == '1') ? 'ASC' : 'DESC';
         }
 
