@@ -1108,6 +1108,7 @@ final class Database
                 $params = (array) $params;
             } else {
                 static $signs = ['!', '<', '>'];
+
                 // Note: "where" must not be combined when array given, eg: (["a = ? AND b = ?" => [1, 2]])
                 // will not be prepared and prepare() method will throw exception about replacement index. So
                 // use ("a = ? AND b = ?", [1, 2]) convention instead for multiple conditions.
@@ -1118,7 +1119,7 @@ final class Database
                     );
 
                     $sign = ' = ';
-                    if (in_array($field[-1], $signs)) {
+                    if (in_array($field[-1], $signs, true)) {
                         $sign  = format(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
                         $field = substr($field, 0, -1);
                     }

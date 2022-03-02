@@ -414,7 +414,7 @@ final class Query
     public function return(string|array|bool $fields, string|array $fetch = null): self
     {
         // For PostgreSQL & Oracle only.
-        if (!in_array($this->db->link()->driver(), ['pgsql', 'oci'])) {
+        if (!in_array($this->db->link()->driver(), ['pgsql', 'oci'], true)) {
             return $this;
         }
 
@@ -440,7 +440,7 @@ final class Query
     {
         $action = strtoupper($action);
 
-        if (!in_array($action, ['NOTHING', 'UPDATE'])) {
+        if (!in_array($action, ['NOTHING', 'UPDATE'], true)) {
             throw new QueryException('Invalid conflict action `%s`, valids are: NOTHING, UPDATE',
                 $action);
         }
@@ -657,7 +657,7 @@ final class Query
             // Eg: ([id => 1, active! => false, ..]).
             foreach ($where as $field => $param) {
                 $sign = ' = ';
-                if (in_array($field[-1], $signs)) {
+                if (in_array($field[-1], $signs, true)) {
                     $sign  = format(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
                     $field = substr($field, 0, -1);
                 }
@@ -1540,12 +1540,12 @@ final class Query
         }
 
         // Base functions.
-        if (in_array($func, ['count', 'sum', 'min', 'max', 'avg'])) {
+        if (in_array($func, ['count', 'sum', 'min', 'max', 'avg'], true)) {
             return $this->select($func . '(' . $distinct . $field . $order . ')' . $as, false);
         }
 
         // PostgreSQL functions (no "_agg" suffix needed).
-        if (in_array($func, ['array', 'string', 'json', 'json_object', 'jsonb', 'jsonb_object'])) {
+        if (in_array($func, ['array', 'string', 'json', 'json_object', 'jsonb', 'jsonb_object'], true)) {
             return $this->select($func . '_agg(' . $distinct . $field . $order . ')' . $as, false);
         }
 
@@ -2154,9 +2154,9 @@ final class Query
         static $ops = ['OR', 'AND', 'ASC', 'DESC'];
 
         $op = strtoupper(trim($op));
-        if (in_array($op, $ops)) {
+        if (in_array($op, $ops, true)) {
             return $op;
-        } elseif ($numerics && in_array($op, ['1', '-1'])) {
+        } elseif ($numerics && in_array($op, ['1', '-1'], true)) {
             return ($op == '1') ? 'ASC' : 'DESC';
         }
 

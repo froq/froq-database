@@ -21,7 +21,7 @@ use PDO, PDOStatement, PDOException;
  */
 final class Result implements Arrayable, Listable, Objectable, \Countable, \IteratorAggregate, \ArrayAccess
 {
-    /** @const array */
+    /** @const array<string> */
     public const FETCH_TYPES = ['array', 'object', 'class'];
 
     /** @var int */
@@ -66,7 +66,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
                         $fetchType = PDO::FETCH_CLASS;
                         break;
                     default:
-                        if ($fetchType && !in_array($fetchType, self::FETCH_TYPES)) {
+                        if ($fetchType && !in_array($fetchType, self::FETCH_TYPES, true)) {
                             throw new ResultException(
                                 'Invalid fetch type `%s` [valids: %a]',
                                 [$fetchType, self::FETCH_TYPES]
