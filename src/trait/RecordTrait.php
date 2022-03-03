@@ -7,14 +7,14 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
-use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait,
-    DataCountTrait, DataEmptyTrait, DataToArrayTrait, DataToObjectTrait, OptionTrait};
+use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait, OptionTrait};
+use froq\collection\trait\{CountTrait, EmptyTrait, ToArrayTrait, ToObjectTrait};
 use froq\validation\ValidationError;
 
 /**
  * Record Trait.
  *
- * A trait, used in `froq\database\record` only and holds record related stuff.
+ * A trait, used in `froq\database\record` only and provides record related stuff.
  *
  * @package froq\database\trait
  * @object  froq\database\trait\RecordTrait
@@ -24,28 +24,17 @@ use froq\validation\ValidationError;
  */
 trait RecordTrait
 {
-    /** @see froq\common\trait\OptionTrait */
-    use OptionTrait;
-
-    /**
-     * @see froq\database\trait\DbTrait
-     * @see froq\database\trait\TableTrait
-     * @see froq\database\trait\ValidationTrait
-     */
+    /** @see froq\database\trait\*Trait */
     use DbTrait, TableTrait, ValidationTrait;
 
-    /**
-     * @see froq\common\trait\DataTrait
-     * @see froq\common\trait\DataLoadTrait
-     * @see froq\common\trait\DataAccessTrait
-     * @see froq\common\trait\DataAccessMagicTrait
-     * @see froq\common\trait\DataCountTrait
-     * @see froq\common\trait\DataEmptyTrait
-     * @see froq\common\trait\DataToArrayTrait
-     * @see froq\common\trait\DataToObjectTrait
-     */
-    use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait, DataCountTrait, DataEmptyTrait,
-        DataToArrayTrait, DataToObjectTrait;
+    /** @see froq\common\trait\*Trait */
+    use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait;
+
+    /** @see froq\collection\trait\*Trait */
+    use CountTrait, EmptyTrait, ToArrayTrait, ToObjectTrait;
+
+    /** @see froq\common\trait\OptionTrait */
+    use OptionTrait;
 
     /** @var array */
     protected array $data = [];
@@ -78,7 +67,10 @@ trait RecordTrait
             return null;
         }
 
-        throw new ValidationError('Cannot prepare record (%s), validation failed [tip: run prepare()'
-            . ' in a try/catch block and use errors() to see error details]', $this::class, errors: $errors);
+        throw new ValidationError(
+            'Cannot prepare record (%s), validation failed and $silent argument is false'.
+            '[tip: run prepare() in a try/catch block and use errors() to see error details]',
+            static::class, errors: $errors
+        );
     }
 }
