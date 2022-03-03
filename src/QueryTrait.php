@@ -10,13 +10,13 @@ namespace froq\database;
 /**
  * Query Trait.
  *
- * Represents a query builder trait entity which mostly fulfills all building needs with short and
- * descriptive methods.
+ * A trait, fulfills all query building needs with short and descriptive methods.
  *
  * @package froq\database
  * @object  froq\database\QueryTrait
  * @author  Kerem Güneş
  * @since   4.0
+ * @internal
  */
 trait QueryTrait
 {

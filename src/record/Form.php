@@ -13,8 +13,8 @@ use froq\validation\ValidationError;
 /**
  * Form.
  *
- * Represents a form class that aims to run validation processes via its validation rules,
- * also is able to save those validated data via a record object.
+ * A class, aims to run validation processes via its validation rules, also is able
+ * to save the validated data via a `$record` property.
  *
  * @package froq\database\record
  * @object  froq\database\record\Form

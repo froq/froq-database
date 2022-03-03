@@ -13,7 +13,7 @@ use froq\validation\Validation;
 /**
  * Validation Trait.
  *
- * Represents a trait entity that holds validation properties and methods with its state and errors.
+ * A trait, provides validation properties and related methods with its state and errors.
  *
  * @package froq\database\trait
  * @object  froq\database\trait\ValidationTrait

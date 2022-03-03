@@ -13,7 +13,7 @@ use froq\database\trait\{DbTrait, TableTrait, ValidationTrait, EntityManagerTrai
 /**
  * Repository.
  *
- * Represents a class entity that contains most required data read/write tools and is intended to use other
+ * A class, contains most required data read/write tools and is intended to use other
  * repository classes and producers/providers or other database related classes.
  *
  * @package froq\database
@@ -23,10 +23,12 @@ use froq\database\trait\{DbTrait, TableTrait, ValidationTrait, EntityManagerTrai
  */
 class Repository
 {
-    /** @see froq\database\trait\DbTrait */
-    /** @see froq\database\trait\TableTrait */
-    /** @see froq\database\trait\ValidationTrait */
-    /** @see froq\database\trait\EntityManagerTrait */
+    /**
+     * @see froq\database\trait\DbTrait
+     * @see froq\database\trait\TableTrait
+     * @see froq\database\trait\ValidationTrait
+     * @see froq\database\trait\EntityManagerTrait
+     */
     use DbTrait, TableTrait, ValidationTrait, EntityManagerTrait;
 
     /**

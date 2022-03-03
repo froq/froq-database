@@ -13,7 +13,7 @@ use froq\pager\Pager;
 /**
  * Record List.
  *
- * Represents a record list entity that used internally and holds `$pager` property and its getter method, and also
+ * A list class, used internally and holds `$pager` property and its getter method, and also
  * all basic collection methods such as `filter()`, `map(), `reduce()` etc.
  *
  * @package froq\database\record
@@ -67,11 +67,7 @@ class RecordList extends ItemCollection implements RecordListInterface
         return $this->toArray(true);
     }
 
-    /**
-     * @param  bool $deep
-     * @return array<int, array|froq\database\record\Record>
-     * @override
-     */
+    /** @override */
     public final function toArray(bool $deep = true): array
     {
         if ($deep) {

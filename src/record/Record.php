@@ -14,8 +14,8 @@ use froq\pager\Pager;
 /**
  * Record.
  *
- * Represents a record class that mimics "Active Record" pattern and may be extended by many
- * record classes to handle CRUD operations in a safe way via form object with validation.
+ * A class, mimics "Active Record" pattern and may be extended by many record classes
+ * to handle CRUD operations in a safe way via `$form` property with validation.
  *
  * @package froq\database\record
  * @object  froq\database\record\Record

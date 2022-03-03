@@ -12,7 +12,7 @@ use froq\database\entity\Manager as EntityManager;
 /**
  * Entity Manager Trait.
  *
- * Represents a trait entity that holds a read-only `$em` property and its getter method.
+ * A trait, provides a read-only `$em` property and its getter method.
  *
  * @package froq\database\trait
  * @object  froq\database\trait\EntityManagerTrait
