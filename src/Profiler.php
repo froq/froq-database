@@ -38,8 +38,6 @@ final class Profiler
 
     /**
      * Hide all debug info.
-     *
-     * @return void
      */
     public function __debugInfo()
     {}
