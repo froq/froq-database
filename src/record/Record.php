@@ -223,26 +223,16 @@ class Record implements RecordInterface
         return $this->id();
     }
 
-    /**
-     * @alias of isValid()
-     */
-    public final function okay(...$args)
-    {
-        return $this->isValid(...$args);
-    }
-
     /** State getters. */
     public final function saved() { return $this->saved ?? null; }
     public final function finded() { return $this->finded ?? null; }
     public final function removed() { return $this->removed ?? null; }
 
     /**
-     * @alias of isFinded()
+     * Aliases.
      */
-    public final function found(...$args)
-    {
-        return $this->isFinded(...$args);
-    }
+    public final function found(...$args) { return $this->isFinded(...$args); }
+    public final function okay(...$args) { return $this->isValid(...$args); }
 
     /**
      * Proxy method to own form class for validation processes.
@@ -709,16 +699,16 @@ class Record implements RecordInterface
      * Find multiple records by given arguments returning a RecordList filled by found records.
      *
      * @param  string|array    $where
-     * @param  any          ...$args For select() method.
+     * @param  mixed        ...$selectArgs For select() method.
      * @return froq\database\record\RecordList
      */
-    public final function findBy(string|array $where, ...$args): RecordList
+    public final function findBy(string|array $where, mixed ...$selectArgs): RecordList
     {
-        $rows = $this->select($where, ...$args);
+        $rows = $this->select($where, ...$selectArgs);
         $that = $this->copy();
 
         // For single records.
-        if (isset($args['limit'])) {
+        if (isset($selectArgs['limit'])) {
             $rows = [(array) $rows];
         }
 
@@ -734,17 +724,17 @@ class Record implements RecordInterface
      * Remove multiple records by given arguments returning a RecordList filled by removed records.
      *
      * @param  string|array    $where
-     * @param  any          ...$args For delete() method.
+     * @param  mixed        ...$deleteArgs For delete() method.
      * @return froq\database\record\RecordList
      */
-    public final function removeBy(string|array $where, ...$args): RecordList
+    public final function removeBy(string|array $where, mixed ...$deleteArgs): RecordList
     {
         // For returning fields.
-        if (!isset($args['return'])) {
-            $args['return'] = '*';
+        if (!isset($deleteArgs['return'])) {
+            $deleteArgs['return'] = '*';
         }
 
-        $rows = $this->delete($where, ...$args);
+        $rows = $this->delete($where, ...$deleteArgs);
         $that = $this->copy();
 
         $thats = [];

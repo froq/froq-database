@@ -681,12 +681,12 @@ final class Query
      * Add/append a "WHERE" query into query stack for an equality condition.
      *
      * @param  string      $field
-     * @param  any         $param
+     * @param  mixed       $param
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereEqual(string $field, $param, string $op = null): self
+    public function whereEqual(string $field, mixed $param, string $op = null): self
     {
         if (is_array($param)) {
             return $this->whereIn($field, $param);
@@ -705,12 +705,12 @@ final class Query
      * Add/append a "WHERE" query into query stack foor a non-equality condition.
      *
      * @param  string      $field
-     * @param  any         $param
+     * @param  mixed       $param
      * @param  string|null $op
      * @return self
      * @throws froq\database\QueryException
      */
-    public function whereNotEqual(string $field, $param, string $op = null): self
+    public function whereNotEqual(string $field, mixed $param, string $op = null): self
     {
         if (is_array($param)) {
             return $this->whereNotIn($field, $param);
@@ -1682,10 +1682,10 @@ final class Query
      *
      * @param  string      $key
      * @param  string|null $subkey
-     * @return any|null
+     * @return mixed|null
      * @since  5.0
      */
-    public function pull(string $key, string $subkey = null)
+    public function pull(string $key, string $subkey = null): mixed
     {
         if (isset($this->stack[$key])) {
             $value = $this->stack[$key];
@@ -2254,11 +2254,11 @@ final class Query
      * Add a clause/statement to query stack.
      *
      * @param  string $key
-     * @param  any    $value
+     * @param  mixed  $value
      * @param  bool   $merge
      * @return self
      */
-    private function add(string $key, $value, bool $merge = true): self
+    private function add(string $key, mixed $value, bool $merge = true): self
     {
         $merge && $value = [...($this->stack[$key] ?? []), $value];
 

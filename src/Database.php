@@ -614,10 +614,10 @@ final class Database
      *
      * @param  callable|null $call
      * @param  callable|null $callError
-     * @return any
+     * @return mixed
      * @throws Throwable
      */
-    public function transaction(callable $call = null, callable $callError = null)
+    public function transaction(callable $call = null, callable $callError = null): mixed
     {
         $transaction = new Transaction($this->link->pdo());
 

@@ -218,12 +218,9 @@ class Form implements FormInterface
     }
 
     /**
-     * @alias of isValid().
+     * Aliases.
      */
-    public final function okay(...$args)
-    {
-        return $this->isValid(...$args);
-    }
+    public final function okay(...$args)  { return $this->isValid(...$args); }
 
     /**
      * Check whether given or own data is valid filtering/sanitizing data, fill `$errors` argument with
