@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\common\trait\InstanceTrait;
+use froq\common\trait\FactoryTrait;
 use PDO, PDOException;
 
 /**
@@ -22,8 +22,7 @@ use PDO, PDOException;
  */
 final class Link
 {
-    /** @see froq\common\trait\InstanceTrait */
-    use InstanceTrait;
+    use FactoryTrait;
 
     /** @var PDO|null */
     private PDO|null $pdo;
@@ -39,7 +38,7 @@ final class Link
      *
      * @param array $options
      */
-    private function __construct(array $options)
+    public function __construct(array $options)
     {
         $this->options = self::prepareOptions($options);
     }
