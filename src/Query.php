@@ -449,7 +449,7 @@ final class Query
             $update = split('\s*,\s*', $update);
         }
 
-        if ($update == null && $action == 'UPDATE') {
+        if (!$update && $action == 'UPDATE') {
             throw new DatabaseException('Conflict action is `update`, but no update data given');
         }
 
@@ -531,7 +531,10 @@ final class Query
     public function join(string $to, string $on = null, array $params = null, string $type = null): self
     {
         $type && $type = strtoupper($type) . ' ';
-        $on   && $on   = 'ON (' . $this->prepare($on, $params) . ')';
+
+        if ($on != '') {
+            $on = 'ON (' . $this->prepare($on, $params) . ')';
+        }
 
         return $this->add('join', [$type . 'JOIN ' . $this->prepareFields($to), $on]);
     }
@@ -1054,7 +1057,7 @@ final class Query
     {
         $field = $this->prepareFields($field);
 
-        if ($rollup != null) {
+        if ($rollup) {
             $field .= ($this->db->link()->driver() == 'mysql') ? ' WITH ROLLUP' : ' ROLLUP (' . (
                 is_string($rollup) ? $this->prepareFields($rollup) : $field
             ) . ')';
@@ -1078,14 +1081,6 @@ final class Query
 
         $field = trim((string) $field);
         $field || throw new QueryException('No field given');
-
-        // Shortcut for ASC/DESC ops (eg: +id, -id).
-        if ($op == null) {
-            $op = match ($field[0]) {
-                '+' => 1, '-' => -1, default => null,
-            };
-            $op && $field = ltrim($field, '+-');
-        }
 
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
         if ($op != null) {
@@ -1798,7 +1793,7 @@ final class Query
 
                         $as .= ' AS ';
                         if ($materialized !== null) {
-                            $as .= ($materialized ? 'MATERIALIZED ' : 'NOT MATERIALIZED ');
+                            $as .= ($materialized ? 'MATERIALIZED' : 'NOT MATERIALIZED') . ' ';
                         }
 
                         if ($indent >= 1) {

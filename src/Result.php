@@ -101,7 +101,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
                 ) ?: null;
 
                 // Indexing by given index field.
-                if (isset($options['index']) && $this->rows != null) {
+                if (isset($options['index']) && $this->rows) {
                     $index = $options['index'];
                     if (!array_key_exists($index, (array) $this->rows[0])) {
                         throw new ResultException('Given index `%s` not found in row set', $index);
