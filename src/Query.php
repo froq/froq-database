@@ -23,10 +23,6 @@ use froq\pager\Pager;
  */
 final class Query
 {
-    /**
-     * @see froq\database\QueryTrait
-     * @see froq\database\trait\DbTrait
-     */
     use QueryTrait, DbTrait;
 
     /**
