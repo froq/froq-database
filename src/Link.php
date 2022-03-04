@@ -196,16 +196,19 @@ final class Link
             throw new LinkException('Empty `dsn` option given');
         }
 
+        // Drop (in case).
+        $options['driver'] = null;
+
         $dsn = trim((string) $options['dsn'], ';');
         if (preg_match('~^(\w+):~', $dsn, $match)) {
-            $driver = $match[1];
+            $options['driver'] = $match[1];
         }
 
         // Throw a proper exeption instead of PDOException('could not find driver').
-        if (empty($driver)) {
+        if (empty($options['driver'])) {
             throw new LinkException('Invalid scheme given in `dsn` option, no driver specified');
         }
 
-        return [...$optionsDefault, ...['dsn' => $dsn, 'driver' => $driver] + $options];
+        return [...$optionsDefault, ...$options];
     }
 }
