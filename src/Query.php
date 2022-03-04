@@ -52,10 +52,8 @@ final class Query
         $table && $this->table($table);
     }
 
-    /**
-     * Magic - string.
-     */
-    public function __toString()
+    /** @magic */
+    public function __toString(): string
     {
         return $this->toString();
     }
