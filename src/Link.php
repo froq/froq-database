@@ -32,12 +32,7 @@ final class Link
     private string $driver;
 
     /** @var array */
-    private array $options = [
-        'dsn'     => null, 'driver'   => null,
-        'user'    => null, 'pass'     => null,
-        'charset' => null, 'timezone' => null,
-        'options' => null
-    ];
+    private array $options;
 
     /**
      * Constructor.
@@ -46,13 +41,11 @@ final class Link
      */
     private function __construct(array $options)
     {
-        $this->options = array_merge($this->options, self::prepareOptions($options));
+        $this->options = self::prepareOptions($options);
     }
 
     /**
      * Hide all debug info.
-     *
-     * @return void
      */
     public function __debugInfo()
     {}
@@ -193,6 +186,13 @@ final class Link
      */
     private static function prepareOptions(array $options): array
     {
+        static $optionsDefault = [
+            'dsn'     => null, 'driver'   => null,
+            'user'    => null, 'pass'     => null,
+            'charset' => null, 'timezone' => null,
+            'options' => null
+        ];
+
         if (empty($options['dsn'])) {
             throw new LinkException('Empty `dsn` option given');
         }
@@ -207,6 +207,6 @@ final class Link
             throw new LinkException('Invalid scheme given in `dsn` option, no driver specified');
         }
 
-        return ['dsn' => $dsn, 'driver' => $driver] + $options;
+        return [...$optionsDefault, ...['dsn' => $dsn, 'driver' => $driver] + $options];
     }
 }
