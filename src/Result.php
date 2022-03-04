@@ -230,17 +230,18 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
     }
 
     /**
-     * Get all insert ids when available.
+     * Get all insert ids or one when available.
      *
-     * @return array<int>|null
+     * @param  int|null $i
+     * @return int|array<int>|null
      */
-    public function ids(): array|null
+    public function ids(int $i = null): int|array|null
     {
-        return $this->ids;
+        return ($i === null) ? $this->ids : $this->ids[$i] ?? null;
     }
 
     /**
-     * Get a single row.
+     * Get one row.
      *
      * @param  int $i
      * @return array|object|null
@@ -251,10 +252,10 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
     }
 
     /**
-     * Get all rows.
+     * Get all rows or one.
      *
      * @param  int|null $i
-     * @return array<array|object>|object|null
+     * @return array<array|object>|array|object|null
      */
     public function rows(int $i = null): array|object|null
     {
