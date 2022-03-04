@@ -174,15 +174,9 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
     /**
      * @inheritDoc froq\common\interface\Objectable
      */
-    public function toObject(): array
+    public function toObject(): object
     {
-        $rows = [];
-
-        foreach ($this->toArray() as $row) {
-            $rows[] = (object) $row;
-        }
-
-        return $rows;
+        return (object) array_map('object', $this->toArray());
     }
 
     /**
@@ -232,9 +226,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function id(): int|null
     {
-        $ids = $this->ids ?? [];
-
-        return end($ids) ?: null;
+        return last($this->ids ?? []);
     }
 
     /**
@@ -244,7 +236,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function ids(): array|null
     {
-        return $this->ids ?? null;
+        return $this->ids;
     }
 
     /**
@@ -276,7 +268,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function first(): array|object|null
     {
-        return $this->rows ? current($this->rows) : null;
+        return first($this->toArray());
     }
 
     /**
@@ -286,7 +278,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function last(): array|object|null
     {
-        return $this->rows ? end($this->rows) : null;
+        return last($this->toArray());
     }
 
     /**
@@ -298,7 +290,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function each(callable $func): self
     {
-        each($this->rows, $func);
+        each($this->toArray(), $func);
 
         return $this;
     }
@@ -312,7 +304,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function filter(callable $func): self
     {
-        $this->rows = array_filter($this->rows, $func);
+        $this->rows = array_filter($this->toArray(), $func);
 
         return $this;
     }
@@ -326,7 +318,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function map(callable $func): self
     {
-        $this->rows = array_map($func, $this->rows);
+        $this->rows = array_map($func, $this->toArray());
 
         return $this;
     }
@@ -341,7 +333,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function reduce(mixed $carry, callable $func): mixed
     {
-        return array_reduce($this->rows, $func, $carry);
+        return array_reduce($this->toArray(), $func, $carry);
     }
 
     /**
@@ -352,7 +344,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function reverse(): self
     {
-        $this->rows = array_reverse($this->rows);
+        $this->rows = array_reverse($this->toArray());
 
         return $this;
     }
