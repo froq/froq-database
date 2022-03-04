@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\sql\{Sql, Name};
+use froq\common\trait\FactoryTrait;
 use froq\{pager\Pager, logger\Logger};
 use PDO, PDOStatement, PDOException, Throwable;
 
@@ -24,6 +25,8 @@ use PDO, PDOStatement, PDOException, Throwable;
  */
 final class Database
 {
+    use FactoryTrait;
+
     /** @var froq\database\Link */
     private Link $link;
 
