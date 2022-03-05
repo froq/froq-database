@@ -23,12 +23,6 @@ use froq\database\trait\{DbTrait, TableTrait, ValidationTrait, EntityManagerTrai
  */
 class Repository
 {
-    /**
-     * @see froq\database\trait\DbTrait
-     * @see froq\database\trait\TableTrait
-     * @see froq\database\trait\ValidationTrait
-     * @see froq\database\trait\EntityManagerTrait
-     */
     use DbTrait, TableTrait, ValidationTrait, EntityManagerTrait;
 
     /**

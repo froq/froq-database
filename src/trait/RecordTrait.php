@@ -24,16 +24,9 @@ use froq\validation\ValidationError;
  */
 trait RecordTrait
 {
-    /** @see froq\database\trait\*Trait */
     use DbTrait, TableTrait, ValidationTrait;
-
-    /** @see froq\common\trait\*Trait */
-    use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait;
-
-    /** @see froq\collection\trait\*Trait */
     use CountTrait, EmptyTrait, ToArrayTrait, ToObjectTrait;
-
-    /** @see froq\common\trait\OptionTrait */
+    use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait;
     use OptionTrait;
 
     /** @var array */

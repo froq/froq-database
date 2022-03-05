@@ -23,7 +23,6 @@ use froq\validation\ValidationError;
  */
 class Form implements FormInterface
 {
-    /** @see froq\database\trait\RecordTrait */
     use RecordTrait;
 
     /** @var froq\database\record\Record */

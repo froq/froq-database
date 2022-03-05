@@ -24,7 +24,6 @@ use froq\pager\Pager;
  */
 class Record implements RecordInterface
 {
-    /** @see froq\database\trait\RecordTrait */
     use RecordTrait;
 
     /** @var froq\database\record\Form */
