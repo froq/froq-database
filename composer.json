@@ -9,10 +9,9 @@
         "php": "^8.0",
         "ext-pdo": "*",
         "froq/froq-common": "^5.0",
-        "froq/froq-collection": "^5.0",
-        "froq/froq-validation": "^5.0",
         "froq/froq-pager": "^5.0",
-        "froq/froq-logger": "^5.0"
+        "froq/froq-logger": "^5.0",
+        "froq/froq-validation": "^5.0"
     },
     "autoload": {
         "classmap": ["src/"]
