@@ -51,7 +51,7 @@ final class Database
         $logging = $options['logging'] ?? null;
         if ($logging) {
             $this->logger = new Logger($logging);
-            $this->logger->setOption('slowQuery', $options['logging']['slowQuery'] ?? null);
+            $this->logger->setOption('slowQuery', $logging['slowQuery'] ?? 0);
         }
 
         // Default is false (no profiling).
