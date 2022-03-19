@@ -388,7 +388,7 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function offsetSet(mixed $i, mixed $_): never
     {
-        throw new \ReadonlyError($this);
+        throw new \ReadonlyClassError($this);
     }
 
     /**
@@ -397,6 +397,6 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
      */
     public function offsetUnset(mixed $i): never
     {
-        throw new \ReadonlyError($this);
+        throw new \ReadonlyClassError($this);
     }
 }
