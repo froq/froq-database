@@ -43,7 +43,7 @@ class RecordList extends ItemCollection implements RecordListInterface
             );
         }
 
-        // State "readOnly" can be changed calling readOnly() or lock()/unlock().
+        // State "readOnly" can be changed calling readOnly().
         parent::__construct($items, readOnly: $readOnly);
     }
 
