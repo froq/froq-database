@@ -129,7 +129,7 @@ final class Database
             }
 
             $pdo          = $this->link->pdo();
-            $pdoStatement = !$this->profiler ? $pdo->query($query)
+            $pdoStatement = empty($this->profiler) ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
 
             if ($timeop) {
@@ -168,7 +168,7 @@ final class Database
             }
 
             $pdo       = $this->link->pdo();
-            $pdoResult = !$this->profiler ? $pdo->exec($query)
+            $pdoResult = empty($this->profiler) ? $pdo->exec($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
 
             if ($timeop) {
