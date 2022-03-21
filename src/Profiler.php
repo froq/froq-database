@@ -226,12 +226,14 @@ final class Profiler
     {
         if (!isset(self::$marks[$name])) {
             throw new ProfilerException(
-                'Could not find a mark with given name `%s`',
+                'Cannot find a mark with given name `%s`',
                 $name
             );
         }
 
         $time = round(microtime(true) - self::$marks[$name], 10);
+
+        // Drop mark.
         unset(self::$marks[$name]);
 
         return $time;
@@ -263,7 +265,7 @@ final class Profiler
                 break;
             default:
                 throw new ProfilerException(
-                    'Invalid mark `%s`, valids are: connection, query',
+                    'Invalid mark `%s` [valids: connection, query]',
                     $mark
                 );
         }
@@ -280,7 +282,7 @@ final class Profiler
     {
         if (!isset($this->profiles[$mark])) {
             throw new ProfilerException(
-                'Could not find a profile with given `%s` mark',
+                'Cannot find a profile with given `%s` mark',
                 $mark
             );
         }
@@ -305,7 +307,7 @@ final class Profiler
                 break;
             default:
                 throw new ProfilerException(
-                    'Invalid mark `%s`, valids are: connection, query',
+                    'Invalid mark `%s` [valids: connection, query]',
                     $mark
                 );
         }
