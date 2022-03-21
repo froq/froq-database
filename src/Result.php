@@ -78,13 +78,6 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
                 }
             }
 
-            // Set/update sequence option to prevent transaction errors that comes from lastInsertId()
-            // calls but while commit() returning true when sequence field not exists.
-            $sequence = true;
-            if (isset($options['sequence'])) {
-                $sequence = (bool) $options['sequence'];
-            }
-
             $query = ltrim($pdoStatement->queryString);
 
             // Select queries & returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
@@ -118,6 +111,11 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
                 }
             }
 
+            // Sequence option to prevent transaction errors that comes from lastInsertId() calls
+            // but while commit() returning true when sequence field not exists. Default is true
+            // for "INSERT" queries.
+            $sequence = (bool) ($options['sequence'] ?? true);
+
             // Insert queries.
             if ($sequence && stripos($query, 'INSERT') === 0) {
                 $id = null;
@@ -150,9 +148,6 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
                 }
             }
         }
-
-        // Flush.
-        $pdoStatement = null;
     }
 
     /**
