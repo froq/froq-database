@@ -77,13 +77,12 @@ final class Profiler
      *
      * @param  string   $mark
      * @param  callable $call
-     * @param  ...      $callArgs
      * @return PDOStatement|int|null
      */
-    public function profile(string $mark, callable $call, ...$callArgs): PDOStatement|int|null
+    public function profile(string $mark, callable $call): PDOStatement|int|null
     {
         $this->start($mark);
-        $ret = $call(...$callArgs);
+        $ret = $call();
         $this->end($mark);
 
         return $ret;
@@ -93,12 +92,11 @@ final class Profiler
      * Profile a connection.
      *
      * @param  callable $call
-     * @param  ...      $callArgs
      * @return void
      */
-    public function profileConnection(callable $call, ...$callArgs): void
+    public function profileConnection(callable $call): void
     {
-        $this->profile('connection', $call, ...$callArgs);
+        $this->profile('connection', $call);
     }
 
     /**
@@ -106,14 +104,13 @@ final class Profiler
      *
      * @param  string   $query
      * @param  callable $call
-     * @param  ...      $callArgs
      * @return PDOStatement|int|null
      */
-    public function profileQuery(string $query, callable $call, ...$callArgs): PDOStatement|int|null
+    public function profileQuery(string $query, callable $call): PDOStatement|int|null
     {
         $this->profiles['query'][++$this->queryCount]['string'] = $query;
 
-        return $this->profile('query', $call, ...$callArgs);
+        return $this->profile('query', $call);
     }
 
     /**
