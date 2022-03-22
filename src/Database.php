@@ -313,9 +313,9 @@ final class Database
      * @param  string $table
      * @param  array  $data
      * @param  array  $options
-     * @return int|string|array|object|null
+     * @return mixed
      */
-    public function insert(string $table, array $data, array $options = null)
+    public function insert(string $table, array $data, array $options = null): mixed
     {
         $return = $fetch = $batch = $conflict = $sequence = null;
         if ($options) {
@@ -391,10 +391,10 @@ final class Database
      * @param  array|null        $params
      * @param  array|null        $options
      * @param  string|null       $op
-     * @return int|string|array|object|null
+     * @return mixed
      */
     public function update(string $table, array $data, string|array $where = null, array $params = null, array $options = null,
-        string $op = null)
+        string $op = null): mixed
     {
         $return = $fetch = $batch = $limit = null;
         if ($options) {
@@ -440,10 +440,10 @@ final class Database
      * @param  array|null        $params
      * @param  array|null        $options
      * @param  string|null       $op
-     * @return int|string|array|object|null
+     * @return mixed
      */
     public function delete(string $table, string|array $where = null, array $params = null, array $options = null,
-        string $op = null)
+        string $op = null): mixed
     {
         $return = $fetch = $batch = $limit = null;
         if ($options) {
@@ -521,10 +521,10 @@ final class Database
      * @param  array|null $where
      * @param  array|null $params
      * @param  array|null $options
-     * @return int|float|array|null
+     * @return mixed
      */
     public function increase(string $table, string|array $field, int|float $value = 1, string|array $where = null,
-        array $params = null, array $options = null)
+        array $params = null, array $options = null): mixed
     {
         $return = $fetch = $batch = $limit = null;
         if ($options) {
@@ -571,10 +571,10 @@ final class Database
      * @param  array|null $where
      * @param  array|null $params
      * @param  array|null $options
-     * @return int|float|array|null
+     * @return mixed
      */
     public function decrease(string $table, string|array $field, int|float $value = 1, string|array $where = null,
-        array $params = null, array $options = null)
+        array $params = null, array $options = null): mixed
     {
         $return = $fetch = $batch = $limit = null;
         if ($options) {
