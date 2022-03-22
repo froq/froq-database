@@ -379,19 +379,19 @@ final class Result implements Arrayable, Listable, Objectable, \Countable, \Iter
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     ReadonlyClassError
+     * @throws     ReadonlyError
      */
     public function offsetSet(mixed $i, mixed $_): never
     {
-        throw new \ReadonlyClassError($this);
+        throw new \ReadonlyError($this);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     ReadonlyClassError
+     * @throws     ReadonlyError
      */
     public function offsetUnset(mixed $i): never
     {
-        throw new \ReadonlyClassError($this);
+        throw new \ReadonlyError($this);
     }
 }
