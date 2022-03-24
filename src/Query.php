@@ -650,6 +650,7 @@ final class Query
             $this->add('where', [$this->prepare($where, $params), $op]);
         } else {
             static $signs = ['!', '<', '>'];
+
             // Eg: ([id => 1, active! => false, ..]).
             foreach ($where as $field => $param) {
                 $sign = ' = ';
