@@ -750,13 +750,13 @@ class Record implements RecordInterface
      * @param  string|array      $where
      * @param  array|null        $params
      * @param  string|null       $op
-     * @param  string            $fields
+     * @param  string|array      $fields
      * @param  string|null       $order
      * @param  string|array|null $fetch
      * @return array|object|null
      */
     public final function select(string|array $where, array $params = null, string $op = null, int|null $limit = 1,
-        string $fields = '*', string $order = null, string|array $fetch = null): array|object|null
+        string|array $fields = '*', string $order = null, string|array $fetch = null): array|object|null
     {
         $query = $this->query()->select($fields);
         $query->where($where, $params, $op);
@@ -780,10 +780,12 @@ class Record implements RecordInterface
      * @param  array        $data
      * @param  string|array $where
      * @param  array|null   $params
+     * @param  string|array $return
      * @param  string|null  $op
-     * @return int|null
+     * @return int|array|null
      */
-    public final function update(array $data, string|array $where, array $params = null, string $op = null): int|null
+    public final function update(array $data, string|array $where, array $params = null, string|array $return = '',
+        string $op = null): int|array|null
     {
         $query = $this->query()->update($data);
         $query->where($where, $params, $op);
@@ -793,7 +795,12 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        return $query->run()->count();
+        // Returning fields.
+        $return && $query->return($return);
+
+        $result = $query->run();
+
+        return $return ? $result->rows() : $result->count();
     }
 
     /**
@@ -801,10 +808,12 @@ class Record implements RecordInterface
      *
      * @param  string|array where
      * @param  array|null   $params
+     * @param  string|array $return
      * @param  string|null  $op
-     * @return int|null
+     * @return int|array|null
      */
-    public final function delete(string|array $where, array $params = null, string $return = '', string $op = null): int|array|null
+    public final function delete(string|array $where, array $params = null, string|array $return = '',
+        string $op = null): int|array|null
     {
         $query = $this->query()->delete();
         $query->where($where, $params, $op);
