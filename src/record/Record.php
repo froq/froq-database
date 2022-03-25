@@ -59,7 +59,7 @@ class Record implements RecordInterface
      * @param  array|null                            $validations
      * @param  array|null                            $validationRules
      * @param  array|null                            $validationOptions
-     * @throws froq\database\record\FormException
+     * @throws froq\database\record\RecordException
      */
     public function __construct(Database $db = null, string $table = null, string $tablePrimary = null,
         array $data = null, string|Form $form = null, array $options = null, array $validations = null,
@@ -142,10 +142,10 @@ class Record implements RecordInterface
     public final function setFormClass(string $formClass): self
     {
         if (!class_exists($formClass)) {
-            throw new FormException('Given form class `%s` not exists', $formClass);
+            throw new RecordException('Given form class `%s` not exists', $formClass);
         }
         if (!class_extends($formClass, Form::class)) {
-            throw new FormException('Given form class `%s` must extend class `%s`',
+            throw new RecordException('Given form class `%s` must extend class `%s`',
                 [$formClass, Form::class]);
         }
 
