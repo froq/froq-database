@@ -378,6 +378,7 @@ class Record implements RecordInterface
     {
         [$table, $primary] = $this->pack();
 
+        // Update data, not set all.
         if ($data !== null) {
             $this->updateData($data);
         }
@@ -413,22 +414,21 @@ class Record implements RecordInterface
         // Detect insert/update.
         $new = !isset($primary) || !isset($data[$primary]);
 
-        // Check id validity.
         if (!$new) {
+            // Get id & check empty.
             $id = $data[$primary] ?? null;
             $id || throw new RecordException('Empty primary value');
         } else {
             unset($data[$primary]);
         }
 
-        // When no transaction wrap requested.
-        if ($options['transaction']) {
-            $data = $new ? $this->db->transaction(fn() => $this->doInsert($data, $table, $primary, $options))
-                         : $this->db->transaction(fn() => $this->doUpdate($data, $table, $primary, $options, $id));
-        } else {
-            $data = $new ? $this->doInsert($data, $table, $primary, $options)
-                         : $this->doUpdate($data, $table, $primary, $options, $id);
-        }
+        // Run macro for insert/update.
+        $run = fn() => (
+            $new ? $this->doInsert($data, $table, $primary, $options)
+                 : $this->doUpdate($data, $table, $primary, $options, $id)
+        );
+
+        $data = $options['transaction'] ? $this->db->transaction($run) : $run();
 
         // When select whole/fresh data wanted (works with primary's only).
         if (isset($options['select']) || $select) {
