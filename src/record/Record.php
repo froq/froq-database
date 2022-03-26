@@ -227,9 +227,7 @@ class Record implements RecordInterface
     public final function finded() { return $this->finded ?? null; }
     public final function removed() { return $this->removed ?? null; }
 
-    /**
-     * Aliases.
-     */
+    /** Aliases. */
     public final function found(...$args) { return $this->isFinded(...$args); }
     public final function okay(...$args) { return $this->isValid(...$args); }
 

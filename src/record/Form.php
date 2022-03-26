@@ -213,9 +213,7 @@ class Form implements FormInterface
         return $record;
     }
 
-    /**
-     * Aliases.
-     */
+    /** Aliases. */
     public final function okay(...$args)  { return $this->isValid(...$args); }
 
     /**
