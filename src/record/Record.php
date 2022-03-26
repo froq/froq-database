@@ -517,12 +517,14 @@ class Record implements RecordInterface
      *
      * @param  array<int|string>         $ids
      * @param  array|string|null         $cols
-     * @param  froq\database\Pager|null &$pager
+     * @param  int|null                  $page
      * @param  int|null                  $limit
+     * @param  froq\database\Pager|null &$pager
      * @return froq\database\record\RecordList
      * @throws froq\database\record\RecordException
      */
-    public final function findAll(array $ids, array|string $cols = null, Pager &$pager = null, int $limit = null): RecordList
+    public final function findAll(array $ids, array|string $cols = null, int $page = null, int $limit = null,
+        Pager &$pager = null): RecordList
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
@@ -534,9 +536,14 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
+        if ($pager) {
+            $query->paginate($page, $limit, $pager);
+            $limit = null; // Used already.
+        }
+
         $cols = $cols ?: $this->query->pull('return', 'fields') ?: '*';
         $data = $query->select($cols)->from($table)
-                      ->getArrayAll($pager, $limit);
+                      ->getArrayAll($limit);
 
         $this->state->finded = $data ? count($data) : 0;
 
