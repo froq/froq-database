@@ -10,8 +10,6 @@ namespace froq\database\record;
 use froq\common\interface\{Arrayable, Objectable};
 
 /**
- * Record Interface.
- *
  * @package froq\database\record
  * @object  froq\database\record\RecordInterface
  * @author  Kerem Güneş

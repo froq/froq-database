@@ -7,15 +7,11 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\DatabaseException;
-
 /**
- * Form Exception.
- *
  * @package froq\database\record
  * @object  froq\database\record\FormException
  * @author  Kerem Güneş
  * @since   5.0
  */
-class FormException extends DatabaseException
+class FormException extends \froq\database\DatabaseException
 {}

@@ -12,8 +12,6 @@ use froq\validation\ValidationError;
 use froq\pager\Pager;
 
 /**
- * Record.
- *
  * A class, mimics "Active Record" pattern and may be extended by many record classes
  * to handle CRUD operations in a safe way via `$form` property with validation.
  *
@@ -170,8 +168,8 @@ class Record implements RecordInterface
     }
 
     /**
-     * Get a form instance setting and returning own or creating new one from provided form class or
-     * default.
+     * Get a form instance setting and returning own or creating new one from provided
+     * form class or default.
      *
      * @return froq\database\record\Form
      */
@@ -180,7 +178,7 @@ class Record implements RecordInterface
         // Use internal or own (current) form/form class if available.
         $form = $this->form ?? $this->formClass ?? new Form(
             $this->db, $this->getTable(), $this->getTablePrimary(),
-            data: $this->getData(), record: $this, options: $this->options,
+            record: $this, data: $this->getData(), options: $this->getOptions(),
             validationRules: $this->getValidationRules(), validationOptions: $this->getValidationOptions()
         );
 
@@ -289,8 +287,10 @@ class Record implements RecordInterface
     }
 
     /**
-     * Apply one/many "WHERE" condition/conditions for find/remove actions. Note: query will always contain primary
-     * value(s) as first statement and continue with "AND" operator.
+     * Apply one/many "WHERE" condition/conditions for find/remove actions.
+     *
+     * Note: query will always contain primary value(s) as first statement and
+     * continue with "AND" operator.
      *
      * @param  array|string $where
      * @param  array|null   $params
@@ -335,8 +335,8 @@ class Record implements RecordInterface
     }
 
     /**
-     * Set/get id property and id (primary) field of data array, cause a `RecordException` if no table primary
-     * presented yet.
+     * Set/get id property and id (primary) field of data array, cause a `RecordException`
+     * if no table primary presented yet.
      *
      * @param  int|string|null $id
      * @return int|string|self|null
@@ -359,9 +359,9 @@ class Record implements RecordInterface
     }
 
     /**
-     * Save given or own data to target table, set `saved` state, set `$id` property if table primary was
-     * presented, throw a `RecordException` if no data or target table given yet or throw a `ValidationError` if
-     * validation fails.
+     * Save given or own data to target table, set `saved` state, set `$id` property if
+     * table primary was presented, throw a `RecordException` if no data or target table
+     * given yet or throw a `ValidationError` if validation fails.
      *
      * @param  array|null        &$data
      * @param  array|null        &$errors
@@ -470,8 +470,9 @@ class Record implements RecordInterface
     }
 
     /**
-     * Find and get a record from target table by given id or own id, set `finded` state, throw a
-     * `RecordException` if id is empty or cause a `RecordException` if no table primary presented.
+     * Find and get a record from target table by given id or own id, set `finded` state,
+     * throw a `RecordException` if id is empty or cause a `RecordException` if no table
+     * primary presented.
      *
      * @param  int|string|null   $id
      * @param  array|string|null $cols
@@ -510,8 +511,9 @@ class Record implements RecordInterface
     }
 
     /**
-     * Find and get all records from target table by given ids, set `finded` state, throw a `RecordException`
-     * if ids are empty or cause a `RecordException` if no table primary presented.
+     * Find and get all records from target table by given ids, set `finded` state,
+     * throw a `RecordException` if ids are empty or cause a `RecordException` if no
+     * table primary presented.
      *
      * @param  array<int|string>         $ids
      * @param  array|string|null         $cols
@@ -550,8 +552,9 @@ class Record implements RecordInterface
     }
 
     /**
-     * Remove a record from target table by given id or own id, set `removed` state, throw a `RecordException`
-     * if id is empty or cause a `RecordException` if no table primary presented.
+     * Remove a record from target table by given id or own id, set `removed` state,
+     * throw a `RecordException` if id is empty or cause a `RecordException` if no table
+     * primary presented.
      *
      * @param  int|string|null $id
      * @return int|froq\database\record\Record|null
@@ -601,8 +604,9 @@ class Record implements RecordInterface
     }
 
     /**
-     * Remove all records from target table by given ids, set `removed` state, throw a `RecordException`
-     * if ids is empty or cause a `RecordException` if no table primary presented.
+     * Remove all records from target table by given ids, set `removed` state, throw
+     * a `RecordException` if ids is empty or cause a `RecordException` if no table
+     * primary presented.
      *
      * @param  array<int|string> $ids
      * @return int|froq\database\record\RecordList|null
@@ -649,8 +653,9 @@ class Record implements RecordInterface
     }
 
     /**
-     * Find a record by given id (and optionally given where), and save it with given new data if find successes. This
-     * method shortcut for find() > save() process with a boolean return.
+     * Find a record by given id (and optionally given where), and save it with given
+     * new data if find successes. This method is a shortcut for find() > save() process
+     * with a bool return.
      *
      * @param  int|string         $id
      * @param  array|null        &$data
@@ -667,13 +672,14 @@ class Record implements RecordInterface
         // Will be used for only find().
         $where && $this->where($where);
 
-        return $this->find($id)->isFinded()
-            && $this->save($data, $errors, $options, $drop, _validate: $_validate)->isSaved();
+        return $this->find($id)->isFinded() && $this->save(
+            $data, $errors, $options, $drop, _validate: $_validate
+        )->isSaved();
     }
 
     /**
-     * Find a record by given id (and optionally given where), and remove it. This method shortcut for find() > remove()
-     * process with a boolean return.
+     * Find a record by given id (and optionally given where), and remove it. This method
+     * is a shortcut for find() > remove() process with a bool return.
      *
      * @param  int|string  $id
      * @param  array|null  $where
@@ -688,7 +694,8 @@ class Record implements RecordInterface
     }
 
     /**
-     * Find multiple records by given arguments returning a RecordList filled by found records.
+     * Find multiple records by given arguments returning a `RecordList` filled by
+     * found records.
      *
      * @param  string|array    $where
      * @param  mixed        ...$selectArgs For select() method.
@@ -713,7 +720,8 @@ class Record implements RecordInterface
     }
 
     /**
-     * Remove multiple records by given arguments returning a `RecordList` filled by removed records.
+     * Remove multiple records by given arguments returning a `RecordList` filled by
+     * removed records.
      *
      * @param  string|array    $where
      * @param  mixed        ...$deleteArgs For delete() method.
@@ -825,13 +833,8 @@ class Record implements RecordInterface
     }
 
     /**
-     * Pack table, table primary and id/ids stuff, throw a `RecordException` if no table presented or no table
-     * primary presented when primary check requested as `$primary = true`.
-     *
-     * @param  int|string|array<int|string>|null $id
-     * @param  bool                              $primary
-     * @return array
-     * @throws froq\database\record\RecordException
+     * Pack table, table primary and id/ids stuff, throw a `RecordException` if no table
+     * presented or no table primary presented when primary check requested as `$primary = true`.
      */
     private function pack(int|string|array $id = null, bool $primary = false): array
     {
@@ -852,11 +855,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Create copy instance with some own basic properties.
-     *
-     * @param  string|null $table
-     * @param  string|null $tablePrimary
-     * @return static
+     * Create copy instance with some base properties.
      */
     private function copy(string $table = null, string $tablePrimary = null): static
     {
@@ -872,12 +871,6 @@ class Record implements RecordInterface
 
     /**
      * Do an insert action.
-     *
-     * @param  array       $data
-     * @param  string      $table
-     * @param  string|null $primary
-     * @param  array       $options
-     * @return array
      */
     private function doInsert(array $data, string $table, string|null $primary, array $options): array
     {
@@ -922,14 +915,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Do an insert action.
-     *
-     * @param  array       $data
-     * @param  string      $table
-     * @param  string|null $primary
-     * @param  array       $options
-     * @param  int|string  $id
-     * @return array
+     * Do an update action.
      */
     private function doUpdate(array $data, string $table, string|null $primary, array $options, int|string $id): array
     {

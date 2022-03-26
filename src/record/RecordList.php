@@ -10,8 +10,6 @@ namespace froq\database\record;
 use froq\pager\Pager;
 
 /**
- * Record List.
- *
  * A list class, used internally and holds `$pager` property and its getter method,
  * and also all basic list methods such as `filter()`, `map(), `reduce()` etc.
  *
@@ -34,9 +32,9 @@ class RecordList extends \ItemList implements RecordListInterface
      */
     public function __construct(array $items = [], Pager $pager = null, bool $locked = false)
     {
-        $this->pager = $pager;
-
         parent::__construct($items, type: $this->extractType(), locked: $locked);
+
+        $this->pager = $pager;
     }
 
     /**
@@ -78,7 +76,7 @@ class RecordList extends \ItemList implements RecordListInterface
     }
 
     /**
-     * Extract accepting type if available, or return Record class as default.
+     * Extract accepting type if available, or return `Record` class as default.
      */
     private function extractType(): string
     {

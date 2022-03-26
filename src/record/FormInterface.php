@@ -10,8 +10,6 @@ namespace froq\database\record;
 use froq\common\interface\{Arrayable, Objectable};
 
 /**
- * Form Interface.
- *
  * @package froq\database\record
  * @object  froq\database\record\FormInterface
  * @author  Kerem Güneş

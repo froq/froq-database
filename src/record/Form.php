@@ -11,8 +11,6 @@ use froq\database\{Database, trait\RecordTrait};
 use froq\validation\ValidationError;
 
 /**
- * Form.
- *
  * A class, aims to run validation processes via its validation rules, also is able
  * to save the validated data via a `$record` property.
  *
@@ -187,8 +185,8 @@ class Form implements FormInterface
     }
 
     /**
-     * Get a record instance setting and returning own or creating new one from provided record class or
-     * default.
+     * Get a record instance setting and returning own or creating new one from
+     * provided record class or default.
      *
      * @return froq\database\record\Record
      */
@@ -197,7 +195,7 @@ class Form implements FormInterface
         // Use internal or own (current) record/record class if available.
         $record = $this->record ?? $this->recordClass ?? new Record(
             $this->db, $this->getTable(), $this->getTablePrimary(),
-            data: $this->getData(), form: $this, options: $this->options,
+            form: $this, data: $this->getData(), options: $this->getOptions(),
             validationRules: $this->getValidationRules(), validationOptions: $this->getValidationOptions()
         );
 
@@ -217,9 +215,9 @@ class Form implements FormInterface
     public final function okay(...$args)  { return $this->isValid(...$args); }
 
     /**
-     * Check whether given or own data is valid filtering/sanitizing data, fill `$errors` argument with
-     * validation errors if validation fails, throw a `FormException` if given or own record data or own
-     * rules is empty.
+     * Check whether given or own data is valid filtering/sanitizing data, fill `$errors`
+     * argument with validation errors if validation fails, throw a `FormException` if given
+     * or own record data or own rules is empty.
      *
      * @param  array|null &$data
      * @param  array|null &$errors
@@ -278,7 +276,8 @@ class Form implements FormInterface
     }
 
     /**
-     * Check whether form is sent (submitted) with given or own name, or request method is post.
+     * Check whether form is sent (submitted) with given or own name, or request
+     * method is post.
      *
      * @param  string|null $name
      * @return bool
@@ -295,8 +294,9 @@ class Form implements FormInterface
     }
 
     /**
-     * Save own data via a newly created record entity returning that record, throw a `FormException` if no
-     * validation was run or throw a `ValidationError` if runned validation was failed.
+     * Save own data via a newly created record entity returning that record, throw
+     * a `FormException` if no validation was run or throw a `ValidationError` if
+     * validation was failed.
      *
      * @param  array|null $options
      * @return froq\database\record\Record
@@ -307,15 +307,21 @@ class Form implements FormInterface
         if ($this->validated === null) {
             throw new FormException('Cannot run save process, form not validated yet');
         } elseif ($this->validated === false) {
-            throw new ValidationError('Cannot run save process, form validation was failed [tip: run save()'
-                . ' in a try/catch block and use errors() to see error details]', errors: $this->errors());
+            throw new ValidationError(
+                'Cannot run save process, form validation was failed [tip: run save() '.
+                'in a try/catch block and use errors() to see error details]',
+                errors: $this->errors()
+            );
         }
 
         $this->record = $this->getRecordInstance();
 
         if (empty($this->table) && empty($table = $this->record->getTable())) {
-            throw new FormException('No table set yet, call setTable() first or define $table property on %s'
-                . ' class to run save()', static::class);
+            throw new FormException(
+                'No table set yet, call setTable() first or define $table property on %s '.
+                'class to run save()',
+                static::class
+            );
         }
         if (empty($this->data)) {
             throw new FormException('No data set yet for save(), call setData() or isValid($data) first');
