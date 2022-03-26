@@ -228,8 +228,8 @@ class Record implements RecordInterface
     public final function removed() { return $this->removed ?? null; }
 
     /** Aliases. */
-    public final function found(...$args) { return $this->isFinded(...$args); }
     public final function okay(...$args) { return $this->isValid(...$args); }
+    public final function found(...$args) { return $this->isFinded(...$args); }
 
     /**
      * Proxy method to own form class for validation processes.
@@ -865,7 +865,7 @@ class Record implements RecordInterface
      */
     private function copy(string $table = null, string $primary = null): static
     {
-        if (static::class == self::class) {
+        if (self::class == static::class) {
             $that = new self($this->db);
         } else {
             $that = new static();
