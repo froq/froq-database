@@ -858,6 +858,9 @@ class Record implements RecordInterface
             );
         }
 
+        // Filter multiple ids.
+        is_array($id) && $id = array_filter($id);
+
         return [$this->table, $this->tablePrimary ?? null, $id];
     }
 
