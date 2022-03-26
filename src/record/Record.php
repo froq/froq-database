@@ -35,17 +35,11 @@ class Record implements RecordInterface
     /** @var froq\database\Query */
     protected Query $query;
 
+    /** @var froq\database\record\RecordState */
+    private RecordState $state;
+
     /** @var int|string|null */
     private int|string|null $id;
-
-    /** @var bool */
-    private bool $saved;
-
-    /** @var int */
-    private int $finded;
-
-    /** @var int|array|null */
-    private int|array|null $removed;
 
     /**
      * Constructor.
@@ -73,6 +67,7 @@ class Record implements RecordInterface
 
         $this->db    = $db;
         $this->query = new Query($db, $table);
+        $this->state = new RecordState();
 
         $data && $this->data = $data;
 
@@ -223,9 +218,9 @@ class Record implements RecordInterface
     }
 
     /** State getters. */
-    public final function saved() { return $this->saved ?? null; }
-    public final function finded() { return $this->finded ?? null; }
-    public final function removed() { return $this->removed ?? null; }
+    public final function saved() { return $this->state->saved; }
+    public final function finded() { return $this->state->finded; }
+    public final function removed() { return $this->state->removed; }
 
     /** Aliases. */
     public final function okay(...$args) { return $this->isValid(...$args); }
@@ -364,7 +359,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Save given or own data to target table, set `$saved` property, set `$id` property if table primary was
+     * Save given or own data to target table, set `saved` state, set `$id` property if table primary was
      * presented, throw a `RecordException` if no data or target table given yet or throw a `ValidationError` if
      * validation fails.
      *
@@ -475,7 +470,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Find and get a record from target table by given id or own id, set `$finded` property, throw a
+     * Find and get a record from target table by given id or own id, set `finded` state, throw a
      * `RecordException` if id is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  int|string|null   $id
@@ -501,10 +496,10 @@ class Record implements RecordInterface
         $data = $query->select($cols)->from($table)
                       ->getArray();
 
-        $this->finded = $data ? 1 : 0;
+        $this->state->finded = $data ? 1 : 0;
 
         $that = $this->copy($table, $primary);
-        $that->finded = $this->finded;
+        $that->state->finded = $this->state->finded;
 
         if ($data) {
             $this->setData($data);
@@ -515,7 +510,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Find and get all records from target table by given ids, set `$finded` property, throw a `RecordException`
+     * Find and get all records from target table by given ids, set `finded` state, throw a `RecordException`
      * if ids are empty or cause a `RecordException` if no table primary presented.
      *
      * @param  array<int|string>         $ids
@@ -541,10 +536,10 @@ class Record implements RecordInterface
         $data = $query->select($cols)->from($table)
                       ->getArrayAll($pager, $limit);
 
-        $this->finded = $data ? count($data) : 0;
+        $this->state->finded = $data ? count($data) : 0;
 
         $that = $this->copy($table, $primary);
-        $that->finded = $this->finded;
+        $that->state->finded = $this->state->finded;
 
         $thats = [];
         if ($data) foreach ($data as $dat) {
@@ -555,7 +550,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Remove a record from target table by given id or own id, set `$removed` property, throw a `RecordException`
+     * Remove a record from target table by given id or own id, set `removed` state, throw a `RecordException`
      * if id is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  int|string|null $id
@@ -586,10 +581,10 @@ class Record implements RecordInterface
 
         // With a record.
         if ($return) {
-            $this->removed = $data = $result->rows(0);
+            $this->state->removed = $data = $result->rows(0);
 
             $that = $this->copy($table, $primary);
-            $that->removed = $this->removed;
+            $that->state->removed = $this->state->removed;
 
             if ($data) {
                 $this->setData($data);
@@ -600,13 +595,13 @@ class Record implements RecordInterface
         }
 
         // With a count.
-        $this->removed = $result->count();
+        $this->state->removed = $result->count();
 
-        return $this->removed;
+        return $this->state->removed;
     }
 
     /**
-     * Remove all records from target table by given ids, set `$removed` property, throw a `RecordException`
+     * Remove all records from target table by given ids, set `removed` state, throw a `RecordException`
      * if ids is empty or cause a `RecordException` if no table primary presented.
      *
      * @param  array<int|string> $ids
@@ -634,10 +629,10 @@ class Record implements RecordInterface
 
         // With a record list.
         if ($return) {
-            $this->removed = $data = $result->rows();
+            $this->state->removed = $data = $result->rows();
 
             $that = $this->copy($table, $primary);
-            $that->removed = $this->removed;
+            $that->state->removed = $this->state->removed;
 
             $thats = [];
             if ($data) foreach ($data as $dat) {
@@ -648,9 +643,9 @@ class Record implements RecordInterface
         }
 
         // With a count.
-        $this->removed = $result->count();
+        $this->state->removed = $result->count();
 
-        return $this->removed;
+        return $this->state->removed;
     }
 
     /**
@@ -718,7 +713,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Remove multiple records by given arguments returning a RecordList filled by removed records.
+     * Remove multiple records by given arguments returning a `RecordList` filled by removed records.
      *
      * @param  string|array    $where
      * @param  mixed        ...$deleteArgs For delete() method.
@@ -804,7 +799,7 @@ class Record implements RecordInterface
     /**
      * Delete record(s) from own table by given conditions.
      *
-     * @param  string|array where
+     * @param  string|array $where
      * @param  array|null   $params
      * @param  string|array $return
      * @param  string|null  $op
@@ -857,23 +852,20 @@ class Record implements RecordInterface
     }
 
     /**
-     * Create a static copy instance with some own basic properties.
+     * Create copy instance with some own basic properties.
      *
      * @param  string|null $table
-     * @param  string|null $primary
+     * @param  string|null $tablePrimary
      * @return static
      */
-    private function copy(string $table = null, string $primary = null): static
+    private function copy(string $table = null, string $tablePrimary = null): static
     {
-        if (self::class == static::class) {
-            $that = new self($this->db);
-        } else {
-            $that = new static();
-            $that->db = $this->db;
-        }
+        $that = clone $this;
+        $that->db = $this->db;
+        $that->state = new RecordState();
 
         $that->setTable($table ?? $this->getTable())
-             ->setTablePrimary($primary ?? $this->getTablePrimary());
+             ->setTablePrimary($tablePrimary ?? $this->getTablePrimary());
 
         return $that;
     }
@@ -907,7 +899,7 @@ class Record implements RecordInterface
         // Get new id if available.
         $id = $result->id();
 
-        $this->saved = (bool) $result->count();
+        $this->state->saved = (bool) $result->count();
 
         // Swap data with returning data.
         if ($return) {
@@ -965,7 +957,7 @@ class Record implements RecordInterface
         // Set primary value with given id.
         $this->id($id);
 
-        $this->saved = (bool) $result->count();
+        $this->state->saved = (bool) $result->count();
 
         // Swap data with returning data.
         if ($return) {
