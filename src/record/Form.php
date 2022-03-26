@@ -34,9 +34,6 @@ class Form implements FormInterface
     /** @var string */
     protected string $name;
 
-    /** @var bool */
-    private bool $saved;
-
     /**
      * Constructor.
      *
