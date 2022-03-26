@@ -1276,7 +1276,7 @@ final class Query
         $sequence ??= $this->stack['insert']['sequence'] ?? null;
         $index      = $this->stack['index']              ?? null;
 
-        return $this->db->query($this->toString(), null, [
+        return $this->db->query($this->toString(), options: [
             'fetch' => $fetch, 'sequence' => $sequence, 'index' => $index
         ]);
     }
@@ -1293,8 +1293,10 @@ final class Query
     }
 
     /**
-     * Commit a "execute" query, reset stack and return self for next command. Note: this method is useful when
-     * chaining is desired for executing "delete" queries and passing to next query, eg. "insert", "update" etc.
+     * Commit a "execute" query, reset stack and return self for next command.
+     *
+     * Note: This method is only useful when chaining is desired for executing
+     * "delete" queries and passing to next query, eg. "insert", "update" etc.
      *
      * @return self
      * @since  5.0
@@ -1303,14 +1305,14 @@ final class Query
     {
         $this->runExec();
 
-        // Keep target table for next query.
-        $table = $this->stack['table'] ?? $this->stack['from'] ?? $this->stack['into'] ?? '';
+        // Keep target table for next query choosing any of.
+        $table = array_choose($this->stack, ['table', 'from', 'into'], '');
 
         return $this->reset()->table($table);
     }
 
     /**
-     * Get a result row stringifying & running current query stack.
+     * Get a result row & running current query stack.
      *
      * @param  string|array<string>|null $fetch
      * @return array|object|null
@@ -1327,7 +1329,7 @@ final class Query
     }
 
     /**
-     * Get all result rows stringifying & running current query stack.
+     * Get all result rows & running current query stack.
      *
      * Note: For pagination purposes, `paginate()` method must be called before this method.
      *
@@ -1343,7 +1345,7 @@ final class Query
     }
 
     /**
-     * Get a result row as array stringifying & running current query stack.
+     * Get a result row as array & running current query stack.
      *
      * @return array|null
      * @since  4.7
@@ -1354,7 +1356,7 @@ final class Query
     }
 
     /**
-     * Get a result row as object stringifying & running current query stack.
+     * Get a result row as object & running current query stack.
      *
      * @return object|null
      * @since  4.7
@@ -1365,7 +1367,7 @@ final class Query
     }
 
     /**
-     * Get a result row as class instance stringifying & running current query stack.
+     * Get a result row as class instance & running current query stack.
      *
      * @return object|null
      * @since  5.0
@@ -1376,10 +1378,9 @@ final class Query
     }
 
     /**
-     * Get all result rows as array stringifying & running current query stack.
+     * Get all result rows as array & running current query stack.
      *
-     * @param  froq\pager\Pager|null &$pager
-     * @param  int|null               $limit
+     * @param  int|null $limit
      * @return array|null
      * @since  4.7
      */
@@ -1389,10 +1390,9 @@ final class Query
     }
 
     /**
-     * Get all result rows as object stringifying & running current query stack.
+     * Get all result rows as object & running current query stack.
      *
-     * @param  froq\pager\Pager|null &$pager
-     * @param  int|null               $limit
+     * @param  int|null $limit
      * @return array|null
      * @since  4.7
      */
@@ -1402,11 +1402,10 @@ final class Query
     }
 
     /**
-     * Get all result rows as class instance stringifying & running current query stack.
+     * Get all result rows as class instance & running current query stack.
      *
-     * @param  string                 $class
-     * @param  froq\pager\Pager|null &$pager
-     * @param  int|null               $limit
+     * @param  string   $class
+     * @param  int|null $limit
      * @return array|null
      * @since  5.0
      */
@@ -1418,9 +1417,8 @@ final class Query
     /**
      * Get all result rows as collection.
      *
-     * @param  string|array<string>|null  $fetch
-     * @param  froq\pager\Pager|null     &$pager
-     * @param  int|null                   $limit
+     * @param  string|array<string>|null $fetch
+     * @param  int|null                  $limit
      * @return froq\collection\Collection
      * @since  5.0
      */
@@ -1487,7 +1485,7 @@ final class Query
     }
 
     /**
-     * Get count result stringifying & running current query stack.
+     * Get count result & running current query stack.
      *
      * @return int
      */
