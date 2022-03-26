@@ -1329,12 +1329,16 @@ final class Query
     /**
      * Get all result rows stringifying & running current query stack.
      *
-     * @note   For pagination purposes, `paginate()` method must be called before this method.
+     * Note: For pagination purposes, `paginate()` method must be called before this method.
+     *
      * @param  string|array<string>|null $fetch
+     * @param  int|null                  $limit
      * @return array|null
      */
-    public function getAll(string|array $fetch = null): array|null
+    public function getAll(string|array $fetch = null, int $limit = null): array|null
     {
+        $limit && $this->limit($limit);
+
         return $this->run($fetch)->rows();
     }
 
@@ -1379,9 +1383,9 @@ final class Query
      * @return array|null
      * @since  4.7
      */
-    public function getArrayAll(Pager &$pager = null, int $limit = null): array|null
+    public function getArrayAll(int $limit = null): array|null
     {
-        return $this->getAll('array', $pager, $limit);
+        return $this->getAll('array', $limit);
     }
 
     /**
@@ -1392,9 +1396,9 @@ final class Query
      * @return array|null
      * @since  4.7
      */
-    public function getObjectAll(Pager &$pager = null, int $limit = null): array|null
+    public function getObjectAll(int $limit = null): array|null
     {
-        return $this->getAll('object', $pager, $limit);
+        return $this->getAll('object', $limit);
     }
 
     /**
@@ -1406,9 +1410,9 @@ final class Query
      * @return array|null
      * @since  5.0
      */
-    public function getClassAll(string $class, Pager &$pager = null, int $limit = null): array|null
+    public function getClassAll(string $class, int $limit = null): array|null
     {
-        return $this->getAll(['class', $class], $pager, $limit);
+        return $this->getAll(['class', $class], $limit);
     }
 
     /**
@@ -1420,9 +1424,9 @@ final class Query
      * @return froq\collection\Collection
      * @since  5.0
      */
-    public function getCollection(string|array $fetch = null, Pager &$pager = null, int $limit = null): Collection
+    public function getCollection(string|array $fetch = null, int $limit = null): Collection
     {
-        return new Collection($this->getAll($fetch, $pager, $limit));
+        return new Collection($this->getAll($fetch, $limit));
     }
 
     /**
