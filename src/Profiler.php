@@ -53,6 +53,26 @@ final class Profiler
     }
 
     /**
+     * Get connection profile.
+     *
+     * @return array|null
+     */
+    public function connectionProfile(): array|null
+    {
+        return $this->profiles['connection'] ?? null;
+    }
+
+    /**
+     * Get query profile.
+     *
+     * @return array|null
+     */
+    public function queryProfile(): array|null
+    {
+        return $this->profiles['query'] ?? null;
+    }
+
+    /**
      * Get query count.
      *
      * @return int
