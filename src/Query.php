@@ -1132,7 +1132,7 @@ final class Query
     public function orderByRandom(): self
     {
         return ($this->db->link()->driver() == 'pgsql')
-            ? $this->add('order', 'random()') : $this->add('order', 'rand()');
+             ? $this->add('order', 'random()') : $this->add('order', 'rand()');
     }
 
     /**
