@@ -1156,8 +1156,12 @@ final class Query
      */
     public function limit(int $limit, int $offset = null): self
     {
-        return ($offset === null) ? $this->add('limit', abs($limit), false)
-             : $this->add('limit', abs($limit), false)->add('offset', abs($offset), false);
+        if ($offset === null) {
+            return $this->add('limit', abs($limit), false);
+        }
+
+        return $this->add('limit', abs($limit), false)
+                    ->add('offset', abs($offset), false);
     }
 
     /**
@@ -1559,6 +1563,7 @@ final class Query
      */
     public function paginate(int $page = null, int $limit = null, Pager &$pager = null, int $count = null): self
     {
+        // prd(func_get_args());
         // Limit/offset. @default
         static $defaults = [10, 0];
 
@@ -1571,9 +1576,12 @@ final class Query
 
         $page = ($page > 0) ? $page : 1;
         $offset = ($page * $limit) - $limit;
+        // prd([$page, $offset]);
+        // prd($this->count());
 
         // This will also get a count() result if no count given.
         $pager ??= $this->db->initPager($count ?? $this->count(), ['start' => $page, 'stop' => $limit]);
+        // prd([$pager->limit, $pager->offset]);
 
         return $this->limit($limit, $offset);
     }
