@@ -38,6 +38,14 @@ class RecordList extends \ItemList implements RecordListInterface
     }
 
     /**
+     * @override
+     */
+    public function __debugInfo(): array
+    {
+        return ['count' => $this->count()] + parent::__debugInfo();
+    }
+
+    /**
      * Get pager property.
      *
      * @return froq\pager\Pager|null
