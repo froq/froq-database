@@ -1339,7 +1339,11 @@ final class Query
      */
     public function getAll(string|array $fetch = null, int $limit = null): array|null
     {
-        $limit && $this->limit($limit);
+        // Apply limit limited queries, preventing sytax errors for non-select queries (PgSQL).
+        if ($limit) {
+            $ok = $this->has('select') || $this->db->link()->driver() != 'pgsql';
+            $ok && $this->limit($limit);
+        }
 
         return $this->run($fetch)->rows();
     }
