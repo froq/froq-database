@@ -1124,7 +1124,7 @@ final class Database
 
                     $sign = ' = ';
                     if (in_array($field[-1], $signs, true)) {
-                        $sign  = format(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
+                        $sign  = sprintf(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
                         $field = substr($field, 0, -1);
                     }
 

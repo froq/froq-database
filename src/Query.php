@@ -655,7 +655,7 @@ final class Query
             foreach ($where as $field => $param) {
                 $sign = ' = ';
                 if (in_array($field[-1], $signs, true)) {
-                    $sign  = format(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
+                    $sign  = sprintf(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
                     $field = substr($field, 0, -1);
                 }
 
@@ -1563,7 +1563,6 @@ final class Query
      */
     public function paginate(int $page = null, int $limit = null, Pager &$pager = null, int $count = null): self
     {
-        // prd(func_get_args());
         // Limit/offset. @default
         static $defaults = [10, 0];
 
@@ -1576,12 +1575,9 @@ final class Query
 
         $page = ($page > 0) ? $page : 1;
         $offset = ($page * $limit) - $limit;
-        // prd([$page, $offset]);
-        // prd($this->count());
 
         // This will also get a count() result if no count given.
         $pager ??= $this->db->initPager($count ?? $this->count(), ['start' => $page, 'stop' => $limit]);
-        // prd([$pager->limit, $pager->offset]);
 
         return $this->limit($limit, $offset);
     }
