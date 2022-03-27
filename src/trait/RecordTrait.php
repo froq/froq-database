@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace froq\database\trait;
 
 use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait, OptionTrait};
-use froq\collection\trait\{CountTrait, EmptyTrait, ToArrayTrait, ToObjectTrait};
+use froq\collection\trait\{EmptyTrait, ToArrayTrait, ToObjectTrait};
 use froq\validation\ValidationError;
 
 /**
@@ -25,7 +25,7 @@ use froq\validation\ValidationError;
 trait RecordTrait
 {
     use DbTrait, TableTrait, ValidationTrait;
-    use CountTrait, EmptyTrait, ToArrayTrait, ToObjectTrait;
+    use EmptyTrait, ToArrayTrait, ToObjectTrait;
     use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait;
     use OptionTrait;
 
