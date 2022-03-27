@@ -12,6 +12,7 @@ namespace froq\database\record;
  * @object  froq\database\record\RecordState
  * @author  Kerem Güneş
  * @since   6.0
+ * @internal
  */
 class RecordState extends \State
 {
@@ -20,7 +21,7 @@ class RecordState extends \State
      */
     public function __construct()
     {
-        // With a fresh initial state.
+        // Initial states for related actions.
         parent::__construct(saved: null, finded: null, removed: null);
     }
 }
