@@ -98,6 +98,24 @@ class Record implements RecordInterface
     }
 
     /**
+     * Clone.
+     */
+    public function __clone()
+    {
+        $this->query = clone $this->query;
+        $this->state = clone $this->state;
+
+        if (isset($this->form)) {
+            $this->form = clone $this->form;
+        }
+
+        $this->query->reset();
+        if (isset($this->table)) {
+            $this->query->table($this->table);
+        }
+    }
+
+    /**
      * Set form property updating form-class property and form's record.
      *
      * @param  froq\database\record\Form
@@ -311,7 +329,7 @@ class Record implements RecordInterface
      * @param  array|null        $fetch
      * @return self
      */
-    public function return(string|array|bool $fields, string|array $fetch = null): self
+    public final function return(string|array|bool $fields, string|array $fetch = null): self
     {
         $this->query->return($fields, $fetch);
 
@@ -494,14 +512,13 @@ class Record implements RecordInterface
         }
 
         $cols = $cols ?: $this->query->pull('return', 'fields') ?: '*';
-        $data = $query->select($cols)->from($table)
-                      ->getArray();
+        $data = $query->select($cols)->from($table)->getArray();
 
         $this->state->finded = $data ? 1 : 0;
 
-        $that = $this->copy($table, $primary);
-        $that->state->finded = $this->state->finded;
+        $that = clone $this;
 
+        // Keep data for both.
         if ($data) {
             $this->setData($data);
             $that->setData($data);
@@ -542,17 +559,13 @@ class Record implements RecordInterface
         }
 
         $cols = $cols ?: $this->query->pull('return', 'fields') ?: '*';
-        $data = $query->select($cols)->from($table)
-                      ->getArrayAll($limit);
+        $data = $query->select($cols)->from($table)->getArrayAll($limit);
 
         $this->state->finded = $data ? count($data) : 0;
 
-        $that = $this->copy($table, $primary);
-        $that->state->finded = $this->state->finded;
-
         $thats = [];
         if ($data) foreach ($data as $dat) {
-            $thats[] = (clone $that)->setData((array) $dat);
+            $thats[] = (clone $this)->setData((array) $dat);
         }
 
         return new RecordList($thats, $pager);
@@ -593,9 +606,9 @@ class Record implements RecordInterface
         if ($return) {
             $this->state->removed = $data = $result->rows(0);
 
-            $that = $this->copy($table, $primary);
-            $that->state->removed = $this->state->removed;
+            $that = clone $this;
 
+            // Keep data for both.
             if ($data) {
                 $this->setData($data);
                 $that->setData($data);
@@ -642,12 +655,9 @@ class Record implements RecordInterface
         if ($return) {
             $this->state->removed = $data = $result->rows();
 
-            $that = $this->copy($table, $primary);
-            $that->state->removed = $this->state->removed;
-
             $thats = [];
             if ($data) foreach ($data as $dat) {
-                $thats[] = (clone $that)->setData((array) $dat);
+                $thats[] = (clone $this)->setData((array) $dat);
             }
 
             return new RecordList($thats);
@@ -711,7 +721,6 @@ class Record implements RecordInterface
     public final function findBy(string|array $where, mixed ...$selectArgs): RecordList
     {
         $rows = $this->select($where, ...$selectArgs);
-        $that = $this->copy();
 
         // For single records.
         if (isset($selectArgs['limit'])) {
@@ -720,7 +729,7 @@ class Record implements RecordInterface
 
         $thats = [];
         if ($rows) foreach ($rows as $row) {
-            $thats[] = (clone $that)->setData((array) $row);
+            $thats[] = (clone $this)->setData((array) $row);
         }
 
         return new RecordList($thats);
@@ -742,11 +751,10 @@ class Record implements RecordInterface
         }
 
         $rows = $this->delete($where, ...$deleteArgs);
-        $that = $this->copy();
 
         $thats = [];
         if ($rows) foreach ($rows as $row) {
-            $thats[] = (clone $that)->setData((array) $row);
+            $thats[] = (clone $this)->setData((array) $row);
         }
 
         return new RecordList($thats);
@@ -862,21 +870,6 @@ class Record implements RecordInterface
         is_array($id) && $id = array_filter($id);
 
         return [$this->table, $this->tablePrimary ?? null, $id];
-    }
-
-    /**
-     * Create copy instance with some base properties.
-     */
-    private function copy(string $table = null, string $tablePrimary = null): static
-    {
-        $that = clone $this;
-        $that->db = $this->db;
-        $that->state = new RecordState();
-
-        $that->setTable($table ?? $this->getTable())
-             ->setTablePrimary($tablePrimary ?? $this->getTablePrimary());
-
-        return $that;
     }
 
     /**
