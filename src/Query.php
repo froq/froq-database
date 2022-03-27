@@ -2156,11 +2156,11 @@ final class Query
         if (in_array($op, $ops, true)) {
             return $op;
         }
-        if ($numeric && in_array($op, ['+1', '-1'], true)) {
+        if ($numeric && in_array($op, ['1', '+1', '-1'], true)) {
             return ($op > '-1') ? 'ASC' : 'DESC';
         }
 
-        throw new QueryException('Invalid op `%s` [valids: AND, OR for where & ASC, DESC, +1, -1 for order]', $op);
+        throw new QueryException('Invalid op `%s` [valids: AND, OR for where & ASC, DESC, 1, +1, -1 for order]', $op);
     }
 
     /**
