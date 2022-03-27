@@ -487,13 +487,14 @@ final class Database
      * @param  string            $table
      * @param  string|array|null $where
      * @param  array|null        $params
+     * @param  string|null       $op
      * @return int
      */
-    public function count(string $table, string|array $where = null, array $params = null): int
+    public function count(string $table, string|array $where = null, array $params = null, string $op = null): int
     {
         $query = $this->initQuery($table);
 
-        $where && $query->where(...$this->prepareWhereInput($where, $params));
+        $where && $query->where(...$this->prepareWhereInput($where, $params, $op));
 
         return $query->count();
     }
