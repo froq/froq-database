@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace froq\database\record;
 
 use froq\database\{Database, Query, trait\RecordTrait};
-use froq\common\trait\StateTrait;
 use froq\validation\ValidationError;
+use froq\common\trait\StateTrait;
 use froq\pager\Pager;
 use State;
 
