@@ -45,12 +45,15 @@ trait RecordTrait
      * Prepare given or own data running validation, throw if validation fails and silent option is not true.
      *
      * @param  array|null &$data
+     * @param  array|null &$errors
      * @param  bool        $silent
      * @return self|null
      * @throws froq\validation\ValidationError
      */
-    public final function prepare(array &$data = null, bool $silent = false): self|null
+    public final function prepare(array &$data = null, array &$errors = null, bool $silent = false): self|null
     {
+        $errors = null;
+
         $this->isValid($data, $errors);
 
         if (!$errors) {
