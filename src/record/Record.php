@@ -8,8 +8,10 @@ declare(strict_types=1);
 namespace froq\database\record;
 
 use froq\database\{Database, Query, trait\RecordTrait};
+use froq\common\trait\StateTrait;
 use froq\validation\ValidationError;
 use froq\pager\Pager;
+use State;
 
 /**
  * A class, mimics "Active Record" pattern and may be extended by many record classes
@@ -22,7 +24,7 @@ use froq\pager\Pager;
  */
 class Record implements RecordInterface
 {
-    use RecordTrait;
+    use RecordTrait, StateTrait;
 
     /** @var froq\database\record\Form */
     protected Form $form;
@@ -32,9 +34,6 @@ class Record implements RecordInterface
 
     /** @var froq\database\Query */
     protected Query $query;
-
-    /** @var froq\database\record\RecordState */
-    private RecordState $state;
 
     /** @var int|string|null */
     private int|string|null $id;
@@ -65,7 +64,7 @@ class Record implements RecordInterface
 
         $this->db    = $db;
         $this->query = new Query($db, $table);
-        $this->state = new RecordState();
+        $this->state = new State();
 
         $data && $this->data = $data;
 
@@ -256,7 +255,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Check saved state/result, fill given id argument when primary exists on record.
+     * Check saved state, fill given id argument when primary exists on record.
      *
      * @param  int|string|null &$id
      * @return bool
@@ -269,29 +268,23 @@ class Record implements RecordInterface
     }
 
     /**
-     * Check finded state/result, fill given state argument.
+     * Check finded state.
      *
-     * @param  int|null &$finded
      * @return bool
      */
-    public final function isFinded(int &$finded = null): bool
+    public final function isFinded(): bool
     {
-        $finded = $this->finded();
-
-        return !!$finded;
+        return (bool) $this->finded();
     }
 
     /**
-     * Check removed state/result, fill given state argument.
+     * Check removed state.
      *
-     * @param  int|array|null &$removed
      * @return bool
      */
-    public final function isRemoved(int|array &$removed = null): bool
+    public final function isRemoved(int &$removed = null): bool
     {
-        $removed = $this->removed();
-
-        return !!$removed;
+        return (bool) $this->removed();
     }
 
     /**
@@ -325,8 +318,8 @@ class Record implements RecordInterface
     /**
      * Apply returnin clause for insert/update/delete actions.
      *
-     * @param  string|array|bool $fields
-     * @param  array|null        $fetch
+     * @param  string|array<string>|bool $fields
+     * @param  string|array<string>|null $fetch
      * @return self
      */
     public final function return(string|array|bool $fields, string|array $fetch = null): self
@@ -380,6 +373,8 @@ class Record implements RecordInterface
      * Save given or own data to target table, set `saved` state, set `$id` property if
      * table primary was presented, throw a `RecordException` if no data or target table
      * given yet or throw a `ValidationError` if validation fails.
+     *
+     * Note: After this method `isSaved()` method must be called to check `saved` state.
      *
      * @param  array|null        &$data
      * @param  array|null        &$errors
@@ -435,7 +430,7 @@ class Record implements RecordInterface
         if (!$new) {
             // Get id & check empty.
             $id = $data[$primary] ?? null;
-            $id || throw new RecordException('Empty primary value');
+            $id ?? throw new RecordException('Null primary value');
         } else {
             unset($data[$primary]);
         }
@@ -459,7 +454,7 @@ class Record implements RecordInterface
             $fields = $options['drop'] ?? $drop;
 
             // Collect null field keys.
-            if ($fields == '@null') {
+            if ($fields === '@null') {
                 $fields = array_keys(array_filter($data, 'is_null'));
             }
 
@@ -489,42 +484,22 @@ class Record implements RecordInterface
 
     /**
      * Find and get a record from target table by given id or own id, set `finded` state,
-     * throw a `RecordException` if id is empty or cause a `RecordException` if no table
+     * throw a `RecordException` if id is null or cause a `RecordException` if no table
      * primary presented.
      *
+     * Note: After this method `isFinded()` method must be called to check `finded` state.
+     *
      * @param  int|string|null   $id
-     * @param  array|string|null $cols
+     * @param  array|string|null $fields
      * @return froq\database\record\Record
      * @throws froq\database\record\RecordException
      */
-    public final function find(int|string $id = null, array|string $cols = null): Record
+    public final function find(int|string $id = null, array|string $fields = null): Record
     {
         $id ??= $this->id();
+        $id ?? throw new RecordException('Null primary value');
 
-        [$table, $primary, $id] = $this->pack($id, primary: true);
-
-        $id || throw new RecordException('Empty primary value');
-
-        $query = $this->query()->equal($primary, $id);
-        $where = $this->query->pull('where');
-        if ($where) foreach ($where as [$where, $op]) {
-            $query->where($where, op: $op);
-        }
-
-        $cols = $cols ?: $this->query->pull('return', 'fields') ?: '*';
-        $data = $query->select($cols)->from($table)->getArray();
-
-        $this->state->finded = $data ? 1 : 0;
-
-        $that = clone $this;
-
-        // Keep data for both.
-        if ($data) {
-            $this->setData($data);
-            $that->setData($data);
-        }
-
-        return $that;
+        return $this->findAll([$id], $fields, limit: 1)->first() ?? (clone $this);
     }
 
     /**
@@ -533,19 +508,19 @@ class Record implements RecordInterface
      * table primary presented.
      *
      * @param  array<int|string>         $ids
-     * @param  array|string|null         $cols
+     * @param  array|string|null         $fields
      * @param  int|null                  $page
      * @param  int|null                  $limit
      * @param  froq\database\Pager|null &$pager
      * @return froq\database\record\RecordList
      * @throws froq\database\record\RecordException
      */
-    public final function findAll(array $ids, array|string $cols = null, int $page = null, int $limit = null,
+    public final function findAll(array $ids, array|string $fields = null, int $page = null, int $limit = null,
         Pager &$pager = null): RecordList
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
-        $ids || throw new RecordException('Empty primary values');
+        $ids || throw new RecordException('Null primary values');
 
         $query = $this->query()->equal($primary, [$ids]);
         $where = $this->query->pull('where');
@@ -555,18 +530,15 @@ class Record implements RecordInterface
 
         if ($pager) {
             $query->paginate($page, $limit, $pager);
-            $limit = null; // Used already.
+        } elseif ($limit) {
+            $query->limit($limit);
         }
 
-        $cols = $cols ?: $this->query->pull('return', 'fields') ?: '*';
-        $data = $query->select($cols)->from($table)->getArrayAll($limit);
+        $fields = $fields ?: $this->query->pull('return', 'fields') ?: '*';
+        $result = $query->select(select: $fields)->from($table)->run(fetch: 'array');
 
-        $this->state->finded = $data ? count($data) : 0;
-
-        $thats = [];
-        if ($data) foreach ($data as $dat) {
-            $thats[] = (clone $this)->setData((array) $dat);
-        }
+        // Copy with rows & "finded" state.
+        $thats = $this->copy($result->rows(), state: ['finded', $result->count()]);
 
         return new RecordList($thats, $pager);
     }
@@ -576,51 +548,18 @@ class Record implements RecordInterface
      * throw a `RecordException` if id is empty or cause a `RecordException` if no table
      * primary presented.
      *
+     * Note: After this method `isRemoved()` method must be called to check `removed` state.
+     *
      * @param  int|string|null $id
-     * @return int|froq\database\record\Record|null
+     * @return froq\database\record\Record
      * @throws froq\database\record\RecordException
      */
-    public final function remove(int|string $id = null): int|Record|null
+    public final function remove(int|string $id = null): Record
     {
         $id ??= $this->id();
+        $id ?? throw new RecordException('Null primary value');
 
-        [$table, $primary, $id] = $this->pack($id, primary: true);
-
-        $id || throw new RecordException('Empty primary value');
-
-        $query = $this->query()->equal($primary, $id);
-
-        $where = $this->query->pull('where');
-        if ($where) foreach ($where as [$where, $op]) {
-            $query->where($where, op: $op);
-        }
-
-        $return = $this->query->pull('return', 'fields');
-        $return && $query->return($return, 'array');
-
-        $query->delete()->from($table);
-
-        $result = $query->run();
-
-        // With a record.
-        if ($return) {
-            $this->state->removed = $data = $result->rows(0);
-
-            $that = clone $this;
-
-            // Keep data for both.
-            if ($data) {
-                $this->setData($data);
-                $that->setData($data);
-            }
-
-            return $that;
-        }
-
-        // With a count.
-        $this->state->removed = $result->count();
-
-        return $this->state->removed;
+        return $this->removeAll([$id])->first() ?? (clone $this);
     }
 
     /**
@@ -629,14 +568,14 @@ class Record implements RecordInterface
      * primary presented.
      *
      * @param  array<int|string> $ids
-     * @return int|froq\database\record\RecordList|null
+     * @return froq\database\record\RecordList
      * @throws froq\database\record\RecordException
      */
-    public final function removeAll(array $ids): int|RecordList|null
+    public final function removeAll(array $ids): RecordList
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
-        $ids || throw new RecordException('Empty primary values');
+        $ids || throw new RecordException('Null primary values');
 
         $query = $this->query()->equal($primary, [$ids]);
         $where = $this->query->pull('where');
@@ -644,70 +583,13 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        $return = $this->query->pull('return', 'fields');
-        $return && $query->return($return, 'array');
+        $fields = $this->query->pull('return', 'fields') ?: '*';
+        $result = $query->delete(return: $fields)->from($table)->run(fetch: 'array');
 
-        $query->delete()->from($table);
+        // Copy with rows & "removed" state.
+        $thats = $this->copy($result->rows(), state: ['removed', $result->count()]);
 
-        $result = $query->run();
-
-        // With a record list.
-        if ($return) {
-            $this->state->removed = $data = $result->rows();
-
-            $thats = [];
-            if ($data) foreach ($data as $dat) {
-                $thats[] = (clone $this)->setData((array) $dat);
-            }
-
-            return new RecordList($thats);
-        }
-
-        // With a count.
-        $this->state->removed = $result->count();
-
-        return $this->state->removed;
-    }
-
-    /**
-     * Find a record by given id (and optionally given where), and save it with given
-     * new data if find successes. This method is a shortcut for find() > save() process
-     * with a bool return.
-     *
-     * @param  int|string         $id
-     * @param  array|null        &$data
-     * @param  array|null        &$errors
-     * @param  array|null         $options
-     * @param  string|array|null  $drop
-     * @param  array|null         $where
-     * @param  bool|null          $_validate @internal
-     * @return bool
-     */
-    public final function findSave(int|string $id, array &$data = null, array &$errors = null, array $options = null,
-        string|array $drop = null, array $where = null, bool $_validate = null): bool
-    {
-        // Will be used for only find().
-        $where && $this->where($where);
-
-        return $this->find($id)->isFinded() && $this->save(
-            $data, $errors, $options, $drop, _validate: $_validate
-        )->isSaved();
-    }
-
-    /**
-     * Find a record by given id (and optionally given where), and remove it. This method
-     * is a shortcut for find() > remove() process with a bool return.
-     *
-     * @param  int|string  $id
-     * @param  array|null  $where
-     * @return bool
-     */
-    public final function findRemove(int|string $id, array $where = null): bool
-    {
-        // Will be used for only find().
-        $where && $this->where($where);
-
-        return $this->find($id)->isFinded() && $this->remove();
+        return new RecordList($thats);
     }
 
     /**
@@ -723,14 +605,12 @@ class Record implements RecordInterface
         $rows = $this->select($where, ...$selectArgs);
 
         // For single records.
-        if (isset($selectArgs['limit'])) {
+        if (value($selectArgs, 'limit') == 1) {
             $rows = [(array) $rows];
         }
 
-        $thats = [];
-        if ($rows) foreach ($rows as $row) {
-            $thats[] = (clone $this)->setData((array) $row);
-        }
+        // Copy with rows & "finded" state.
+        $thats = $this->copy($rows, state: ['finded', size($rows)]);
 
         return new RecordList($thats);
     }
@@ -746,33 +626,33 @@ class Record implements RecordInterface
     public final function removeBy(string|array $where, mixed ...$deleteArgs): RecordList
     {
         // For returning fields.
-        if (!isset($deleteArgs['return'])) {
+        if (value($deleteArgs, 'return') == null) {
             $deleteArgs['return'] = '*';
         }
 
         $rows = $this->delete($where, ...$deleteArgs);
 
-        $thats = [];
-        if ($rows) foreach ($rows as $row) {
-            $thats[] = (clone $this)->setData((array) $row);
-        }
+        // Copy with rows & "removed" state.
+        $thats = $this->copy($rows, state: ['removed', size($rows)]);
 
         return new RecordList($thats);
     }
 
     /**
-     * Select record(s) from own table by given conditions.
+     * Select record(s) from self table by given conditions.
      *
      * @param  string|array      $where
      * @param  array|null        $params
      * @param  string|null       $op
      * @param  string|array      $fields
+     * @param  int|null          $limit
+     * @param  int|null          $offset
      * @param  string|null       $order
      * @param  string|array|null $fetch
      * @return array|object|null
      */
-    public final function select(string|array $where, array $params = null, string $op = null, int|null $limit = 1,
-        string|array $fields = '*', string $order = null, string|array $fetch = null): array|object|null
+    public final function select(string|array $where, array $params = null, string $op = null, string|array $fields = '*',
+        int $limit = null, int $offset = null, string $order = null, string|array $fetch = null): array|object|null
     {
         $query = $this->query()->select($fields);
         $query->where($where, $params, $op);
@@ -782,7 +662,7 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        $limit && $query->limit($limit);
+        $limit && $query->limit($limit, $offset);
         $order && $query->order($order);
 
         $result = $query->run($fetch);
@@ -791,17 +671,17 @@ class Record implements RecordInterface
     }
 
     /**
-     * Update record(s) on own table by given conditions.
+     * Update record(s) on self table by given conditions.
      *
-     * @param  array        $data
-     * @param  string|array $where
-     * @param  array|null   $params
-     * @param  string|array $return
-     * @param  string|null  $op
+     * @param  array             $data
+     * @param  string|array      $where
+     * @param  array|null        $params
+     * @param  string|null       $op
+     * @param  string|array|null $return
      * @return int|array|null
      */
-    public final function update(array $data, string|array $where, array $params = null, string|array $return = '',
-        string $op = null): int|array|null
+    public final function update(array $data, string|array $where, array $params = null, string $op = null,
+        string|array $return = null): int|array|null
     {
         $query = $this->query()->update($data);
         $query->where($where, $params, $op);
@@ -811,25 +691,23 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        // Returning fields.
-        $return && $query->return($return);
-
+        $return && $query->return($return, fetch: 'array');
         $result = $query->run();
 
         return $return ? $result->rows() : $result->count();
     }
 
     /**
-     * Delete record(s) from own table by given conditions.
+     * Delete record(s) from self table by given conditions.
      *
-     * @param  string|array $where
-     * @param  array|null   $params
-     * @param  string|array $return
-     * @param  string|null  $op
+     * @param  string|array       $where
+     * @param  array|null         $params
+     * @param  string|null        $op
+     * @param  string|array|null $return
      * @return int|array|null
      */
-    public final function delete(string|array $where, array $params = null, string|array $return = '',
-        string $op = null): int|array|null
+    public final function delete(string|array $where, array $params = null, string $op = null,
+        string|array $return = null): int|array|null
     {
         $query = $this->query()->delete();
         $query->where($where, $params, $op);
@@ -839,17 +717,31 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        // Returning fields.
-        $return && $query->return($return);
-
+        $return && $query->return($return, fetch: 'array');
         $result = $query->run();
 
         return $return ? $result->rows() : $result->count();
     }
 
     /**
+     * Count records on self table by given conditions.
+     *
+     * @param  array       $where
+     * @param  array|null  $params
+     * @param  string|null $op
+     * @return int
+     */
+    public final function count(string|array $where, array $params = null, string $op = null): int
+    {
+        $query = $this->query();
+        $query->where($where, $params, $op);
+
+        return $query->count();
+    }
+
+    /**
      * Pack table, table primary and id/ids stuff, throw a `RecordException` if no table
-     * presented or no table primary presented when primary check requested as `$primary = true`.
+     * presented or no table primary presented when primary check requested as `true`.
      */
     private function pack(int|string|array $id = null, bool $primary = false): array
     {
@@ -867,9 +759,41 @@ class Record implements RecordInterface
         }
 
         // Filter multiple ids.
-        is_array($id) && $id = array_filter($id);
+        is_array($id) && $id = array_filter($id, fn($id) => $id !== null);
 
         return [$this->table, $this->tablePrimary ?? null, $id];
+    }
+
+    /**
+     * Copy self data & given state cloning current `Record` instance and return cloned
+     * items as list to use for `RecordList` instance.
+     *
+     * Note: This method does not assign "id" for find, remove etc. to current record object,
+     * instead each related id will be assigned to created clone if related data was found.
+     */
+    private function copy(?array $data, array $state): array
+    {
+        $this->setState(...$state)->setData((array) $data);
+
+        $thats = [];
+
+        if ($data) {
+            $primary = $this->getTablePrimary();
+
+            foreach ($data as $dat) {
+                $that = clone $this;
+                $that->setState($state[0], 1)->setData($dat = (array) $dat);
+
+                // Assign primary if available.
+                if ($primary && isset($dat[$primary])) {
+                    $that->id = $dat[$primary];
+                }
+
+                $thats[] = $that;
+            }
+        }
+
+        return $thats;
     }
 
     /**
@@ -883,14 +807,12 @@ class Record implements RecordInterface
         $query    = $this->query()->insert($data, sequence: !!$sequence);
 
         $return ??= $this->query->pull('return', 'fields');
-        $return   && $query->return($return, 'array');
+        $return   && $query->return($return, fetch: 'array');
 
         $conflict = $this->query->pull('conflict');
         $conflict && $query->conflict(...$conflict);
 
         $result   = $query->run();
-
-        unset($query);
 
         // Get new id if available.
         $id = $result->id();
@@ -929,7 +851,7 @@ class Record implements RecordInterface
         $query    = $this->query()->update($data)->equal($primary, $id);
 
         $return ??= $this->query->pull('return', 'fields');
-        $return   && $query->return($return, 'array');
+        $return   && $query->return($return, fetch: 'array');
 
         $conflict = $this->query->pull('conflict');
         $conflict && $query->conflict(...$conflict);
@@ -940,8 +862,6 @@ class Record implements RecordInterface
         }
 
         $result = $query->run();
-
-        unset($query);
 
         // Set primary value with given id.
         $this->id($id);
