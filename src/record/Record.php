@@ -298,7 +298,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Apply one/many "WHERE" condition/conditions for find/remove actions.
+     * Apply where condition for find/remove actions.
      *
      * Note: query will always contain primary value(s) as first statement and
      * continue with "AND" operator.
@@ -316,7 +316,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Apply returnin clause for insert/update/delete actions.
+     * Apply returning clause for insert/update/delete actions.
      *
      * @param  string|array<string>|bool $fields
      * @param  string|array<string>|null $fetch
@@ -550,16 +550,17 @@ class Record implements RecordInterface
      *
      * Note: After this method `isRemoved()` method must be called to check `removed` state.
      *
-     * @param  int|string|null $id
+     * @param  int|string|null   $id
+     * @param  string|array|null $return
      * @return froq\database\record\Record
      * @throws froq\database\record\RecordException
      */
-    public final function remove(int|string $id = null): Record
+    public final function remove(int|string $id = null, string|array $return = null): Record
     {
         $id ??= $this->id();
         $id ?? throw new RecordException('Null primary value');
 
-        return $this->removeAll([$id])->first() ?? (clone $this);
+        return $this->removeAll([$id], $return)->first() ?? (clone $this);
     }
 
     /**
@@ -568,10 +569,11 @@ class Record implements RecordInterface
      * primary presented.
      *
      * @param  array<int|string> $ids
+     * @param  string|array|null $return
      * @return froq\database\record\RecordList
      * @throws froq\database\record\RecordException
      */
-    public final function removeAll(array $ids): RecordList
+    public final function removeAll(array $ids, string|array $return = null): RecordList
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
@@ -583,8 +585,8 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        $fields = $this->query->pull('return', 'fields') ?: '*';
-        $result = $query->delete(return: $fields)->from($table)->run(fetch: 'array');
+        $return = $return ?: $this->query->pull('return', 'fields');
+        $result = $query->delete(return: $return)->from($table)->run(fetch: 'array');
 
         // Copy with rows & "removed" state.
         $thats = $this->copy($result->rows(), state: ['removed', $result->count()]);
@@ -625,11 +627,6 @@ class Record implements RecordInterface
      */
     public final function removeBy(string|array $where, mixed ...$deleteArgs): RecordList
     {
-        // For returning fields.
-        if (value($deleteArgs, 'return') == null) {
-            $deleteArgs['return'] = '*';
-        }
-
         $rows = $this->delete($where, ...$deleteArgs);
 
         // Copy with rows & "removed" state.
@@ -654,6 +651,10 @@ class Record implements RecordInterface
     public final function select(string|array $where, array $params = null, string $op = null, string|array $fields = '*',
         int $limit = null, int $offset = null, string $order = null, string|array $fetch = null): array|object|null
     {
+        // If return() called before, simply overrides fields.
+        $return = $this->query->pull('return', 'fields');
+        $return && $fields = $return;
+
         $query = $this->query()->select($fields);
         $query->where($where, $params, $op);
 
@@ -691,7 +692,9 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
+        $return ??= $this->query->pull('return', 'fields');
         $return && $query->return($return, fetch: 'array');
+
         $result = $query->run();
 
         return $return ? $result->rows() : $result->count();
@@ -700,9 +703,9 @@ class Record implements RecordInterface
     /**
      * Delete record(s) from self table by given conditions.
      *
-     * @param  string|array       $where
-     * @param  array|null         $params
-     * @param  string|null        $op
+     * @param  string|array      $where
+     * @param  array|null        $params
+     * @param  string|null       $op
      * @param  string|array|null $return
      * @return int|array|null
      */
@@ -717,7 +720,9 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
+        $return ??= $this->query->pull('return', 'fields');
         $return && $query->return($return, fetch: 'array');
+
         $result = $query->run();
 
         return $return ? $result->rows() : $result->count();
