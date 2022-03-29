@@ -43,28 +43,4 @@ class Repository
         $this->db = $db;
         $this->em = $em ?? new EntityManager($db);
     }
-
-    /**
-     * Init a `Sql` object with/without given params argument.
-     *
-     * @param  string     $input
-     * @param  array|null $params
-     * @return froq\database\sql\Sql
-     */
-    public final function sql(string $input, array $params = null): Sql
-    {
-        return $this->db->initSql($input, $params);
-    }
-
-    /**
-     * Init a `Query` object using self `$db` property, setting its "table" query with `$table` argument
-     * when provided or using self `$table` property.
-     *
-     * @param  string|null $table
-     * @return froq\database\Query
-     */
-    public final function query(string $table = null): Query
-    {
-        return $this->db->initQuery($table ?? $this->table ?? null);
-    }
 }
