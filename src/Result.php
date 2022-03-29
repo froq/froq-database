@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\common\interface\{Arrayable, Objectable};
+use froq\common\interface\Arrayable;
 use froq\collection\Collection;
 use PDO, PDOStatement, PDOException;
 
@@ -19,7 +19,7 @@ use PDO, PDOStatement, PDOException;
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Result implements Arrayable, Objectable, \Countable, \IteratorAggregate, \ArrayAccess
+final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
 {
     /** @const array<string> */
     public const FETCH_TYPES = ['array', 'object', 'class'];
@@ -156,14 +156,6 @@ final class Result implements Arrayable, Objectable, \Countable, \IteratorAggreg
     public function toArray(): array
     {
         return $this->rows ?? [];
-    }
-
-    /**
-     * @inheritDoc froq\common\interface\Objectable
-     */
-    public function toObject(): object
-    {
-        return (object) array_map('object', $this->toArray());
     }
 
     /**
