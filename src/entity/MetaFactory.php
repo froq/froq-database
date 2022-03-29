@@ -7,12 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{MetaException, Meta, ClassMeta, PropertyMeta};
-
 /**
- * Meta Factory.
- *
- * Represents a factory class that used for creating ClassMeta & PropertyMeta instances.
+ * A factory class, used for creating `ClassMeta` & `PropertyMeta` instances.
  *
  * @package froq\database\entity
  * @object  froq\database\entity\MetaFactory
@@ -120,7 +116,7 @@ final class MetaFactory
      * @param  string $name
      * @return void
      */
-    public static function delCacheItem(string $name): void
+    public static function deleteCacheItem(string $name): void
     {
         unset(self::$cache[$name]);
     }

@@ -7,55 +7,43 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{Manager, EntityListInterface};
-use froq\database\record\Record;
-use froq\collection\ItemCollection;
 use froq\pager\Pager;
+use ItemList;
 
 /**
- * Abstract Entity List.
- *
- * Represents an abstract entity list class that can be extended by entity list classes used for
- * accessing & modifiying data via its utility methods such as saveAll(), findAll(), removeAll()
- * and checkers for these methods.
+ * An abstract entity list class that can be extended by entity list classes used for
+ * accessing & modifiying data via its utility methods such as `saveAll()`, `findAll()`,
+ * `removeAll()` and checkers for these methods.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\AbstractEntityList
+ * @object  froq\database\entity\EntityList
  * @author  Kerem Güneş
- * @since   5.0, Replaced with "object" subpackage.
+ * @since   5.0
  */
-abstract class AbstractEntityList extends ItemCollection implements EntityListInterface
+abstract class EntityList extends ItemList implements EntityListInterface
 {
     /** @var froq\database\entity\Manager */
     private Manager $manager;
 
     /** @var froq\pager\Pager|null */
-    private Pager|null $pager = null;
+    private Pager|null $pager;
 
     /**
      * Constructor.
      *
-     * @param ... $entities
+     * @param object ...$entities
      */
-    public function __construct(...$entities)
+    public function __construct(object ...$entities)
     {
-        $entities && $this->resetData($entities);
+        parent::__construct(type: 'object');
+
+        $entities && $this->fill(...$entities);
     }
 
-    /**
-     * Magic - debug info.
-     *
-     * @return array
-     */
-    public function __debugInfo()
+    /** @override */
+    public function __debugInfo(): array
     {
-        [$data, $class] = [(array) $this, self::class];
-
-        // Drop internals.
-        unset($data["\0{$class}\0manager"]);
-        unset($data["\0{$class}\0pager"]);
-
-        return $data;
+        return $this->toArray();
     }
 
     /**
@@ -74,7 +62,7 @@ abstract class AbstractEntityList extends ItemCollection implements EntityListIn
     /**
      * Get manager property.
      *
-     * @return froq\database\entity\Manager|null $manager
+     * @return froq\database\entity\Manager|null
      */
     public final function getManager(): Manager|null
     {
@@ -95,13 +83,13 @@ abstract class AbstractEntityList extends ItemCollection implements EntityListIn
     }
 
     /**
-     * Get manager property.
+     * Get pager property.
      *
-     * @return froq\pager\Pager|null $pager
+     * @return froq\pager\Pager|null
      */
     public final function getPager(): Pager|null
     {
-        return $this->pager;
+        return $this->pager ?? null;
     }
 
     /**
@@ -147,7 +135,7 @@ abstract class AbstractEntityList extends ItemCollection implements EntityListIn
      */
     public final function isSavedAll(): bool
     {
-        return !!array_filter($this->data, fn($entity) => $entity->isSaved());
+        return $this->getActionResult('isSaved');
     }
 
     /**
@@ -157,7 +145,7 @@ abstract class AbstractEntityList extends ItemCollection implements EntityListIn
      */
     public final function isFindedAll(): bool
     {
-        return !!array_filter($this->data, fn($entity) => $entity->isFinded());
+        return $this->getActionResult('isFinded');
     }
 
     /**
@@ -167,14 +155,54 @@ abstract class AbstractEntityList extends ItemCollection implements EntityListIn
      */
     public final function isRemovedAll(): bool
     {
-        return !!array_filter($this->data, fn($entity) => $entity->isRemoved());
+        return $this->getActionResult('isRemoved');
     }
 
     /**
-     * @alias of isFindedAll()
+     * @alias isFindedAll()
      */
     public final function isFoundAll(): bool
     {
         return $this->isFindedAll();
+    }
+
+    /**
+     * Fill entity list with given entities.
+     *
+     * @param  object ...$entities
+     * @return self
+     * @throws froq\database\entity\EntityListException
+     */
+    public final function fill(object ...$entities): self
+    {
+        is_list($entities) || throw new EntityListException(
+            'Parameter $entities must be a list array'
+        );
+
+        foreach ($entities as $entity) {
+            $this->add($entity);
+        }
+
+        return $this;
+    }
+
+    /** @override */
+    public function toArray(bool $deep = false): array
+    {
+        $items = parent::toArray();
+
+        $deep && $items = Util::toDeepArray($items);
+
+        return $items;
+    }
+
+    /**
+     * Get action result filtering items by given action.
+     */
+    private function getActionResult(string $action): bool
+    {
+        return $this->items() && count($this->items()) == count(array_filter(
+            $this->items(), fn($entity) => $entity->$action()
+        ));
     }
 }

@@ -7,12 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{Meta, PropertyMeta};
-
 /**
- * Class Meta.
- *
- * Represents a metadata class entity that keeps a parsed class metadata details.
+ * A metadata class, keeps parsed class metadata details.
  *
  * @package froq\database\entity
  * @object  froq\database\entity\ClassMeta
@@ -49,7 +45,7 @@ final class ClassMeta extends Meta
     /**
      * Get all properties.
      *
-     * @return array<froq\database\entity\PropertyMeta|void>
+     * @return array<froq\database\entity\PropertyMeta|null>
      */
     public function getProperties(): array
     {
@@ -78,16 +74,6 @@ final class ClassMeta extends Meta
     }
 
     /**
-     * Check whether class metadata contains sequence option.
-     *
-     * @return bool
-     */
-    public function hasSequence(): bool
-    {
-        return (bool) $this->getOption('sequence', default: true);
-    }
-
-    /**
      * Get table option from class metadata.
      *
      * @return string|null
@@ -104,14 +90,7 @@ final class ClassMeta extends Meta
      */
     public function getTablePrimary(): string|null
     {
-        $ret = $this->getDataField('id', default: 'id');
-
-        // We use only one/first column (@fornow).
-        if ($ret && strpos($ret, ',')) {
-            $ret = split('\s*,\s*', $ret)[1];
-        }
-
-        return $ret;
+        return $this->getDataField('primary');
     }
 
     /**

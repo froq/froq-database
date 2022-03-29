@@ -7,15 +7,12 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{MetaException, MetaFactory, Meta, ClassMeta, PropertyMeta};
 use froq\util\Objects;
 use ReflectionClass, ReflectionProperty, ReflectionException;
 
 /**
- * Meta Parser.
- *
- * Represents a parser class that used for parsing entity classes's metadata info into ClassMeta/PropertyMeta
- * classes.
+ * A parser class, used for parsing entity classes's metadata info into `ClassMeta`
+ * & `PropertyMeta` classes.
  *
  * @package froq\database\entity
  * @object  froq\database\entity\MetaParser
@@ -34,8 +31,7 @@ final class MetaParser
      */
     public static function parseClassMeta(string|object $class, bool $withProperties = true): ClassMeta|null
     {
-        // When an object given as class.
-        is_object($class) && $class = get_class($class);
+        is_object($class) && $class = $class::class;
 
         // Check MetaFactory cache for only "withProperties" parsing.
         if ($withProperties && MetaFactory::hasCacheItem($class)) {
@@ -55,7 +51,7 @@ final class MetaParser
 
         /** @var froq\database\entity\ClassMeta */
         $meta = MetaFactory::initClassMeta($class, $data);
-        $meta->setReflector($classRef);
+        $meta->setReflection($classRef);
 
         // And add properties.
         if ($withProperties) {
@@ -72,9 +68,15 @@ final class MetaParser
                 $propName  = $propRef->name;
                 $propClass = $propRef->class;
 
+                // Skip non @meta stuff.
+                $data = self::getDataFrom($propRef);
+                if ($data === null) {
+                    continue;
+                }
+
                 /** @var froq\database\entity\PropertyMeta */
-                $prop = MetaFactory::initPropertyMeta($propName, $propClass, data: self::getDataFrom($propRef));
-                $prop->setReflector($propRef);
+                $prop = MetaFactory::initPropertyMeta($propName, $propClass, $data);
+                $prop->setReflection($propRef);
 
                 $props[$propName] = $prop;
             }
@@ -95,8 +97,7 @@ final class MetaParser
      */
     public static function parsePropertyMeta(object|string $class, string $property): PropertyMeta|null
     {
-        // When an object given as class.
-        is_object($class) && $class = get_class($class);
+        is_object($class) && $class = $class::class;
 
         // Check MetaFactory cache.
         if (MetaFactory::hasCacheItem($name = ($class .'.'. $property))) {
@@ -114,8 +115,9 @@ final class MetaParser
             return null;
         }
 
+        // Skip non @meta stuff.
         $data = self::getDataFrom($propRef->getDeclaringClass());
-        if (!$data) {
+        if ($data === null) {
             return null;
         }
 
@@ -124,7 +126,7 @@ final class MetaParser
 
         /** @var froq\database\entity\PropertyMeta */
         $meta = MetaFactory::initPropertyMeta($propName, $propClass, $data);
-        $meta->setReflector($propRef);
+        $meta->setReflection($propRef);
 
         return $meta;
     }
@@ -179,6 +181,11 @@ final class MetaParser
      */
     private static function getDataFromAnnotations(string $annotations, ReflectionClass|ReflectionProperty $ref): array|null
     {
+        // Eg: @meta, for only select fields usage.
+        if (preg_match('~@meta[^(]~si', $annotations)) {
+            return [];
+        }
+
         // Eg: @meta(id:"id", table:"users", ..)
         // Eg: @meta(id="id", table="users", ..)
         if (preg_match('~@meta\s*\((.+)\)~si', $annotations, $match)) {
@@ -186,7 +193,7 @@ final class MetaParser
 
             // Converting to JSON.
             foreach ($lines as &$line) {
-                $line = preg_replace('~^[*\s]+|[\s]+$~', '', $line);
+                $line = preg_replace('~^[\*\s]+|[\s]+$~', '', $line);
 
                 // Comment-outs.
                 if (str_starts_with($line, '//')) {
@@ -194,7 +201,7 @@ final class MetaParser
                     continue;
                 }
 
-                // Prepare entity class & JSON field names.
+                // Prepare entity class & JSON fields.
                 $line = preg_replace('~\\\\(?!["])~', '\\\\\\\\\1', $line);
                 $line = preg_replace('~(\w{2,})\s*[:=](?![=])~', '"\1":', $line);
             }

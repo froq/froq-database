@@ -7,12 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\Meta;
-
 /**
- * Property Meta.
- *
- * Represents a metadata class entity that keeps a parsed property metadata details.
+ * A metadata class, keeps parsed property metadata details.
  *
  * @package froq\database\entity
  * @object  froq\database\entity\PropertyMeta
@@ -54,23 +50,13 @@ final class PropertyMeta extends Meta
     }
 
     /**
-     * Get repository class.
+     * Get propert value using reflection.
      *
-     * @return string|null
+     * @return mixed|null
      */
-    public function getRepositoryClass(): string|null
+    public function getValue(object $object): mixed
     {
-        return $this->getDataField('repository');
-    }
-
-    /**
-     * Get propert value using reflector.
-     *
-     * @return any|null
-     */
-    public function getValue(object $object)
-    {
-        return $this->getReflector()->getValue($object);
+        return $this->getReflection()->getValue($object);
     }
 
     /**
@@ -86,15 +72,15 @@ final class PropertyMeta extends Meta
     /**
      * Get validation default option for empty/null situations.
      *
-     * @return any|null
+     * @return mixed|null
      */
-    public function getValidationDefault()
+    public function getValidationDefault(): mixed
     {
         return $this->getDataField('validation.default');
     }
 
     /**
-     * Check whether has entity class.
+     * Check whether property has entity class.
      *
      * @return bool
      */
@@ -104,109 +90,12 @@ final class PropertyMeta extends Meta
     }
 
     /**
-     * Check whether has entity list class.
+     * Check whether property has entity list class.
      *
      * @return bool
      */
     public function hasEntityList(): bool
     {
         return !empty($this->data['entityList']);
-    }
-
-    /**
-     * Check whether is linked.
-     *
-     * @return bool
-     */
-    public function isLinked(): bool
-    {
-        return !empty($this->data['link']);
-    }
-
-    /**
-     * Get link table.
-     *
-     * @return string|null
-     */
-    public function getLinkTable(): string|null
-    {
-        return $this->getDataField('link.table');
-    }
-
-    /**
-     * Get link column.
-     *
-     * @return string|null
-     */
-    public function getLinkColumn(): string|null
-    {
-        return $this->getDataField('link.column');
-    }
-
-    /**
-     * Get link condition.
-     *
-     * @return string|null
-     */
-    public function getLinkCondition(): string|null
-    {
-        return $this->getDataField('link.where');
-    }
-
-    /**
-     * Get link method.
-     *
-     * @return string|null
-     */
-    public function getLinkMethod(): string|null
-    {
-        return $this->getDataField('link.method');
-    }
-
-    /**
-     * Get link limit.
-     *
-     * @return int|null
-     */
-    public function getLinkLimit(): int|null
-    {
-        $limit = $this->getDataField('link.limit');
-
-        return intval($limit) ?: null;
-    }
-
-    /**
-     * Check whether linked table cascades for given action.
-     *
-     * @param  string $action
-     * @return bool
-     */
-    public function isLinkCascadesFor(string $action): bool
-    {
-        $cascade = $this->getDataField('link.cascade', default: null);
-
-        // Asterisk allows both "true" and "*" arguments.
-        return $cascade && ($cascade == '*' || str_contains($cascade, $action));
-    }
-
-    /**
-     * Pack table stuff.
-     *
-     * @return array|null
-     * @internal
-     */
-    public function packLinkStuff(): array|null
-    {
-        if ($table = $this->getLinkTable()) {
-            return [
-                $table,
-                $this->getLinkColumn(),
-                $this->getLinkCondition(),
-                $this->getLinkMethod() ?? 'one-to-one', // As default.
-                $this->getLinkLimit(),
-            ];
-        }
-
-        return null;
     }
 }

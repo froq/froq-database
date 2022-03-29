@@ -7,18 +7,14 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\{ManagerException, MetaParser, AbstractEntity, AbstractEntityList,
-    ClassMeta, PropertyMeta};
-use froq\database\record\{Form, Record};
-use froq\database\{Database, Query, Result, trait\DbTrait};
-use froq\validation\Rule as ValidationRule;
+use froq\database\{Database, Result, trait\DbTrait};
+use froq\database\record\Record;
+use froq\validation\ValidationError;
 use froq\pager\Pager;
-use ReflectionClass, ReflectionProperty;
+use ItemList, ReflectionProperty;
 
 /**
- * Manager.
- *
- * Represents a class entity that creates & manages data entities using attributes/annotations of these entities,
+ * A class, creates & manages data entities using attributes/annotations of these entities,
  * also dial with current open database for queries, executions and transactions.
  *
  * @package froq\database\entity
@@ -28,7 +24,6 @@ use ReflectionClass, ReflectionProperty;
  */
 final class Manager
 {
-    /** @see froq\database\trait\DbTrait */
     use DbTrait;
 
     /**
@@ -74,13 +69,13 @@ final class Manager
     }
 
     /**
-     * Run a SQL transaction or return a Transaction instance.
+     * Run a SQL transaction or return a `Transaction` instance.
      *
      * @param  callable|null $call
      * @param  callable|null $callError
-     * @return any
+     * @return mixed
      */
-    public function transaction(callable $call = null, callable $callError = null)
+    public function transaction(callable $call = null, callable $callError = null): mixed
     {
         return $this->db->transaction($call, $callError);
     }
@@ -89,23 +84,20 @@ final class Manager
      * Create an entity with/without given properties.
      *
      * @param  string    $class
-     * @param  any    ...$properties
+     * @param  mixed  ...$properties
      * @return object
-     * @throws froq\database\entity\ManagerException
      * @causes froq\database\entity\ManagerException
      */
-    public function createEntity(string $class, ...$properties): object
+    public function createEntity(string $class, mixed ...$properties): object
     {
+        /** @var froq\database\entity\ClassMeta */
+        $classMeta = $this->getClassMeta($class);
+
         $entity = $this->initEntity($class, $properties);
+        $record = $this->initRecord($classMeta, $entity, true, true);
 
-        /* @var froq\database\entity\ClassMeta|null */
-        $classMeta = MetaParser::parseClassMeta($entity);
-        $classMeta || throw new ManagerException('Null entity class meta');
-
-        $record = $this->initRecord($classMeta, $entity);
-
-        $this->assignEntityProperties($entity, $record, $classMeta);
-        $this->assignEntityInternalProperties($entity, $record);
+        $this->setProperties($entity, $record, $classMeta);
+        $this->setInternalProperties($entity, $record);
 
         return $entity;
     }
@@ -128,74 +120,51 @@ final class Manager
      *
      * @param  object $entity
      * @return object
-     * @throws froq\database\entity\ManagerException
+     * @causes froq\database\entity\ManagerException
+     * @throws froq\validation\ValidationError
      */
     public function save(object $entity): object
     {
-        /* @var froq\database\entity\ClassMeta|null */
-        $classMeta = MetaParser::parseClassMeta($entity);
-        $classMeta || throw new ManagerException('Null entity class meta');
+        /** @var froq\database\entity\ClassMeta */
+        $classMeta = $this->getClassMeta($entity);
 
-        $entityData = $entityProps = [];
+        $data = [];
         foreach ($classMeta->getProperties() as $name => $propertyMeta) {
-            $value = self::getPropertyValue($propertyMeta->getReflector(), $entity);
-
-            // @cancel
-            // // Collect & skip entity properties to save later.
-            // if ($propertyMeta->hasEntity() && $propertyMeta->isLinkCascadesFor('save')) {
-            //     // We can't save empty entities.
-            //     if ($value != null) {
-            //         $entityProps[] = $value;
-            //     }
-            //     continue;
-            // }
-
-            // Working without this, hmmm...
-            // // Skip entity properties.
-            // if ($propertyMeta->isLinked() || $propertyMeta->hasEntity()) {
-            //     continue;
-            // }
-
-            $entityData[$name] = $value ?? $propertyMeta->getValidationDefault();
+            $data[$name] = $this->getPropertyValue($entity, $propertyMeta->getReflection())
+                ?? $propertyMeta->getValidationDefault();
         }
 
-        // No try/catch, so allow exceptions in Record.
-        $record = $this->initRecord($classMeta, $entity)
-                ->setData($entityData)
-                ->save();
+        /** @var froq\database\record\Record */
+        $record = $this->initRecord($classMeta, $entity, true, true);
 
-        $this->assignEntityProperties($entity, $record, $classMeta);
-        $this->assignEntityInternalProperties($entity, $record);
-
-        // @cancel
-        // if ($record->isSaved()) {
-        //     // Also save if any entity property exists.
-        //     foreach ($entityProps as $entityProp) {
-        //         $this->save($entityProp);
-        //     }
-        //     // Fill linked properties.
-        //     foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
-        //         $this->loadLinkedProperty($propertyMeta, $entity, 'save');
-        //     }
-        // }
-
-        // Call on-save method when provided.
-        if (method_exists($entity, 'onSave')) {
-            $entity->onSave();
+        try {
+            $record->save($data);
+        } catch (ValidationError $e) {
+            throw new ValidationError(
+                'Cannot save entity (%s), validation failed [tip: run save() '.
+                'in a try/catch block and use errors() to see error details]',
+                $entity::class, errors: $e->errors()
+            );
         }
+
+        $this->setProperties($entity, $record, $classMeta);
+        $this->setInternalProperties($entity, $record, ['saved', $record->isSaved()]);
+
+        // Call action method when provided.
+        $this->callAction($entity, 'onSave');
 
         return $entity;
     }
 
     /**
-     * Save all given entities.
+     * Save an entity list.
      *
-     * @param  array|froq\database\entity\AbstractEntityList $entityList
-     * @param  bool                                          $init
-     * @return array|froq\database\entity\AbstractEntityList
+     * @param  array|froq\database\entity\EntityList $entityList
+     * @param  bool                                  $init
+     * @return array|froq\database\entity\EntityList
      * @causes froq\database\entity\ManagerException
      */
-    public function saveAll(array|AbstractEntityList $entityList, bool $init = false): array|AbstractEntityList
+    public function saveAll(array|EntityList $entityList, bool $init = false): array|EntityList
     {
         foreach ($entityList as $entity) {
             $this->save($entity);
@@ -211,41 +180,26 @@ final class Manager
     /**
      * Find an entity related record & fill given entity with found record data.
      *
-     * @param  object      $entity
-     * @param  string|null $id
+     * @param  object $entity
      * @return object
-     * @throws froq\database\entity\ManagerException
+     * @causes froq\database\entity\ManagerException
      */
-    public function find(object $entity, int|string $id = null): object
+    public function find(object $entity): object
     {
-        /* @var froq\database\entity\ClassMeta|null */
-        $classMeta = MetaParser::parseClassMeta($entity);
-        $classMeta || throw new ManagerException('Null entity class meta');
+        /** @var froq\database\entity\ClassMeta */
+        $classMeta = $this->getClassMeta($entity);
 
-        $id   ??= self::getEntityPrimaryValue($entity, $classMeta);
-        $fields = self::getEntityFields($entity);
+        $id = $this->getPrimaryValue($entity, $classMeta);
 
-        // No try/catch, so allow exceptions in Record.
-        $record = $this->initRecord($classMeta)
-                ->setId($id)
-                ->return($fields)
-                ->find();
+        /** @var froq\database\record\Record */
+        $record = $this->initRecord($classMeta, $entity, true, primaryRequired: true)
+            ->find($id);
 
-        $this->assignEntityProperties($entity, $record, $classMeta);
-        $this->assignEntityInternalProperties($entity, $record);
+        $this->setProperties($entity, $record, $classMeta);
+        $this->setInternalProperties($entity, $record, ['finded', $record->isFinded()]);
 
-        // @cancel
-        // if ($record->isFinded()) {
-        //     // Fill linked properties.
-        //     foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
-        //         $this->loadLinkedProperty($propertyMeta, $entity, 'find');
-        //     }
-        // }
-
-        // Call on-find method when provided.
-        if (method_exists($entity, 'onFind')) {
-            $entity->onFind();
-        }
+        // Call action method when provided.
+        $this->callAction($entity, 'onFind');
 
         return $entity;
     }
@@ -253,16 +207,33 @@ final class Manager
     /**
      * Find all entity list related records & fill given entity list with found records data.
      *
-     * @param  array|froq\database\entity\AbstractEntityList $entityList
-     * @param  bool                                          $init
-     * @return array|froq\database\entity\AbstractEntityList
-     * @throws froq\database\entity\ManagerException
+     * @param  array<object>|froq\database\entity\EntityList<object> $entityList
+     * @param  bool                                                  $init
+     * @return array<object>|froq\database\entity\EntityList<object>
      * @causes froq\database\entity\ManagerException
+     * @throws froq\database\entity\ManagerException
      */
-    public function findAll(array|AbstractEntityList $entityList, bool $init = false): array|AbstractEntityList
+    public function findAll(array|EntityList $entityList, bool $init = false): array|EntityList
     {
-        foreach ($entityList as $entity) {
-            $this->find($entity);
+        [$ids, $items, $primary, $classMeta] = $this->prepareListItems($entityList);
+
+        /** @var froq\database\record\RecordList */
+        $records = $this->initRecord($classMeta, $items[0], true)
+            ->findAll($ids, limit: $items->count());
+
+        if ($records->count()) {
+            // For proper index selection below (null-row safety).
+            $this->sortListItemsByPrimary($records, $items, $primary);
+
+            foreach ($records as $i => $record) {
+                $entity = $items[$i];
+
+                $this->setProperties($entity, $record, $classMeta);
+                $this->setInternalProperties($entity, $record, ['finded', true]);
+
+                // Call action method when provided.
+                $this->callAction($entity, 'onFind');
+            }
         }
 
         if ($init && is_array($entityList)) {
@@ -273,64 +244,81 @@ final class Manager
     }
 
     /**
-     * Find all entity records by given conditions or using given entity properties as condition & init/fill
-     * given entity/entity class with found records data when db supports, returning an entity list.
+     * Find all entity records by given conditions or using given entity properties as condition
+     * & init/fill given entity/entity class with found records data when db supports, returning
+     * an entity list.
      *
-     * @param  string|object          $entity
+     * Note: To prevent all of given entity object properties be used as search parameters, an
+     * empty entity object or entity class can be given.
+     *
+     * When pagination desired, following example can be used.
+     *
+     * ```
+     * $page  = Get from somewhere, eg. $_GET['page'].
+     * $limit = Get from somewhere or set as constant, default is 10.
+     * $count = Count of total records by some conditions. <optional>
+     *
+     * $pager = new Pager(['page' => $page, 'limit' => $limit, 'count' => $count])
+     * $pager->run() <optional>
+     *
+     * $result = $em->findBy($entityObject or $entityClass, pager: $pager, ...<other params>)
+     *```
+     *
+     * @param  object|string          $entity
      * @param  array|null             $where
-     * @param  int|null               $limit
      * @param  string|null            $order
      * @param  froq\pager\Pager|null &$pager
-     * @return froq\database\entity\AbstractEntityList
-     * @throws froq\database\entity\ManagerException
+     * @return froq\database\entity\EntityList
+     * @causes froq\database\entity\ManagerException
      */
-    public function findBy(string|object $entity, string|array $where = null, int $limit = null, string $order = null,
-        Pager &$pager = null): AbstractEntityList
+    public function findBy(object|string $entity, array $where = null, string $order = null, Pager &$pager = null): EntityList
     {
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
 
-        /* @var froq\database\entity\ClassMeta|null */
-        $classMeta = MetaParser::parseClassMeta($entity);
-        $classMeta || throw new ManagerException('Null entity class meta');
+        /** @var froq\database\entity\ClassMeta */
+        $classMeta = $this->getClassMeta($entity);
 
-        $record = $this->initRecord($classMeta);
-        $fields = self::getEntityFields($entity);
+        $where = $this->prepareWhere($entity, $classMeta, $where);
+
+        /** @var froq\database\record\Record */
+        $record = $this->initRecord($classMeta, $entity, true);
+
+        $limit = $offset = null; $order ??= $classMeta->getTablePrimary();
+
+        if ($pager) {
+            // Disable redirects.
+            $pager->redirect = false;
+
+            // Pager was run?
+            if ($pager->totalPages === null) {
+                $count = $pager->totalRecords ?? $record->count($where);
+                [$limit, $offset] = $pager->run($count);
+            } else {
+                [$limit, $offset] = [$pager->limit, $pager->offset];
+            }
+        }
+
+        /** @var froq\database\record\RecordList */
+        $records = $record->findBy($where, limit: $limit, offset: $offset, order: $order, fetch: 'array');
 
         $entityList = $this->initEntityList($classMeta->getListClass());
 
-        $rows = $record->select(
-            self::prepareWhereCondition($where, $entity, $classMeta),
-            fields: $fields, limit: $limit, order: $order
-        );
-
-        if ($rows != null) {
-            // For a proper list to loop below.
-            if ($limit == 1) {
-                $rows = [$rows];
-            }
-
-            foreach ($rows as $row) {
+        if ($records->count()) {
+            foreach ($records as $record) {
                 $entityClone = clone $entity;
-                $this->assignEntityProperties($entityClone, $row, $classMeta);
-                $this->assignEntityInternalProperties($entityClone, $record);
 
-                // @cancel
-                // // Fill linked properties.
-                // foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
-                //     $this->loadLinkedProperty($propertyMeta, $entityClone, 'find');
-                // }
+                $this->setProperties($entityClone, $record, $classMeta);
+                $this->setInternalProperties($entityClone, $record, ['finded', true]);
 
-                // Call on-save method when provided.
-                if (method_exists($entityClone, 'onFind')) {
-                    $entityClone->onFind();
-                }
+                // Call action method when provided.
+                $this->callAction($entityClone, 'onFind');
 
                 $entityClones[] = $entityClone;
             }
 
             // Fill entity list & set pager.
-            $entityList->resetData($entityClones);
+            $entityList->fill(...$entityClones);
             $pager && $entityList->setPager($pager);
         }
 
@@ -340,41 +328,26 @@ final class Manager
     /**
      * Remove an entity related record & fill given entity with found record data.
      *
-     * @param  object      $entity
-     * @param  string|null $id
+     * @param  object $entity
      * @return object
-     * @throws froq\database\entity\ManagerException
+     * @causes froq\database\entity\ManagerException
      */
-    public function remove(object $entity, int|string $id = null): object
+    public function remove(object $entity): object
     {
-        /* @var froq\database\entity\ClassMeta|null */
-        $classMeta = MetaParser::parseClassMeta($entity);
-        $classMeta || throw new ManagerException('Null entity class meta');
+        /** @var froq\database\entity\ClassMeta */
+        $classMeta = $this->getClassMeta($entity);
 
-        $id   ??= self::getEntityPrimaryValue($entity, $classMeta);
-        $fields = self::getEntityFields($entity);
+        $id = $this->getPrimaryValue($entity, $classMeta);
 
-        // No try/catch, so allow exceptions in Record.
-        $record = $this->initRecord($classMeta)
-                ->setId($id)
-                ->return($fields)
-                ->remove();
+        /** @var froq\database\record\Record */
+        $record = $this->initRecord($classMeta, $entity, true, primaryRequired: true)
+            ->remove($id);
 
-        $this->assignEntityProperties($entity, $record, $classMeta);
-        $this->assignEntityInternalProperties($entity, $record);
+        $this->setProperties($entity, $record, $classMeta);
+        $this->setInternalProperties($entity, $record, ['removed', $record->isRemoved()]);
 
-        // @cancel
-        // if ($record->isRemoved()) {
-        //     // Drop linked properties (records actually).
-        //     foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
-        //         $this->unloadLinkedProperty($propertyMeta, $entity);
-        //     }
-        // }
-
-        // Call on-remove method when provided.
-        if (method_exists($entity, 'onRemove')) {
-            $entity->onRemove();
-        }
+        // Call action method when provided.
+        $this->callAction($entity, 'onRemove');
 
         return $entity;
     }
@@ -382,16 +355,32 @@ final class Manager
     /**
      * Remove all entity list related records & fill given entity list with removed records data.
      *
-     * @param  array|froq\database\entity\AbstractEntityList $entityList
-     * @param  bool                                          $init
-     * @return array|froq\database\entity\AbstractEntityList
-     * @throws froq\database\entity\ManagerException
+     * @param  array|froq\database\entity\EntityList $entityList
+     * @param  bool                                  $init
+     * @return array|froq\database\entity\EntityList
      * @causes froq\database\entity\ManagerException
      */
-    public function removeAll(array|AbstractEntityList $entityList, bool $init = false): array|AbstractEntityList
+    public function removeAll(array|EntityList $entityList, bool $init = false): array|EntityList
     {
-        foreach ($entityList as $entity) {
-            $this->remove($entity);
+        [$ids, $items, $primary, $classMeta] = $this->prepareListItems($entityList);
+
+        /** @var froq\database\record\RecordList */
+        $records = $this->initRecord($classMeta, $items[0], true)
+            ->removeAll($ids);
+
+        if ($records->count()) {
+            // For proper index selection below (null-row safety).
+            $this->sortListItemsByPrimary($records, $items, $primary);
+
+            foreach ($records as $i => $record) {
+                $entity = $items[$i];
+
+                $this->setProperties($entity, $record, $classMeta);
+                $this->setInternalProperties($entity, $record, ['removed', true]);
+
+                // Call action method when provided.
+                $this->callAction($entity, 'onRemove');
+            }
         }
 
         if ($init && is_array($entityList)) {
@@ -402,55 +391,46 @@ final class Manager
     }
 
     /**
-     * Remove all entity records by given conditions or using given entity properties as condition & init/fill
-     * given entity class with removed records data when db supports, returning an entity list.
+     * Remove all entity records by given conditions or using given entity properties as condition
+     * & init/fill given entity class with removed records data when db supports, returning an entity
+     * list.
      *
-     * @param  string|object $entity
-     * @param  array|null    $where
-     * @return froq\database\entity\AbstractEntityList
-     * @throws froq\database\entity\ManagerException
+     * @param  string|object     $entity
+     * @param  string|array|null $where
+     * @return froq\database\entity\EntityList
+     * @causes froq\database\entity\ManagerException
      */
-    public function removeBy(string|object $entity, string|array $where = null): AbstractEntityList
+    public function removeBy(string|object $entity, string|array $where = null): EntityList
     {
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
 
-        /* @var froq\database\entity\ClassMeta|null */
-        $classMeta = MetaParser::parseClassMeta($entity);
-        $classMeta || throw new ManagerException('Null entity class meta');
+        /** @var froq\database\entity\ClassMeta */
+        $classMeta = $this->getClassMeta($entity);
 
-        $record = $this->initRecord($classMeta);
-        $return = self::getEntityFields($entity);
+        $where = $this->prepareWhere($entity, $classMeta, $where);
+
+        /** @var froq\database\record\RecordList */
+        $records = $this->initRecord($classMeta, $entity, true)
+            ->removeBy($where);
 
         $entityList = $this->initEntityList($classMeta->getListClass());
 
-        $rows = $record->delete(
-            self::prepareWhereCondition($where, $entity, $classMeta),
-            return: $return
-        );
-
-        if ($rows != null) {
-            foreach ($rows as $row) {
+        if ($records->count()) {
+            foreach ($records as $record) {
                 $entityClone = clone $entity;
-                $this->assignEntityProperties($entityClone, $row, $classMeta);
-                $this->assignEntityInternalProperties($entityClone, $record);
 
-                // @cancel
-                // // Drop linked properties (records actually).
-                // foreach ($this->getLinkedProperties($classMeta) as $propertyMeta) {
-                //     $this->unloadLinkedProperty($propertyMeta, $entityClone);
-                // }
+                $this->setProperties($entityClone, $record, $classMeta);
+                $this->setInternalProperties($entityClone, $record, ['removed', true]);
 
-                // Call on-remove method when provided.
-                if (method_exists($entityClone, 'onRemove')) {
-                    $entityClone->onRemove();
-                }
+                // Call action method when provided.
+                $this->callAction($entityClone, 'onRemove');
 
                 $entityClones[] = $entityClone;
             }
 
             // Fill entity list.
-            $entityList->resetData($entityClones);
+            $entityList->fill(...$entityClones);
         }
 
         return $entityList;
@@ -458,80 +438,61 @@ final class Manager
 
     /**
      * Init a record by given entity class meta.
-     *
-     * @param  froq\database\entity\ClassMeta $classMeta
-     * @param  object|null                    $entity
-     * @return froq\database\record\Record
      */
-    private function initRecord(ClassMeta $classMeta, object $entity = null): Record
+    private function initRecord(ClassMeta $classMeta, object $entity = null, bool $fields = null, bool $validations = null,
+        bool $primaryRequired = false): Record
     {
-        $validations = null;
-
-        // Assign validations if available.
-        if ($entity != null) {
-            $ref = $classMeta->getReflector();
-            // When "validations" property is defined on entity class.
-            if ($ref->hasProperty('validations')) {
-                $validations = self::getPropertyValue(
-                    new ReflectionProperty($ref->getName(), 'validations'),
-                    $entity
-                );
-            }
-            // When "validations()" method exists on entity class.
-            elseif (is_callable_method($entity, 'validations', static: true)) {
-                $validations = $entity::validations();
-            }
-            // When propties have "validation" metadata on entity class.
-            else {
-                foreach ($classMeta->getProperties() as $name => $propertyMeta) {
-                    // Skip entity properties.
-                    if ($propertyMeta->hasEntity()) {
-                        continue;
-                    }
-
-                    $validations[$name] = $propertyMeta->getValidation();
-                }
-            }
-        }
-
         // Use annotated record class or default.
         $record = $classMeta->getRecordClass() ?: Record::class;
 
-        return new $record(
-            $this->db,
-            table: $classMeta->getTable(),
-            tablePrimary: ($id = $classMeta->getTablePrimary()),
-            options: [
-                'transaction' => $classMeta->getOption('transaction', true),
-                'sequence'    => $classMeta->getOption('sequence', !!$id),
-                'validate'    => $classMeta->getOption('validate', !!$validations),
-            ],
-            validations: $validations,
+        // Used for only "find/remove" actions.
+        $fields && $fields = $this->getFields($entity, $classMeta);
+
+        // Used for only "save" actions.
+        $validations && $validations = $this->getValidations($entity, $classMeta);
+
+        [$table, $tablePrimary] = $classMeta->packTableStuff();
+
+        if (!$table) {
+            throw new ManagerException('Entity %s has no table definition',
+                $classMeta->getName());
+        }
+        if ($primaryRequired && !$tablePrimary) {
+            throw new ManagerException('Entity %s has no primary (id) definition',
+                $classMeta->getName());
+        }
+
+        $record = new $record(
+            $this->db, $table, $tablePrimary,
+            validations: $validations, options: [
+                'transaction' => $classMeta->getOption('transaction', default: true),
+                'sequence'    => $classMeta->getOption('sequence',    default: !!$tablePrimary),
+                'validate'    => $classMeta->getOption('validate',    default: !!$validations),
+            ]
         );
+
+        $fields && $record->return($fields);
+
+        return $record;
     }
 
     /**
      * Init an entity with/without given class & with/without given properties.
-     *
-     * @param  string|null $class
-     * @param  array|null  $properties
-     * @return froq\database\entity\AbstractEntity
-     * @throws froq\database\entity\ManagerException
      */
-    private function initEntity(string|null $class, array $properties = null): AbstractEntity
+    private function initEntity(string|null $class, array $properties = null): Entity
     {
         // Check class validity.
-        if ($class != null) {
+        if ($class) {
             class_exists($class) || throw new ManagerException(
-                'Entity list class `%s` not exists', $class
+                'Entity class `%s` not exists', $class
             );
-            class_extends($class, AbstractEntity::class) || throw new ManagerException(
-                'Entity list class `%s` must extend `%s`', [$class, AbstractEntity::class]
+            class_extends($class, Entity::class) || throw new ManagerException(
+                'Entity class `%s` must extend `%s`', [$class, Entity::class]
             );
 
             $entity = new $class();
         } else {
-            $entity = new class() extends AbstractEntity {};
+            $entity = new class() extends Entity {};
         }
 
         // Set manager & properties.
@@ -543,395 +504,308 @@ final class Manager
 
     /**
      * Init an entity list with/without given class & with/without given entities.
-     *
-     * @param  string|null $class
-     * @param  array|null  $entities
-     * @return froq\database\entity\AbstractEntityList
-     * @throws froq\database\entity\ManagerException
      */
-    private function initEntityList(string|null $class, array $entities = null): AbstractEntityList
+    private function initEntityList(string|null $class, array $entities = null): EntityList
     {
         // Check class validity.
-        if ($class != null) {
+        if ($class) {
             class_exists($class) || throw new ManagerException(
                 'Entity list class `%s` not exists', $class
             );
-            class_extends($class, AbstractEntityList::class) || throw new ManagerException(
-                'Entity list class `%s` must extend `%s`', [$class, AbstractEntityList::class]
+            class_extends($class, EntityList::class) || throw new ManagerException(
+                'Entity list class `%s` must extend `%s`', [$class, EntityList::class]
             );
 
             $entityList = new $class();
         } else {
-            $entityList = new class() extends AbstractEntityList {};
+            $entityList = new class() extends EntityList {};
         }
 
         // Set manager & stack items.
         $entityList->setManager($this);
-        $entities && $entityList->resetData($entities);
+        $entities && $entityList->fill(...$entities);
 
         return $entityList;
     }
 
     /**
-     * Get linked properties from given entity class meta.
-     *
-     * @param  froq\database\entity\ClassMeta $classMeta
-     * @return array
+     * Get class meta parsing given entity meta attributes/annotations or throw a
+     * `ManagerException` if given entity has no meta attributes/annotations.
      */
-    private function getLinkedProperties(ClassMeta $classMeta): array
+    private function getClassMeta(string|object $entity): ClassMeta
     {
-        return array_filter($classMeta->getProperties(), fn($propertyMeta) => $propertyMeta->isLinked());
+        return MetaParser::parseClassMeta($entity)
+            ?: throw new ManagerException('No meta in class ' . get_class_name($entity));
     }
 
     /**
-     * Load a linked property.
-     *
-     * @param  froq\database\entity\PropertyMeta $propertyMeta
-     * @param  object                            $entity
-     * @param  string|null                       $action
-     * @return void
-     * @throws froq\database\entity\ManagerException
-     * @cancel Not in use.
+     * Set entity properties.
      */
-    private function loadLinkedProperty(PropertyMeta $propertyMeta, object $entity, string $action = null): void
-    {
-        // Check whether cascade op allows given action.
-        if ($action && !$propertyMeta->isLinkCascadesFor($action)) {
-            return;
-        }
-
-        $class = $propertyMeta->getEntityClass() ?: throw new ManagerException(
-            'No valid link entity provided in `%s` meta',
-            $propertyMeta->getName()
-        );
-
-        [$table, $column, $condition, $method, $limit] = $propertyMeta->packLinkStuff();
-
-        // Check non-link / non-valid properties.
-        ($table && $column) ?: throw new ManagerException(
-            'No valid link table/column provided in `%s` meta',
-            $propertyMeta->getName()
-        );
-
-        // Given or default limit (if not disabled as "-1").
-        $limit = ($limit != -1) ? $limit : null;
-
-        // Parse linked property class meta.
-        /* @var froq\database\entity\ClassMeta|null */
-        $linkedClassMeta = MetaParser::parseClassMeta($class);
-        $linkedClassMeta || throw new ManagerException('Null entity class meta');
-
-        switch ($method) {
-            case 'one-to-one':
-                $primaryField = $linkedClassMeta->getTablePrimary();
-                $primaryValue = self::getPropertyValue($column, $entity);
-
-                $limit = 1; // Update limit.
-                break;
-            case 'one-to-many':
-                $primaryField = $column; // Reference.
-
-                // Get value from property's class.
-                /* @var froq\database\entity\ClassMeta|null */
-                $propertyClassMeta  = MetaParser::parseClassMeta($propertyMeta->getClass());
-                $propertyClassMeta || throw new ManagerException('Null entity class meta');
-
-                $primaryValue = self::getPropertyValue($propertyClassMeta->getTablePrimary(), $entity);
-
-                unset($propertyClassMeta); // Free.
-                break;
-            default:
-                throw new ManagerException(
-                    'Unimplemented link method `%s` on `%s` property',
-                    [$method, $propertyMeta->getName()]
-                );
-        }
-
-        $fields = self::getEntityFields($class);
-
-        // Create a select query & apply link criteria.
-        $query = $this->db->initQuery($table)
-               ->select($fields)
-               ->equal($primaryField, $primaryValue);
-
-        // Apply link (row) limit.
-        $limit && $query->limit($limit);
-
-        // Apply where condition.
-        if ($condition != null) {
-            $query->where('(' . str_replace(
-                ['==', '&', '|'], ['=', 'AND', 'OR'],
-                $condition
-            ) . ')');
-        }
-
-        $propEntity     = new $class();
-        $propEntityList = ($listClass = $propertyMeta->getEntityListClass()) ? new $listClass() : null;
-
-        // An entity list.
-        if ($propEntityList != null) {
-            $data = (array) $query->getArrayAll($pager, $limit);
-            foreach ($data as $dat) {
-                $propEntityClone = clone $propEntity;
-                foreach ($dat as $name => $value) {
-                    $prop = $linkedClassMeta->getProperty($name);
-                    $prop ? self::setPropertyValue($prop->getReflector(), $propEntityClone, $value)
-                          : throw new ManagerException('Property `%s.%s` not exists or private', [$class, $name]);
-                }
-
-                $propEntityList->add($propEntityClone);
-            }
-
-            $pager && $propEntityList->setPager($pager);
-
-            // Set property value as an entity list.
-            self::setPropertyValue($propertyMeta->getReflector(), $entity, $propEntityList);
-        }
-        // An entity.
-        else {
-            $data = (array) $query->getArray();
-            foreach ($data as $name => $value) {
-                $prop = $linkedClassMeta->getProperty($name);
-                $prop ? self::setPropertyValue($prop->getReflector(), $propEntity, $value)
-                      : throw new ManagerException('Property `%s.%s` not exists or private', [$class, $name]);
-            }
-
-            // Recursion for other linked stuff.
-            foreach ($this->getLinkedProperties($linkedClassMeta) as $prop) {
-                $this->loadLinkedProperty($prop, $propEntity, $action);
-            }
-
-            // Set property value as an entity.
-            self::setPropertyValue($propertyMeta->getReflector(), $entity, $propEntity);
-        }
-    }
-
-    /**
-     * Unload a linked property (drops a record from database actually).
-     *
-     * Note: seems it's nonsence loading whole dropped linked data on entities, this method does
-     * not create and fill dropped records data as new entities. So, a property (eg. User$logins)
-     * can contain a plenty records on a database.
-     *
-     * @param  froq\database\entity\PropertyMeta $propertyMeta
-     * @param  object                            $entity
-     * @return void
-     * @throws froq\database\entity\ManagerException
-     * @cancel Not in use.
-     */
-    private function unloadLinkedProperty(PropertyMeta $propertyMeta, object $entity): void
-    {
-        // Check whether cascade op allows remove action.
-        if (!$propertyMeta->isLinkCascadesFor('remove')) {
-            return;
-        }
-
-        $class = $propertyMeta->getEntityClass() ?: throw new ManagerException(
-            'No valid link entity provided in `%s` meta',
-            $propertyMeta->getName()
-        );
-
-        [$table, $column, , $method] = $propertyMeta->packLinkStuff();
-
-        // Check non-link / non-valid properties.
-        ($table && $column) ?: throw new ManagerException(
-            'No valid link table/column provided in `%s` meta',
-            $propertyMeta->getName()
-        );
-
-        // Parse linked property class meta.
-        /* @var froq\database\entity\ClassMeta|null */
-        $linkedClassMeta = MetaParser::parseClassMeta($class);
-        $linkedClassMeta || throw new ManagerException('Null entity class meta');
-
-        switch ($method) {
-            case 'one-to-one':
-                $primaryField = $linkedClassMeta->getTablePrimary();
-                $primaryValue = self::getPropertyValue($column, $entity);
-                break;
-            case 'one-to-many':
-                $primaryField = $column; // Reference.
-
-                // Get value from property's class.
-                /* @var froq\database\entity\ClassMeta|null */
-                $propertyClassMeta  = MetaParser::parseClassMeta($propertyMeta->getClass());
-                $propertyClassMeta || throw new ManagerException('Null entity class meta');
-
-                $primaryValue = self::getPropertyValue($propertyClassMeta->getTablePrimary(), $entity);
-
-                unset($propertyClassMeta); // Free.
-                break;
-            default:
-                throw new ManagerException(
-                    'Unimplemented link method `%s` on `%s` property',
-                    [$method, $propertyMeta->getName()]
-                );
-        }
-
-        // Create a delete query & apply link criteria.
-        $this->db->initQuery($table)
-                 ->delete()
-                 ->equal($primaryField, $primaryValue)
-                 ->run();
-    }
-
-    /**
-     * Assign an entity properties.
-     *
-     * @param  object                            $entity
-     * @param  array|froq\database\record\Record $record
-     * @param  froq\database\entity\ClassMeta    $classMeta
-     * @return void
-     */
-    private function assignEntityProperties(object $entity, array|Record $record, ClassMeta $classMeta): void
+    private function setProperties(object $entity, array|Record $record, ClassMeta $classMeta): void
     {
         $data = is_array($record) ? $record : $record->toArray();
         if ($data) {
-            $props = $classMeta->getProperties();
+            $properties = $classMeta->getProperties();
             foreach ($data as $name => $value) {
-                // Set existsing (defined/parsed) properties only.
-                isset($props[$name]) && self::setPropertyValue(
-                    $props[$name]->getReflector(), $entity, $value
-                );
+                // Set present (defined/parsed) properties only.
+                if (isset($properties[$name])) {
+                    $this->setPropertyValue($entity, $properties[$name]->getReflection(), $value);
+                }
             }
         }
     }
 
     /**
-     * Assign an entity internal properties.
-     *
-     * @param  object                      $entity
-     * @param  froq\database\record\Record $record
-     * @return void
+     * Set entity internal properties.
      */
-    private function assignEntityInternalProperties(object $entity, Record $record): void
+    private function setInternalProperties(object $entity, Record $record, array $state = null): void
     {
-        // When entity extends AbstractEntity.
-        if ($entity instanceof AbstractEntity) {
-            $entity->setManager($this)
-                   ->setRecord($record);
+        // When entity extends Entity.
+        if ($entity instanceof Entity) {
+            $entity->setManager($this);
+
+            // Set result state.
+            $state && $entity->setState(...$state);
         }
     }
 
     /**
-     * Get an entity fields when defined `fields()` method as static or return `*`.
-     *
-     * @param  object|string $entity
-     * @return array|string
-     * @throws froq\database\entity\ManagerException
+     * Get an entity fields when defined `FIELDS` constant or `fields()` method
+     * on entity class, or get them from class meta or return `*` (all) as default.
      */
-    private static function getEntityFields(object|string $entity): array|string
+    private function getFields(object|null $entity, ClassMeta $classMeta): array|string
     {
-        // Default is all.
-        $fields = '*';
+        $ret = $def = null;
+        $ref = $classMeta->getReflection();
 
-        // When fields() method available as public & static.
-        if (is_callable_method($entity, 'fields', static: true)) {
-            $fields = $entity::fields();
-            is_array($fields) || is_string($fields) || throw new ManagerException(
-                'Method %s.fields() must return array|string, %s returned',
-                [is_object($entity) ? $entity::class : $entity, get_type($fields)]
-            );
+        if ($entity) {
+            // When "FIELDS" constant is defined on entity class.
+            if ($ref->hasConstant('FIELDS')) {
+                $ret = $entity::FIELDS;
+                $def = 1;
+            }
+            // When "fields()" method exists on entity class.
+            elseif ($ref->hasMethod('fields')) {
+                $ret = $entity->fields();
+                $def = 2;
+            }
 
-            // Prevent weird issues.
-            if (!$fields || $fields === ['*']) {
-                $fields = '*';
+            if ($def && !is_type_of($ret, 'array|string')) {
+                $message = ($def == 1)
+                    ? 'Constant %s::FIELDS must define array, %t defined'
+                    : 'Method %s::fields() must return array, %t returned';
+                throw new ManagerException($message, [$entity::class, $ret]);
             }
         }
 
-        return $fields;
+        // When properties have "validation" meta on entity class.
+        if (!$def) {
+            foreach ($classMeta->getProperties() as $name => $propertyMeta) {
+                // Skip entity properties.
+                $propertyMeta->hasEntity() || $ret[] = $name;
+            }
+        }
+
+        // Prevent weird issues.
+        if (!$ret || $ret === ['*']) {
+            $ret = '*';
+        }
+
+        return $ret;
     }
 
     /**
-     * Get an entity primary value from given entity class meta when available.
-     *
-     * @param  object                         $entity
-     * @param  froq\database\entity\ClassMeta $classMeta
-     * @return int|string|null
+     * Get an entity validations when defined `VALIDATIONS` constant or `validations()`
+     * method on entity class, or get them from class meta or return `null`.
      */
-    private static function getEntityPrimaryValue(object $entity, ClassMeta $classMeta): int|string|null
+    private function getValidations(object|null $entity, ClassMeta $classMeta): array|null
+    {
+        $ret = $def = null;
+        $ref = $classMeta->getReflection();
+
+        if ($entity) {
+            // When "VALIDATIONS" constant is defined on entity class.
+            if ($ref->hasConstant('VALIDATIONS')) {
+                $ret = $entity::VALIDATIONS;
+                $def = 1;
+            }
+            // When "validations()" method exists on entity class.
+            elseif ($ref->hasMethod('validations')) {
+                $ret = $entity->validations();
+                $def = 2;
+            }
+
+            if ($def && !is_type_of($ret, 'array')) {
+                $message = ($def == 1)
+                    ? 'Constant %s::VALIDATIONS must define array, %t defined'
+                    : 'Method %s::validations() must return array, %t returned';
+                throw new ManagerException($message, [$entity::class, $ret]);
+            }
+        }
+
+        // When properties have "validation" meta on entity class.
+        if (!$def) {
+            foreach ($classMeta->getProperties() as $name => $propertyMeta) {
+                // Skip entity properties.
+                $propertyMeta->hasEntity() || $ret[$name] = $propertyMeta->getValidation();
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Get an entity primary value using given entity class meta when available.
+     */
+    private function getPrimaryValue(object $entity, ClassMeta $classMeta): int|string|null
     {
         $primary = (string) $classMeta->getTablePrimary();
 
-        // When defined as public.
-        if (isset($entity->{$primary})) {
-            return $entity->{$primary};
-        }
-        // When getId() defined as public.
-        elseif (is_callable_method($entity, 'getId')) {
-            return $entity->getId();
+        if ($primary) {
+            $value = $this->getPropertyValue($entity, $classMeta->getProperty($primary)->getReflection());
+            if (!is_type_of($value, 'int|string')) {
+                throw new ManagerException(
+                    'Primary (%s::$%s) value must be int|string, %t given',
+                    [$entity::class, $primary, $value]
+                );
+            }
         }
 
-        return null;
+        return $value ?? null;
     }
 
     /**
      * Set an entity property value.
-     *
-     * @param  string|ReflectionProperty $ref
-     * @param  object                    $entity
-     * @param  any                       $value
-     * @return void
      */
-    private static function setPropertyValue(string|ReflectionProperty $ref, object $entity, $value): void
+    private function setPropertyValue(object $entity, ReflectionProperty $property, mixed $value): void
     {
-        is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
-
-        // When a property-specific setter is available.
-        if (is_callable_method($entity, $method = ('set' . $ref->name))) {
+        // When property-specific setter is available.
+        if (method_exists($entity, ($method = ('set' . $property->name)))) {
             $entity->$method($value);
             return;
         }
 
-        $ref->isPublic() || $ref->setAccessible(true);
-
-        $ref->setValue($entity, $value);
+        $property->setValue($entity, $value);
     }
 
     /**
      * Get an entity property value.
-     *
-     * @param  string|ReflectionProperty $ref
-     * @param  object                    $entity
-     * @return any
      */
-    private static function getPropertyValue(string|ReflectionProperty $ref, object $entity)
+    private function getPropertyValue(object $entity, ReflectionProperty $property): mixed
     {
-        is_string($ref) && $ref = new ReflectionProperty($entity, $ref);
-
-        // When a property-specific getter is available.
-        if (is_callable_method($entity, $method = ('get' . $ref->name))) {
+        // When property-specific getter is available.
+        if (method_exists($entity, ($method = ('get' . $property->name)))) {
             return $entity->$method();
         }
 
-        $ref->isPublic() || $ref->setAccessible(true);
-
-        return $ref->getValue($entity);
+        return $property->getValue($entity);
     }
 
     /**
      * Prepare given where condition appending given entity properties.
-     *
-     * @param  array|null                     $where
-     * @param  object                         $entity
-     * @param  froq\database\entity\ClassMeta $classMeta
-     * @return array
      */
-    public static function prepareWhereCondition(array|null $where, object $entity, ClassMeta $classMeta): array
+    private function prepareWhere(object $entity, ClassMeta $classMeta, array|null $where): array
     {
         $where ??= [];
 
         foreach ($classMeta->getProperties() as $name => $propertyMeta) {
-            // When "where" does not contains a rule already.
+            // When "where" does not contains a condition already.
             if (!array_key_exists($name, $where)) {
-                $value = self::getPropertyValue($propertyMeta->getReflector(), $entity);
-                // Skip null values.
-                if (!is_null($value)) {
+                $value = $this->getPropertyValue($entity, $propertyMeta->getReflection());
+                // Skip nulls.
+                if ($value !== null) {
                     $where[$name] = $value;
                 }
             }
         }
 
         return $where;
+    }
+
+    /**
+     * Prepare list items for `findAll()` & `removeAll()` methods to reduce code repetition
+     * and ensure:
+     * - Given list is not empty.
+     * - Each item is an object (entity) and all same type.
+     * - Each item has primary field definition (@default="id").
+     * - Each item has a unique state by primary with not null value.
+     */
+    private function prepareListItems(array|EntityList $entityList): array
+    {
+        $item  = $entityList[0] ?: throw new ManagerException('Empty list');
+        $items = new ItemList();
+
+        foreach ($entityList as $i => $entity) {
+            is_object($entity) || throw new ManagerException(
+                'Each item must be object, %t given', $entity
+            );
+
+            // All entities must be same type.
+            if ($item::class != $entity::class) {
+                throw new ManagerException(
+                    'All items must be same type as first item %s, %s is different',
+                    [$item::class, $entity::class]
+                );
+            }
+            $item = $entity;
+
+            /** @var froq\database\entity\ClassMeta */
+            $classMeta = $this->getClassMeta($entity);
+
+            if (!$primary = $classMeta->getTablePrimary()) {
+                throw new ManagerException(
+                    'Item %s[%d] has no primary (id) definition',
+                    [$entity::class, $i]
+                );
+            }
+
+            $id = $this->getPropertyValue($entity, $classMeta->getProperty($primary)->getReflection());
+            if ($id === null) {
+                throw new ManagerException(
+                    'Item %s[%d] has null primary (%s) value',
+                    [$entity::class, $i, $primary]
+                );
+            }
+            if (!is_type_of($id, 'int|string')) {
+                throw new ManagerException(
+                    'Item %s[%d] primary (%s) value must be int|string, %t given',
+                    [$entity::class, $i, $primary, $id]
+                );
+            }
+
+            // Note: Since cannot get multiple records with same id and also corrupting
+            // sorting processes in findAll() & removeAll(), this exception is required.
+            if (isset($ids) && ($j = array_search($id, $ids)) !== false) {
+                throw new ManagerException(
+                    'Item %s[%d] has same primary (%s) value %s with previous item %s[%d]',
+                    [$entity::class, $i, $primary, $id, $entity::class, $j]
+                );
+            }
+
+            $ids[] = $id; $items[] = $entity;
+        }
+
+        return [$ids, $items, $primary, $classMeta];
+    }
+
+    /**
+     * Sort items of both two lists by given primary for proper index selection (null-row safety)
+     * in related loops in `findAll()` & `removeAll()` methods.
+     */
+    private function sortListItemsByPrimary(ItemList $recordList, ItemList $entityList, string $primary): void
+    {
+        $fn = fn($a, $b) => $a[$primary] <=> $b[$primary];
+
+        $recordList->sort($fn); $entityList->sort($fn);
+    }
+
+    /**
+     * Call an entity method if available, so defined in for find/save/remove actions.
+     */
+    private function callAction(object $entity, string $method): void
+    {
+        if (method_exists($entity, $method)) {
+            $entity->$method();
+        }
     }
 }

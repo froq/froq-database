@@ -7,13 +7,11 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\common\interface\Arrayable;
-
 /**
  * @package froq\database\entity
- * @object  froq\database\entity\EntityListInterface
+ * @object  froq\database\entity\EntityException
  * @author  Kerem Güneş
  * @since   5.0
  */
-interface EntityListInterface extends Arrayable, \ArrayAccess
+class EntityException extends \froq\database\DatabaseException
 {}
