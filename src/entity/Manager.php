@@ -44,43 +44,6 @@ final class Manager
     }
 
     /**
-     * Run a raw SQL query.
-     *
-     * @param  string     $query
-     * @param  array|null $params
-     * @param  array|null $options
-     * @return froq\database\Result
-     */
-    public function query(string $query, array $params = null, array $options = null): Result
-    {
-        return $this->db->query($query, $params, $options);
-    }
-
-    /**
-     * Run a raw SQL execution.
-     *
-     * @param  string     $query
-     * @param  array|null $params
-     * @return int
-     */
-    public function execute(string $query, array $params = null): int
-    {
-        return $this->db->execute($query, $params);
-    }
-
-    /**
-     * Run a SQL transaction or return a `Transaction` instance.
-     *
-     * @param  callable|null $call
-     * @param  callable|null $callError
-     * @return mixed
-     */
-    public function transaction(callable $call = null, callable $callError = null): mixed
-    {
-        return $this->db->transaction($call, $callError);
-    }
-
-    /**
      * Create an entity with/without given properties.
      *
      * @param  string    $class
