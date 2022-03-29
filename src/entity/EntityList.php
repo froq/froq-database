@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\common\PagedList;
+use froq\database\trait\PagerTrait;
 
 /**
  * An abstract entity list class that can be extended by entity list classes used for
@@ -19,9 +19,9 @@ use froq\database\common\PagedList;
  * @author  Kerem Güneş
  * @since   5.0
  */
-abstract class EntityList extends PagedList implements EntityListInterface
+abstract class EntityList extends \ItemList implements EntityListInterface
 {
-    use ManagerTrait;
+    use ManagerTrait, PagerTrait;
 
     /**
      * Constructor.

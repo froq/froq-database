@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\common\PagedList;
+use froq\database\trait\PagerTrait;
 use froq\pager\Pager;
 
 /**
@@ -18,8 +18,10 @@ use froq\pager\Pager;
  * @author  Kerem Güneş
  * @since   5.0
  */
-class RecordList extends PagedList implements RecordListInterface
+class RecordList extends \ItemList implements RecordListInterface
 {
+    use PagerTrait;
+
     /**
      * Constructor.
      *
@@ -29,13 +31,15 @@ class RecordList extends PagedList implements RecordListInterface
      */
     public function __construct(array $items = [], Pager $pager = null, bool $locked = false)
     {
-        parent::__construct($items, $pager, type: $this->extractType(), locked: $locked);
+        parent::__construct($items, type: $this->extractType(), locked: $locked);
+
+        $this->pager = $pager;
     }
 
     /**
      * @override
      */
-    public final function toArray(bool $deep = false): array
+    public function toArray(bool $deep = false): array
     {
         $items = parent::toArray();
 
