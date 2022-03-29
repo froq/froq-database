@@ -265,13 +265,15 @@ final class Manager
      *```
      *
      * @param  object|string          $entity
-     * @param  array|null             $where
+     * @param  string|array|null      $where
+     * @param  array|null             $params Used only when $where is string.
      * @param  string|null            $order
      * @param  froq\pager\Pager|null &$pager
      * @return froq\database\entity\EntityList
      * @causes froq\database\entity\ManagerException
      */
-    public function findBy(object|string $entity, array $where = null, string $order = null, Pager &$pager = null): EntityList
+    public function findBy(object|string $entity, string|array $where = null, array $params = null, string $order = null,
+        Pager &$pager = null): EntityList
     {
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
@@ -279,7 +281,7 @@ final class Manager
         /** @var froq\database\entity\ClassMeta */
         $classMeta = $this->getClassMeta($entity);
 
-        $where = $this->prepareWhere($entity, $classMeta, $where);
+        $this->prepareWhere($entity, $classMeta, $where, $params);
 
         /** @var froq\database\record\Record */
         $record = $this->initRecord($classMeta, $entity, true);
@@ -292,7 +294,7 @@ final class Manager
 
             // Pager was run?
             if ($pager->totalPages === null) {
-                $count = $pager->totalRecords ?? $record->count($where);
+                $count = $pager->totalRecords ?? $record->count($where, $params);
                 [$limit, $offset] = $pager->run($count);
             } else {
                 [$limit, $offset] = [$pager->limit, $pager->offset];
@@ -300,7 +302,7 @@ final class Manager
         }
 
         /** @var froq\database\record\RecordList */
-        $records = $record->findBy($where, limit: $limit, offset: $offset, order: $order, fetch: 'array');
+        $records = $record->findBy($where, $params, limit: $limit, offset: $offset, order: $order, fetch: 'array');
 
         $entityList = $this->initEntityList($classMeta->getListClass());
 
@@ -397,10 +399,11 @@ final class Manager
      *
      * @param  string|object     $entity
      * @param  string|array|null $where
+     * @param  array|null        $params Used only when $where is string.
      * @return froq\database\entity\EntityList
      * @causes froq\database\entity\ManagerException
      */
-    public function removeBy(string|object $entity, string|array $where = null): EntityList
+    public function removeBy(string|object $entity, string|array $where = null, array $params = null): EntityList
     {
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
@@ -408,11 +411,11 @@ final class Manager
         /** @var froq\database\entity\ClassMeta */
         $classMeta = $this->getClassMeta($entity);
 
-        $where = $this->prepareWhere($entity, $classMeta, $where);
+        $this->prepareWhere($entity, $classMeta, $where, $params);
 
         /** @var froq\database\record\RecordList */
         $records = $this->initRecord($classMeta, $entity, true)
-            ->removeBy($where);
+            ->removeBy($where, $params);
 
         $entityList = $this->initEntityList($classMeta->getListClass());
 
@@ -704,22 +707,25 @@ final class Manager
     /**
      * Prepare given where condition appending given entity properties.
      */
-    private function prepareWhere(object $entity, ClassMeta $classMeta, array|null $where): array
+    private function prepareWhere(object $entity, ClassMeta $classMeta, string|array|null &$where, array|null &$params): void
     {
         $where ??= [];
 
-        foreach ($classMeta->getProperties() as $name => $propertyMeta) {
-            // When "where" does not contains a condition already.
-            if (!array_key_exists($name, $where)) {
-                $value = $this->getPropertyValue($entity, $propertyMeta->getReflection());
-                // Skip nulls.
-                if ($value !== null) {
-                    $where[$name] = $value;
+        if (is_string($where)) {
+            $where  = trim($where);
+            $params = (array) $params;
+        } else {
+            foreach ($classMeta->getProperties() as $name => $propertyMeta) {
+                // When "where" does not contains a condition already.
+                if (!array_key_exists($name, $where)) {
+                    $value = $this->getPropertyValue($entity, $propertyMeta->getReflection());
+                    // Skip nulls.
+                    if ($value !== null) {
+                        $where[$name] = $value;
+                    }
                 }
             }
         }
-
-        return $where;
     }
 
     /**
