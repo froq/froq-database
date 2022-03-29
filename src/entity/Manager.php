@@ -269,12 +269,13 @@ final class Manager
      * @param  array|null             $params Used only when $where is string.
      * @param  string|null            $order
      * @param  int|null               $limit
+     * @param  int|null               $offset
      * @param  froq\pager\Pager|null &$pager
      * @return froq\database\entity\EntityList
      * @causes froq\database\entity\ManagerException
      */
     public function findBy(object|string $entity, string|array $where = null, array $params = null,
-        string $order = null, int $limit = null, Pager &$pager = null): EntityList
+        string $order = null, int $limit = null, int $offset = null, Pager &$pager = null): EntityList
     {
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
@@ -298,8 +299,6 @@ final class Manager
             } else {
                 [$limit, $offset] = [$pager->limit, $pager->offset];
             }
-        } else {
-            $offset = null;
         }
 
         // Order by clause, default is primary.
