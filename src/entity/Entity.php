@@ -182,7 +182,7 @@ abstract class Entity implements EntityInterface
             }
         }
 
-        $deep && $data = Util::toDeepArray($data);
+        $deep && $data = EntityUtil::toDeepArray($data);
 
         return $data;
     }
@@ -194,7 +194,7 @@ abstract class Entity implements EntityInterface
     {
         $data = (object) $this->toArray(false);
 
-        $deep && $data = Util::toDeepObject($data);
+        $deep && $data = EntityUtil::toDeepObject($data);
 
         return $data;
     }

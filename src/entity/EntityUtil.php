@@ -9,12 +9,12 @@ namespace froq\database\entity;
 
 /**
  * @package froq\database\entity
- * @object  froq\database\entity\Util
+ * @object  froq\database\entity\EntityUtil
  * @author  Kerem Güneş
  * @since   6.0
  * @static
  */
-class Util extends \StaticClass
+class EntityUtil extends \StaticClass
 {
     /**
      * Make a deep array, used by `toArray()` methods of `Entity` and `EntityList` classes.
