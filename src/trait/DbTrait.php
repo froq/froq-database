@@ -10,8 +10,6 @@ namespace froq\database\trait;
 use froq\database\Database;
 
 /**
- * Db Trait.
- *
  * A trait, provides a read-only `$db` property and its getter method.
  *
  * @package froq\database\trait

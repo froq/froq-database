@@ -10,16 +10,14 @@ namespace froq\database\trait;
 use froq\database\entity\Manager as EntityManager;
 
 /**
- * Entity Manager Trait.
- *
  * A trait, provides a read-only `$em` property and its getter method.
  *
  * @package froq\database\trait
- * @object  froq\database\trait\EntityManagerTrait
+ * @object  froq\database\trait\EmTrait
  * @author  Kerem Güneş
  * @since   5.1
  */
-trait EntityManagerTrait
+trait EmTrait
 {
     /** @var froq\database\entity\Manager */
     protected EntityManager $em;

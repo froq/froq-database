@@ -11,8 +11,6 @@ use froq\common\Exception;
 use froq\validation\Validation;
 
 /**
- * Validation Trait.
- *
  * A trait, provides validation properties and related methods with its state and errors.
  *
  * @package froq\database\trait

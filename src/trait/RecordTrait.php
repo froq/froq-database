@@ -12,8 +12,6 @@ use froq\collection\trait\{EmptyTrait, ToArrayTrait, ToObjectTrait};
 use froq\validation\ValidationError;
 
 /**
- * Record Trait.
- *
  * A trait, used in `froq\database\record` only and provides record related stuff.
  *
  * @package froq\database\trait

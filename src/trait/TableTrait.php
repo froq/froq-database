@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database\trait;
 
 /**
- * Table Trait.
- *
  * A trait, provides table properties and related methods.
  *
  * @package froq\database\trait
