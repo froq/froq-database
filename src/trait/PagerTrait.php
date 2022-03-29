@@ -28,7 +28,7 @@ trait PagerTrait
      * @param  froq\pager\Pager $pager
      * @return self
      */
-    public function setPager(Pager $pager): self
+    public final function setPager(Pager $pager): self
     {
         $this->pager = $pager;
 
@@ -40,7 +40,7 @@ trait PagerTrait
      *
      * @return froq\pager\Pager|null
      */
-    public function getPager(): Pager|null
+    public final function getPager(): Pager|null
     {
         return $this->pager ?? null;
     }
