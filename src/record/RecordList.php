@@ -7,22 +7,19 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
+use froq\database\common\PagedList;
 use froq\pager\Pager;
 
 /**
- * A list class, used internally and holds `$pager` property and its getter method,
- * and also all basic list methods such as `filter()`, `map(), `reduce()` etc.
+ * A list class, for collecting `Record` instances.
  *
  * @package froq\database\record
  * @object  froq\database\record\RecordList
  * @author  Kerem Güneş
  * @since   5.0
  */
-class RecordList extends \ItemList implements RecordListInterface
+class RecordList extends PagedList implements RecordListInterface
 {
-    /** @var froq\pager\Pager|null */
-    protected Pager|null $pager;
-
     /**
      * Constructor.
      *
@@ -32,43 +29,13 @@ class RecordList extends \ItemList implements RecordListInterface
      */
     public function __construct(array $items = [], Pager $pager = null, bool $locked = false)
     {
-        parent::__construct($items, type: $this->extractType(), locked: $locked);
-
-        $this->pager = $pager;
+        parent::__construct($items, $pager, type: $this->extractType(), locked: $locked);
     }
 
     /**
      * @override
      */
-    public function __debugInfo(): array
-    {
-        return ['count' => $this->count()] + parent::__debugInfo();
-    }
-
-    /**
-     * Get pager property.
-     *
-     * @return froq\pager\Pager|null
-     */
-    public final function pager(): Pager|null
-    {
-        return $this->pager;
-    }
-
-    /**
-     * Get a array copy of data items.
-     *
-     * @return array<int, array>
-     */
-    public final function data(): array
-    {
-        return $this->toArray(true);
-    }
-
-    /**
-     * @override
-     */
-    public final function toArray(bool $deep = true): array
+    public final function toArray(bool $deep = false): array
     {
         $items = parent::toArray();
 

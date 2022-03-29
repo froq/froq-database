@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
+use froq\database\common\PagedList;
 use froq\pager\Pager;
-use ItemList;
 
 /**
  * An abstract entity list class that can be extended by entity list classes used for
@@ -20,13 +20,10 @@ use ItemList;
  * @author  Kerem Güneş
  * @since   5.0
  */
-abstract class EntityList extends ItemList implements EntityListInterface
+abstract class EntityList extends PagedList implements EntityListInterface
 {
     /** @var froq\database\entity\Manager */
     private Manager $manager;
-
-    /** @var froq\pager\Pager|null */
-    private Pager|null $pager;
 
     /**
      * Constructor.
@@ -38,12 +35,6 @@ abstract class EntityList extends ItemList implements EntityListInterface
         parent::__construct(type: 'object');
 
         $entities && $this->fill(...$entities);
-    }
-
-    /** @override */
-    public function __debugInfo(): array
-    {
-        return $this->toArray();
     }
 
     /**
@@ -67,29 +58,6 @@ abstract class EntityList extends ItemList implements EntityListInterface
     public final function getManager(): Manager|null
     {
         return $this->manager ?? null;
-    }
-
-    /**
-     * Set pager property.
-     *
-     * @param  froq\pager\Pager $pager
-     * @return self
-     */
-    public final function setPager(Pager $pager): self
-    {
-        $this->pager = $pager;
-
-        return $this;
-    }
-
-    /**
-     * Get pager property.
-     *
-     * @return froq\pager\Pager|null
-     */
-    public final function getPager(): Pager|null
-    {
-        return $this->pager ?? null;
     }
 
     /**
@@ -186,7 +154,9 @@ abstract class EntityList extends ItemList implements EntityListInterface
         return $this;
     }
 
-    /** @override */
+    /**
+     * @override
+     */
     public function toArray(bool $deep = false): array
     {
         $items = parent::toArray();
