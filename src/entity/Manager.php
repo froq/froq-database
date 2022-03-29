@@ -268,12 +268,13 @@ final class Manager
      * @param  string|array|null      $where
      * @param  array|null             $params Used only when $where is string.
      * @param  string|null            $order
+     * @param  int|null               $limit
      * @param  froq\pager\Pager|null &$pager
      * @return froq\database\entity\EntityList
      * @causes froq\database\entity\ManagerException
      */
-    public function findBy(object|string $entity, string|array $where = null, array $params = null, string $order = null,
-        Pager &$pager = null): EntityList
+    public function findBy(object|string $entity, string|array $where = null, array $params = null,
+        string $order = null, int $limit = null, Pager &$pager = null): EntityList
     {
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
@@ -286,8 +287,6 @@ final class Manager
         /** @var froq\database\record\Record */
         $record = $this->initRecord($classMeta, $entity, true);
 
-        $limit = $offset = null; $order ??= $classMeta->getTablePrimary();
-
         if ($pager) {
             // Disable redirects.
             $pager->redirect = false;
@@ -299,7 +298,12 @@ final class Manager
             } else {
                 [$limit, $offset] = [$pager->limit, $pager->offset];
             }
+        } else {
+            $offset = null;
         }
+
+        // Order by clause, default is primary.
+        $order ??= $classMeta->getTablePrimary();
 
         /** @var froq\database\record\RecordList */
         $records = $record->findBy($where, $params, limit: $limit, offset: $offset, order: $order, fetch: 'array');
@@ -733,7 +737,7 @@ final class Manager
      * and ensure:
      * - Given list is not empty.
      * - Each item is an object (entity) and all same type.
-     * - Each item has primary field definition (@default="id").
+     * - Each item has primary field definition.
      * - Each item has a unique state by primary with not null value.
      */
     private function prepareListItems(array|EntityList $entityList): array
