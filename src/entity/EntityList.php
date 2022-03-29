@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\common\PagedList;
-use froq\pager\Pager;
 
 /**
  * An abstract entity list class that can be extended by entity list classes used for
@@ -22,8 +21,7 @@ use froq\pager\Pager;
  */
 abstract class EntityList extends PagedList implements EntityListInterface
 {
-    /** @var froq\database\entity\Manager */
-    private Manager $manager;
+    use ManagerTrait;
 
     /**
      * Constructor.
@@ -35,29 +33,6 @@ abstract class EntityList extends PagedList implements EntityListInterface
         parent::__construct(type: 'object');
 
         $entities && $this->fill(...$entities);
-    }
-
-    /**
-     * Set manager property.
-     *
-     * @param  froq\database\entity\Manager $manager
-     * @return self
-     */
-    public final function setManager(Manager $manager): self
-    {
-        $this->manager = $manager;
-
-        return $this;
-    }
-
-    /**
-     * Get manager property.
-     *
-     * @return froq\database\entity\Manager|null
-     */
-    public final function getManager(): Manager|null
-    {
-        return $this->manager ?? null;
     }
 
     /**

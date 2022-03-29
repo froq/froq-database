@@ -22,10 +22,7 @@ use State, ReflectionProperty;
  */
 abstract class Entity implements EntityInterface
 {
-    use StateTrait;
-
-    /** @var froq\database\entity\Manager */
-    private Manager $manager;
+    use ManagerTrait, StateTrait;
 
     /**
      * Constructor.
@@ -43,29 +40,6 @@ abstract class Entity implements EntityInterface
     public function __debugInfo(): array
     {
         return $this->toArray();
-    }
-
-    /**
-     * Set manager property.
-     *
-     * @param  froq\database\entity\Manager $manager
-     * @return self
-     */
-    public final function setManager(Manager $manager): self
-    {
-        $this->manager = $manager;
-
-        return $this;
-    }
-
-    /**
-     * Get manager property.
-     *
-     * @return froq\database\entity\Manager|null
-     */
-    public final function getManager(): Manager|null
-    {
-        return $this->manager ?? null;
     }
 
     /**
