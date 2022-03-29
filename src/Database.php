@@ -199,9 +199,10 @@ final class Database
      * @param  array|null        $params
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
-     * @return array|object|scalar|null
+     * @return mixed|null
      */
-    public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null)
+    public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null,
+        ): mixed
     {
         $result = $this->query($query, $params, ['fetch' => $fetch])
                        ->rows(0);
@@ -251,10 +252,10 @@ final class Database
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
      * @param  string|null       $op
-     * @return array|object|scalar|null
+     * @return mixed|null
      */
     public function select(string $table, string $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, string|array $fetch = null, string|bool $flat = null, string $op = null)
+        string $order = null, string|array $fetch = null, string|bool $flat = null, string $op = null): mixed
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -288,7 +289,8 @@ final class Database
      * @return array|null
      */
     public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, int|array $limit = null, string|array $fetch = null, string|bool $flat = null, string $op = null)
+        string $order = null, int|array $limit = null, string|array $fetch = null, string|bool $flat = null,
+        string $op = null): array|null
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -393,8 +395,8 @@ final class Database
      * @param  string|null       $op
      * @return mixed
      */
-    public function update(string $table, array $data, string|array $where = null, array $params = null, array $options = null,
-        string $op = null): mixed
+    public function update(string $table, array $data, string|array $where = null, array $params = null,
+        array $options = null, string $op = null): mixed
     {
         $return = $fetch = $batch = $limit = null;
         if ($options) {
