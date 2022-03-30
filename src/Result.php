@@ -168,7 +168,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function toClass(string $class, bool $ctor = false, array $ctorArgs = []): array
     {
-        $rows = [];
+        $ret = [];
 
         if (!$ctor) {
             foreach ($this->toArray() as $row) {
@@ -176,15 +176,15 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                 foreach ($row as $name => $value) {
                     $class->{$name} = $value;
                 }
-                $rows[] = $class;
+                $ret[] = $class;
             }
         } else {
             foreach ($this->toArray() as $row) {
-                $rows[] = new $class($row, ...$ctorArgs);
+                $ret[] = new $class($row, ...$ctorArgs);
             }
         }
 
-        return $rows;
+        return $ret;
     }
 
     /**
