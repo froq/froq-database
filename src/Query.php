@@ -100,18 +100,20 @@ final class Query
      * @param  bool               $prepare
      * @param  bool               $wrap
      * @param  string|null        $as
+     * @param  string|null        $sas
      * @return self
      * @throws froq\database\QueryException
      */
-    public function select(string|array|Query $select = '*', bool $prepare = true, bool $wrap = false, string $as = null): self
+    public function select(string|array|Query $select = '*', bool $prepare = true, bool $wrap = false, string $as = null,
+        string $sas = null): self
     {
         if ($select instanceof Query) {
             $wrap = true;
         } else {
             if (is_array($select)) {
-                if ($as != '') {
-                    // Prefix all fields with "as" argument.
-                    $select = array_map(fn($field) => $this->prepareField("{$as}.{$field}"), $select);
+                if ($sas != '') {
+                    // Prefix all fields with "sas" argument.
+                    $select = array_map(fn($field) => $this->prepareField("{$sas}.{$field}"), $select);
                     $prepare = false;
                 }
                 $select = join(', ', $select);
@@ -653,7 +655,7 @@ final class Query
 
         if (is_string($where)) {
             // For single row with multi params, eg: (id, [1,2,3]).
-            if ($params && is_array($params) && preg_test('~^\w+$~', $where)) {
+            if ($params && is_array($params) && preg_match('~^\w+$~', $where)) {
                 $where .= ' IN (?)';
             }
 
