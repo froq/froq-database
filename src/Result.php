@@ -96,30 +96,14 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                         : $pdoStatement->fetchAll($fetchType)
                 ) ?: [];
 
-                // Indexing by given index field.
-                if (isset($options['index']) && $rows) {
-                    $index = $options['index'];
-                    if (!array_key_exists($index, (array) $rows[0])) {
-                        throw new ResultException('Given index `%s` not found in row set', $index);
-                    }
-
-                    $temp  = [];
-                    $array = is_array($rows[0]);
-                    foreach ($rows as $row) {
-                        $temp[$array ? $row[$index] : $row->{$index}] = $row;
-                    }
-
-                    // Re-assign & free temp.
-                    [$rows, $temp] = [$temp, null];
-                }
-
                 $this->rows->add(...$rows);
+                unset($rows);
             }
 
             // Sequence option to prevent transaction errors that comes from lastInsertId() calls
             // but while commit() returning true when sequence field not exists. Default is true
             // for "INSERT" queries.
-            $sequence = (bool) ($options['sequence'] ?? true);
+            $sequence = $options['sequence'] ?? true;
 
             // Insert queries.
             if ($sequence && stripos($query, 'INSERT') === 0) {
@@ -150,6 +134,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                     }
 
                     $this->ids->add(...$ids);
+                    unset($ids);
                 }
             }
         }

@@ -201,8 +201,7 @@ final class Database
      * @param  string|bool|null  $flat
      * @return mixed|null
      */
-    public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null,
-        ): mixed
+    public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null): mixed
     {
         $result = $this->query($query, $params, ['fetch' => $fetch])
                        ->rows(0);
@@ -223,13 +222,11 @@ final class Database
      * @param  array|null        $params
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
-     * @param  string|null       $index
      * @return array|null
      */
-    public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null,
-        string $index = null): array|null
+    public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null): array|null
     {
-        $result = $this->query($query, $params, ['fetch' => $fetch, 'index' => $index])
+        $result = $this->query($query, $params, ['fetch' => $fetch])
                        ->rows();
 
         // When a single column value wanted.

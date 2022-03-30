@@ -1147,18 +1147,6 @@ final class Query
     }
 
     /**
-     * Index row set by given field.
-     *
-     * @param  string $field
-     * @return self
-     * @since  5.0
-     */
-    public function indexBy(string $field): self
-    {
-        return $this->add('index', $field, false);
-    }
-
-    /**
      * Add "LIMIT" clause into query stack.
      *
      * @param  int      $limit
@@ -1289,11 +1277,8 @@ final class Query
         // From stack if given with return(), insert() etc.
         $fetch    ??= $this->stack['return']['fetch']    ?? null;
         $sequence ??= $this->stack['insert']['sequence'] ?? null;
-        $index      = $this->stack['index']              ?? null;
 
-        return $this->db->query($this->toString(), options: [
-            'fetch' => $fetch, 'sequence' => $sequence, 'index' => $index
-        ]);
+        return $this->db->query($this->toString(), options: ['fetch' => $fetch, 'sequence' => $sequence]);
     }
 
     /**
