@@ -79,11 +79,12 @@ final class Query
      */
     public function from(string|Query $from, string $as = null, bool $prepare = true): self
     {
-        if (is_string($from)) {
-            $prepare && $from = $this->prepareFields($from);
-        } else {
-            $from = '(' . $from->toString() . ')';
+        if ($from instanceof Query) {
+            $from = '(' . $from . ')';
+            $prepare = false;
         }
+
+        $prepare && $from = $this->prepareFields($from);
 
         if ($as != '') {
             $from .= ' AS ' . $this->prepareField($as);
@@ -105,13 +106,12 @@ final class Query
     public function select(string|array|Query $select = '*', bool $prepare = true, bool $wrap = false, string $as = null): self
     {
         if ($select instanceof Query) {
-            $select = $select->toString();
-            $wrap   = true;
+            $wrap = true;
         } else {
             if (is_array($select)) {
                 if ($as != '') {
                     // Prefix all fields with "as" argument.
-                    $select  = array_map(fn($field) => $this->prepareField("{$as}.{$field}"), $select);
+                    $select = array_map(fn($field) => $this->prepareField("{$as}.{$field}"), $select);
                     $prepare = false;
                 }
                 $select = join(', ', $select);
@@ -747,7 +747,7 @@ final class Query
     {
         $value = is_null($value) ? 'NULL' : ($value ? 'TRUE' : 'FALSE');
 
-        return $this->where($this->prepareField($field) . ' IS ' . $value, null, $op);
+        return $this->where($this->prepareField($field) . ' IS ' . $value, op: $op);
     }
 
     /**
@@ -763,7 +763,7 @@ final class Query
     {
         $value = is_null($value) ? 'NULL' : ($value ? 'TRUE' : 'FALSE');
 
-        return $this->where($this->prepareField($field) . ' IS NOT ' . $value, null, $op);
+        return $this->where($this->prepareField($field) . ' IS NOT ' . $value, op: $op);
     }
 
     /**
@@ -778,14 +778,13 @@ final class Query
     public function whereIn(string $field, array|Query $params, string $op = null): self
     {
         if ($params instanceof Query) {
-            return $this->where($this->prepareField($field)
-                . ' IN (' . $params->toString() . ')', null, $op);
+            return $this->where($this->prepareField($field) . ' IN (' . $params . ')', op: $op);
         }
 
         $params || throw new QueryException('No parameters given');
 
         return $this->where($this->prepareField($field)
-            . ' IN (' . $this->prepareWhereInPlaceholders($params) . ')', $params, $op);
+             . ' IN (' . $this->prepareWhereInPlaceholders($params) . ')', $params, $op);
     }
 
     /**
@@ -800,14 +799,13 @@ final class Query
     public function whereNotIn(string $field, array|Query $params, string $op = null): self
     {
         if ($params instanceof Query) {
-            return $this->where($this->prepareField($field)
-                . ' NOT IN (' . $params->toString() . ')', null, $op);
+            return $this->where($this->prepareField($field) . ' NOT IN (' . $params . ')', op: $op);
         }
 
         $params || throw new QueryException('No parameters given');
 
         return $this->where($this->prepareField($field)
-            . ' NOT IN (' . $this->prepareWhereInPlaceholders($params) . ')', $params, $op);
+             . ' NOT IN (' . $this->prepareWhereInPlaceholders($params) . ')', $params, $op);
     }
 
     /**
@@ -819,7 +817,7 @@ final class Query
      */
     public function whereNull(string $field, string $op = null): self
     {
-        return $this->whereIs($field, null, $op);
+        return $this->whereIs($field, op: $op);
     }
 
     /**
@@ -831,7 +829,7 @@ final class Query
      */
     public function whereNotNull(string $field, string $op = null): self
     {
-        return $this->whereIsNot($field, null, $op);
+        return $this->whereIsNot($field, op: $op);
     }
 
     /**
@@ -957,7 +955,7 @@ final class Query
                    : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
         }
 
-        return $this->where($where, null, $op);
+        return $this->where($where, op: $op);
     }
 
     /**
@@ -985,7 +983,7 @@ final class Query
                 : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
         }
 
-        return $this->where($where, null, $op);
+        return $this->where($where, op: $op);
     }
 
     /**
@@ -1002,7 +1000,7 @@ final class Query
             $query = $this->prepare($query, $params);
         }
 
-        return $this->where('EXISTS (' . $query . ')', null, $op);
+        return $this->where('EXISTS (' . $query . ')', op: $op);
     }
 
     /**
@@ -1019,7 +1017,7 @@ final class Query
             $query = $this->prepare($query, $params);
         }
 
-        return $this->where('NOT EXISTS (' . $query . ')', null, $op);
+        return $this->where('NOT EXISTS (' . $query . ')', op: $op);
     }
 
     /**
@@ -1032,8 +1030,8 @@ final class Query
     public function whereRandom(float $value = 0.01, string $op = null): self
     {
         return ($this->db->link()->driver() == 'pgsql')
-             ? $this->where('random() < ' . $value, $op)
-             : $this->where('rand() < ' . $value, $op);
+             ? $this->where('random() < ' . $value, op: $op)
+             : $this->where('rand() < ' . $value, op: $op);
     }
 
     /**
