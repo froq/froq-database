@@ -30,8 +30,6 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      */
     public function __construct(object ...$entities)
     {
-        parent::__construct(type: 'object');
-
         $entities && $this->fill(...$entities);
     }
 

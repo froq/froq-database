@@ -27,11 +27,10 @@ class RecordList extends \ItemList implements RecordListInterface
      *
      * @param array                 $items
      * @param froq\pager\Pager|null $pager
-     * @param bool                  $locked
      */
-    public function __construct(array $items = [], Pager $pager = null, bool $locked = false)
+    public function __construct(array $items = [], Pager $pager = null)
     {
-        parent::__construct($items, type: $this->extractType(), locked: $locked);
+        parent::__construct($items);
 
         $this->pager = $pager;
     }
@@ -52,19 +51,5 @@ class RecordList extends \ItemList implements RecordListInterface
         }
 
         return $items;
-    }
-
-    /**
-     * Extract accepting type if available, or return `Record` class as default.
-     */
-    private function extractType(): string
-    {
-        $type = substr(static::class, 0, -strlen('List'));
-
-        if (!class_exists($type) || !class_extends($type, Record::class)) {
-            $type = Record::class;
-        }
-
-        return $type;
     }
 }
