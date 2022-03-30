@@ -646,6 +646,11 @@ final class Query
         $op = $this->prepareOp($op ?: 'AND'); // @default=AND
 
         if (is_string($where)) {
+            // For single row with multi params, eg: (id, [1,2,3]).
+            if ($params && is_array($params) && preg_test('~^\w+$~', $where)) {
+                $where .= ' IN (?)';
+            }
+
             // Eg: (id = ?, 1).
             $this->add('where', [$this->prepare($where, $params), $op]);
         } else {
