@@ -97,8 +97,18 @@ final class Manager
                 ?? $propertyMeta->getValidationDefault();
         }
 
+        // Clear null values & discard validations for "update" actions only on existing records.
+        // So, if any non nullable field was sent to db, an error will be raised already.
+        $id = $this->getPrimaryValue($entity, $classMeta, check: false);
+        if ($id !== null) {
+            $data = array_clear($data, [null]);
+            $validations = null;
+        } else {
+            $validations = true;
+        }
+
         /** @var froq\database\record\Record */
-        $record = $this->initRecord($classMeta, $entity, true, true);
+        $record = $this->initRecord($classMeta, $entity, true, $validations);
 
         try {
             $record->save($data);
@@ -626,13 +636,13 @@ final class Manager
     /**
      * Get an entity primary value using given entity class meta when available.
      */
-    private function getPrimaryValue(object $entity, ClassMeta $classMeta): int|string|null
+    private function getPrimaryValue(object $entity, ClassMeta $classMeta, bool $check = true): int|string|null
     {
         $primary = (string) $classMeta->getTablePrimary();
 
         if ($primary) {
             $value = $this->getPropertyValue($entity, $classMeta->getProperty($primary)->getReflection());
-            if (!is_type_of($value, 'int|string')) {
+            if ($check && !is_type_of($value, 'int|string')) {
                 throw new ManagerException(
                     'Primary (%s::$%s) value must be int|string, %t given',
                     [$entity::class, $primary, $value]
