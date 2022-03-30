@@ -7,12 +7,12 @@ declare(strict_types=1);
 
 namespace froq\database;
 
+use froq\database\result\{Ids, Rows};
 use froq\common\interface\Arrayable;
-use froq\collection\Collection;
 use PDO, PDOStatement, PDOException;
 
 /**
- * Result.
+ * A class, for query result stuff such as count, ids & rows.
  *
  * @package froq\database
  * @object  froq\database\Result
@@ -27,11 +27,11 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /** @var int */
     private int $count = 0;
 
-    /** @var ?array<int> */
-    private ?array $ids = null;
+    /** @var froq\database\result\Ids<int> */
+    private Ids $ids;
 
-    /** @var ?array<array|object> */
-    private ?array $rows = null;
+    /** @var froq\database\result\Rows<array|object> */
+    private Rows $rows;
 
     /**
      * Constructor.
@@ -42,6 +42,9 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null)
     {
+        $this->ids  = new Ids();
+        $this->rows = new Rows();
+
         if ($pdo->errorCode() == '00000' && $pdoStatement->errorCode() == '00000') {
             // Assign count (affected rows etc).
             $this->count = $pdoStatement->rowCount();
@@ -87,28 +90,30 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                 // Set or get default.
                 $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
-                $this->rows = (
+                $rows = (
                     ($fetchType == PDO::FETCH_CLASS)
                         ? $pdoStatement->fetchAll($fetchType, $fetchClass)
                         : $pdoStatement->fetchAll($fetchType)
-                ) ?: null;
+                ) ?: [];
 
                 // Indexing by given index field.
-                if (isset($options['index']) && $this->rows) {
+                if (isset($options['index']) && $rows) {
                     $index = $options['index'];
-                    if (!array_key_exists($index, (array) $this->rows[0])) {
+                    if (!array_key_exists($index, (array) $rows[0])) {
                         throw new ResultException('Given index `%s` not found in row set', $index);
                     }
 
-                    $rows  = [];
-                    $array = is_array($this->rows[0]);
-                    foreach ($this->rows as $row) {
-                        $rows[$array ? $row[$index] : $row->{$index}] = $row;
+                    $temp  = [];
+                    $array = is_array($rows[0]);
+                    foreach ($rows as $row) {
+                        $temp[$array ? $row[$index] : $row->{$index}] = $row;
                     }
 
-                    // Re-assign.
-                    $this->rows = $rows;
+                    // Re-assign & free temp.
+                    [$rows, $temp] = [$temp, null];
                 }
+
+                $this->rows->add(...$rows);
             }
 
             // Sequence option to prevent transaction errors that comes from lastInsertId() calls
@@ -144,7 +149,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                         $ids = range($start, $end);
                     }
 
-                    $this->ids = $ids;
+                    $this->ids->add(...$ids);
                 }
             }
         }
@@ -155,7 +160,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function toArray(): array
     {
-        return $this->rows ?? [];
+        return $this->rows->toArray();
     }
 
     /**
@@ -188,57 +193,52 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Create a collection with rows.
-     *
-     * @return froq\collection\Collection
-     * @since  5.0
-     */
-    public function toCollection(): Collection
-    {
-        return new Collection($this->rows);
-    }
-
-    /**
      * Get last insert id when available.
      *
      * @return int|null
      */
     public function id(): int|null
     {
-        return last($this->ids ?? []);
+        return $this->ids->last();
     }
 
     /**
      * Get all insert ids or one when available.
      *
-     * @param  int|null $i
+     * @param  int|null $index
      * @return int|array<int>|null
      */
-    public function ids(int $i = null): int|array|null
+    public function ids(int $index = null): int|array|null
     {
-        return ($i === null) ? $this->ids : $this->ids[$i] ?? null;
+        if ($index !== null) {
+            return $this->ids->item($index);
+        }
+        return $this->ids->items();
     }
 
     /**
      * Get one row.
      *
-     * @param  int $i
+     * @param  int $index
      * @return array|object|null
      */
-    public function row(int $i): array|object|null
+    public function row(int $index): array|object|null
     {
-        return $this->rows[$i] ?? null;
+        return $this->rows->item($index);
     }
 
     /**
-     * Get all rows or one.
+     * Get one row or all rows.
      *
-     * @param  int|null $i
+     * @param  int|null $index
      * @return array<array|object>|array|object|null
      */
-    public function rows(int $i = null): array|object|null
+    public function rows(int $index = null): array|object|null
     {
-        return ($i === null) ? $this->rows : $this->rows[$i] ?? null;
+        if ($index !== null) {
+            return $this->rows->item($index);
+        }
+        return $this->rows->items();
     }
 
     /**
@@ -248,7 +248,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function first(): array|object|null
     {
-        return first($this->toArray());
+        return $this->rows->first();
     }
 
     /**
@@ -258,7 +258,22 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function last(): array|object|null
     {
-        return last($this->toArray());
+        return $this->rows->last();
+    }
+
+    /**
+     * Sort.
+     *
+     * @param  callable|null $func
+     * @param  int           $flags
+     * @return self
+     * @since  6.0
+     */
+    public function sort(callable $func = null, int $flags = 0): self
+    {
+        $this->rows->sort($func, $flags);
+
+        return $this;
     }
 
     /**
@@ -270,7 +285,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function each(callable $func): self
     {
-        each($this->toArray(), $func);
+        $this->rows->each($func);
 
         return $this;
     }
@@ -284,7 +299,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function filter(callable $func): self
     {
-        $this->rows = array_filter_list($this->toArray(), $func);
+        $this->rows->filter($func);
 
         return $this;
     }
@@ -298,7 +313,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function map(callable $func): self
     {
-        $this->rows = array_map($func, $this->toArray());
+        $this->rows->map($func);
 
         return $this;
     }
@@ -313,7 +328,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function reduce(mixed $carry, callable $func): mixed
     {
-        return array_reduce($this->toArray(), $func, $carry);
+        return $this->rows->reduce($carry, $func);
     }
 
     /**
@@ -324,7 +339,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function reverse(): self
     {
-        $this->rows = array_reverse($this->toArray());
+        $this->rows->reverse();
 
         return $this;
     }
@@ -339,8 +354,8 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
 
     /**
      * @inheritDoc IteratorAggregate
-     */ #[\ReturnTypeWillChange]
-    public function getIterator(): iterable
+     */
+    public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator($this->toArray());
     }
@@ -348,24 +363,24 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * @inheritDoc ArrayAccess
      */
-    public function offsetExists(mixed $i): bool
+    public function offsetExists(mixed $index): bool
     {
-        return $this->row($i) !== null;
+        return $this->row($index) !== null;
     }
 
     /**
      * @inheritDoc ArrayAccess
      */
-    public function offsetGet(mixed $i): array|object|null
+    public function offsetGet(mixed $index): array|object|null
     {
-        return $this->row($i);
+        return $this->row($index);
     }
 
     /**
      * @inheritDoc ArrayAccess
      * @throws     ReadonlyError
      */
-    public function offsetSet(mixed $i, mixed $_): never
+    public function offsetSet(mixed $index, mixed $_): never
     {
         throw new \ReadonlyError($this);
     }
@@ -374,7 +389,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      * @inheritDoc ArrayAccess
      * @throws     ReadonlyError
      */
-    public function offsetUnset(mixed $i): never
+    public function offsetUnset(mixed $index): never
     {
         throw new \ReadonlyError($this);
     }
