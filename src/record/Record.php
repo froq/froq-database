@@ -288,16 +288,6 @@ class Record implements RecordInterface
     }
 
     /**
-     * Create a new query.
-     *
-     * @return froq\database\Query
-     */
-    public final function query(): Query
-    {
-        return new Query($this->db, $this->getTable());
-    }
-
-    /**
      * Apply where condition for find/remove actions.
      *
      * Note: query will always contain primary value(s) as first statement and
@@ -522,7 +512,8 @@ class Record implements RecordInterface
 
         $ids || throw new RecordException('Null primary values');
 
-        $query = $this->query()->equal($primary, [$ids]);
+        $query = $this->query($table)->equal($primary, [$ids]);
+
         $where = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
             $query->where($where, op: $op);
@@ -535,7 +526,7 @@ class Record implements RecordInterface
         }
 
         $fields = $fields ?: $this->query->pull('return', 'fields') ?: '*';
-        $result = $query->select(select: $fields)->from($table)->run(fetch: 'array');
+        $result = $query->select(select: $fields)->run(fetch: 'array');
 
         // Copy with rows & "finded" state.
         $thats = $this->copy($result->rows(), state: ['finded', $result->count()]);
@@ -579,14 +570,15 @@ class Record implements RecordInterface
 
         $ids || throw new RecordException('Null primary values');
 
-        $query = $this->query()->equal($primary, [$ids]);
+        $query = $this->query($table)->equal($primary, [$ids]);
+
         $where = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
             $query->where($where, op: $op);
         }
 
         $return = $return ?: $this->query->pull('return', 'fields');
-        $result = $query->delete(return: $return)->from($table)->run(fetch: 'array');
+        $result = $query->delete(return: $return)->run(fetch: 'array');
 
         // Copy with rows & "removed" state.
         $thats = $this->copy($result->rows(), state: ['removed', $result->count()]);
@@ -770,6 +762,16 @@ class Record implements RecordInterface
     }
 
     /**
+     * Create a new Query instance.
+     */
+    private function query(string $table = null): Query
+    {
+        $table ??= $this->pack()[0];
+
+        return new Query($this->db, $table);
+    }
+
+    /**
      * Copy self data & given state cloning current `Record` instance and return cloned
      * items as list to use for `RecordList` instance.
      *
@@ -809,15 +811,16 @@ class Record implements RecordInterface
         $return   = $options['return']   ?? null;     // Whether returning any field(s) or current data.
         $sequence = $options['sequence'] ?? $primary; // Whether table has sequence or not.
 
-        $query    = $this->query()->insert($data, sequence: !!$sequence);
+        $query = $this->query($table);
+        $query->insert($data, sequence: !!$sequence);
 
         $return ??= $this->query->pull('return', 'fields');
-        $return   && $query->return($return, fetch: 'array');
+        $return && $query->return($return, fetch: 'array');
 
         $conflict = $this->query->pull('conflict');
         $conflict && $query->conflict(...$conflict);
 
-        $result   = $query->run();
+        $result = $query->run();
 
         // Get new id if available.
         $id = $result->id();
@@ -853,15 +856,16 @@ class Record implements RecordInterface
 
         unset($data[$primary]); // Not needed in data set.
 
-        $query    = $this->query()->update($data)->equal($primary, $id);
+        $query = $this->query($table);
+        $query->update($data)->equal($primary, $id);
 
         $return ??= $this->query->pull('return', 'fields');
-        $return   && $query->return($return, fetch: 'array');
+        $return && $query->return($return, fetch: 'array');
 
         $conflict = $this->query->pull('conflict');
         $conflict && $query->conflict(...$conflict);
 
-        $where    = $this->query->pull('where');
+        $where = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
             $query->where($where, op: $op);
         }
