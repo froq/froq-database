@@ -654,9 +654,9 @@ final class Query
         $op = $this->prepareOp($op ?: 'AND'); // @default=AND
 
         if (is_string($where)) {
-            // For single row with multi params, eg: (id, [1,2,3]).
-            if ($params && is_array($params) && preg_match('~^\w+$~', $where)) {
-                $where .= ' IN (?)';
+            // For single field with multi params, eg: (id, [1,2,3]).
+            if (is_array($params) && preg_match('~^\w+$~', $where)) {
+                return $this->whereIn($where, $params);
             }
 
             // Eg: (id = ?, 1).
