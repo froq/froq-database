@@ -49,24 +49,23 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             // Assign count (affected rows etc).
             $this->count = $pdoStatement->rowCount();
 
-            // Check fetch option.
-            if (isset($options['fetch'])) {
-                $fetch     = (array) $options['fetch'];
-                $fetchType = $fetch[0] ?? null;
+            $options = $this->prepareOptions($options);
 
-                switch ($fetchType) {
+            // Check fetch option.
+            if ($options['fetch']) {
+                switch ($fetchType = $options['fetch'][0]) {
                     case  'array': $fetchType = PDO::FETCH_ASSOC; break;
                     case 'object': $fetchType = PDO::FETCH_OBJ;   break;
                     case  'class':
-                        $fetchClass = $fetch[1] ?? null;
-                        if (!$fetchClass) {
+                        if (empty($options['fetch'][1])) {
                             throw new ResultException(
                                 'No fetch class given, it is required when fetch type '.
                                 'is `class` [tip: give it as second item of `fetch` option]'
                             );
                         }
 
-                        $fetchType = PDO::FETCH_CLASS;
+                        $fetchType  = PDO::FETCH_CLASS;
+                        $fetchClass = $options['fetch'][1];
                         break;
                     default:
                         if ($fetchType && !in_array($fetchType, self::FETCH_TYPES, true)) {
@@ -100,13 +99,12 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                 unset($rows);
             }
 
-            // Sequence option to prevent transaction errors that comes from lastInsertId() calls
-            // but while commit() returning true when sequence field not exists. Default is true
-            // for "INSERT" queries.
-            $sequence = $options['sequence'] ?? true;
+            // Note: Sequence option to prevent transaction errors that comes from lastInsertId()
+            // calls but while commit() returning true when sequence field not exists. Default is
+            // true for "INSERT" queries if no "sequence" option given.
 
             // Insert queries.
-            if ($sequence && stripos($query, 'INSERT') === 0) {
+            if ($options['sequence'] && stripos($query, 'INSERT') === 0) {
                 $id = null;
 
                 // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that mostly
@@ -377,5 +375,22 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     public function offsetUnset(mixed $index): never
     {
         throw new \ReadonlyError($this);
+    }
+
+    /**
+     * Prepare options with defaults for constructor.
+     */
+    private function prepareOptions(array|null $options): array
+    {
+        static $optionsDefault = [
+            'fetch' => null, 'sequence' => true,
+        ];
+
+        $options = [...$optionsDefault, ...$options ?? []];
+
+        $options['fetch']    = (array) $options['fetch'];
+        $options['sequence'] = (bool) ($options['sequence'] ?? true);
+
+        return $options;
     }
 }
