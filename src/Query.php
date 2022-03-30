@@ -105,9 +105,15 @@ final class Query
     public function select(string|array|Query $select = '*', bool $prepare = true, bool $wrap = false, string $as = null): self
     {
         if ($select instanceof Query) {
-            $select = $select->toString(); $wrap = true;
+            $select = $select->toString();
+            $wrap   = true;
         } else {
             if (is_array($select)) {
+                if ($as != '') {
+                    // Prefix all fields with "as" argument.
+                    $select  = array_map(fn($field) => $this->prepareField("{$as}.{$field}"), $select);
+                    $prepare = false;
+                }
                 $select = join(', ', $select);
             }
 
