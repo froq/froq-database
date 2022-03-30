@@ -87,7 +87,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             if (stripos($query, 'SELECT') !== false || (
                 stripos($query, 'RETURNING') && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
             )) {
-                // Set or get default.
+                // Use present type that was set above or get default.
                 $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
                 $rows = (
@@ -178,7 +178,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Get last insert id when available.
+     * Get last insert id.
      *
      * @return int|null
      */
@@ -188,7 +188,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Get all insert ids or one when available.
+     * Get one or all insert ids.
      *
      * @param  int|null $index
      * @return int|array<int>|null
@@ -247,7 +247,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Sort.
+     * Sort rows.
      *
      * @param  callable|null $func
      * @param  int           $flags
@@ -262,7 +262,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Each.
+     * Each for rows.
      *
      * @param  callable $func
      * @return self
@@ -276,7 +276,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Filter.
+     * Filter rows.
      *
      * @param  callable $func
      * @return self
@@ -290,7 +290,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Map.
+     * Map rows.
      *
      * @param  callable $func
      * @return self
@@ -304,7 +304,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Reduce.
+     * Reduce rows.
      *
      * @param  mixed    $carry
      * @param  callable $func
@@ -317,7 +317,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Reverse.
+     * Reverse rows.
      *
      * @return self
      * @since  6.0
