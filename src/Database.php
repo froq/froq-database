@@ -107,7 +107,7 @@ final class Database
     }
 
     /**
-     * Run an SQL query and returning its result as `Result` object, or throw a
+     * Run a SQL query and returning its result as `Result` object, or throw a
      * `DatabaseQueryException` if any query error occurs.
      *
      * @param  string     $query
@@ -146,7 +146,7 @@ final class Database
     }
 
     /**
-     * Run an SQL query and returning its result as `int` or `null`, or throw a
+     * Run a SQL query and returning its result as `int` or `null`, or throw a
      * `DatabaseQueryException` if any error occurs.
      *
      * @param  string     $query
@@ -199,7 +199,7 @@ final class Database
      * @param  array|null        $params
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
-     * @return mixed|null
+     * @return mixed
      */
     public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null): mixed
     {
@@ -249,7 +249,7 @@ final class Database
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
      * @param  string|null       $op
-     * @return mixed|null
+     * @return mixed
      */
     public function select(string $table, string $fields = '*', string|array $where = null, array $params = null,
         string $order = null, string|array $fetch = null, string|bool $flat = null, string $op = null): mixed
