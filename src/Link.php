@@ -99,9 +99,11 @@ final class Link
         $options[PDO::ATTR_EMULATE_PREPARES]   ??= true;
         $options[PDO::ATTR_DEFAULT_FETCH_MODE] ??= PDO::FETCH_ASSOC;
 
-        // For a proper return that gives '1' always even with identical values in UPDATE queries.
         if ($driver == 'mysql') {
+            // For a proper return that gives '1' always even with identical values in UPDATE queries.
             $options[PDO::MYSQL_ATTR_FOUND_ROWS] ??= true;
+            // For a proper memory usage.
+            $options[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] ??= false;
         }
 
         try {
