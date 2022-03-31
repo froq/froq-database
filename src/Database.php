@@ -283,17 +283,22 @@ final class Database
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
      * @param  string|null       $op
-     * @return array|null
+     * @param  string|null       $raw For returning a raw Result instance.
+     * @return mixed
      */
     public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,
         string $order = null, int|array $limit = null, string|array $fetch = null, string|bool $flat = null,
-        string $op = null): array|null
+        string $op = null, bool $raw = false): mixed
     {
         $query = $this->initQuery($table)->select($fields);
 
         $where && $query->where(...$this->prepareWhereInput($where, $params, $op));
         $order && $query->orderBy($order);
         $limit && $query->limit(...(array) $limit);
+
+        if ($raw) {
+            return $query->run($fetch);
+        }
 
         $result = $query->run($fetch)->rows();
 
@@ -304,6 +309,20 @@ final class Database
         }
 
         return $result;
+    }
+
+    /**
+     * Bridge method to `selectAll()` for returning a `Result` instance.
+     *
+     * @param  mixed ...$selectArgs Same as selectAll().
+     * @return froq\database\Result
+     * @since  6.0
+     */
+    public function selectResult(mixed ...$selectArgs): Result
+    {
+        $selectArgs['raw'] = true;
+
+        return $this->selectAll(...$selectArgs);
     }
 
     /**
