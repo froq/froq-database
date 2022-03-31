@@ -137,6 +137,26 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
+     * Get a copy of ids property.
+     *
+     * @return froq\database\result\Ids
+     */
+    public function getIds(): Ids
+    {
+        return clone $this->ids;
+    }
+
+    /**
+     * Get a copy of rows property.
+     *
+     * @return froq\database\result\Rows
+     */
+    public function getRows(): Rows
+    {
+        return clone $this->rows;
+    }
+
+    /**
      * @inheritDoc froq\common\interface\Arrayable
      */
     public function toArray(): array
