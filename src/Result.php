@@ -127,11 +127,9 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             // Use present type that was set above or get default.
             $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
-            $rows = (
-                ($fetchType == PDO::FETCH_CLASS)
-                    ? $pdoStatement->fetchAll($fetchType, $fetchClass)
-                    : $pdoStatement->fetchAll($fetchType)
-            ) ?: [];
+            $rows = ($fetchType == PDO::FETCH_CLASS)
+                  ? $pdoStatement->fetchAll($fetchType, $fetchClass)
+                  : $pdoStatement->fetchAll($fetchType);
 
             $this->rows->add(...$rows);
             unset($rows);
