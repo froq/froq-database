@@ -260,7 +260,7 @@ final class Database
         $order && $query->orderBy($order);
         $query->limit(1);
 
-        $result = $query->run($fetch)->row(0);
+        $result = $query->run($fetch)->rows(0);
 
         // When a single column value wanted.
         if ($result && $flat) {
@@ -362,7 +362,7 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result = $result->row(0);
+                $result = $result->rows(0);
                 if (is_string($return)) {
                     $resultArray = (array) $result;
                     if (isset($resultArray[$return])) {
@@ -416,7 +416,7 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result = $result->row(0);
+                $result = $result->rows(0);
                 if (is_string($return)) {
                     $resultArray = (array) $result;
                     if (isset($resultArray[$return])) {
@@ -465,7 +465,7 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result = $result->row(0);
+                $result = $result->rows(0);
                 if (is_string($return)) {
                     $resultArray = (array) $result;
                     if (isset($resultArray[$return])) {
@@ -546,7 +546,7 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result      = $result->row(0);
+                $result      = $result->rows(0);
                 $resultArray = (array) $result;
                 if (is_string($field)) {
                     $result = $resultArray[$field];
@@ -596,7 +596,7 @@ final class Database
                 $result = $result->rows();
             } else {
                 // If single row wanted as return.
-                $result      = $result->row(0);
+                $result      = $result->rows(0);
                 $resultArray = (array) $result;
                 if (is_string($field)) {
                     $result = $resultArray[$field];
