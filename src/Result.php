@@ -45,93 +45,96 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
         $this->ids  = new Ids();
         $this->rows = new Rows();
 
-        if ($pdo->errorCode() == '00000' && $pdoStatement->errorCode() == '00000') {
-            $options = $this->prepareOptions($options);
+        // Normally an exception must be thrown until here.
+        if ($pdo->errorCode() != '00000' || $pdoStatement->errorCode() != '00000') {
+            return;
+        }
 
-            // Check fetch option.
-            if ($options['fetch']) {
-                switch ($fetchType = $options['fetch'][0]) {
-                    case  'array': $fetchType = PDO::FETCH_ASSOC; break;
-                    case 'object': $fetchType = PDO::FETCH_OBJ;   break;
-                    case  'class':
-                        if (empty($options['fetch'][1])) {
-                            throw new ResultException(
-                                'No fetch class given, it is required when fetch type '.
-                                'is `class` [tip: give it as second item of `fetch` option]'
-                            );
-                        }
+        $options = $this->prepareOptions($options);
 
-                        $fetchType  = PDO::FETCH_CLASS;
-                        $fetchClass = $options['fetch'][1];
-                        break;
-                    default:
-                        if ($fetchType && !in_array($fetchType, self::FETCH_TYPES, true)) {
-                            throw new ResultException(
-                                'Invalid fetch type `%s` [valids: %a]',
-                                [$fetchType, self::FETCH_TYPES]
-                            );
-                        }
-
-                        // For default below.
-                        $fetchType = null;
-                }
-            }
-
-            // Assign count (affected rows etc).
-            $this->count = $pdoStatement->rowCount();
-
-            // Select & other fetchable queries (eg: insert/update/delete with returning clause).
-            if ($this->count && $pdoStatement->columnCount()) {
-                // Use present type that was set above or get default.
-                $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
-
-                $rows = (
-                    ($fetchType == PDO::FETCH_CLASS)
-                        ? $pdoStatement->fetchAll($fetchType, $fetchClass)
-                        : $pdoStatement->fetchAll($fetchType)
-                ) ?: [];
-
-                $this->rows->add(...$rows);
-                unset($rows);
-            }
-
-            // Note: Sequence option to prevent transaction errors that comes from lastInsertId()
-            // calls but while commit() returning true when sequence field not exists. Default is
-            // true for "INSERT" queries if no "sequence" option given.
-            $sequence = $options['sequence'] && preg_match('~^\s*INSERT~i', $pdoStatement->queryString);
-
-            // Insert queries.
-            if ($this->count && $sequence) {
-                $id = null;
-
-                // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that mostly
-                // occurs when a user-provided ID given to insert data. Sequence option for this but cannot
-                // prevent transaction commits when no sequence field exists.
-                try {
-                    $id = (int) $pdo->lastInsertId();
-                } catch (PDOException) {}
-
-                if ($id) {
-                    $ids = [$id];
-
-                    // Handle multiple inserts.
-                    if ($this->count > 1) {
-                        // MySQL awesomeness, last id is first id..
-                        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql') {
-                            $start = $id;
-                            $end   = $id + $this->count - 1;
-                        } else {
-                            $start = $id - $this->count + 1;
-                            $end   = $id;
-                        }
-
-                        $ids = range($start, $end);
+        // Check fetch option.
+        if ($options['fetch']) {
+            switch ($fetchType = $options['fetch'][0]) {
+                case  'array': $fetchType = PDO::FETCH_ASSOC; break;
+                case 'object': $fetchType = PDO::FETCH_OBJ;   break;
+                case  'class':
+                    if (empty($options['fetch'][1])) {
+                        throw new ResultException(
+                            'No fetch class given, it is required when fetch type '.
+                            'is `class` [tip: give it as second item of `fetch` option]'
+                        );
                     }
 
-                    $this->ids->add(...$ids);
-                    unset($ids);
-                }
+                    $fetchType  = PDO::FETCH_CLASS;
+                    $fetchClass = $options['fetch'][1];
+                    break;
+                default:
+                    if ($fetchType && !in_array($fetchType, self::FETCH_TYPES, true)) {
+                        throw new ResultException(
+                            'Invalid fetch type `%s` [valids: %a]',
+                            [$fetchType, self::FETCH_TYPES]
+                        );
+                    }
+
+                    // For default below.
+                    $fetchType = null;
             }
+        }
+
+        // Assign count (affected rows etc).
+        $this->count = $pdoStatement->rowCount();
+
+        // Note: Sequence option to prevent transaction errors that comes from lastInsertId()
+        // calls but while commit() returning true when sequence field not exists. Default is
+        // true for "INSERT" queries if no "sequence" option given.
+        $sequence = $options['sequence'] && preg_match('~^\s*INSERT~i', $pdoStatement->queryString);
+
+        // Insert queries.
+        if ($this->count && $sequence) {
+            $id = null;
+
+            // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that mostly
+            // occurs when a user-provided ID given to insert data. Sequence option for this but cannot
+            // prevent transaction commits when no sequence field exists.
+            try {
+                $id = (int) $pdo->lastInsertId();
+            } catch (PDOException) {}
+
+            if ($id) {
+                $ids = [$id];
+
+                // Handle multiple inserts.
+                if ($this->count > 1) {
+                    // MySQL awesomeness, last id is first id..
+                    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql') {
+                        $start = $id;
+                        $end   = $id + $this->count - 1;
+                    } else {
+                        $start = $id - $this->count + 1;
+                        $end   = $id;
+                    }
+
+                    $ids = range($start, $end);
+                }
+
+                $this->ids->add(...$ids);
+                unset($ids);
+            }
+        }
+
+        // Select & other fetchable queries (eg: insert/update/delete with returning clause).
+        if ($this->count && $pdoStatement->columnCount()) {
+            // Use present type that was set above or get default.
+            $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
+
+            $rows = (
+                ($fetchType == PDO::FETCH_CLASS)
+                    ? $pdoStatement->fetchAll($fetchType, $fetchClass)
+                    : $pdoStatement->fetchAll($fetchType)
+            ) ?: [];
+
+            $this->rows->add(...$rows);
+            unset($rows);
         }
     }
 
