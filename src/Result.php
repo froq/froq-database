@@ -46,9 +46,6 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
         $this->rows = new Rows();
 
         if ($pdo->errorCode() == '00000' && $pdoStatement->errorCode() == '00000') {
-            // Assign count (affected rows etc).
-            $this->count = $pdoStatement->rowCount();
-
             $options = $this->prepareOptions($options);
 
             // Check fetch option.
@@ -80,12 +77,11 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                 }
             }
 
-            $query = ltrim($pdoStatement->queryString);
+            // Assign count (affected rows etc).
+            $this->count = $pdoStatement->rowCount();
 
-            // Select queries & returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
-            if (stripos($query, 'SELECT') !== false || (
-                stripos($query, 'RETURNING') && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
-            )) {
+            // Select & other fetchable queries (eg: insert/update/delete with returning clause).
+            if ($this->count && $pdoStatement->columnCount()) {
                 // Use present type that was set above or get default.
                 $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
@@ -102,9 +98,10 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             // Note: Sequence option to prevent transaction errors that comes from lastInsertId()
             // calls but while commit() returning true when sequence field not exists. Default is
             // true for "INSERT" queries if no "sequence" option given.
+            $sequence = $options['sequence'] && preg_match('~^\s*INSERT~i', $pdoStatement->queryString);
 
             // Insert queries.
-            if ($options['sequence'] && stripos($query, 'INSERT') === 0) {
+            if ($this->count && $sequence) {
                 $id = null;
 
                 // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that mostly
