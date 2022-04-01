@@ -172,14 +172,16 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
         $ret = [];
 
         if (!$ctor) {
+            // When class consumes row fields as property.
             foreach ($this->toArray() as $row) {
                 $class = new $class(...$ctorArgs);
                 foreach ($row as $name => $value) {
-                    $class->{$name} = $value;
+                    $class->$name = $value;
                 }
                 $ret[] = $class;
             }
         } else {
+            // When class consumes row as parameter.
             foreach ($this->toArray() as $row) {
                 $ret[] = new $class($row, ...$ctorArgs);
             }
