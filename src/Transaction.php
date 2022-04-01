@@ -10,9 +10,7 @@ namespace froq\database;
 use PDO, PDOException;
 
 /**
- * Transaction.
- *
- * A transaction wrapper that wraps all exceptions with `TransactionException` exception.
+ * A wrapper class for PDO transactions with some utilities.
  *
  * @package froq\database
  * @object  froq\database\Transaction

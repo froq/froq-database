@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database;
 
 /**
- * Query Trait.
- *
  * A trait, fulfills all query building needs with short and descriptive methods.
  *
  * @package froq\database

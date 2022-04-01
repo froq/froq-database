@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database;
 
 /**
- * Repository Exception.
- *
  * @package froq\database
  * @object  froq\database\RepositoryException
  * @author  Kerem Güneş

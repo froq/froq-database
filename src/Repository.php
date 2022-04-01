@@ -12,8 +12,6 @@ use froq\database\trait\{DbTrait, EmTrait, TableTrait, ValidationTrait};
 use froq\database\common\Helper;
 
 /**
- * Repository.
- *
  * A class, contains most required data read/write tools and is intended to use other
  * repository classes and producers/providers or other database related classes.
  *

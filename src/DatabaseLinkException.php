@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database;
 
 /**
- * Database Link Exception.
- *
  * @package froq\database
  * @object  froq\database\DatabaseLinkException
  * @author  Kerem Güneş

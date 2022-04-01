@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database;
 
 /**
- * Database Query Exception.
- *
  * @package froq\database
  * @object  froq\database\DatabaseQueryException
  * @author  Kerem Güneş

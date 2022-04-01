@@ -10,7 +10,7 @@ namespace froq\database;
 use PDOStatement;
 
 /**
- * Profiler.
+ * A profiling class for database connection & queries.
  *
  * @package froq\database
  * @object  froq\database\Profiler

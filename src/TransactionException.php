@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database;
 
 /**
- * Transaction Exception.
- *
  * @package froq\database
  * @object  froq\database\TransactionException
  * @author  Kerem Güneş

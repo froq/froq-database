@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\common\Exception;
 use Throwable;
 
 /**
@@ -16,7 +15,7 @@ use Throwable;
  * @author  Kerem Güneş
  * @since   1.0
  */
-class DatabaseException extends Exception
+class DatabaseException extends \froq\common\Exception
 {
     /** @var string */
     private string $sqlState = '';

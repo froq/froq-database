@@ -12,8 +12,6 @@ use froq\collection\Collection;
 use froq\pager\Pager;
 
 /**
- * Query.
- *
  * A query (builder) class, fulfills all building needings with descriptive methods.
  *
  * @package froq\database

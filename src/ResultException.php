@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database;
 
 /**
- * Result Exception.
- *
  * @package froq\database
  * @object  froq\database\ResultException
  * @author  Kerem Güneş

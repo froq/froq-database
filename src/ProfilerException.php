@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database;
 
 /**
- * Profiler Exception.
- *
  * @package froq\database
  * @object  froq\database\ProfilerException
  * @author  Kerem Güneş

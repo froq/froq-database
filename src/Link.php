@@ -11,8 +11,6 @@ use froq\common\trait\FactoryTrait;
 use PDO, PDOException;
 
 /**
- * Link.
- *
  * A wrapper class for PDO with some utilities.
  *
  * @package froq\database
