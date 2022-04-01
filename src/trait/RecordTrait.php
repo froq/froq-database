@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
-use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait, OptionTrait};
+use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait};
 use froq\collection\trait\{EmptyTrait, ToArrayTrait, ToObjectTrait};
 use froq\validation\ValidationError;
 
@@ -25,10 +25,12 @@ trait RecordTrait
     use DbTrait, TableTrait, ValidationTrait;
     use EmptyTrait, ToArrayTrait, ToObjectTrait;
     use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait;
-    use OptionTrait;
 
     /** @var array */
     protected array $data = [];
+
+    /** @var array */
+    protected array $options = [];
 
     /** @var array */
     protected static array $optionsDefault = [
@@ -38,6 +40,30 @@ trait RecordTrait
         'return'      => null, // Whether returning any field(s) or current data (for "returning" clause).
         'fetch'       => null, // Fetch type.
     ];
+
+    /**
+     * Set options.
+     *
+     * @param  ?array $options
+     * @return self
+     * @since  6.0
+     */
+    public final function setOptions(?array $options): self
+    {
+        $this->options = array_options($options, self::$optionsDefault);
+
+        return $this;
+    }
+
+    /**
+     * Get options.
+     *
+     * @return ?array
+     */
+    public final function getOptions(): array
+    {
+        return $this->options;
+    }
 
     /**
      * Prepare given or own data running validation, throw if validation fails and silent option is not true.

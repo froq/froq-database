@@ -79,8 +79,7 @@ class Record implements RecordInterface
             }
         }
 
-        $this->setOptions($options, self::$optionsDefault)
-             ->setValidations($validations);
+        $this->setOptions($options)->setValidations($validations);
     }
 
     /**
