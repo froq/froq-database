@@ -114,9 +114,8 @@ final class Manager
             $record->save($data);
         } catch (ValidationError $e) {
             throw new ValidationError(
-                'Cannot save entity (%s), validation failed [tip: run save() '.
-                'in a try/catch block and use errors() to see error details]',
-                $entity::class, errors: $e->errors()
+                'Cannot save entity (%s), validation failed [tip: %s]'
+                [$entity::class, ValidationError::tip()], errors: $e->errors()
             );
         }
 

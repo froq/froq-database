@@ -43,19 +43,14 @@ class Record implements RecordInterface
      * Constructor.
      *
      * @param  froq\database\Database|null            $db
-     * @param  array|null                             $data
      * @param  string|froq\database\common\Table|null $table
      * @param  string|froq\database\record\Form|null  $form
+     * @param  array|null                             $data
      * @param  array|null                             $options
      * @param  array|null                             $validations
-     * @param  array|null                             $validationRules
-     * @param  array|null                             $validationOptions
-     * @throws froq\database\record\RecordException
      */
-    public function __construct(Database $db = null, array $data = null,
-        string|Table $table = null, string|Form $form = null,
-        array $options = null, array $validations = null,
-        array $validationRules = null, array $validationOptions = null)
+    public function __construct(Database $db = null, string|Table $table = null, string|Form $form = null,
+        array $data = null, array $options = null, array $validations = null)
     {
         // Try to use active database when non given.
         $this->db = $db ?? Helper::getActiveDatabase();
@@ -84,20 +79,8 @@ class Record implements RecordInterface
             }
         }
 
-        $this->setOptions($options, self::$optionsDefault);
-
-        // Validations can be combined or simple array'ed.
-        if ($validations) {
-            isset($validations['@rules'])   && $validationRules   = array_pull($validations, '@rules');
-            isset($validations['@options']) && $validationOptions = array_pull($validations, '@options');
-
-            // Simple array'ed if no "@rules" field given.
-            $validationRules ??= $validations;
-        }
-
-        // Set validation stuff.
-        $validationRules   && $this->validationRules   = $validationRules;
-        $validationOptions && $this->validationOptions = $validationOptions;
+        $this->setOptions($options, self::$optionsDefault)
+             ->setValidations($validations);
     }
 
     /**
@@ -106,17 +89,21 @@ class Record implements RecordInterface
     public function __clone()
     {
         $this->query = clone $this->query;
+        $this->query->reset();
+
         $this->state = clone $this->state;
+
+        if (isset($this->table)) {
+            $this->table = clone $this->table;
+            $this->query->table((string) $this->table->getName());
+        }
 
         if (isset($this->form)) {
             $this->form = clone $this->form;
         }
 
-        $this->query->reset();
-        if (isset($this->table)) {
-            $this->table = clone $this->table;
-            $this->query->table($this->table->getName());
-        }
+        $this->validation = clone $this->validation;
+        $this->validation->reset();
     }
 
     /**
@@ -198,10 +185,10 @@ class Record implements RecordInterface
     public final function getFormInstance(): Form
     {
         // Use internal or own (current) form/form class if available.
-        $form = $this->form ?? $this->formClass ?? new Form($this->db,
-            record: $this, data: $this->getData(), table: $this->getTable(),
-            options: $this->getOptions(), validations: null,
-            validationRules: $this->getValidationRules(), validationOptions: $this->getValidationOptions()
+        $form = $this->form ?? $this->formClass ?? new Form(
+            db: $this->db, record: $this,
+            data: $this->getData(), table: $this->getTable(),
+            options: $this->getOptions(), validations: $this->getValidations()
         );
 
         // If class given.
@@ -247,7 +234,7 @@ class Record implements RecordInterface
     public final function found() { return $this->isFinded(); }
 
     /**
-     * Proxy method to own form class for validation processes.
+     * Proxy method to own form for validation processes.
      *
      * @param  array|null &$data
      * @param  array|null &$errors
@@ -369,7 +356,7 @@ class Record implements RecordInterface
      * table primary was presented, throw a `RecordException` if no data or target table
      * given yet or throw a `ValidationError` if validation fails.
      *
-     * Note: After this method `isSaved()` method must be called to check `saved` state.
+     * Note: After this method, `isSaved()` method must be called to check `saved` state.
      *
      * @param  array|null        &$data
      * @param  array|null        &$errors
@@ -384,8 +371,6 @@ class Record implements RecordInterface
     public final function save(array &$data = null, array &$errors = null, array $options = null,
         string|array $drop = null, bool $bool = false, bool $select = false, bool $_validate = null): bool|self
     {
-        [$table, $primary] = $this->pack();
-
         // Update data, not set all.
         if ($data !== null) {
             $this->updateData($data);
@@ -399,13 +384,15 @@ class Record implements RecordInterface
             );
         }
 
+        [$table, $primary] = $this->pack();
+
         // When primary given id() or setId() before.
         if ($primary && isset($this->data[$primary])) {
             $data[$primary] = $this->data[$primary];
         }
 
         // Options are used for only save actions.
-        $options = array_merge($this->options, $options ?? []);
+        $options = [...$this->options, ...$options ?? []];
 
         // Default is true (@see froq\database\trait\RecordTrait).
         $_validate ??= (bool) $options['validate'];
@@ -413,9 +400,8 @@ class Record implements RecordInterface
         // Run validation.
         if ($_validate && !$this->isValid($data, $errors, $options)) {
             throw new ValidationError(
-                'Cannot save record (%s), validation failed [tip: run save() '.
-                'in a try/catch block and use errors() to see error details]',
-                static::class, errors: $errors
+                'Cannot save record (%s), validation failed [tip: %s]',
+                [static::class, ValidationError::tip()], errors: $errors
             );
         }
 
@@ -494,7 +480,12 @@ class Record implements RecordInterface
         $id ??= $this->id();
         $id ?? throw new RecordException('Null primary value');
 
-        return $this->findAll([$id], $fields, limit: 1)->first() ?? (clone $this);
+        $that = $this->findAll([$id], $fields, limit: 1)->first() ?? (clone $this);
+
+        // Required for changing data list => map (thats copy).
+        if ($this !== $that) $this->setData($that->getData());
+
+        return $that;
     }
 
     /**
@@ -556,7 +547,12 @@ class Record implements RecordInterface
         $id ??= $this->id();
         $id ?? throw new RecordException('Null primary value');
 
-        return $this->removeAll([$id], $return)->first() ?? (clone $this);
+        $that = $this->removeAll([$id], $return)->first() ?? (clone $this);
+
+        // Required for changing data list => map (thats copy).
+        if ($this !== $that) $this->setData($that->getData());
+
+        return $that;
     }
 
     /**

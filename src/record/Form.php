@@ -37,20 +37,15 @@ class Form implements FormInterface
      * Constructor.
      *
      * @param  froq\database\Database|null             $db
-     * @param  array|null                              $data
      * @param  string|froq\database\common\Table|null  $table
      * @param  string|froq\database\record\Record|null $record
+     * @param  array|null                              $data
      * @param  array|null                              $options
      * @param  array|null                              $validations
-     * @param  array|null                              $validationRules
-     * @param  array|null                              $validationOptions
      * @param  string|null                             $name
-     * @throws froq\database\record\FormException
      */
-    public function __construct(Database $db = null, array $data = null,
-        string|Table $table = null, string|Record $record = null,
-        array $options = null, array $validations = null,
-        array $validationRules = null, array $validationOptions = null, string $name = null)
+    public function __construct(Database $db = null, string|Table $table = null, string|Record $record = null,
+        array $data = null, array $options = null, array $validations = null, string $name = null)
     {
         // Try to use active database when non given.
         $this->db = $db ?? Helper::getActiveDatabase();
@@ -75,20 +70,8 @@ class Form implements FormInterface
             }
         }
 
-        $this->setOptions($options, self::$optionsDefault);
-
-        // Validations can be combined or simple array'ed.
-        if ($validations) {
-            isset($validations['@rules'])   && $validationRules   = array_pull($validations, '@rules');
-            isset($validations['@options']) && $validationOptions = array_pull($validations, '@options');
-
-            // Simple array'ed if no "@rules" field given.
-            $validationRules ??= $validations;
-        }
-
-        // Set validation stuff.
-        $validationRules   && $this->validationRules   = $validationRules;
-        $validationOptions && $this->validationOptions = $validationOptions;
+        $this->setOptions($options, self::$optionsDefault)
+             ->setValidations($validations);
     }
 
     /**
@@ -194,10 +177,10 @@ class Form implements FormInterface
     public final function getRecordInstance(): Record
     {
         // Use internal or own (current) record/record class if available.
-        $record = $this->record ?? $this->recordClass ?? new Record($this->db,
-            form: $this, data: $this->getData(), table: $this->getTable(),
-            options: $this->getOptions(), validations: null,
-            validationRules: $this->getValidationRules(), validationOptions: $this->getValidationOptions()
+        $record = $this->record ?? $this->recordClass ?? new Record(
+            db: $this->db, form: $this,
+            data: $this->getData(), table: $this->getTable(),
+            options: $this->getOptions(), validations: $this->getValidations()
         );
 
         // If class given.
@@ -229,10 +212,10 @@ class Form implements FormInterface
     public final function isValid(array &$data = null, array &$errors = null, array $options = null): bool
     {
         $data    ??= $this->getData() ?: $this->getRecordData();
-        $rules     = $this->getValidationRules() ?: $this->getRecord()?->getValidationRules();
-        $options ??= $this->getValidationOptions() ?: $this->getRecord()?->getValidationOptions();
+        $rules     = $this->validation->getRules() ?: $this->getRecord()?->getValidation()->getRules();
+        $options ??= $this->validation->getOptions() ?: $this->getRecord()?->getValidation()->getOptions();
 
-        $this->runValidation($data, $rules, $options, $errors);
+        $this->validation->run($data, $rules, $options, $errors);
 
         // Update with modified stuff (byref).
         $this->data = $data;
@@ -240,12 +223,9 @@ class Form implements FormInterface
         // Update record too.
         if ($record = $this->getRecord()) {
             $record->setData($data);
-            if ($errors !== null) {
-                $record->setValidationErrors($errors);
-            }
         }
 
-        return $this->validated;
+        return $this->validation->result();
     }
 
     /**
@@ -296,28 +276,37 @@ class Form implements FormInterface
             $this->isValid($data, options: $options);
         }
 
-        if ($this->validated === null) {
+        $data ??= $this->getData() ?: $this->getRecordData();
+        if (empty($data)) {
+            throw new RecordException(
+                'No data given yet for save(), call setData() or load() '.
+                'first or pass $data argument to save()'
+            );
+        }
+
+        $result = $this->validation->result();
+
+        if ($result === null) {
             throw new FormException(
                 'Cannot run save process, form not validated yet, call isValid()'
             );
         }
-        if ($this->validated === false) {
+        if ($result === false) {
             throw new ValidationError(
-                'Cannot run save process, form validation was failed [tip: run save() '.
-                'in a try/catch block and use errors() to see error details]',
-                errors: $this->errors()
+                'Cannot run save process, form validation was failed [tip: %s]',
+                ValidationError::tip(), errors: $this->validation->errors()
             );
         }
 
         // Options are used for only save actions.
-        $options = array_merge($this->options, $options ?? []);
+        $options = [...$this->options, ...$options ?? []];
 
         $this->record = $this->getRecordInstance()
               ->save($this->data, options: $options, _validate: false /* Must be validated until here.. */)
               ->setForm($this);
 
         // Require new validation.
-        $this->validated = null;
+        $this->validation->reset();
 
         return $this->record;
     }
