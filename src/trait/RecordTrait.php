@@ -50,7 +50,7 @@ trait RecordTrait
      */
     public final function setOptions(?array $options): self
     {
-        $this->options = array_options($options, self::$optionsDefault);
+        $this->options = array_options($options, static::$optionsDefault);
 
         return $this;
     }
