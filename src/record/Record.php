@@ -254,7 +254,7 @@ class Record implements RecordInterface
     {
         $id = $this->id ?? null;
 
-        return !!$this->saved();
+        return (bool) $this->saved();
     }
 
     /**
@@ -818,7 +818,7 @@ class Record implements RecordInterface
         // Get new id if available.
         $id = $result->id();
 
-        $this->state->saved = (bool) $result->count();
+        $this->state->saved = $result->count();
 
         // Swap data with returning data.
         if ($return) {
@@ -868,7 +868,7 @@ class Record implements RecordInterface
         // Set primary value with given id.
         $this->id($id);
 
-        $this->state->saved = (bool) $result->count();
+        $this->state->saved = $result->count();
 
         // Swap data with returning data.
         if ($return) {

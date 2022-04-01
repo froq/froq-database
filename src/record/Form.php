@@ -232,9 +232,7 @@ class Form implements FormInterface
      */
     public final function isSaved(int|string &$id = null): bool
     {
-        $this->getRecord()?->isSaved($id);
-
-        return !!$id;
+        return (bool) $this->getRecord()?->isSaved($id);
     }
 
     /**
