@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\{Database, Result, trait\DbTrait};
-use froq\database\common\Table;
+use froq\database\{Database, DatabaseException, Result, trait\DbTrait};
+use froq\database\common\{Helper, Table};
 use froq\database\record\Record;
 use froq\validation\ValidationError;
 use froq\pager\Pager;
@@ -35,11 +35,11 @@ final class Manager
      */
     public function __construct(Database $db = null)
     {
-        // Try to use active app database object.
-        $db ??= function_exists('app') ? app()->database() : throw new ManagerException(
-            'No database given to deal, be sure running this module with `froq\app` ' .
-            'module and be sure `database` option exists in app config or pass $db argument'
-        );
+        if (!$db) try {
+            $db = Helper::getActiveDatabase();
+        } catch (DatabaseException $e) {
+            throw new ManagerException($e->message);
+        }
 
         $this->db = $db;
     }

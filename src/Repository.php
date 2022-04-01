@@ -9,6 +9,7 @@ namespace froq\database;
 
 use froq\database\{sql\Sql, entity\Manager as EntityManager};
 use froq\database\trait\{DbTrait, EmTrait, TableTrait, ValidationTrait};
+use froq\database\common\Helper;
 
 /**
  * Repository.
@@ -34,11 +35,11 @@ class Repository
      */
     public function __construct(Database $db = null, EntityManager $em = null)
     {
-        // Try to use active app database object.
-        $db ??= function_exists('app') ? app()->database() : throw new RepositoryException(
-            'No database given to deal, be sure running this module with `froq\app` '.
-            'module and be sure `database` option exists in app config or pass $db argument'
-        );
+        if (!$db) try {
+            $db = Helper::getActiveDatabase();
+        } catch (DatabaseException $e) {
+            throw new RepositoryException($e->message);
+        }
 
         $this->db = $db;
         $this->em = $em ?? new EntityManager($db);

@@ -14,7 +14,7 @@ use froq\database\{Database, DatabaseException};
  * @object  froq\database\common\Helper
  * @author  Kerem Güneş
  * @since   6.0
- * @static @internal
+ * @static
  */
 final class Helper extends \StaticClass
 {
