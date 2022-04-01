@@ -168,26 +168,25 @@ class Form implements FormInterface
     }
 
     /**
-     * Get a record instance setting and returning own or creating new one from
+     * Get a record instance setting and returning self or creating new one from
      * provided record class or default.
      *
      * @return froq\database\record\Record
      */
     public final function getRecordInstance(): Record
     {
-        // Use internal or own (current) record/record class if available.
+        // Use internal or self record/record class if available.
         $record = $this->record ?? $this->recordClass ?? new Record(
             db: $this->db, form: $this,
             data: $this->getData(), table: $this->getTable(),
             options: $this->getOptions(), validations: $this->getValidations()
         );
 
-        // If class given.
         if (is_string($record)) {
-            // Check also class validity.
+            // Checks also class validity.
             $this->setRecordClass($record);
 
-            // Init & update own record.
+            // Init & update record.
             $this->setRecord($record = new $record());
         }
 
@@ -195,18 +194,16 @@ class Form implements FormInterface
     }
 
     /** Aliases. */
-    public final function okay(...$args)  { return $this->isValid(...$args); }
+    public final function okay(&...$args)  { return $this->isValid(...$args); }
 
     /**
-     * Check whether given or own data is valid filtering/sanitizing data, fill `$errors`
-     * argument with validation errors if validation fails, throw a `FormException` if given
-     * or own record data or own rules is empty.
+     * Check whether given or self data is valid filtering/sanitizing data, fill `$errors`
+     * argument with validation errors if validation fails.
      *
      * @param  array|null &$data
      * @param  array|null &$errors
      * @param  array|null  $options
      * @return bool
-     * @throws froq\database\record\FormException
      */
     public final function isValid(array &$data = null, array &$errors = null, array $options = null): bool
     {
@@ -217,7 +214,7 @@ class Form implements FormInterface
         $this->validation->run($data, $rules, $options, $errors);
 
         // Update with modified stuff (byref).
-        $this->data = $data;
+        $this->setData($data);
 
         // Update record too.
         if ($record = $this->getRecord()) {
@@ -228,7 +225,7 @@ class Form implements FormInterface
     }
 
     /**
-     * Proxy method to own record saved state/result.
+     * Proxy method to self record saved state.
      *
      * @param  int|string|null &$id
      * @return bool
@@ -241,7 +238,7 @@ class Form implements FormInterface
     }
 
     /**
-     * Check whether form is sent (submitted) with given or own name, or request
+     * Check whether form is sent (submitted) with given or self name, or request
      * method is post.
      *
      * @param  string|null $name
@@ -259,8 +256,8 @@ class Form implements FormInterface
     }
 
     /**
-     * Save own data via a newly created record entity returning that record, throw
-     * a `FormException` if no validation was run or throw a `ValidationError` if
+     * Save given or self data via a newly created record entity returning that record,
+     * throw a `FormException` if no validation was run or throw a `ValidationError` if
      * validation was failed.
      *
      * @param  array|null &$data
@@ -277,7 +274,7 @@ class Form implements FormInterface
 
         $data ??= $this->getData() ?: $this->getRecordData();
         if (empty($data)) {
-            throw new RecordException(
+            throw new FormException(
                 'No data given yet for save(), call setData() or load() '.
                 'first or pass $data argument to save()'
             );
@@ -301,7 +298,7 @@ class Form implements FormInterface
         $options = [...$this->options, ...$options ?? []];
 
         $this->record = $this->getRecordInstance()
-              ->save($this->data, options: $options, _validate: false /* Must be validated until here.. */)
+              ->save($data, options: $options, validate: false /* Must be validated until here.. */)
               ->setForm($this);
 
         // Require new validation.

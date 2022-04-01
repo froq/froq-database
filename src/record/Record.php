@@ -66,8 +66,7 @@ class Record implements RecordInterface
             } else {
                 $this->table = new Table($table);
             }
-            $table = $this->table->getName();
-            $table && $this->query->table($this->table->getName());
+            $this->query->table((string) $this->table->getName());
         }
 
         if ($form) {
@@ -176,26 +175,26 @@ class Record implements RecordInterface
     }
 
     /**
-     * Get a form instance setting and returning own or creating new one from provided
+     * Get a form instance setting and returning self form or creating new one from provided
      * form class or default.
      *
      * @return froq\database\record\Form
      */
     public final function getFormInstance(): Form
     {
-        // Use internal or own (current) form/form class if available.
+        // Use internal or self form/form class if available.
         $form = $this->form ?? $this->formClass ?? new Form(
             db: $this->db, record: $this,
             data: $this->getData(), table: $this->getTable(),
             options: $this->getOptions(), validations: $this->getValidations()
         );
 
-        // If class given.
+        // If form is a class.
         if (is_string($form)) {
-            // Check also class validity.
+            // Checks also class validity.
             $this->setFormClass($form);
 
-            // Init & update own form.
+            // Init & update form.
             $this->setForm($form = new $form());
         }
 
@@ -229,11 +228,11 @@ class Record implements RecordInterface
     public final function removed() { return $this->state->removed; }
 
     /** Aliases. */
-    public final function okay(...$args) { return $this->isValid(...$args); }
+    public final function okay(&...$args) { return $this->isValid(...$args); }
     public final function found() { return $this->isFinded(); }
 
     /**
-     * Proxy method to own form for validation processes.
+     * Proxy method to self form for validation processes.
      *
      * @param  array|null &$data
      * @param  array|null &$errors
@@ -351,9 +350,9 @@ class Record implements RecordInterface
     }
 
     /**
-     * Save given or own data to target table, set `saved` state, set `$id` property if
-     * table primary was presented, throw a `RecordException` if no data or target table
-     * given yet or throw a `ValidationError` if validation fails.
+     * Save given or self data to target table, set `saved` state, set `$id` property if
+     * table primary was presented, throw a `RecordException` if no data given yet or null
+     * primary given for update, or throw a `ValidationError` if validation fails.
      *
      * Note: After this method, `isSaved()` method must be called to check `saved` state.
      *
@@ -363,12 +362,12 @@ class Record implements RecordInterface
      * @param  string|array|null  $drop
      * @param  bool               $bool
      * @param  bool               $select
-     * @param  bool|null          $_validate @internal
+     * @param  bool|null          $validate @internal
      * @return bool|self
      * @throws froq\database\record\RecordException
      */
     public final function save(array &$data = null, array &$errors = null, array $options = null,
-        string|array $drop = null, bool $bool = false, bool $select = false, bool $_validate = null): bool|self
+        string|array $drop = null, bool $bool = false, bool $select = false, bool $validate = null): bool|self
     {
         // Update data, not set all.
         if ($data !== null) {
@@ -394,10 +393,10 @@ class Record implements RecordInterface
         $options = [...$this->options, ...$options ?? []];
 
         // Default is true (@see froq\database\trait\RecordTrait).
-        $_validate ??= (bool) $options['validate'];
+        $validate ??= (bool) $options['validate'];
 
         // Run validation.
-        if ($_validate && !$this->isValid($data, $errors, $options)) {
+        if ($validate && !$this->isValid($data, $errors, $options)) {
             throw new ValidationError(
                 'Cannot save record (%s), validation failed [tip: %s]',
                 [static::class, ValidationError::tip()], errors: $errors
@@ -463,7 +462,7 @@ class Record implements RecordInterface
     }
 
     /**
-     * Find and get a record from target table by given id or own id, set `finded` state,
+     * Find and get a record from self table by given id or self id, set `finded` state,
      * throw a `RecordException` if id is null or cause a `RecordException` if no table
      * primary presented.
      *
@@ -488,9 +487,9 @@ class Record implements RecordInterface
     }
 
     /**
-     * Find and get all records from target table by given ids, set `finded` state,
-     * throw a `RecordException` if ids are empty or cause a `RecordException` if no
-     * table primary presented.
+     * Find and get all records from self table by given ids, set `finded` state,
+     * throw a `RecordException` if ids are empty or cause a `RecordException` if
+     * no table primary presented.
      *
      * @param  array<int|string>         $ids
      * @param  array|string|null         $fields
@@ -530,9 +529,9 @@ class Record implements RecordInterface
     }
 
     /**
-     * Remove a record from target table by given id or own id, set `removed` state,
-     * throw a `RecordException` if id is empty or cause a `RecordException` if no table
-     * primary presented.
+     * Remove a record from self table by given id or self id, set `removed` state,
+     * throw a `RecordException` if id is null or cause a `RecordException` if no
+     * table primary presented.
      *
      * Note: After this method `isRemoved()` method must be called to check `removed` state.
      *
@@ -555,8 +554,8 @@ class Record implements RecordInterface
     }
 
     /**
-     * Remove all records from target table by given ids, set `removed` state, throw
-     * a `RecordException` if ids is empty or cause a `RecordException` if no table
+     * Remove all records from self table by given ids, set `removed` state, throw
+     * a `RecordException` if ids are empty or cause a `RecordException` if no table
      * primary presented.
      *
      * @param  array<int|string> $ids
