@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\{Database, Result, trait\DbTrait};
+use froq\database\common\Table;
 use froq\database\record\Record;
 use froq\validation\ValidationError;
 use froq\pager\Pager;
@@ -114,7 +115,7 @@ final class Manager
             $record->save($data);
         } catch (ValidationError $e) {
             throw new ValidationError(
-                'Cannot save entity (%s), validation failed [tip: %s]'
+                'Cannot save entity (%s), validation failed [tip: %s]',
                 [$entity::class, ValidationError::tip()], errors: $e->errors()
             );
         }
@@ -441,7 +442,8 @@ final class Manager
         }
 
         $record = new $record(
-            $this->db, $table, $tablePrimary,
+            db: $this->db,
+            table: new Table($table, $tablePrimary),
             validations: $validations, options: [
                 'transaction' => $classMeta->getOption('transaction', default: true),
                 'sequence'    => $classMeta->getOption('sequence',    default: !!$tablePrimary),
