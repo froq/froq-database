@@ -21,8 +21,12 @@ use PDO, PDOStatement, PDOException;
  */
 final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
 {
-    /** @const array<string> */
-    public const FETCH_TYPES = ['array', 'object', 'class'];
+    /** @const array */
+    public const FETCH = [
+        'array'  => PDO::FETCH_ASSOC,
+        'object' => PDO::FETCH_OBJ,
+        'class'  => PDO::FETCH_CLASS,
+    ];
 
     /** @var int */
     private int $count = 0;
@@ -52,32 +56,23 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
 
         $options = $this->prepareOptions($options);
 
-        // Check fetch option.
+        // Set fetch option.
         if ($options['fetch']) {
-            switch ($fetchType = $options['fetch'][0]) {
-                case  'array': $fetchType = PDO::FETCH_ASSOC; break;
-                case 'object': $fetchType = PDO::FETCH_OBJ;   break;
-                case  'class':
-                    if (empty($options['fetch'][1])) {
-                        throw new ResultException(
-                            'No fetch class given, it is required when fetch type '.
-                            'is `class` [tip: give it as second item of `fetch` option]'
-                        );
-                    }
+            $fetch = $options['fetch'][0];
+            if ($fetch) {
+                $fetchType =@ self::FETCH[$fetch];
+                $fetchType || throw new ResultException(
+                    'Invalid fetch type `%s` [valids: %a]',
+                    [$fetch, array_keys(self::FETCH)]
+                );
 
-                    $fetchType  = PDO::FETCH_CLASS;
-                    $fetchClass = $options['fetch'][1];
-                    break;
-                default:
-                    if ($fetchType && !in_array($fetchType, self::FETCH_TYPES, true)) {
-                        throw new ResultException(
-                            'Invalid fetch type `%s` [valids: %a]',
-                            [$fetchType, self::FETCH_TYPES]
-                        );
-                    }
-
-                    // For default below.
-                    $fetchType = null;
+                if ($fetchType == PDO::FETCH_CLASS) {
+                    $fetchClass =@ $options['fetch'][1];
+                    $fetchClass || throw new ResultException(
+                        'No fetch class given, it is required when fetch type '.
+                        'is `class` [tip: give it as second item of `fetch` option]'
+                    );
+                }
             }
         }
 
