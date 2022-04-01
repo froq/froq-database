@@ -10,6 +10,8 @@ namespace froq\database\common;
 use froq\validation\{Validation as BaseValidation};
 
 /**
+ * Validation wrapper, holds validation related stuff.
+ *
  * @package froq\database\common
  * @object  froq\database\common\Validation
  * @author  Kerem Güneş

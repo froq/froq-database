@@ -8,6 +8,8 @@ declare(strict_types=1);
 namespace froq\database\common;
 
 /**
+ * Table wrapper, holds a table name & primary related stuff.
+ *
  * @package froq\database\common
  * @object  froq\database\common\Table
  * @author  Kerem Güneş
