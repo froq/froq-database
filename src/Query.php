@@ -1674,26 +1674,6 @@ final class Query
     }
 
     /**
-     * Pull an item from query stack.
-     *
-     * @param  string      $key
-     * @param  string|null $subkey
-     * @return mixed|null
-     * @since  5.0
-     */
-    public function pull(string $key, string $subkey = null): mixed
-    {
-        if (isset($this->stack[$key])) {
-            $value = $this->stack[$key];
-            if (isset($subkey, $value[$subkey])) {
-                $value = $value[$subkey];
-            }
-            unset($this->stack[$key]);
-        }
-        return $value ?? null;
-    }
-
-    /**
      * Drop an item from query stack.
      *
      * @param  string $key
@@ -1705,6 +1685,18 @@ final class Query
         unset($this->stack[$key]);
 
         return $this;
+    }
+
+    /**
+     * Pull an item from query stack (key: AKA path with dot notation).
+     *
+     * @param  string $key
+     * @return mixed
+     * @since  5.0
+     */
+    public function pull(string $key): mixed
+    {
+        return array_pull($this->stack, $key);
     }
 
     /**

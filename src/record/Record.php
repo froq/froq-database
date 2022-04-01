@@ -516,7 +516,7 @@ class Record implements RecordInterface
             $query->limit($limit);
         }
 
-        $fields = $fields ?: $this->query->pull('return', 'fields') ?: '*';
+        $fields = $fields ?: $this->query->pull('return.fields') ?: '*';
         $result = $query->select(select: $fields)->run(fetch: 'array');
 
         // Copy with rows & "finded" state.
@@ -574,7 +574,7 @@ class Record implements RecordInterface
         }
 
         // When no "return" given, an empty list returns even it was successful.
-        $return = $return ?: $this->query->pull('return', 'fields') ?: $primary;
+        $return = $return ?: $this->query->pull('return.fields') ?: $primary;
         $result = $query->delete(return: $return)->run(fetch: 'array');
 
         // Copy with rows & "removed" state.
@@ -641,7 +641,7 @@ class Record implements RecordInterface
         int $limit = null, int $offset = null, string $order = null, string|array $fetch = null): array|object|null
     {
         // If return() called before, simply overrides fields.
-        $return = $this->query->pull('return', 'fields');
+        $return = $this->query->pull('return.fields');
         $return && $fields = $return;
 
         $query = $this->query()->select($fields);
@@ -681,7 +681,7 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        $return ??= $this->query->pull('return', 'fields');
+        $return ??= $this->query->pull('return.fields');
         $return && $query->return($return, fetch: 'array');
 
         $result = $query->run();
@@ -709,7 +709,7 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        $return ??= $this->query->pull('return', 'fields');
+        $return ??= $this->query->pull('return.fields');
         $return && $query->return($return, fetch: 'array');
 
         $result = $query->run();
@@ -807,7 +807,7 @@ class Record implements RecordInterface
         $query = $this->query($table);
         $query->insert($data, sequence: !!$sequence);
 
-        $return ??= $this->query->pull('return', 'fields');
+        $return ??= $this->query->pull('return.fields');
         $return && $query->return($return, fetch: 'array');
 
         $conflict = $this->query->pull('conflict');
@@ -852,7 +852,7 @@ class Record implements RecordInterface
         $query = $this->query($table);
         $query->update($data)->equal($primary, $id);
 
-        $return ??= $this->query->pull('return', 'fields');
+        $return ??= $this->query->pull('return.fields');
         $return && $query->return($return, fetch: 'array');
 
         $conflict = $this->query->pull('conflict');
