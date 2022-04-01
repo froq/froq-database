@@ -273,12 +273,9 @@ class Form implements FormInterface
         }
 
         $data ??= $this->getData() ?: $this->getRecordData();
-        if (empty($data)) {
-            throw new FormException(
-                'No data given yet for save(), call setData() or load() '.
-                'first or pass $data argument to save()'
-            );
-        }
+        $data || throw new FormException(
+            'No data yet, call setData() or pass $data argument to save()'
+        );
 
         $result = $this->validation->result();
 

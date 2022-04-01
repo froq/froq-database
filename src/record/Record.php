@@ -375,12 +375,9 @@ class Record implements RecordInterface
         }
 
         $data ??= $this->getData() ?: $this->getFormData();
-        if (empty($data)) {
-            throw new RecordException(
-                'No data given yet for save(), call setData() or load() '.
-                'first or pass $data argument to save()'
-            );
-        }
+        $data || throw new RecordException(
+            'No data yet, call setData() or pass $data argument to save()'
+        );
 
         [$table, $primary] = $this->pack();
 

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
-use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait};
+use froq\common\trait\{DataTrait, DataAccessTrait, DataAccessMagicTrait};
 use froq\collection\trait\{EmptyTrait, ToArrayTrait, ToObjectTrait};
 use froq\validation\ValidationError;
 
@@ -24,7 +24,7 @@ trait RecordTrait
 {
     use DbTrait, TableTrait, ValidationTrait;
     use EmptyTrait, ToArrayTrait, ToObjectTrait;
-    use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait;
+    use DataTrait, DataAccessTrait, DataAccessMagicTrait;
 
     /** @var array */
     protected array $data = [];
