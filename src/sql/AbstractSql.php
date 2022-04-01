@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database\sql;
 
 /**
- * Abstract Sql.
- *
  * @package froq\database\sql
  * @object  froq\database\sql\AbstractSql
  * @author  Kerem Güneş
