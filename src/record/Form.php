@@ -211,7 +211,7 @@ class Form implements FormInterface
         $rules     = $this->validation->getRules() ?: $this->getRecord()?->getValidation()->getRules();
         $options ??= $this->validation->getOptions() ?: $this->getRecord()?->getValidation()->getOptions();
 
-        $this->validation->run($data, $rules, $options, $errors);
+        $this->validation->run($data, $errors, $rules, $options);
 
         // Update with modified stuff (byref).
         $this->setData($data);

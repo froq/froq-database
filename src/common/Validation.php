@@ -120,22 +120,19 @@ class Validation
      * and filling `$errors` argument when validation fails.
      *
      * @param  ?array &$data
+     * @param  ?array &$errors
      * @param  ?array  $rules
      * @param  ?array  $options
-     * @param  ?array &$errors
      * @return bool
      */
-    public function run(?array &$data, ?array $rules, ?array $options, ?array &$errors): bool
+    public function run(?array &$data, ?array &$errors, ?array $rules, ?array $options): bool
     {
-        $errors = null;
-        $result = (new BaseValidation($rules, $options))->validate($data, $errors);
-
-        $this->result = $result;
+        $this->result = (new BaseValidation($rules, $options))->validate($data, $errors);
 
         if ($errors !== null) {
             $this->errors = $errors;
         }
 
-        return $result;
+        return $this->result;
     }
 }

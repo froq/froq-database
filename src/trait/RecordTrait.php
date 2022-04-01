@@ -76,8 +76,6 @@ trait RecordTrait
      */
     public final function prepare(array &$data = null, array &$errors = null, bool $silent = false): self|null
     {
-        $errors = null;
-
         $this->isValid($data, $errors);
 
         if (!$errors) {
