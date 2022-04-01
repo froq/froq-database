@@ -642,7 +642,15 @@ final class Manager
         $primary = (string) $classMeta->getTablePrimary();
 
         if ($primary) {
-            $value = $this->getPropertyValue($entity, $classMeta->getProperty($primary)->getReflection());
+            $primaryMeta = $classMeta->getProperty($primary);
+            if (!$primaryMeta) {
+                throw new ManagerException(
+                    'Primary (%s::$%s) not defined or has no meta',
+                    [$entity::class, $primary]
+                );
+            }
+
+            $value = $this->getPropertyValue($entity, $primaryMeta->getReflection());
             if ($check && !is_type_of($value, 'int|string')) {
                 throw new ManagerException(
                     'Primary (%s::$%s) value must be int|string, %t given',
@@ -742,7 +750,15 @@ final class Manager
                 );
             }
 
-            $id = $this->getPropertyValue($entity, $classMeta->getProperty($primary)->getReflection());
+            $primaryMeta = $classMeta->getProperty($primary);
+            if (!$primaryMeta) {
+                throw new ManagerException(
+                    'Item %s[%d] primary (%s) not defined or has no meta',
+                    [$entity::class, $i, $primary]
+                );
+            }
+
+            $id = $this->getPropertyValue($entity, $primaryMeta);
             if ($id === null) {
                 throw new ManagerException(
                     'Item %s[%d] has null primary (%s) value',
