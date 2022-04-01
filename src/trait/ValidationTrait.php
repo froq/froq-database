@@ -170,16 +170,10 @@ trait ValidationTrait
      * @param  ?array  $options
      * @param  ?array &$errors
      * @return bool
-     * @throws froq\common\Exception
      * @internal
      */
     protected final function runValidation(?array &$data, ?array $rules, ?array $options, ?array &$errors): bool
     {
-        $rules || throw new Exception(
-            'No validation rules set yet, call setValidationRules() or '.
-            'define $validationRules property on class '. static::class
-        );
-
         $errors = null;
         $result = (new Validation($rules, $options))->validate($data, $errors);
 

@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database\record;
 
 use froq\database\{Database, Query, trait\RecordTrait};
+use froq\database\common\{Helper, Table};
 use froq\validation\ValidationError;
 use froq\common\trait\StateTrait;
 use froq\pager\Pager;
@@ -41,34 +42,39 @@ class Record implements RecordInterface
     /**
      * Constructor.
      *
-     * @param  froq\database\Database|null           $db
-     * @param  string|null                           $table
-     * @param  string|null                           $tablePrimary
-     * @param  array|null                            $data
-     * @param  string|froq\database\record\Form|null $form
-     * @param  array|null                            $options
-     * @param  array|null                            $validations
-     * @param  array|null                            $validationRules
-     * @param  array|null                            $validationOptions
+     * @param  froq\database\Database|null            $db
+     * @param  array|null                             $data
+     * @param  string|froq\database\common\Table|null $table
+     * @param  string|froq\database\record\Form|null  $form
+     * @param  array|null                             $options
+     * @param  array|null                             $validations
+     * @param  array|null                             $validationRules
+     * @param  array|null                             $validationOptions
      * @throws froq\database\record\RecordException
      */
-    public function __construct(Database $db = null, string $table = null, string $tablePrimary = null,
-        array $data = null, string|Form $form = null, array $options = null, array $validations = null,
+    public function __construct(Database $db = null, array $data = null,
+        string|Table $table = null, string|Form $form = null,
+        array $options = null, array $validations = null,
         array $validationRules = null, array $validationOptions = null)
     {
-        // Try to use active app database object.
-        $db ??= function_exists('app') ? app()->database() : throw new RecordException(
-            'No database given to deal, be sure running this module with `froq\app` ' .
-            'module and be sure `database` option exists in app config or pass $db argument'
-        );
-
-        $this->db    = $db;
-        $this->query = new Query($db, $table);
-        $this->state = new State();
+        // Try to use active database when non given.
+        $this->db = $db ?? Helper::getActiveDatabase();
 
         $data && $this->data = $data;
 
-        // Both form class & instance accepted.
+        $this->query = new Query($db);
+        $this->state = new State();
+
+        if ($table) {
+            if ($table instanceof Table) {
+                $this->table = $table;
+            } else {
+                $this->table = new Table($table);
+            }
+            $table = $this->table->getName();
+            $table && $this->query->table($this->table->getName());
+        }
+
         if ($form) {
             if ($form instanceof Form) {
                 $this->form      = $form;
@@ -89,9 +95,7 @@ class Record implements RecordInterface
             $validationRules ??= $validations;
         }
 
-        // Set table & validation stuff.
-        $table             && $this->table             = $table;
-        $tablePrimary      && $this->tablePrimary      = $tablePrimary;
+        // Set validation stuff.
         $validationRules   && $this->validationRules   = $validationRules;
         $validationOptions && $this->validationOptions = $validationOptions;
     }
@@ -110,7 +114,8 @@ class Record implements RecordInterface
 
         $this->query->reset();
         if (isset($this->table)) {
-            $this->query->table($this->table);
+            $this->table = clone $this->table;
+            $this->query->table($this->table->getName());
         }
     }
 
@@ -193,9 +198,9 @@ class Record implements RecordInterface
     public final function getFormInstance(): Form
     {
         // Use internal or own (current) form/form class if available.
-        $form = $this->form ?? $this->formClass ?? new Form(
-            $this->db, $this->getTable(), $this->getTablePrimary(),
-            record: $this, data: $this->getData(), options: $this->getOptions(),
+        $form = $this->form ?? $this->formClass ?? new Form($this->db,
+            record: $this, data: $this->getData(), table: $this->getTable(),
+            options: $this->getOptions(), validations: null,
             validationRules: $this->getValidationRules(), validationOptions: $this->getValidationOptions()
         );
 
@@ -239,7 +244,7 @@ class Record implements RecordInterface
 
     /** Aliases. */
     public final function okay(...$args) { return $this->isValid(...$args); }
-    public final function found(...$args) { return $this->isFinded(...$args); }
+    public final function found() { return $this->isFinded(); }
 
     /**
      * Proxy method to own form class for validation processes.
@@ -282,7 +287,7 @@ class Record implements RecordInterface
      *
      * @return bool
      */
-    public final function isRemoved(int &$removed = null): bool
+    public final function isRemoved(): bool
     {
         return (bool) $this->removed();
     }
@@ -577,7 +582,8 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        $return = $return ?: $this->query->pull('return', 'fields');
+        // When no "return" given, an empty list returns even it was successful.
+        $return = $return ?: $this->query->pull('return', 'fields') ?: $primary;
         $result = $query->delete(return: $return)->run(fetch: 'array');
 
         // Copy with rows & "removed" state.
@@ -742,23 +748,19 @@ class Record implements RecordInterface
      */
     private function pack(int|string|array $id = null, bool $primary = false): array
     {
-        if (empty($this->table)) {
-            throw new RecordException(
-                'No $table property defined on %s class, call setTable()',
-                static::class
-            );
+        $table = $this->getTable();
+
+        if (!$table || !$table->getName()) {
+            throw new RecordException('Empty table for %s, call setTable()', static::class);
         }
-        if ($primary && empty($this->tablePrimary)) {
-            throw new RecordException(
-                'No $tablePrimary property defined on %s class, call setTablePrimary()',
-                static::class
-            );
+        if ($primary && !$table->getPrimary()) {
+            throw new RecordException('Empty table primary for %s, call table setPrimary()', static::class);
         }
 
-        // Filter multiple ids.
+        // Filter multiple ids by not-null check.
         is_array($id) && $id = array_filter($id, fn($id) => $id !== null);
 
-        return [$this->table, $this->tablePrimary ?? null, $id];
+        return [$table->getName(), $table->getPrimary(), $id];
     }
 
     /**
@@ -785,7 +787,7 @@ class Record implements RecordInterface
         $thats = [];
 
         if ($data) {
-            $primary = $this->getTablePrimary();
+            $primary = $this->table->getPrimary();
 
             foreach ($data as $dat) {
                 $that = clone $this;
