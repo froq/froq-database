@@ -58,7 +58,7 @@ trait ValidationTrait
         // Validations can be combined or simple array'ed.
         if ($validations) {
             if (isset($validations['@rules'])) {
-               $rules = array_pull($validations, '@rules');
+                $rules = array_pull($validations, '@rules');
             }
             if (isset($validations['@options'])) {
                 $options = array_pull($validations, '@options');
