@@ -52,7 +52,7 @@ final class Link
      */
     public function __sleep()
     {
-        return ['driver', 'options'];
+        return ['options'];
     }
 
     /**
