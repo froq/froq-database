@@ -139,13 +139,10 @@ final class MetaParser
      */
     private static function getDataFrom(ReflectionClass|ReflectionProperty $ref): array|null
     {
-        // Eg: #[meta(table:"users", ..)]
         if ($attributes = $ref->getAttributes()) {
             return self::getDataFromAttributes($attributes);
         }
 
-        // Eg: @meta(table:"users", ..)
-        // Eg: @meta(table="users", ..)
         if ($annotations = $ref->getDocComment()) {
             return self::getDataFromAnnotations($annotations, $ref);
         }
