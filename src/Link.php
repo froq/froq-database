@@ -48,6 +48,22 @@ final class Link
     {}
 
     /**
+     * Return valid properties.
+     */
+    public function __sleep()
+    {
+        return ['driver', 'options'];
+    }
+
+    /**
+     * Re-connect.
+     */
+    public function __wakeup()
+    {
+        $this->connect();
+    }
+
+    /**
      * Get pdo property.
      *
      * @return PDO|null
