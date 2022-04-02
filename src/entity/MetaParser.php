@@ -139,13 +139,13 @@ final class MetaParser
      */
     private static function getDataFrom(ReflectionClass|ReflectionProperty $ref): array|null
     {
-        // Eg: #[meta(id:"id", table:"users", ..)]
+        // Eg: #[meta(table:"users", ..)]
         if ($attributes = $ref->getAttributes()) {
             return self::getDataFromAttributes($attributes);
         }
 
-        // Eg: @meta(id:"id", table:"users", ..)
-        // Eg: @meta(id="id", table="users", ..)
+        // Eg: @meta(table:"users", ..)
+        // Eg: @meta(table="users", ..)
         if ($annotations = $ref->getDocComment()) {
             return self::getDataFromAnnotations($annotations, $ref);
         }
@@ -161,7 +161,7 @@ final class MetaParser
      */
     private static function getDataFromAttributes(array $attributes): array|null
     {
-        // Eg: #[meta(id:"id", table:"users", ..)]
+        // Eg: #[meta(table:"users", ..)]
         foreach ($attributes as $attribute) {
             $name = Objects::getShortName($attribute->getName());
             if (strtolower($name) == 'meta') {
@@ -186,8 +186,8 @@ final class MetaParser
             return [];
         }
 
-        // Eg: @meta(id:"id", table:"users", ..)
-        // Eg: @meta(id="id", table="users", ..)
+        // Eg: @meta(table:"users", ..)
+        // Eg: @meta(table="users", ..)
         if (preg_match('~@meta\s*\((.+)\)~si', $annotations, $match)) {
             $lines = preg_split('~\n~', $match[1], -1, 1);
 
