@@ -54,7 +54,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             return;
         }
 
-        $options = $this->prepareOptions($options);
+        $options = self::prepareOptions($options);
 
         // Set fetch option.
         if ($options['fetch']) {
@@ -395,7 +395,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Prepare options with defaults for constructor.
      */
-    private function prepareOptions(array|null $options): array
+    private static function prepareOptions(array|null $options): array
     {
         static $optionsDefault = [
             'fetch' => null, 'sequence' => true,
