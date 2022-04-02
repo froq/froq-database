@@ -42,6 +42,19 @@ abstract class Entity implements EntityInterface
         return $this->toArray();
     }
 
+    /** @magic */
+    public function __serialize(): array
+    {
+        return EntityUtil::store($this);
+    }
+
+    /** @magic */
+    public function __unserialize(array $data): void
+    {
+        $data = EntityUtil::unstore($this, $data);
+        $data && $this->fill(...$data);
+    }
+
     /**
      * Run a "save" action using manager.
      *

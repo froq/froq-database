@@ -33,6 +33,19 @@ abstract class EntityList extends \ItemList implements EntityListInterface
         $entities && $this->fill(...$entities);
     }
 
+    /** @magic */
+    public function __serialize(): array
+    {
+        return EntityUtil::store($this);
+    }
+
+    /** @magic */
+    public function __unserialize(array $data): void
+    {
+        $data = EntityUtil::unstore($this, $data);
+        $data && $this->fill(...$data);
+    }
+
     /**
      * Run a "save-all" action using manager.
      *

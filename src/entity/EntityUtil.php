@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
+use froq\util\misc\{Storage, Package};
+
 /**
  * @package froq\database\entity
  * @object  froq\database\entity\EntityUtil
@@ -54,5 +56,53 @@ class EntityUtil extends \StaticClass
         }
 
         return $data;
+    }
+
+    /**
+     * Store given object for serialize operations keeping private stuff original.
+     *
+     * @param  Entity|EntityList $object
+     * @return array
+     */
+    public static function store(Entity|EntityList $object): array
+    {
+        $pack = new Package(data: $object->toArray());
+        $pack->manager = $object->getManager();
+
+        if ($object instanceof Entity) {
+            $pack->states = $object->getStates();
+        } else {
+            $pack->pager = $object->getPager();
+        }
+
+        // Keep UUID public to take back from unserialize call.
+        $pack->data['@uuid'] = $uuid = uuid();
+
+        Storage::store($uuid, $pack);
+
+        return $pack->data;
+    }
+
+    /**
+     * Unstore given object for unserialize operations keeping private stuff original.
+     *
+     * @param  Entity|EntityList $object
+     * @return array
+     */
+    public static function unstore(Entity|EntityList $object, array $data): array
+    {
+        $pack = Storage::unstore($data['@uuid']);
+        $pack->manager && $object->setManager($pack->manager);
+
+        if ($object instanceof Entity) {
+            $object->initState(...$pack->states);
+        } else {
+            $pack->pager && $object->setPager($pack->pager);
+        }
+
+        // Drop unowned UUID field.
+        unset($pack->data['@uuid']);
+
+        return $pack->data;
     }
 }
