@@ -758,7 +758,7 @@ final class Manager
                 );
             }
 
-            $id = $this->getPropertyValue($entity, $primaryMeta);
+            $id = $this->getPropertyValue($entity, $primaryMeta->getReflection());
             if ($id === null) {
                 throw new ManagerException(
                     'Item %s[%d] has null primary (%s) value',
