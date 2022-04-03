@@ -375,7 +375,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function offsetExists(mixed $index): bool
     {
-        return $this->row($index) !== null;
+        return $this->rows->offsetExists($index);
     }
 
     /**
@@ -383,7 +383,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function offsetGet(mixed $index): array|object|null
     {
-        return $this->row($index);
+        return $this->rows->offsetGet($index);
     }
 
     /**
