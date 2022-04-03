@@ -39,6 +39,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
 
     /**
      * Constructor.
+     *
      * @param  PDO          $pdo
      * @param  PDOStatement $pdoStatement
      * @param  array|null   $options
@@ -134,9 +135,32 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
+     * Get last insert id.
+     *
+     * @return int|null
+     * @since  6.0
+     */
+    public function getId(): int|null
+    {
+        return $this->id();
+    }
+
+    /**
+     * Get a copy of a row.
+     *
+     * @return object|null
+     * @since  6.0
+     */
+    public function getRow(): object|null
+    {
+        return $this->rows(0, true);
+    }
+
+    /**
      * Get a copy of ids property.
      *
      * @return froq\database\result\Ids
+     * @since  6.0
      */
     public function getIds(): Ids
     {
@@ -147,6 +171,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      * Get a copy of rows property.
      *
      * @return froq\database\result\Rows
+     * @since  6.0
      */
     public function getRows(): Rows
     {
@@ -272,6 +297,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      * @param  int          $index
      * @param  string|array $field
      * @return mixed
+     * @since  6.0
      */
     public function cols(int $index, string|array $field): mixed
     {
