@@ -350,6 +350,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function free(): void
     {
+        // This will set all properties as "uninitialized".
         unset($this->count, $this->ids, $this->rows);
     }
 
