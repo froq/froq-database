@@ -137,10 +137,10 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get last insert id.
      *
-     * @return int|null
+     * @return ?int
      * @since  6.0
      */
-    public function getId(): int|null
+    public function getId(): ?int
     {
         return $this->id();
     }
@@ -148,10 +148,10 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get a copy of a row.
      *
-     * @return object|null
+     * @return ?Row
      * @since  6.0
      */
-    public function getRow(): object|null
+    public function getRow(): ?Row
     {
         return $this->rows(0, true);
     }
@@ -170,51 +170,17 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get a copy of rows property.
      *
+     * @param  bool $init
      * @return froq\database\result\Rows
      * @since  6.0
      */
-    public function getRows(): Rows
+    public function getRows(bool $init = true): Rows
     {
-        return (clone $this->rows);
-    }
-
-    /**
-     * @inheritDoc froq\common\interface\Arrayable
-     */
-    public function toArray(): array
-    {
-        return $this->rows->toArray();
-    }
-
-    /**
-     * Get rows as given class instance.
-     *
-     * @param  string $class
-     * @param  bool   $ctor
-     * @param  array  $ctorArgs
-     * @return array<object>
-     */
-    public function toClass(string $class, bool $ctor = false, array $ctorArgs = []): array
-    {
-        $ret = [];
-
-        if (!$ctor) {
-            // When class consumes row fields as property.
-            foreach ($this->toArray() as $row) {
-                $class = new $class(...$ctorArgs);
-                foreach ($row as $name => $value) {
-                    $class->$name = $value;
-                }
-                $ret[] = $class;
-            }
-        } else {
-            // When class consumes row as parameter.
-            foreach ($this->toArray() as $row) {
-                $ret[] = new $class($row, ...$ctorArgs);
-            }
+        if ($init) {
+            return (clone $this->rows)
+                ->map(fn($row) => $this->toRow($row));
         }
-
-        return $ret;
+        return (clone $this->rows);
     }
 
     /**
@@ -412,6 +378,45 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     {
         // This will set all properties as "uninitialized".
         unset($this->count, $this->ids, $this->rows);
+    }
+
+    /**
+     * Get rows as given class instance.
+     *
+     * @param  string $class
+     * @param  bool   $ctor
+     * @param  array  $ctorArgs
+     * @return array<object>
+     */
+    public function toClass(string $class, bool $ctor = false, array $ctorArgs = []): array
+    {
+        $ret = [];
+
+        if (!$ctor) {
+            // When class consumes row fields as property.
+            foreach ($this->toArray() as $row) {
+                $class = new $class(...$ctorArgs);
+                foreach ($row as $name => $value) {
+                    $class->$name = $value;
+                }
+                $ret[] = $class;
+            }
+        } else {
+            // When class consumes row as parameter.
+            foreach ($this->toArray() as $row) {
+                $ret[] = new $class($row, ...$ctorArgs);
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * @inheritDoc froq\common\interface\Arrayable
+     */
+    public function toArray(bool $deep = false): array
+    {
+        return $this->rows->toArray($deep);
     }
 
     /**
