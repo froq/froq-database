@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\sql\{Sql, Name};
+use froq\database\result\{Row, Rows};
 use froq\common\trait\FactoryTrait;
 use froq\{pager\Pager, logger\Logger};
 use PDO, PDOStatement, PDOException, Throwable;
@@ -247,11 +248,41 @@ final class Database
      * @return froq\database\Result
      * @since  6.0
      */
-    public function getResult(mixed ...$args): Result
+    public function getResult(string $query, mixed ...$args): Result
     {
         $args['raw'] = true;
 
-        return $this->getAll(...$args);
+        return $this->getAll($query, ...$args);
+    }
+
+    /**
+     * Bridge method to `getResult()` for returning a `Row` instance.
+     *
+     * @param  string   $query
+     * @param  mixed ...$args Same with getResult().
+     * @return froq\database\result\Row|null
+     * @since  6.0
+     */
+    public function getRow(string $query, mixed ...$args): Row|null
+    {
+        $args = ['fetch' => 'array', 'flat' => null] + $args;
+
+        return $this->getResult($query, ...$args)->rows(0, true);
+    }
+
+    /**
+     * Bridge method to `getResult()` for returning a `Row` instance.
+     *
+     * @param  string   $query
+     * @param  mixed ...$args Same with getResult().
+     * @return froq\database\result\Rows
+     * @since  6.0
+     */
+    public function getRows(string $query, mixed ...$args): Rows
+    {
+        $args = ['fetch' => 'array', 'flat' => null] + $args;
+
+        return $this->getResult($query, ...$args)->rows(null, true);
     }
 
     /**
@@ -325,15 +356,46 @@ final class Database
     /**
      * Bridge method to `selectAll()` for returning a `Result` instance.
      *
+     * @param  string   $table
      * @param  mixed ...$args Same with selectAll().
      * @return froq\database\Result
      * @since  6.0
      */
-    public function selectResult(mixed ...$args): Result
+    public function selectResult(string $table, mixed ...$args): Result
     {
         $args['raw'] = true;
 
-        return $this->selectAll(...$args);
+        return $this->selectAll($table, ...$args);
+    }
+
+    /**
+     * Bridge method to `selectResult()` for returning a `Row` instance.
+     *
+     * @param  string   $table
+     * @param  mixed ...$args Same with selectResult().
+     * @return froq\database\result\Row|null
+     * @since  6.0
+     */
+    public function selectRow(string $table, mixed ...$args): Row|null
+    {
+        $args = ['fetch' => 'array', 'flat' => null, 'limit' => 1] + $args;
+
+        return $this->selectResult($table, ...$args)->rows(0, true);
+    }
+
+    /**
+     * Bridge method to `selectResult()` for returning a `Rows` instance.
+     *
+     * @param  string   $table
+     * @param  mixed ...$args Same with selectResult().
+     * @return froq\database\result\Rows
+     * @since  6.0
+     */
+    public function selectRows(string $table, mixed ...$args): Rows
+    {
+        $args = ['fetch' => 'array', 'flat' => null] + $args;
+
+        return $this->selectResult($table, ...$args)->rows(null, true);
     }
 
     /**
