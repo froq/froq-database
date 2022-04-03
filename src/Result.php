@@ -146,16 +146,11 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get a copy of rows property.
      *
-     * @param  bool $init
      * @return froq\database\result\Rows
      */
-    public function getRows(bool $init = false): Rows
+    public function getRows(): Rows
     {
-        $rows = (clone $this->rows);
-        if ($init) foreach ($rows as $i => $row) {
-            $rows[$i] = $this->toRow($row);
-        }
-        return $rows;
+        return (clone $this->rows);
     }
 
     /**
@@ -231,7 +226,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     public function row(int $index, bool $init = false): array|object|null
     {
         $row = $this->rows->item($index);
-        return ($init && $row) ? $this->toRow($row) : $row;
+        return $init && $row ? $this->toRow($row) : $row;
     }
 
     /**
@@ -245,9 +240,10 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     {
         if ($index !== null) {
             $row = $this->rows->item($index);
-            return ($init && $row) ? $this->toRow($row) : $row;
+            return $init && $row ? $this->toRow($row) : $row;
         }
-        return $this->rows->items();
+        $rows = $this->rows->items();
+        return $init ? $this->toRows($rows) : $rows;
     }
 
     /**
@@ -448,6 +444,14 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     private function toRow(array|object $data): Row
     {
         return new Row((array) $data);
+    }
+
+    /**
+     * Create a `Rows` instance mapping all items to `Row` instances.
+     */
+    private function toRows(array $data): Rows
+    {
+        return new Rows(array_map([$this, 'toRow'], $data));
     }
 
     /**
