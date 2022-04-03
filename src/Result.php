@@ -381,6 +381,52 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
+     * Map all items to given (map-like) class.
+     *
+     * Note: This method is mate of listTo(), so mapTo() must be called first
+     * for listing purposes.
+     *
+     * @param  string $class
+     * @param  array  $classArgs
+     * @return self
+     * @since  6.0
+     */
+    public function mapTo(string $class, array $classArgs = []): self
+    {
+        $object = new $class(...$classArgs);
+        foreach ($this->rows as $i => $row) {
+            $clone = clone $object;
+            foreach ($row as $name => $value) {
+                $clone->$name = $value;
+            }
+            $this->rows[$i] = $clone;
+        }
+
+        return $this;
+    }
+
+    /**
+     * List all items to given (list-like) class.
+     *
+     * Note: This method is mate of mapTo(), so listTo() must be called last
+     * for listing purposes.
+     *
+     * @param  string $class
+     * @param  array  $classArgs
+     * @return object
+     * @since  6.0
+     */
+    public function listTo(string $class, array $classArgs = []): object
+    {
+        $object = new $class(...$classArgs);
+        foreach ($this->rows as $row) {
+            $object[] = $row;
+        }
+
+        return $object;
+    }
+
+    /**
      * Get rows as given class instance.
      *
      * @param  string $class
