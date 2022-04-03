@@ -343,6 +343,17 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
+     * Free all properties.
+     *
+     * @return void
+     * @since  6.0
+     */
+    public function free(): void
+    {
+        unset($this->count, $this->ids, $this->rows);
+    }
+
+    /**
      * @inheritDoc Countable
      */
     public function count(): int
