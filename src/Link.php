@@ -22,11 +22,11 @@ final class Link
 {
     use FactoryTrait;
 
-    /** @var PDO|null */
-    private PDO|null $pdo;
+    /** @var ?PDO */
+    private ?PDO $pdo = null;
 
-    /** @var string */
-    private string $driver;
+    /** @var ?string */
+    private ?string $driver = null;
 
     /** @var array */
     private array $options;
@@ -66,21 +66,21 @@ final class Link
     /**
      * Get pdo property.
      *
-     * @return PDO|null
+     * @return ?PDO
      */
-    public function pdo(): PDO|null
+    public function pdo(): ?PDO
     {
-        return $this->pdo ?? null;
+        return $this->pdo;
     }
 
     /**
      * Get pdo driver property.
      *
-     * @return string|null
+     * @return ?string
      */
-    public function driver(): string|null
+    public function driver(): ?string
     {
-        return $this->driver ?? null;
+        return $this->driver;
     }
 
     /**
@@ -157,7 +157,7 @@ final class Link
      */
     public function isAlive(): bool
     {
-        return isset($this->pdo);
+        return $this->pdo != null;
     }
 
     /**
@@ -169,7 +169,7 @@ final class Link
      */
     public function setCharset(string $charset): void
     {
-        $this->isAlive() || throw new LinkException('Link is gone');
+        $this->isAlive() || throw new LinkException('Link is dead');
 
         $this->pdo->exec('SET NAMES ' . $this->pdo->quote($charset));
     }
@@ -183,7 +183,7 @@ final class Link
      */
     public function setTimezone(string $timezone): void
     {
-        $this->isAlive() || throw new LinkException('Link is gone');
+        $this->isAlive() || throw new LinkException('Link is dead');
 
         if ($this->driver == 'mysql') {
             $this->pdo->exec('SET time_zone = ' . $this->pdo->quote($timezone));
