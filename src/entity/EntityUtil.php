@@ -105,4 +105,50 @@ class EntityUtil extends \StaticClass
 
         return $pack->data;
     }
+
+    /**
+     * Convert given given object to JSON string applying filter/map params if given.
+     *
+     * Note: Map arguments (or $data only) must be passed byref for modifications or removals.
+     *
+     * @param  Entity|EntityList $object
+     * @param  int               $flags
+     * @param  callable|null     $filter
+     * @param  callable|null     $map
+     * @return string
+     */
+    public static function toJson(Entity|EntityList $object, int $flags = 0, callable $filter = null, callable $map = null): string
+    {
+        if ($object instanceof Entity) {
+            $data = $object->toArray(true);
+
+            if ($filter) {
+                $temp = [];
+                foreach ($data as $key => $value) {
+                    $filter($value, $key) && $temp[$key] = $value;
+                }
+
+                [$data, $temp] = [$temp, null];
+            }
+
+            // Map arguments must be passed byref for modifications.
+            if ($map) foreach ($data as $key => $value) {
+                $map($value, $key, $data);
+            }
+
+            return (string) json_encode($data, $flags);
+        } else {
+            $json = '';
+
+            foreach ($object->toArray() as $item) {
+                if ($item instanceof Entity) {
+                    $json .= $item->toJson($flags, $filter, $map);
+                } else {
+                    $json .= (string) json_encode($object, $flags);
+                }
+            }
+
+            return $json;
+        }
+    }
 }

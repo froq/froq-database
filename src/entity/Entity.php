@@ -189,9 +189,9 @@ abstract class Entity implements EntityInterface
     /**
      * @inheritDoc froq\common\interface\Jsonable
      */
-    public function toJson(int $flags = 0): string
+    public function toJson(int $flags = 0, callable $filter = null, callable $map = null): string
     {
-        return (string) json_encode($this->toArray(true), $flags);
+        return EntityUtil::toJson($this, $flags, $filter, $map);
     }
 
     /**

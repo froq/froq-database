@@ -153,6 +153,14 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     }
 
     /**
+     * @override
+     */
+    public function toJson(int $flags = 0, callable $filter = null, callable $map = null): string
+    {
+        return EntityUtil::toJson($this, $flags, $filter, $map);
+    }
+
+    /**
      * Get action result filtering items by given action.
      */
     private function getActionResult(string $action): bool
