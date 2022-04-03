@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\result\{Ids, Rows};
+use froq\database\result\{Ids, Rows, Row};
 use froq\common\interface\Arrayable;
 use PDO, PDOStatement, PDOException;
 
@@ -138,7 +138,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function getIds(): Ids
     {
-        return clone $this->ids;
+        return (clone $this->ids);
     }
 
     /**
@@ -148,7 +148,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
      */
     public function getRows(): Rows
     {
-        return clone $this->rows;
+        return (clone $this->rows);
     }
 
     /**
@@ -217,24 +217,28 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get one row.
      *
-     * @param  int $index
+     * @param  int  $index
+     * @param  bool $init
      * @return array|object|null
      */
-    public function row(int $index): array|object|null
+    public function row(int $index, bool $init = false): array|object|null
     {
-        return $this->rows->item($index);
+        $row = $this->rows->item($index);
+        return $init ? $this->toRow($row) : $row;
     }
 
     /**
      * Get one row or all rows.
      *
      * @param  int|null $index
+     * @param  bool     $init
      * @return array<array|object>|array|object|null
      */
-    public function rows(int $index = null): array|object|null
+    public function rows(int $index = null, bool $init = false): array|object|null
     {
         if ($index !== null) {
-            return $this->rows->item($index);
+            $row = $this->rows->item($index);
+            return $init ? $this->toRow($row) : $row;
         }
         return $this->rows->items();
     }
@@ -381,7 +385,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * @inheritDoc ArrayAccess
      */
-    public function offsetGet(mixed $index): array|object|null
+    public function offsetGet(mixed $index): mixed
     {
         return $this->rows->offsetGet($index);
     }
@@ -402,6 +406,14 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     public function offsetUnset(mixed $index): never
     {
         throw new \ReadonlyError($this);
+    }
+
+    /**
+     * Create a `Row` instance or return null data is empty.
+     */
+    private function toRow(array|object|null $data): Row|null
+    {
+        return $data ? new Row((array) $data) : null;
     }
 
     /**

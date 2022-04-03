@@ -8,13 +8,13 @@ declare(strict_types=1);
 namespace froq\database\result;
 
 /**
- * A class, for collecting `Result` rows as list.
+ * A class, for keeping `Result` rows as item.
  *
  * @package froq\database\result
- * @object  froq\database\result\Rows
+ * @object  froq\database\result\Row
  * @author  Kerem Güneş
  * @since   6.0
  * @internal
  */
-class Rows extends \ItemList
+class Row extends \Item
 {}
