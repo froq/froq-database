@@ -224,7 +224,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     public function row(int $index, bool $init = false): array|object|null
     {
         $row = $this->rows->item($index);
-        return $init ? $this->toRow($row) : $row;
+        return ($init && $row) ? $this->toRow($row) : $row;
     }
 
     /**
@@ -238,7 +238,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     {
         if ($index !== null) {
             $row = $this->rows->item($index);
-            return $init ? $this->toRow($row) : $row;
+            return ($init && $row) ? $this->toRow($row) : $row;
         }
         return $this->rows->items();
     }
@@ -436,11 +436,11 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Create a `Row` instance or return null data is empty.
+     * Create a `Row` instance.
      */
-    private function toRow(array|object|null $data): Row|null
+    private function toRow(array|object $data): Row
     {
-        return $data ? new Row((array) $data) : null;
+        return new Row((array) $data);
     }
 
     /**

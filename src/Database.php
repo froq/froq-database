@@ -355,6 +355,7 @@ final class Database
      * @param  array  $data
      * @param  array  $options
      * @return mixed
+     * @throws froq\database\DatabaseException
      */
     public function insert(string $table, array $data, array $options = null): mixed
     {
