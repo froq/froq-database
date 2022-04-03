@@ -209,10 +209,7 @@ final class Database
         $row = $this->query($query, $params, ['fetch' => $fetch])->rows(0);
 
         // When a single column value wanted.
-        if ($flat && $row) {
-            $row = (array) $row;
-            $row = array_select($row, is_string($flat) ? $flat : key($row));
-        }
+        $flat && $row = $this->getFlattenData($flat, $row, 1);
 
         return $row;
     }
@@ -238,10 +235,7 @@ final class Database
         $rows = $result->rows();
 
         // When a single column value wanted.
-        if ($flat && $rows) {
-            $rows = (array) $rows;
-            $rows = array_column($rows, is_string($flat) ? $flat : key($rows[0]));
-        }
+        $flat && $rows = $this->getFlattenData($flat, $rows);
 
         return $rows;
     }
@@ -285,10 +279,7 @@ final class Database
         $row = $query->run($fetch)->rows(0);
 
         // When a single column value wanted.
-        if ($flat && $row) {
-            $row = (array) $row;
-            $row = array_select($row, is_string($flat) ? $flat : key($row));
-        }
+        $flat && $row = $this->getFlattenData($flat, $row, 1);
 
         return $row;
     }
@@ -326,10 +317,7 @@ final class Database
         $rows = $result->rows();
 
         // When a single column value wanted.
-        if ($flat && $rows) {
-            $rows = (array) $rows;
-            $rows = array_column($rows, is_string($flat) ? $flat : key($rows[0]));
-        }
+        $flat && $rows = $this->getFlattenData($flat, $rows);
 
         return $rows;
     }
@@ -399,17 +387,7 @@ final class Database
 
         $result = $query->run();
 
-        // If rows/fields wanted as return.
-        if ($return) {
-            return $batch ? $result->rows() : $result->cols(0, $return);
-        }
-
-        // If sequence isn't false return id/ids (@default=true).
-        if ($sequence !== false) {
-            return $batch ? $result->ids() : $result->id();
-        }
-
-        return $result->count();
+        return $this->getReturningData($result, $return, $batch, $sequence);
     }
 
     /**
@@ -441,12 +419,7 @@ final class Database
 
         $result = $query->run();
 
-        // If rows/fields wanted as return.
-        if ($return) {
-            return $batch ? $result->rows() : $result->cols(0, $return);
-        }
-
-        return $result->count();
+        return $this->getReturningData($result, $return, $batch);
     }
 
     /**
@@ -477,12 +450,7 @@ final class Database
 
         $result = $query->run();
 
-        // If rows/fields wanted as return.
-        if ($return) {
-            return $batch ? $result->rows() : $result->cols(0, $return);
-        }
-
-        return $result->count();
+        return $this->getReturningData($result, $return, $batch);
     }
 
     /**
@@ -531,26 +499,7 @@ final class Database
     public function increase(string $table, string|array $field, int|float $value = 1, string|array $where = null,
         array $params = null, array $options = null): mixed
     {
-        $return = $fetch = $batch = $limit = null;
-        if ($options) {
-            [$return, $fetch, $batch, $limit] = array_select(
-                $options, ['return', 'fetch', 'batch', 'limit']
-            );
-        }
-
-        $query = $this->initQuery($table)->increase($field, $value, !!$return);
-
-        $where && $query->where(...$this->prepareWhereInput($where, $params));
-        $limit && $query->limit($limit);
-
-        $result = $query->run($fetch);
-
-        if (!$return) {
-            return $result->count();
-        }
-
-        // If rows/fields wanted as return.
-        return $batch ? $result->rows() : $result->cols(0, is_string($field) ? $field : array_keys($field));
+        return $this->doIncreaseDecrease('increase', $table, $field, $value, $where, $params, $options);
     }
 
     /**
@@ -567,26 +516,7 @@ final class Database
     public function decrease(string $table, string|array $field, int|float $value = 1, string|array $where = null,
         array $params = null, array $options = null): mixed
     {
-        $return = $fetch = $batch = $limit = null;
-        if ($options) {
-            [$return, $fetch, $batch, $limit] = array_select(
-                $options, ['return', 'fetch', 'batch', 'limit']
-            );
-        }
-
-        $query = $this->initQuery($table)->decrease($field, $value, !!$return);
-
-        $where && $query->where(...$this->prepareWhereInput($where, $params));
-        $limit && $query->limit($limit);
-
-        $result = $query->run($fetch);
-
-        if (!$return) {
-            return $result->count();
-        }
-
-        // If rows/fields wanted as return.
-        return $batch ? $result->rows() : $result->cols(0, is_string($field) ? $field : array_keys($field));
+        return $this->doIncreaseDecrease('decrease', $table, $field, $value, $where, $params, $options);
     }
 
     /**
@@ -1134,5 +1064,68 @@ final class Database
         }
 
         return [$where, $params];
+    }
+
+    /**
+     * Get flatten data reducing fields to single dimension.
+     */
+    private function getFlattenData(string|bool $flat, array|object|null $data, int $limit = null): mixed
+    {
+        if ($data) {
+            $data = is_list($data) ? $data : (array) $data;
+            if ($limit == 1) {
+                $data = array_select($data, is_string($flat) ? $flat : key($data));
+            } else {
+                $data = array_column($data, is_string($flat) ? $flat : key($data[0]));
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * Get returning data for insert/update/delete methods.
+     */
+    private function getReturningData(Result $result, bool|string|array|null $return, bool|null $batch, bool $sequence = null): mixed
+    {
+        // If rows/fields wanted as return.
+        if ($return) {
+            return $batch ? $result->rows() : $result->cols(0, $return);
+        }
+
+        // If sequence isn't false return id/ids (@default=true).
+        if ($sequence !== false) {
+            return $batch ? $result->ids() : $result->id();
+        }
+
+        return $result->count();
+    }
+
+    /**
+     * Co-operating method for increase/decrease methods.
+     */
+    private function doIncreaseDecrease(string $method, string $table, string|array $field, int|float $value,
+        string|array|null $where, array|null $params, array|null $options): mixed
+    {
+        $return = $fetch = $batch = $limit = null;
+        if ($options) {
+            [$return, $fetch, $batch, $limit] = array_select(
+                $options, ['return', 'fetch', 'batch', 'limit']
+            );
+        }
+
+        $query = $this->initQuery($table)->{$method}($field, $value, !!$return);
+
+        $where && $query->where(...$this->prepareWhereInput($where, $params));
+        $limit && $query->limit($limit);
+
+        $result = $query->run($fetch);
+
+        // If rows/fields wanted as return.
+        if ($return) {
+            return $batch ? $result->rows()
+                 : $result->cols(0, is_string($field) ? $field : array_keys($field));
+        }
+
+        return $result->count();
     }
 }
