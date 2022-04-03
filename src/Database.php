@@ -28,11 +28,11 @@ final class Database
     /** @var froq\database\Link */
     private Link $link;
 
-    /** @var froq\logger\Logger|null */
-    private Logger|null $logger = null;
+    /** @var ?froq\logger\Logger */
+    private ?Logger $logger = null;
 
-    /** @var froq\database\Profiler|null. */
-    private Profiler|null $profiler = null;
+    /** @var ?froq\database\Profiler */
+    private ?Profiler $profiler = null;
 
     /** @var array */
     private array $options;
@@ -89,30 +89,24 @@ final class Database
     }
 
     /**
-     * Get logger property or throw a `DatabaseException` if no logger.
+     * Get logger property.
      *
-     * @return froq\logger\Logger
-     * @throws froq\database\DatabaseException
+     * @return ?froq\logger\Logger
      * @since  4.9
      */
-    public function logger(): Logger
+    public function logger(): ?Logger
     {
-        return $this->logger ?? throw new DatabaseException(
-            'Database object has no logger, be sure `logging` option is not empty'
-        );
+        return $this->logger;
     }
 
     /**
-     * Get profiler property or throw a `DatabaseException` if no profiler.
+     * Get profiler property.
      *
-     * @return froq\database\Profiler
-     * @throws froq\database\DatabaseException
+     * @return ?froq\database\Profiler
      */
-    public function profiler(): Profiler
+    public function profiler(): ?Profiler
     {
-        return $this->profiler ?? throw new DatabaseException(
-            'Database object has no profiler, be sure `profiling` option is not empty or false'
-        );
+        return $this->profiler;
     }
 
     /**
