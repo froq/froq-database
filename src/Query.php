@@ -493,11 +493,11 @@ final class Query
      *
      * @param  array     $field
      * @param  float|int $value
-     * @param  bool      $return
+     * @param  bool|null $return
      * @return self
      * @since  5.0
      */
-    public function increase(string|array $field, int|float $value = 1, bool $return = false): self
+    public function increase(string|array $field, int|float $value = 1, bool $return = null): self
     {
         $data = $this->prepareIncreaseDecrease('+', $field, $value, $return);
 
@@ -509,11 +509,11 @@ final class Query
      *
      * @param  array     $field
      * @param  float|int $value
-     * @param  bool      $return
+     * @param  bool|null $return
      * @return self
      * @since  5.0
      */
-    public function decrease(string|array $field, int|float $value = 1, bool $return = false): self
+    public function decrease(string|array $field, int|float $value = 1, bool $return = null): self
     {
         $data = $this->prepareIncreaseDecrease('-', $field, $value, $return);
 
@@ -2156,12 +2156,12 @@ final class Query
      * @param  string       $sign
      * @param  string|array $field
      * @param  int|float    $value
-     * @param  bool         $return
+     * @param  bool|null    $return
      * @return array
      * @throws froq\database\QueryException
      * @since  5.0
      */
-    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = false): array
+    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = null): array
     {
         $data = [];
 
