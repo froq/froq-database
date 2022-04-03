@@ -122,8 +122,10 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             // Use present type that was set above or get default.
             $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
+            // @tome: Data is populated before the constructor is called.
+            // To populate data after the constructor use PDO::FETCH_PROPS_LATE.
             $rows = ($fetchType == PDO::FETCH_CLASS)
-                  ? $pdoStatement->fetchAll($fetchType, $fetchClass)
+                  ? $pdoStatement->fetchAll($fetchType|PDO::FETCH_PROPS_LATE, $fetchClass)
                   : $pdoStatement->fetchAll($fetchType);
 
             $this->rows->add(...$rows);
