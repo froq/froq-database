@@ -209,7 +209,7 @@ final class Database
         $row = $this->query($query, $params, ['fetch' => $fetch])->rows(0);
 
         // When a single column value wanted.
-        if ($row && $flat) {
+        if ($flat && $row) {
             $row = (array) $row;
             $row = array_select($row, is_string($flat) ? $flat : key($row));
         }
@@ -224,19 +224,40 @@ final class Database
      * @param  array|null        $params
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
-     * @return array|null
+     * @param  bool|null         $raw For returning a raw Result instance.
+     * @return mixed
      */
-    public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null): array|null
+    public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null,
+        bool $raw = false): mixed
     {
-        $rows = $this->query($query, $params, ['fetch' => $fetch])->rows();
+        $result = $this->query($query, $params, ['fetch' => $fetch]);
+        if ($raw) {
+            return $result;
+        }
+
+        $rows = $result->rows();
 
         // When a single column value wanted.
-        if ($rows && $flat) {
+        if ($flat && $rows) {
             $rows = (array) $rows;
             $rows = array_column($rows, is_string($flat) ? $flat : key($rows[0]));
         }
 
         return $rows;
+    }
+
+    /**
+     * Bridge method to `getAll()` for returning a `Result` instance.
+     *
+     * @param  mixed ...$args Same with getAll().
+     * @return froq\database\Result
+     * @since  6.0
+     */
+    public function getResult(mixed ...$args): Result
+    {
+        $args['raw'] = true;
+
+        return $this->getAll(...$args);
     }
 
     /**
@@ -264,7 +285,7 @@ final class Database
         $row = $query->run($fetch)->rows(0);
 
         // When a single column value wanted.
-        if ($row && $flat) {
+        if ($flat && $row) {
             $row = (array) $row;
             $row = array_select($row, is_string($flat) ? $flat : key($row));
         }
@@ -284,7 +305,7 @@ final class Database
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
      * @param  string|null       $op
-     * @param  string|null       $raw For returning a raw Result instance.
+     * @param  bool|null         $raw For returning a raw Result instance.
      * @return mixed
      */
     public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,
@@ -297,14 +318,15 @@ final class Database
         $order && $query->orderBy($order);
         $limit && $query->limit(...(array) $limit);
 
+        $result = $query->run($fetch);
         if ($raw) {
-            return $query->run($fetch);
+            return $result;
         }
 
-        $rows = $query->run($fetch)->rows();
+        $rows = $result->rows();
 
         // When a single column value wanted.
-        if ($rows && $flat) {
+        if ($flat && $rows) {
             $rows = (array) $rows;
             $rows = array_column($rows, is_string($flat) ? $flat : key($rows[0]));
         }
@@ -315,15 +337,15 @@ final class Database
     /**
      * Bridge method to `selectAll()` for returning a `Result` instance.
      *
-     * @param  mixed ...$selectArgs Same as selectAll().
+     * @param  mixed ...$args Same with selectAll().
      * @return froq\database\Result
      * @since  6.0
      */
-    public function selectResult(mixed ...$selectArgs): Result
+    public function selectResult(mixed ...$args): Result
     {
-        $selectArgs['raw'] = true;
+        $args['raw'] = true;
 
-        return $this->selectAll(...$selectArgs);
+        return $this->selectAll(...$args);
     }
 
     /**
