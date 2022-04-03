@@ -206,16 +206,15 @@ final class Database
      */
     public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null): mixed
     {
-        $result = $this->query($query, $params, ['fetch' => $fetch])
-                       ->rows(0);
+        $row = $this->query($query, $params, ['fetch' => $fetch])->rows(0);
 
         // When a single column value wanted.
-        if ($result && $flat) {
-            $result = (array) $result;
-            $result = array_select($result, is_string($flat) ? $flat : key($result));
+        if ($row && $flat) {
+            $row = (array) $row;
+            $row = array_select($row, is_string($flat) ? $flat : key($row));
         }
 
-        return $result;
+        return $row;
     }
 
     /**
@@ -229,16 +228,15 @@ final class Database
      */
     public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null): array|null
     {
-        $result = $this->query($query, $params, ['fetch' => $fetch])
-                       ->rows();
+        $rows = $this->query($query, $params, ['fetch' => $fetch])->rows();
 
         // When a single column value wanted.
-        if ($result && $flat) {
-            $result = (array) $result;
-            $result = array_column($result, is_string($flat) ? $flat : key($result[0]));
+        if ($rows && $flat) {
+            $rows = (array) $rows;
+            $rows = array_column($rows, is_string($flat) ? $flat : key($rows[0]));
         }
 
-        return $result;
+        return $rows;
     }
 
     /**
@@ -263,15 +261,15 @@ final class Database
         $order && $query->orderBy($order);
         $query->limit(1);
 
-        $result = $query->run($fetch)->rows(0);
+        $row = $query->run($fetch)->rows(0);
 
         // When a single column value wanted.
-        if ($result && $flat) {
-            $result = (array) $result;
-            $result = array_select($result, is_string($flat) ? $flat : key($result));
+        if ($row && $flat) {
+            $row = (array) $row;
+            $row = array_select($row, is_string($flat) ? $flat : key($row));
         }
 
-        return $result;
+        return $row;
     }
 
     /**
@@ -303,15 +301,15 @@ final class Database
             return $query->run($fetch);
         }
 
-        $result = $query->run($fetch)->rows();
+        $rows = $query->run($fetch)->rows();
 
         // When a single column value wanted.
-        if ($result && $flat) {
-            $result = (array) $result;
-            $result = array_column($result, is_string($flat) ? $flat : key($result[0]));
+        if ($rows && $flat) {
+            $rows = (array) $rows;
+            $rows = array_column($rows, is_string($flat) ? $flat : key($rows[0]));
         }
 
-        return $result;
+        return $rows;
     }
 
     /**
@@ -378,24 +376,12 @@ final class Database
 
         $result = $query->run();
 
-        // If rows wanted as return.
+        // If rows/fields wanted as return.
         if ($return) {
-            if ($batch) {
-                $result = $result->rows();
-            } else {
-                // If single row wanted as return.
-                $result = $result->rows(0);
-                if (is_string($return)) {
-                    $resultArray = (array) $result;
-                    if (isset($resultArray[$return])) {
-                        $result = $resultArray[$return];
-                    }
-                }
-            }
-
-            return $result;
+            return $batch ? $result->rows() : $result->cols(0, $return);
         }
 
+        // If sequence isn't false return id/ids (@default=true).
         if ($sequence !== false) {
             return $batch ? $result->ids() : $result->id();
         }
@@ -432,22 +418,9 @@ final class Database
 
         $result = $query->run();
 
-        // If rows wanted as return.
+        // If rows/fields wanted as return.
         if ($return) {
-            if ($batch) {
-                $result = $result->rows();
-            } else {
-                // If single row wanted as return.
-                $result = $result->rows(0);
-                if (is_string($return)) {
-                    $resultArray = (array) $result;
-                    if (isset($resultArray[$return])) {
-                        $result = $resultArray[$return];
-                    }
-                }
-            }
-
-            return $result;
+            return $batch ? $result->rows() : $result->cols(0, $return);
         }
 
         return $result->count();
@@ -481,22 +454,9 @@ final class Database
 
         $result = $query->run();
 
-        // If rows wanted as return.
+        // If rows/fields wanted as return.
         if ($return) {
-            if ($batch) {
-                $result = $result->rows();
-            } else {
-                // If single row wanted as return.
-                $result = $result->rows(0);
-                if (is_string($return)) {
-                    $resultArray = (array) $result;
-                    if (isset($resultArray[$return])) {
-                        $result = $resultArray[$return];
-                    }
-                }
-            }
-
-            return $result;
+            return $batch ? $result->rows() : $result->cols(0, $return);
         }
 
         return $result->count();
@@ -555,33 +515,19 @@ final class Database
             );
         }
 
-        $query = $this->initQuery($table)->increase($field, $value, $return);
+        $query = $this->initQuery($table)->increase($field, $value, !!$return);
 
         $where && $query->where(...$this->prepareWhereInput($where, $params));
         $limit && $query->limit($limit);
 
-        $result = $query->run();
+        $result = $query->run($fetch);
 
-        // If rows wanted as return.
-        if ($return) {
-            if ($batch) {
-                $result = $result->rows();
-            } else {
-                // If single row wanted as return.
-                $result      = $result->rows(0);
-                $resultArray = (array) $result;
-                if (is_string($field)) {
-                    $result = $resultArray[$field];
-                } else {
-                    $fields = array_keys($field);
-                    $result = array_combine($fields, array_select($resultArray, $fields));
-                }
-            }
-
-            return $result;
+        if (!$return) {
+            return $result->count();
         }
 
-        return $result->count();
+        // If rows/fields wanted as return.
+        return $batch ? $result->rows() : $result->cols(0, is_string($field) ? $field : array_keys($field));
     }
 
     /**
@@ -605,33 +551,19 @@ final class Database
             );
         }
 
-        $query = $this->initQuery($table)->decrease($field, $value, $return);
+        $query = $this->initQuery($table)->decrease($field, $value, !!$return);
 
         $where && $query->where(...$this->prepareWhereInput($where, $params));
         $limit && $query->limit($limit);
 
-        $result = $query->run();
+        $result = $query->run($fetch);
 
-        // If rows wanted as return.
-        if ($return) {
-            if ($batch) {
-                $result = $result->rows();
-            } else {
-                // If single row wanted as return.
-                $result      = $result->rows(0);
-                $resultArray = (array) $result;
-                if (is_string($field)) {
-                    $result = $resultArray[$field];
-                } else {
-                    $fields = array_keys($field);
-                    $result = array_combine($fields, array_select($resultArray, $fields));
-                }
-            }
-
-            return $result;
+        if (!$return) {
+            return $result->count();
         }
 
-        return $result->count();
+        // If rows/fields wanted as return.
+        return $batch ? $result->rows() : $result->cols(0, is_string($field) ? $field : array_keys($field));
     }
 
     /**

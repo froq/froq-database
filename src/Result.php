@@ -58,7 +58,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
 
         // Set fetch option.
         if ($options['fetch']) {
-            $fetch = $options['fetch'][0];
+            $fetch =@ $options['fetch'][0];
             if ($fetch) {
                 $fetchType =@ self::FETCH[$fetch];
                 $fetchType || throw new ResultException(
@@ -261,6 +261,33 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     public function last(): array|object|null
     {
         return $this->rows->last();
+    }
+
+    /**
+     * Get only columns by given index/field(s).
+     *
+     * @param  int          $index
+     * @param  string|array $field
+     * @return mixed
+     */
+    public function cols(int $index, string|array $field): mixed
+    {
+        $row = $this->rows($index);
+
+        if ($row && $field != '*') {
+            $orow = new Row((array) $row);
+            // Single field.
+            if (is_string($field)) {
+                if ($orow->has($field)) {
+                    return $orow->get($field);
+                }
+            } elseif (is_array($field)) {
+                $vals = $orow->select($field, combine: true);
+                return is_array($row) ? $vals : (object) $vals;
+            }
+        }
+
+        return $row;
     }
 
     /**
