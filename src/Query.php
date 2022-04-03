@@ -42,6 +42,7 @@ final class Query
     public function __construct(Database $db, string $table = null)
     {
         $this->db = $db;
+        $this->db->link();
 
         $table && $this->table($table);
     }

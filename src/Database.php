@@ -34,46 +34,57 @@ final class Database
     /** @var froq\database\Profiler|null. */
     private Profiler|null $profiler = null;
 
+    /** @var array */
+    private array $options;
+
     /**
      * Constructor.
      *
-     * Init a `Database` object initing a `Link` object and auto-connecting, or throw a
-     * `DatabaseLinkException` if any connection error occurs.
-     *
-     * @param  array $options
-     * @throws froq\database\DatabaseLinkException
+     * @param array $options
      */
     public function __construct(array $options)
     {
         // Default is null (no logging).
-        $logging = $options['logging'] ?? null;
+        $logging = array_pluck($options, 'logging');
         if ($logging) {
             $this->logger = new Logger($logging);
             $this->logger->setOption('slowQuery', $logging['slowQuery'] ?? 0);
         }
 
         // Default is false (no profiling).
-        $profiling = $options['profiling'] ?? false;
+        $profiling = array_pluck($options, 'profiling');
         if ($profiling) {
             $this->profiler = new Profiler();
         }
 
-        $this->link = Link::init($options);
-        try {
-            empty($this->profiler) ? $this->link->connect()
-                : $this->profiler->profileConnection(fn() => $this->link->connect());
-        } catch (LinkException $e) {
-            throw new DatabaseLinkException($e);
-        }
+        $this->options = $options;
     }
 
     /**
-     * Get link property.
+     * Hide all debug info.
+     */
+    public function __debugInfo()
+    {}
+
+    /**
+     * Get link property connecting if no connection yet.
      *
      * @return froq\database\Link
+     * @throws froq\database\DatabaseLinkException
      */
     public function link(): Link
     {
+        if (empty($this->link)) {
+            $this->link = Link::init($this->options);
+
+            try {
+                empty($this->profiler) ? $this->link->connect()
+                    : $this->profiler->profileConnection(fn() => $this->link->connect());
+            } catch (LinkException $e) {
+                throw new DatabaseLinkException($e);
+            }
+        }
+
         return $this->link;
     }
 
@@ -126,7 +137,7 @@ final class Database
                 Profiler::mark($marker);
             }
 
-            $pdo          = $this->link->pdo();
+            $pdo          = $this->link()->pdo();
             $pdoStatement = empty($this->profiler) ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
 
@@ -165,7 +176,7 @@ final class Database
                 Profiler::mark($marker);
             }
 
-            $pdo       = $this->link->pdo();
+            $pdo       = $this->link()->pdo();
             $pdoResult = empty($this->profiler) ? $pdo->exec($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
 
@@ -639,7 +650,7 @@ final class Database
      */
     public function transaction(callable $call = null, callable $callError = null): mixed
     {
-        $transaction = new Transaction($this->link->pdo());
+        $transaction = new Transaction($this->link()->pdo());
 
         // Return transaction object.
         if (!$call) {
@@ -709,7 +720,7 @@ final class Database
                    $this->quoteNames(substr($input, $pos + 1));
         }
 
-        $driver = $this->link->driver();
+        $driver = $this->link()->driver();
         if ($driver == 'pgsql') {
             // Cast notations (eg: foo::int).
             if ($pos = strpos($input, '::')) {
@@ -833,7 +844,7 @@ final class Database
      */
     public function escapeString(string $input, bool $quote = true, string $extra = ''): string
     {
-        $input = $this->link->pdo()->quote($input);
+        $input = $this->link()->pdo()->quote($input);
 
         $quote || $input = trim($input, "'");
         $extra && $input = addcslashes($input, $extra);
@@ -861,7 +872,7 @@ final class Database
      */
     public function escapeName(string $input): string
     {
-        $input = match ($this->link->driver()) {
+        $input = match ($this->link()->driver()) {
             'mysql' => str_replace('`', '``', $input),
             'mssql' => str_replace(']', ']]', $input),
             default => str_replace('"', '""', $input)
@@ -1036,7 +1047,7 @@ final class Database
         $input || throw new DatabaseException('Empty input');
 
         try {
-            return $this->link->pdo()->prepare($input);
+            return $this->link()->pdo()->prepare($input);
         } catch (PDOException $e) {
             throw new DatabaseException($e);
         }
