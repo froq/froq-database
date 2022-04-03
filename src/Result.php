@@ -144,11 +144,16 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get a copy of rows property.
      *
+     * @param  bool $init
      * @return froq\database\result\Rows
      */
-    public function getRows(): Rows
+    public function getRows(bool $init = false): Rows
     {
-        return (clone $this->rows);
+        $rows = (clone $this->rows);
+        if ($init) foreach ($rows as $i => $row) {
+            $rows[$i] = $this->toRow($row);
+        }
+        return $rows;
     }
 
     /**
