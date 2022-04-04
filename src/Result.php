@@ -146,7 +146,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Get a copy of a row.
+     * Get a copy of first row.
      *
      * @return ?Row
      * @since  6.0
