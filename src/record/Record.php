@@ -821,13 +821,7 @@ class Record implements RecordInterface
         $this->state->saved = $result->count();
 
         // Swap data with returning data.
-        if ($return) {
-            $result = (array) $result->first();
-            if (isset($result[$return])) {
-                $result = [$return => $result[$return]];
-            }
-            $data = $result;
-        }
+        $return && $data = (array) $result->first();
 
         if ($primary && $id) {
             // Put on the top primary.
@@ -871,13 +865,7 @@ class Record implements RecordInterface
         $this->state->saved = $result->count();
 
         // Swap data with returning data.
-        if ($return) {
-            $result = (array) $result->first();
-            if (isset($result[$return])) {
-                $result = [$return => $result[$return]];
-            }
-            $data = $result;
-        }
+        $return && $data = (array) $result->first();
 
         // Put on the top primary.
         $data = [$primary => $id] + $data;
