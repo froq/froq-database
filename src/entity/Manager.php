@@ -102,7 +102,7 @@ final class Manager
         // So, if any non nullable field was sent to db, an error will be raised already.
         $id = $this->getPrimaryValue($entity, $classMeta, check: false);
         if ($id !== null) {
-            $data = array_clear($data, [null]);
+            $data = array_refine($data, [null]);
             $validations = null;
         } else {
             $validations = true;
