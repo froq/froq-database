@@ -780,15 +780,15 @@ final class Database
      * Escape a string input.
      *
      * @param  string $input
-     * @param  bool   $quote
+     * @param  bool   $wrap
      * @param  string $extra
      * @return string
      */
-    public function escapeString(string $input, bool $quote = true, string $extra = ''): string
+    public function escapeString(string $input, bool $wrap = true, string $extra = ''): string
     {
         $input = $this->quote($input);
 
-        $quote || $input = trim($input, "'");
+        $wrap  || $input = trim($input, "'");
         $extra && $input = addcslashes($input, $extra);
 
         return $input;
@@ -798,12 +798,12 @@ final class Database
      * Escape like string input.
      *
      * @param  string $input
-     * @param  bool   $quote
+     * @param  bool   $wrap
      * @return string
      */
-    public function escapeLikeString(string $input, bool $quote = true): string
+    public function escapeLikeString(string $input, bool $wrap = true): string
     {
-        return $this->escapeString($input, $quote, '%_');
+        return $this->escapeString($input, $wrap, '%_');
     }
 
     /**
