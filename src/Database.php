@@ -625,7 +625,7 @@ final class Database
      */
     public function quote(string $input): string
     {
-        return "'" . $input . "'";
+        return $this->link()->pdo()->quote($input);
     }
 
     /**
@@ -786,7 +786,7 @@ final class Database
      */
     public function escapeString(string $input, bool $quote = true, string $extra = ''): string
     {
-        $input = $this->link()->pdo()->quote($input);
+        $input = $this->quote($input);
 
         $quote || $input = trim($input, "'");
         $extra && $input = addcslashes($input, $extra);
