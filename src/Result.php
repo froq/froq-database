@@ -572,8 +572,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             // Insert.
             else {
                 // Search for primary.
-                $rs = $db->prepareStatement("SELECT * FROM {$table} LIMIT 1");
-                $rs->execute();
+                $rs = $db->executeStatement("SELECT * FROM {$table} LIMIT 1");
                 for ($i = 0; $i < $rs->columnCount(); $i++) {
                     $column = $rs->getColumnMeta($i);
                     if ($column['flags'] && in_array('primary_key', $column['flags'])) {

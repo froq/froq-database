@@ -9,6 +9,7 @@ namespace froq\database;
 
 use froq\database\sql\{Sql, Name};
 use froq\database\result\{Row, Rows};
+use froq\database\trait\StatementTrait;
 use froq\common\trait\FactoryTrait;
 use froq\{pager\Pager, logger\Logger};
 use PDO, PDOStatement, PDOException, Throwable;
@@ -24,7 +25,7 @@ use PDO, PDOStatement, PDOException, Throwable;
  */
 final class Database
 {
-    use FactoryTrait;
+    use FactoryTrait, StatementTrait;
 
     /** @var froq\database\Link */
     private Link $link;
@@ -973,25 +974,6 @@ final class Database
         $input || throw new DatabaseException('Empty input');
 
         return $input;
-    }
-
-    /**
-     * Prepare statement input returning a `PDOStatement` object.
-     *
-     * @param  string $input
-     * @return PDOStatement
-     * @throws froq\database\DatabaseException
-     */
-    public function prepareStatement(string $input): PDOStatement
-    {
-        $input = $this->prepareNameInput($input);
-        $input || throw new DatabaseException('Empty input');
-
-        try {
-            return $this->link()->pdo()->prepare($input);
-        } catch (PDOException $e) {
-            throw new DatabaseException($e);
-        }
     }
 
     /**
