@@ -86,7 +86,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
         $sequence = $options['sequence'] && preg_match('~^\s*INSERT~i', $pdoStatement->queryString);
 
         // Insert queries.
-        if ($this->count && $sequence) {
+        if ($pdoStatement->rowCount() && $sequence) {
             $id = null;
 
             // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that mostly
@@ -97,21 +97,24 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             } catch (PDOException) {}
 
             if ($id) {
-                $ids = [$id];
+                $ids = [$id]; $count = $pdoStatement->rowCount();
 
                 // Handle multiple inserts.
-                if ($this->count > 1) {
+                if ($count > 1) {
                     // MySQL awesomeness, last id is first id..
                     if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql') {
                         $start = $id;
-                        $end   = $id + $this->count - 1;
+                        $end   = $id + $count - 1;
                     } else {
-                        $start = $id - $this->count + 1;
+                        $start = $id - $count + 1;
                         $end   = $id;
                     }
 
                     $ids = range($start, $end);
                 }
+
+                // Update count, in case.
+                $this->count = count($ids);
 
                 $this->ids->add(...$ids);
                 unset($ids);
@@ -119,7 +122,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
         }
 
         // Select & other fetchable queries (eg: insert/update/delete with returning clause).
-        if ($this->count && $pdoStatement->columnCount()) {
+        if ($pdoStatement->columnCount()) {
             // Use present type that was set above or get default.
             $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
@@ -129,8 +132,13 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                   ? $pdoStatement->fetchAll($fetchType|PDO::FETCH_PROPS_LATE, $fetchClass)
                   : $pdoStatement->fetchAll($fetchType);
 
-            $this->rows->add(...$rows);
-            unset($rows);
+            if ($rows) {
+                // Update count, in case.
+                $this->count = count($rows);
+
+                $this->rows->add(...$rows);
+                unset($rows);
+            }
         }
     }
 
