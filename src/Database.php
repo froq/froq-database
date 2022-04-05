@@ -143,7 +143,7 @@ final class Database
                 }
             }
 
-            return new Result($pdo, $pdoStatement, $options);
+            return new Result($pdo, $pdoStatement, $options, $this);
         } catch (PDOException $e) {
             throw new DatabaseQueryException($e);
         }

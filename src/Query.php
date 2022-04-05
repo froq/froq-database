@@ -414,14 +414,43 @@ final class Query
      */
     public function return(string|array|bool $fields, string|array $fetch = null): self
     {
-        // For PostgreSQL & Oracle only.
+        $fields  = ($fields === true) ? '*' : $this->prepareFields($fields);
+        $fetch ??= $this->stack['return']['fetch'] ?? null;
+
+        // Return fallback in stack for no "RETURNING" supported databases.
         if (!in_array($this->db->link()->driver(), ['pgsql', 'oci'], true)) {
+            // For insert stuff.
+            if (isset($this->stack['table'], $this->stack['insert'])) {
+                $this->stack['return.fallback'] = [
+                    'table'  => $this->stack['table'],
+                    'fields' => $fields, 'fetch' => $fetch
+                ];
+            }
+            // For update/delete stuff.
+            elseif (
+                isset($this->stack['table'], $this->stack['where']) && (
+                isset($this->stack['update']) || isset($this->stack['delete'])
+            )) {
+                if (isset($this->stack['update'])) {
+                    $this->stack['return.fallback'] = [
+                        'table'  => $this->stack['table'],
+                        'where'  => $this->stack['where'],
+                        'fields' => $fields, 'fetch' => $fetch
+                    ];
+                } elseif (isset($this->stack['delete'])) {
+                    $that = $this->clone(true);
+                    $that->stack['table'] = $this->stack['table'];
+                    $that->stack['where'] = $this->stack['where'];
+
+                    // Keep row data before delete.
+                    $this->stack['return.fallback'] = [
+                        'data' => $that->select($fields)->getAll($fetch)
+                    ];
+                }
+            }
+
             return $this;
         }
-
-        $fields = ($fields === true) ? '*' : $this->prepareFields($fields);
-
-        $fetch ??= $this->stack['return']['fetch'] ?? null;
 
         return $this->add('return', ['fields' => $fields, 'fetch' => $fetch], false);
     }
@@ -1277,7 +1306,16 @@ final class Query
         $fetch    ??= $this->stack['return']['fetch']    ?? null;
         $sequence ??= $this->stack['insert']['sequence'] ?? null;
 
-        return $this->db->query($this->toString(), options: ['fetch' => $fetch, 'sequence' => $sequence]);
+        // Return for only no "RETURNING" supported databases. @see return()
+        if (isset($this->stack['return.fallback'])) {
+            $return = $this->stack['return.fallback'];
+            $return['fetch'] ??= $fetch;
+        }
+
+        return $this->db->query($this->toString(), options: [
+            'fetch'  => $fetch, 'sequence' => $sequence,
+            'return' => $return ?? null
+        ]);
     }
 
     /**
@@ -1905,7 +1943,7 @@ final class Query
                         }
                     }
 
-                    if (isset($stack['return'])) {
+                    if (isset($stack['return']['fields'])) {
                         $ret .= $nt . 'RETURNING ' . $stack['return']['fields'];
                     }
                 }
@@ -1927,7 +1965,7 @@ final class Query
                     isset($stack['order']) && $ret .= $nt . $this->toQueryString('order');
                     isset($stack['limit']) && $ret .= $nt . $this->toQueryString('limit');
 
-                    if (isset($stack['return'])) {
+                    if (isset($stack['return']['fields'])) {
                         $ret .= $nt . 'RETURNING ' . $stack['return']['fields'];
                     }
                 }
@@ -1948,7 +1986,7 @@ final class Query
                     isset($stack['order']) && $ret .= $nt . $this->toQueryString('order');
                     isset($stack['limit']) && $ret .= $nt . $this->toQueryString('limit');
 
-                    if (isset($stack['return'])) {
+                    if (isset($stack['return']['fields'])) {
                         $ret .= $nt . 'RETURNING ' . $stack['return']['fields'];
                     }
                 }

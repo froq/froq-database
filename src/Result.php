@@ -40,12 +40,13 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Constructor.
      *
-     * @param  PDO          $pdo
-     * @param  PDOStatement $pdoStatement
-     * @param  array|null   $options
+     * @param  PDO           $pdo
+     * @param  PDOStatement  $pdoStatement
+     * @param  array|null    $options
+     * @param  Database|null $db
      * @throws froq\database\ResultException
      */
-    public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null)
+    public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null, Database $db = null)
     {
         $this->ids  = new Ids();
         $this->rows = new Rows();
@@ -78,7 +79,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
         }
 
         // Assign count (affected rows etc).
-        $this->count = $pdoStatement->rowCount();
+        $this->count = $count = $pdoStatement->rowCount();
 
         // Note: Sequence option to prevent transaction errors that comes from lastInsertId()
         // calls but while commit() returning true when sequence field not exists. Default is
@@ -97,7 +98,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             } catch (PDOException) {}
 
             if ($id) {
-                $ids = [$id]; $count = $pdoStatement->rowCount();
+                $ids = [$id];
 
                 // Handle multiple inserts.
                 if ($count > 1) {
@@ -139,6 +140,12 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                 $this->rows->add(...$rows);
                 unset($rows);
             }
+        }
+
+        // Return for only no "RETURNING" supported databases that send by query builder via
+        // run() method. See Query.return() & run().
+        if ($count && isset($options['return'])) {
+            $this->applyReturnFallback($options['return'], $db);
         }
     }
 
@@ -537,6 +544,59 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     private function toRows(array $data): Rows
     {
         return new Rows(array_map([$this, 'toRow'], $data));
+    }
+
+    /**
+     * Apply return fallback that sent by query builder.
+     */
+    private function applyReturnFallback(array $return, Database $db): void
+    {
+        $rows = null;
+
+        // When rows given (delete).
+        if (isset($return['data'])) {
+            $rows = $return['data'];
+        }
+        // When table given (update/insert).
+        elseif(isset($return['table'], $return['fields'])) {
+            [$table, $fields, $fetch] = array_select($return, ['table', 'fields', 'fetch']);
+
+            // Update.
+            if (isset($return['where'])) {
+                $query = $db->initQuery($table);
+                foreach ($return['where'] as [$where, $op]) {
+                    $query->where($where, op: $op);
+                }
+                $rows = $query->select($fields)->getAll($fetch);
+            }
+            // Insert.
+            else {
+                // Search for primary.
+                $rs = $db->prepareStatement("SELECT * FROM {$table} LIMIT 1");
+                $rs->execute();
+                for ($i = 0; $i < $rs->columnCount(); $i++) {
+                    $column = $rs->getColumnMeta($i);
+                    if ($column['flags'] && in_array('primary_key', $column['flags'])) {
+                        $primary = $column['name'];
+                        break;
+                    }
+                } unset($rs); // @free
+
+                if (isset($primary)) {
+                    $rows = $db->initQuery($table)
+                        ->where($primary, [$this->ids->toArray()])
+                        ->select($fields)->getAll($fetch);
+                }
+            }
+        }
+
+        // Fill rows with returning data.
+        if ($rows) {
+            $this->count = count($rows);
+
+            $this->rows->add(...$rows);
+            unset($rows);
+        }
     }
 
     /**
