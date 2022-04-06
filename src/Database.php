@@ -290,7 +290,7 @@ final class Database
      * Select a row from given table as `array|object` or return `null` if no match.
      *
      * @param  string            $table
-     * @param  string            $fields
+     * @param  string|array      $fields
      * @param  string|array|null $where
      * @param  array|null        $params
      * @param  string|null       $order
@@ -299,7 +299,7 @@ final class Database
      * @param  string|null       $op
      * @return mixed
      */
-    public function select(string $table, string $fields = '*', string|array $where = null, array $params = null,
+    public function select(string $table, string|array $fields = '*', string|array $where = null, array $params = null,
         string $order = null, string|array $fetch = null, string|bool $flat = null, string $op = null): mixed
     {
         $query = $this->initQuery($table)->select($fields);
