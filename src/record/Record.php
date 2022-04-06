@@ -359,14 +359,14 @@ class Record implements RecordInterface
      * @param  array|null        &$data
      * @param  array|null        &$errors
      * @param  array|null         $options
+     * @param  string|array|null  $select
      * @param  string|array|null  $drop
-     * @param  bool               $select
      * @param  bool|null          $validate @internal
-     * @return bool|self
+     * @return self
      * @throws froq\database\record\RecordException
      */
     public final function save(array &$data = null, array &$errors = null, array $options = null,
-        string|array $drop = null, bool $select = false, bool $validate = null): self
+        string|array $select = null, string|array $drop = null, bool $validate = null): self
     {
         // Update data, not set all.
         if ($data !== null) {
@@ -421,7 +421,7 @@ class Record implements RecordInterface
         // When select whole/fresh data wanted (works with primary's only).
         if (isset($options['select']) || $select) {
             $select = $options['select'] ?? $select;
-            $select && $data = (array) $this->db->select($table, where: [$primary => $data[$primary]]);
+            $select && $data = (array) $this->db->select($table, $select, [$primary => $data[$primary]]);
         }
 
         // Drop unwanted fields.
