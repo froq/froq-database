@@ -9,6 +9,7 @@ namespace froq\database;
 
 use froq\database\{trait\DbTrait, sql\Sql, sql\Name};
 use froq\database\result\{Row, Rows};
+use froq\database\query\QueryParams;
 use froq\collection\Collection;
 use froq\pager\Pager;
 
@@ -673,12 +674,12 @@ final class Query
     /**
      * Add/append a "WHERE" query into query stack.
      *
-     * @param  string|array     $where
-     * @param  array|Query|null $params
-     * @param  string|null      $op
+     * @param  string|array|QueryParams $where
+     * @param  array|Query|null         $params
+     * @param  string|null              $op
      * @return self
      */
-    public function where(string|array $where, array|Query $params = null, string $op = null): self
+    public function where(string|array|QueryParams $where, array|Query $params = null, string $op = null): self
     {
         $op = $this->prepareOp($op ?: 'AND'); // @default=AND
 
@@ -690,6 +691,11 @@ final class Query
 
             // Eg: (id = ?, 1).
             $this->add('where', [$this->prepare($where, $params), $op]);
+        } elseif ($where instanceof QueryParams) {
+            // Simply query params.
+            foreach ($where->prepareFor($this) as [$where, $op]) {
+                $this->add('where', [$where, $op]);
+            }
         } else {
             static $signs = ['!', '<', '>'];
 
@@ -2273,16 +2279,16 @@ final class Query
      * Add a clause/statement to query stack.
      *
      * @param  string $key
-     * @param  mixed  $value
+     * @param  mixed  $item
      * @param  bool   $merge
      * @return self
      */
-    private function add(string $key, mixed $value, bool $merge = true): self
+    private function add(string $key, mixed $item, bool $merge = true): self
     {
-        $merge && $value = [...($this->stack[$key] ?? []), $value];
+        $merge && $item = [...($this->stack[$key] ?? []), $item];
 
         $this->key         = $key; // Tick for last call.
-        $this->stack[$key] = $value;
+        $this->stack[$key] = $item;
 
         return $this;
     }
@@ -2291,22 +2297,22 @@ final class Query
      * Add a clause/statement operator to query stack.
      *
      * @param  string $key
-     * @param  string $value
+     * @param  string $item
      * @return self
      * @throws froq\database\QueryException
      * @since  5.0
      */
-    private function addTo(string $key, string $value): self
+    private function addTo(string $key, string $item): self
     {
         if (!isset($this->stack[$key])) {
-            $op = substr(trim($value), 0, strpos(trim($value), ' '));
+            $op = substr(trim($item), 0, strpos(trim($item), ' '));
             throw new QueryException(
                 'No `%s` statement yet in query stack to apply `%s` operator, '.
                 'call %s() first to apply', [$key, $op, $key]
             );
         }
 
-        $this->stack[$key][count($this->stack[$key]) - 1][1] = $value;
+        $this->stack[$key][count($this->stack[$key]) - 1][1] = $item;
 
         return $this;
     }
