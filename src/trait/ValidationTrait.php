@@ -42,7 +42,7 @@ trait ValidationTrait
      */
     public function getValidation(): ?Validation
     {
-        return $this->validation;
+        return $this->validation ?? null;
     }
 
     /**
