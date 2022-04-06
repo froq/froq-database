@@ -7,13 +7,13 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\{sql\Sql, entity\Manager as EntityManager};
 use froq\database\trait\{DbTrait, EmTrait, TableTrait, ValidationTrait};
+use froq\database\entity\Manager as EntityManager;
 use froq\database\common\Helper;
 
 /**
- * A class, contains most required data read/write tools and is intended to use other
- * repository classes and producers/providers or other database related classes.
+ * A class, intended to use other repository classes and producers/providers
+ * or other database related classes.
  *
  * @package froq\database
  * @object  froq\database\Repository
