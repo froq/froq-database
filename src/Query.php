@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\{trait\DbTrait, sql\Sql, sql\Name};
+use froq\database\result\{Row, Rows};
 use froq\collection\Collection;
 use froq\pager\Pager;
 
@@ -1488,6 +1489,34 @@ final class Query
     public function getIds(): array|null
     {
         return $this->run()->ids();
+    }
+
+    /**
+     * Run query and return one row.
+     *
+     * @return froq\database\result\Row|null
+     * @since  6.0
+     */
+    public function getRow(): Row|null
+    {
+        $this->limit(1);
+
+        return $this->run('array')->getRow();
+    }
+
+    /**
+     * Run query and return all rows.
+     *
+     * @param  int|null $limit
+     * @param  int|null $offset
+     * @return froq\database\result\Rows
+     * @since  6.0
+     */
+    public function getRows(int $limit = null, int $offset = null): Rows
+    {
+        $limit && $this->limit($limit, $offset);
+
+        return $this->run('array')->getRows();
     }
 
     /**
