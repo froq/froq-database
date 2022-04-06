@@ -360,14 +360,13 @@ class Record implements RecordInterface
      * @param  array|null        &$errors
      * @param  array|null         $options
      * @param  string|array|null  $drop
-     * @param  bool               $bool
      * @param  bool               $select
      * @param  bool|null          $validate @internal
      * @return bool|self
      * @throws froq\database\record\RecordException
      */
     public final function save(array &$data = null, array &$errors = null, array $options = null,
-        string|array $drop = null, bool $bool = false, bool $select = false, bool $validate = null): bool|self
+        string|array $drop = null, bool $select = false, bool $validate = null): self
     {
         // Update data, not set all.
         if ($data !== null) {
@@ -445,14 +444,6 @@ class Record implements RecordInterface
         $this->setData($data);
         if ($form = $this->getForm()) {
             $form->setData($data);
-        }
-
-        // When bool return wanted.
-        if (isset($options['bool']) || $bool) {
-            $bool = $options['bool'] ?? $bool;
-            if ($bool) {
-                return $this->isSaved();
-            }
         }
 
         return $this;
