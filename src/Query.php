@@ -7,14 +7,15 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\{trait\DbTrait, sql\Sql, sql\Name};
-use froq\database\result\{Row, Rows};
+use froq\database\trait\{DbTrait, QueryTrait};
 use froq\database\query\QueryParams;
+use froq\database\result\{Row, Rows};
+use froq\database\sql\{Sql, Name};
 use froq\collection\Collection;
 use froq\pager\Pager;
 
 /**
- * A query (builder) class, fulfills all building needings with descriptive methods.
+ * A query builder class, fulfills most building needings with descriptive methods.
  *
  * @package froq\database
  * @object  froq\database\Query
@@ -23,7 +24,7 @@ use froq\pager\Pager;
  */
 final class Query
 {
-    use QueryTrait, DbTrait;
+    use DbTrait, QueryTrait;
 
     /**
      * Key, tick for last call via add().

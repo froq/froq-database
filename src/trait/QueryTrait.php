@@ -5,13 +5,13 @@
  */
 declare(strict_types=1);
 
-namespace froq\database;
+namespace froq\database\trait;
 
 /**
- * A trait, fulfills all query building needs with short and descriptive methods.
+ * A trait, provides short and descriptive methods and used by Query class only.
  *
- * @package froq\database
- * @object  froq\database\QueryTrait
+ * @package froq\database\trait
+ * @object  froq\database\trait\QueryTrait
  * @author  Kerem Güneş
  * @since   4.0
  * @internal
