@@ -28,11 +28,51 @@ class QueryParam implements Arrayable
      * @param string $logic
      */
     public function __construct(
-        public string $field,
-        public string $operator,
-        public mixed  $value,
-        public string $logic = 'AND'
+        public string $field    = '',
+        public string $operator = '',
+        public mixed  $value    = '',
+        public string $logic    = 'AND'
     ) {}
+
+    public function setField(string $field): self
+    {
+        $this->field = $field;
+        return $this;
+    }
+    public function getField(): string
+    {
+        return $this->field;
+    }
+
+    public function setOperator(string $operator): self
+    {
+        $this->operator = $operator;
+        return $this;
+    }
+    public function getOperator(): string
+    {
+        return $this->operator;
+    }
+
+    public function setValue(mixed $value): self
+    {
+        $this->value = $value;
+        return $this;
+    }
+    public function getValue(): mixed
+    {
+        return $this->value;
+    }
+
+    public function setLogic(string $logic): self
+    {
+        $this->logic = $logic;
+        return $this;
+    }
+    public function getLogic(): string
+    {
+        return $this->logic;
+    }
 
     /**
      * @inheritDoc froq\common\interface\Arrayable
