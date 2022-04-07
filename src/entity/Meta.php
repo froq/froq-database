@@ -24,9 +24,9 @@ use ReflectionClass, ReflectionProperty;
 class Meta
 {
     /** @const int */
-    public const TYPE_CLASS    = 1,
-                 TYPE_PROPERTY = 2,
-                 TYPE_METHOD   = 3; // Not implemented (reserved).
+    public final const TYPE_CLASS    = 1,
+                       TYPE_PROPERTY = 2,
+                       TYPE_METHOD   = 3; // Not implemented (reserved).
 
     /** @var ReflectionClass|ReflectionProperty */
     private ReflectionClass|ReflectionProperty $reflection;
