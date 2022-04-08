@@ -19,8 +19,8 @@ use froq\pager\Pager;
  */
 trait PagerTrait
 {
-    /** @var froq\pager\Pager|null */
-    protected Pager|null $pager;
+    /** @var ?froq\pager\Pager */
+    protected ?Pager $pager;
 
     /**
      * Set pager property.
@@ -38,9 +38,9 @@ trait PagerTrait
     /**
      * Get pager property.
      *
-     * @return froq\pager\Pager|null
+     * @return ?froq\pager\Pager
      */
-    public final function getPager(): Pager|null
+    public final function getPager(): ?Pager
     {
         return $this->pager ?? null;
     }
