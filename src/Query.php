@@ -183,7 +183,7 @@ final class Query
 
         $list = is_list($fields);
 
-        $func = match ($this->db->link()->driver()) {
+        $func = match ($this->db->link->driver()) {
             'pgsql' => $list ? 'json_build_array' : 'json_build_object',
             'mysql' => $list ? 'json_array'       : 'json_object',
             default => throw new QueryException('Method selectJson() available for PgSQL & MySQL only')
@@ -421,7 +421,7 @@ final class Query
         $fetch ??= $this->stack['return']['fetch'] ?? null;
 
         // Return fallback in stack for no "RETURNING" supported databases.
-        if (!in_array($this->db->link()->driver(), ['pgsql', 'oci'], true)) {
+        if (!in_array($this->db->link->driver(), ['pgsql', 'oci'], true)) {
             // For insert stuff.
             if (isset($this->stack['table'], $this->stack['insert'])) {
                 $this->stack['return.fallback'] = [
@@ -988,7 +988,7 @@ final class Query
         if (!$ilike) {
             $where = $field . ' LIKE ' . $search;
         } else {
-            $where = ($this->db->link()->driver() == 'pgsql')
+            $where = ($this->db->link->driver() == 'pgsql')
                    ? sprintf('%s ILIKE %s', $field, $search)
                    : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
         }
@@ -1016,7 +1016,7 @@ final class Query
         if (!$ilike) {
             $where = $field . ' NOT LIKE ' . $search;
         } else {
-            $where = ($this->db->link()->driver() == 'pgsql')
+            $where = ($this->db->link->driver() == 'pgsql')
                 ? sprintf('%s NOT ILIKE %s', $field, $search)
                 : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
         }
@@ -1067,7 +1067,7 @@ final class Query
      */
     public function whereRandom(float $value = 0.01, string $op = null): self
     {
-        return ($this->db->link()->driver() == 'pgsql')
+        return ($this->db->link->driver() == 'pgsql')
              ? $this->where('random() < ' . $value, op: $op)
              : $this->where('rand() < ' . $value, op: $op);
     }
@@ -1100,7 +1100,7 @@ final class Query
         $field = $this->prepareFields($field);
 
         if ($rollup) {
-            $field .= ($this->db->link()->driver() == 'mysql') ? ' WITH ROLLUP' : ' ROLLUP (' . (
+            $field .= ($this->db->link->driver() == 'mysql') ? ' WITH ROLLUP' : ' ROLLUP (' . (
                 is_string($rollup) ? $this->prepareFields($rollup) : $field
             ) . ')';
         }
@@ -1138,7 +1138,7 @@ final class Query
         // Eg: "tr_TR" or "tr_TR.utf8".
         if ($collate != null) {
             $collate = trim($collate);
-            if ($this->db->link()->driver() == 'pgsql') {
+            if ($this->db->link->driver() == 'pgsql') {
                 $collate = '"' . trim($collate, '"') . '"';
             }
             $collate = ' COLLATE ' . $collate;
@@ -1178,7 +1178,7 @@ final class Query
      */
     public function orderByRandom(): self
     {
-        return ($this->db->link()->driver() == 'pgsql')
+        return ($this->db->link->driver() == 'pgsql')
              ? $this->add('order', 'random()') : $this->add('order', 'rand()');
     }
 
@@ -1366,7 +1366,7 @@ final class Query
     {
         // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
         if (!$this->has('limit')) {
-            $ok = $this->has('select') || $this->db->link()->driver() != 'pgsql';
+            $ok = $this->has('select') || $this->db->link->driver() != 'pgsql';
             $ok && $this->limit(1);
         }
 
@@ -1386,7 +1386,7 @@ final class Query
     {
         // Apply limit limited queries, preventing sytax errors for non-select queries (PgSQL).
         if ($limit) {
-            $ok = $this->has('select') || $this->db->link()->driver() != 'pgsql';
+            $ok = $this->has('select') || $this->db->link->driver() != 'pgsql';
             $ok && $this->limit($limit);
         }
 
@@ -1894,7 +1894,7 @@ final class Query
                         ['fields' => $fields, 'action' => $action,
                          'update' => $update, 'where'  => $where] = $stack['conflict'];
 
-                        $ret .= match ($driver = $this->db->link()->driver()) {
+                        $ret .= match ($driver = $this->db->link->driver()) {
                             'pgsql' => $nt . 'ON CONFLICT (' . $fields . ') DO ' . $action,
                             'mysql' => $nt . 'ON DUPLICATE KEY ' . ($action = 'UPDATE'),
                             default => throw new QueryException('Method conflict() available for PgSQL & MySQL only')

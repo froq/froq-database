@@ -27,14 +27,14 @@ final class Database
 {
     use FactoryTrait, StatementTrait;
 
-    /** @var froq\database\Link */
-    private Link $link;
-
     /** @var ?froq\logger\Logger */
-    private ?Logger $logger = null;
+    public readonly ?Logger $logger;
 
     /** @var ?froq\database\Profiler */
-    private ?Profiler $profiler = null;
+    public readonly ?Profiler $profiler;
+
+    /** @var froq\database\Link */
+    public readonly Link $link;
 
     /** @var array */
     private array $options;
@@ -51,12 +51,16 @@ final class Database
         if ($logging) {
             $this->logger = new Logger($logging);
             $this->logger->setOption('slowQuery', $logging['slowQuery'] ?? 0);
+        } else {
+            $this->logger = null;
         }
 
         // Default is false (no profiling).
         $profiling = array_pluck($options, 'profiling');
         if ($profiling) {
             $this->profiler = new Profiler();
+        } else {
+            $this->profiler = null;
         }
 
         $this->options = $options;
@@ -78,6 +82,7 @@ final class Database
     {
         if (empty($this->link)) {
             $this->link = Link::init($this->options);
+            unset($this->options); // Used already.
 
             try {
                 empty($this->profiler) ? $this->link->connect()
@@ -88,27 +93,6 @@ final class Database
         }
 
         return $this->link;
-    }
-
-    /**
-     * Get logger property.
-     *
-     * @return ?froq\logger\Logger
-     * @since  4.9
-     */
-    public function logger(): ?Logger
-    {
-        return $this->logger;
-    }
-
-    /**
-     * Get profiler property.
-     *
-     * @return ?froq\database\Profiler
-     */
-    public function profiler(): ?Profiler
-    {
-        return $this->profiler;
     }
 
     /**
