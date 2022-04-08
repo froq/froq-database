@@ -27,17 +27,10 @@ final class Helper extends \StaticClass
      */
     public static function getActiveDatabase(string $method = null): Database
     {
-        // Try to use app's database.
-        if (function_exists('app')) {
-            return app()->database();
-        }
-
-        $method ??= get_trace()[0]['callerMethod'];
-
         return function_exists('app') ? app()->database() : throw new DatabaseException(
             'No database given to deal, be sure running this module with `froq\app` '.
             'module and `database` option exists in app config or pass $db argument '.
-            'to %s()', $method
+            'to %s()', $method ?? get_trace()[0]['callerMethod']
         );
     }
 }
