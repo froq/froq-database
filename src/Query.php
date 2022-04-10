@@ -420,7 +420,7 @@ final class Query
         $fields  = ($fields === true) ? '*' : $this->prepareFields($fields);
         $fetch ??= $this->stack['return']['fetch'] ?? null;
 
-        // Return fallback in stack for no "RETURNING" supported databases.
+        // Return fallback for no "RETURNING" supported databases.
         if (!in_array($this->db->link->driver(), ['pgsql', 'oci'], true)) {
             // For insert stuff.
             if (isset($this->stack['table'], $this->stack['insert'])) {
@@ -1583,7 +1583,7 @@ final class Query
         }
 
         throw new QueryException('Invalid aggregate function `%s` [valids: count, sum, min, max, avg,'
-            . ' array, string, json, json_object, jsonb, jsonb_object]', [$func]);
+            . ' array, string, json, json_object, jsonb, jsonb_object]', $func);
     }
 
     /**
@@ -1751,11 +1751,11 @@ final class Query
      * Get query stack as string.
      *
      * @param  int|bool|null $indent
-     * @param  bool          $_trim @internal
+     * @param  bool          $trim @internal
      * @return string
      * @throws froq\database\QueryException
      */
-    public function toString(int|bool $indent = null, bool $_trim = true): string
+    public function toString(int|bool $indent = null, bool $trim = true): string
     {
         $n = $t = ' ';
         if ($indent) {
@@ -1776,12 +1776,12 @@ final class Query
             $this->has($key) && $ret .= $this->toQueryString($key, $indent);
         }
 
-        if ($ret == '') {
-            throw new QueryException('No query ready to build, use select(), insert(), update(), delete(),'
-                . ' aggregate() etc. first');
-        }
+        $ret || throw new QueryException(
+            'No query ready to build, use select(), insert(), update(), delete()'.
+            ', aggregate() etc. first'
+        );
 
-        $_trim && $ret = trim($ret);
+        $trim && $ret = trim($ret);
 
         return $ret;
     }
@@ -1824,12 +1824,13 @@ final class Query
 
                         $as .= ' AS ';
                         if ($materialized !== null) {
-                            $as .= ($materialized ? 'MATERIALIZED' : 'NOT MATERIALIZED') . ' ';
+                            $as .= $materialized ? 'MATERIALIZED ' : 'NOT MATERIALIZED ';
                         }
 
                         if ($indent >= 1) {
                             $qs = explode("\n", $query, 2); // Find first tab space.
-                            $ts = str_repeat("\t", count($qs) < 2 ? 0 : strspn($qs[1], "\t"));
+                            $ts = str_repeat("\t", isset($qs[1]) ? strspn($qs[1], "\t") : 0);
+                            unset($qs);
 
                             $with[] = $as . '(' . $n . $ts . $query . $nt . ')';
                         } else {
@@ -1842,8 +1843,8 @@ final class Query
                 break;
             case 'select':
                 if (isset($stack['select'])) {
-                    $table = $stack['from'] ?? $stack['table'] ?? null;
-                    $table || throw new QueryException('Table is not defined yet, call from() or table() to continue');
+                    $table = $stack['from'] ?? $stack['table'] ??
+                        throw new QueryException('Table is not defined yet, call from() or table() to continue');
 
                     if ($stack['select'] != '*') {
                         foreach ($stack['select'] as $field) {
@@ -1877,8 +1878,8 @@ final class Query
                 break;
             case 'insert':
                 if (isset($stack['insert'])) {
-                    $table = $stack['into'] ?? $stack['table'] ?? null;
-                    $table || throw new QueryException('Table is not defined yet, call into() or table() to continue');
+                    $table = $stack['into'] ?? $stack['table'] ??
+                        throw new QueryException('Table is not defined yet, call into() or table() to continue');
 
                     if ($stack['insert'] == '1') {
                         $ret = $nt . 'INSERT INTO ' . $table;
@@ -1951,8 +1952,8 @@ final class Query
                 break;
             case 'update':
                 if (isset($stack['update'])) {
-                    $table = $stack['table'] ?? null;
-                    $table || throw new QueryException('Table is not defined yet, call table() to continue');
+                    $table = $stack['table'] ??
+                        throw new QueryException('Table is not defined yet, call table() to continue');
 
                     if (!isset($stack['where'])) {
                         throw new QueryException('No `where` for update yet, it must be provided for security'
@@ -1973,8 +1974,8 @@ final class Query
                 break;
             case 'delete':
                 if (isset($stack['delete'])) {
-                    $table = $stack['from'] ?? $stack['table'] ?? null;
-                    $table || throw new QueryException('Table is not defined yet, call from() or table() to continue');
+                    $table = $stack['from'] ?? $stack['table'] ??
+                        throw new QueryException('Table is not defined yet, call from() or table() to continue');
 
                     if (!isset($stack['where'])) {
                         throw new QueryException('No `where` for delete yet, it must be provided for security'
