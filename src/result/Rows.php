@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\result;
 
+use froq\common\interface\Arrayable;
+
 /**
  * A class, for collecting `Result` rows as list.
  *
@@ -26,7 +28,7 @@ class Rows extends \ItemList
         $items = $this->items();
 
         if ($deep) foreach ($items as &$item) {
-            if ($item instanceof \froq\common\interface\Arrayable) {
+            if ($item instanceof Arrayable) {
                 $item = $item->toArray();
             } elseif ($item instanceof \stdClass) {
                 $item = (array) $item;
