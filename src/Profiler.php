@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
+use froq\util\misc\{Timer, Storage};
 use PDOStatement;
 
 /**
@@ -19,21 +20,18 @@ use PDOStatement;
  */
 final class Profiler
 {
-    /** @var array */
-    private array $profiles = [];
+    /** @var froq\util\misc\Storage */
+    private Storage $profiles;
 
     /** @var int */
     private int $queryCount = 0;
-
-    /** @var array */
-    private static array $marks;
 
     /**
      * Constructor.
      */
     public function __construct()
     {
-        self::$marks = [];
+        $this->profiles = new Storage();
     }
 
     /**
@@ -49,7 +47,7 @@ final class Profiler
      */
     public function profiles(): array
     {
-        return $this->profiles;
+        return $this->profiles->toArray();
     }
 
     /**
@@ -59,7 +57,7 @@ final class Profiler
      */
     public function connectionProfile(): array|null
     {
-        return $this->profiles['connection'] ?? null;
+        return $this->profiles->connection;
     }
 
     /**
@@ -69,7 +67,7 @@ final class Profiler
      */
     public function queryProfile(): array|null
     {
-        return $this->profiles['query'] ?? null;
+        return $this->profiles->query;
     }
 
     /**
@@ -83,27 +81,15 @@ final class Profiler
     }
 
     /**
-     * Get marks.
-     *
-     * @return array
-     */
-    public static function marks(): array
-    {
-        return self::$marks;
-    }
-
-    /**
      * Profile.
      *
-     * @param  string   $mark
+     * @param  string   $key
      * @param  callable $call
      * @return PDOStatement|int|null
      */
-    public function profile(string $mark, callable $call): PDOStatement|int|null
+    public function profile(string $key, callable $call): PDOStatement|int|null
     {
-        $this->start($mark);
-        $ret = $call();
-        $this->end($mark);
+        $this->start($key); $ret = $call(); $this->end($key);
 
         return $ret;
     }
@@ -128,7 +114,7 @@ final class Profiler
      */
     public function profileQuery(string $query, callable $call): PDOStatement|int|null
     {
-        $this->profiles['query'][++$this->queryCount]['string'] = $query;
+        $this->profiles->query[++$this->queryCount]['string'] = $query;
 
         return $this->profile('query', $call);
     }
@@ -140,8 +126,8 @@ final class Profiler
      */
     public function lastQuery(string $key = null): float|string|array|null
     {
-        return $key ? $this->profiles['query'][$this->queryCount][$key] ?? null
-             : $this->profiles['query'][$this->queryCount] ?? null;
+        return $key ? $this->profiles->query[$this->queryCount][$key] ?? null
+                    : $this->profiles->query[$this->queryCount]       ?? null;
     }
 
     /**
@@ -172,22 +158,22 @@ final class Profiler
      */
     public function totalTime(bool $timeOnly = true): float|string|null
     {
-        if (empty($this->profiles)) {
+        if (!$this->profiles->count()) {
             return null;
         }
 
         $totalTime  = 0.0;
         $totalTimes = [];
 
-        if (isset($this->profiles['connection'])) {
-            $totalTime += $this->profiles['connection']['time'];
+        if ($this->profiles->connection) {
+            $totalTime += $this->profiles->connection['time'];
             if (!$timeOnly) {
                 $totalTimes[] = 'connection('. $totalTime .')';
             }
         }
 
-        if (isset($this->profiles['query'])) {
-            foreach ($this->profiles['query'] as $i => $profile) {
+        if ($this->profiles->query) {
+            foreach ($this->profiles->query as $i => $profile) {
                 $totalTime += $profile['time'];
                 if (!$timeOnly) {
                     $totalTimes[] = 'query('. $i .': '. $profile['time'] .')';
@@ -203,132 +189,83 @@ final class Profiler
     }
 
     /**
-     * Create a marker (to prevent name collusion).
+     * Create a collusion-free marker.
      *
-     * @param  string $name
+     * @param  string $id
      * @return string
      * @since  5.0
      */
-    public static function marker(string $name): string
+    public static function marker(string $id): string
     {
-        return sprintf('%s-%.10F', $name, microtime(true));
+        return sprintf('%s-%s', $id, uuid());
     }
 
     /**
-     * Mark a profile entry returning its started time.
+     * Mark a profile entry starting its timer.
      *
-     * @param  string $name
-     * @return float
-     * @throws froq\database\ProfilerException
+     * @param  string $id
+     * @return void
      * @since  5.0
      */
-    public static function mark(string $name): float
+    public static function mark(string $id): void
     {
-        if (isset(self::$marks[$name])) {
-            throw new ProfilerException(
-                'Existing mark name `%s` given, call unmark() to drop it',
-                $name
-            );
-        }
-
-        return self::$marks[$name] = microtime(true);
+        Storage::store($id, new Timer());
     }
 
     /**
      * Unmark a profile entry returning its elapsed time.
      *
-     * @param  string $name
-     * @return float
-     * @throws froq\database\ProfilerException
+     * @param  string $id
+     * @return float|null
      * @since  5.0
      */
-    public static function unmark(string $name): float
+    public static function unmark(string $id): float|null
     {
-        if (!isset(self::$marks[$name])) {
-            throw new ProfilerException(
-                'Cannot find a mark with given name `%s`',
-                $name
-            );
-        }
-
-        $time = round(microtime(true) - self::$marks[$name], 10);
-
-        // Drop mark.
-        unset(self::$marks[$name]);
-
-        return $time;
+        return Storage::unstore($id)?->getTime();
     }
 
     /**
      * Start a profile entry for a connection or query.
-     *
-     * @param  string $mark
-     * @return void
-     * @throws froq\database\ProfilerException
      */
-    private function start(string $mark): void
+    private function start(string $key): void
     {
-        $start = microtime(true);
-        switch ($mark) {
+        switch ($key) {
             case 'connection':
-                $this->profiles[$mark] = [
-                    'start' => $start, 'end' => 0.0, 'time' => 0.0
-                ];
+                $this->profiles->connection['timer'] = new Timer();
                 break;
             case 'query':
-                $i = $this->queryCount;
-                if (isset($this->profiles[$mark][$i])) {
-                    $this->profiles[$mark][$i] += [
-                        'start' => $start, 'end' => 0.0, 'time' => 0.0
-                    ];
-                }
+                $this->profiles->query[$this->queryCount]['timer'] = new Timer();
                 break;
             default:
                 throw new ProfilerException(
-                    'Invalid mark `%s` [valids: connection, query]',
-                    $mark
+                    'Invalid key `%s` [valids: connection, query]',
+                    $key
                 );
         }
     }
 
     /**
      * End a profile entry for a connection or query.
-     *
-     * @param  string $mark
-     * @return void
-     * @throws froq\database\ProfilerException
      */
-    private function end(string $mark): void
+    private function end(string $key): void
     {
-        if (!isset($this->profiles[$mark])) {
-            throw new ProfilerException(
-                'Cannot find a profile with given `%s` mark',
-                $mark
-            );
-        }
-
-        $end = microtime(true);
-
-        switch ($mark) {
+        switch ($key) {
             case 'connection':
-                $time = round($end - $this->profiles[$mark]['start'], 10);
+                $timer = $this->profiles->connection['timer'];
+                $this->profiles->connection = $timer->stop()->toArray();
 
-                $this->profiles[$mark]['end']  = $end;
-                $this->profiles[$mark]['time'] = $time;
+                unset($this->profiles->connection['timer']);
                 break;
             case 'query':
-                $i = $this->queryCount;
-                if (isset($this->profiles[$mark][$i])) {
-                    $time = round($end - $this->profiles[$mark][$i]['start'], 10);
+                $timer = $this->profiles->query[$this->queryCount]['timer'];
+                $this->profiles->query[$this->queryCount] += $timer->stop()->toArray();
 
-                    $this->profiles[$mark][$i]['end']  = $end;
-                    $this->profiles[$mark][$i]['time'] = $time;
-                }
+                unset($this->profiles->query[$this->queryCount]['timer']);
                 break;
             default:
                 throw new ProfilerException(
-                    'Invalid mark `%s` [valids: connection, query]',
-                    $mark
+                    'Invalid key `%s` [valids: connection, query]',
+                    $key
                 );
         }
     }
