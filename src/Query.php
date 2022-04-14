@@ -146,7 +146,6 @@ final class Query
      * @param  string|null  $as
      * @param  bool         $wrap
      * @return self
-     * @causes froq\database\QueryException
      */
     public function selectQuery(string|Query $query, array $params = null, string $as = null, bool $wrap = true): self
     {
@@ -158,41 +157,59 @@ final class Query
     }
 
     /**
+     * Add/append a "SELECT" query into query stack from a raw query.
+     *
+     * @param  string       $select
+     * @param  string|null  $as
+     * @param  bool         $wrap
+     * @return self
+     */
+    public function selectRaw(string $select, string $as = null, bool $wrap = false): self
+    {
+        $select = $this->prepare($select);
+
+        return $this->select($select, false, $wrap, $as);
+    }
+
+    /**
      * Add/append a "SELECT" query into query stack with a JSON function.
      *
-     * @param  string|array<string> $fields
+     * @param  string|array<string> $select
      * @param  string|null          $as
      * @param  bool                 $prepare
      * @return self
      * @throws froq\database\QueryException
      */
-    public function selectJson(string|array $fields, string $as = null, bool $prepare = true): self
+    public function selectJson(string|array $select, string $as = null, bool $prepare = true): self
     {
-        // Eg: ('id:foo.id, ..').
-        if (is_string($fields)) {
-            $parts  = split('\s*,\s*', $fields);
-            $fields = [];
+        // For JSON objects (eg: "id:foo.id, .." or just "id or foo.id, ..").
+        if (is_string($select)) {
+            $parts   = split('\s*,\s*', $select);
+            $selects = [];
 
             foreach ($parts as $part) {
                 [$key, $name] = split('\s*:\s*', $part, 2);
-                $fields[$key] = $name;
+                $selects[$key] = $name ?? $key; // If name skipped.
             }
 
             unset($parts, $part);
+        } else {
+            $selects = $select;
         }
 
-        $list = is_list($fields);
+        $list = is_list($selects);
 
         $func = match ($this->db->link->driver()) {
-            'pgsql' => $list ? 'json_build_array' : 'json_build_object',
-            'mysql' => $list ? 'json_array'       : 'json_object',
+            'pgsql' => $list ? 'jsonb_build_array' : 'jsonb_build_object',
+            'mysql' => $list ? 'json_array'        : 'json_object',
             default => throw new QueryException('Method selectJson() available for PgSQL & MySQL only')
         };
 
         if ($list) {
-            $select = $this->prepareFields($fields);
+            $select = $this->prepareFields($selects);
         } else {
-            foreach ($fields as $key => $field) {
+            $select = [];
+            foreach ($selects as $key => $field) {
                 if ($field instanceof Query || $field instanceof Sql) {
                     $field = '(' . $field . ')'; // For raw/query fields.
                     $prepare = false;
@@ -205,9 +222,6 @@ final class Query
 
             $select = join(', ', $select);
         }
-
-        $select = trim((string) $select);
-        $select || throw new QueryException('Empty select fields given');
 
         $select = $func . '(' . $select . ')';
 
