@@ -83,13 +83,13 @@ final class Profiler
     /**
      * Profile.
      *
-     * @param  string   $key
+     * @param  string   $type
      * @param  callable $call
      * @return PDOStatement|int|null
      */
-    public function profile(string $key, callable $call): PDOStatement|int|null
+    public function profile(string $type, callable $call): PDOStatement|int|null
     {
-        $this->start($key); $ret = $call(); $this->end($key);
+        $this->start($type); $ret = $call(); $this->end($type);
 
         return $ret;
     }
@@ -227,9 +227,9 @@ final class Profiler
     /**
      * Start a profile entry for a connection or query.
      */
-    private function start(string $key): void
+    private function start(string $type): void
     {
-        switch ($key) {
+        switch ($type) {
             case 'connection':
                 $this->profiles->connection['timer'] = new Timer();
                 break;
@@ -238,8 +238,8 @@ final class Profiler
                 break;
             default:
                 throw new ProfilerException(
-                    'Invalid key `%s` [valids: connection, query]',
-                    $key
+                    'Invalid type `%s` [valids: connection, query]',
+                    $type
                 );
         }
     }
@@ -247,9 +247,9 @@ final class Profiler
     /**
      * End a profile entry for a connection or query.
      */
-    private function end(string $key): void
+    private function end(string $type): void
     {
-        switch ($key) {
+        switch ($type) {
             case 'connection':
                 $timer = $this->profiles->connection['timer'];
                 $this->profiles->connection = $timer->stop()->toArray();
@@ -264,8 +264,8 @@ final class Profiler
                 break;
             default:
                 throw new ProfilerException(
-                    'Invalid key `%s` [valids: connection, query]',
-                    $key
+                    'Invalid type `%s` [valids: connection, query]',
+                    $type
                 );
         }
     }
