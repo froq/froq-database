@@ -182,15 +182,15 @@ final class Database
     }
 
     /**
-     * Get a single row running given query as `array|object` or return `null` if no match.
+     * Get a single row running given query or return `null` if no match.
      *
      * @param  string            $query
      * @param  array|null        $params
-     * @param  string|array|null $fetch
+     * @param  string|null       $fetch
      * @param  string|bool|null  $flat
      * @return mixed
      */
-    public function get(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null): mixed
+    public function get(string $query, array $params = null, string $fetch = null, string|bool $flat = null): mixed
     {
         $row = $this->query($query, $params, ['fetch' => $fetch])->rows(0);
 
@@ -201,16 +201,16 @@ final class Database
     }
 
     /**
-     * Get all rows running given query as `array` or return `null` if no matches.
+     * Get all rows running given query or return `null` if no matches.
      *
      * @param  string            $query
      * @param  array|null        $params
-     * @param  string|array|null $fetch
+     * @param  string|null       $fetch
      * @param  string|bool|null  $flat
      * @param  bool              $raw For returning a raw Result instance.
      * @return mixed
      */
-    public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null,
+    public function getAll(string $query, array $params = null, string $fetch = null, string|bool $flat = null,
         bool $raw = false): mixed
     {
         $result = $this->query($query, $params, ['fetch' => $fetch]);
@@ -271,20 +271,20 @@ final class Database
     }
 
     /**
-     * Select a row from given table as `array|object` or return `null` if no match.
+     * Select a row from given table or return `null` if no match.
      *
      * @param  string            $table
      * @param  string|array      $fields
      * @param  string|array|null $where
      * @param  array|null        $params
      * @param  string|null       $order
-     * @param  string|array|null $fetch
+     * @param  string|null       $fetch
      * @param  string|bool|null  $flat
      * @param  string|null       $op
      * @return mixed
      */
     public function select(string $table, string|array $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, string|array $fetch = null, string|bool $flat = null, string $op = null): mixed
+        string $order = null, string $fetch = null, string|bool $flat = null, string $op = null): mixed
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -301,7 +301,7 @@ final class Database
     }
 
     /**
-     * Select all rows from given table as `array` or return `null` if no matches.
+     * Select all rows from given table or return `null` if no matches.
      *
      * @param  string            $table
      * @param  string            $fields
@@ -309,14 +309,14 @@ final class Database
      * @param  array|null        $params
      * @param  string|null       $order
      * @param  int|array|null    $limit
-     * @param  string|array|null $fetch
+     * @param  string|null       $fetch
      * @param  string|bool|null  $flat
      * @param  string|null       $op
      * @param  bool              $raw For returning a raw Result instance.
      * @return mixed
      */
     public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, int|array $limit = null, string|array $fetch = null, string|bool $flat = null,
+        string $order = null, int|array $limit = null, string $fetch = null, string|bool $flat = null,
         string $op = null, bool $raw = false): mixed
     {
         $query = $this->initQuery($table)->select($fields);

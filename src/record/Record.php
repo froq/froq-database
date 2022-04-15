@@ -299,10 +299,10 @@ class Record implements RecordInterface
      * Apply returning clause for insert/update/delete actions.
      *
      * @param  string|array<string>|bool $fields
-     * @param  string|array<string>|null $fetch
+     * @param  string|null               $fetch
      * @return self
      */
-    public final function return(string|array|bool $fields, string|array $fetch = null): self
+    public final function return(string|array|bool $fields, string $fetch = null): self
     {
         $this->query->return($fields, $fetch);
 
@@ -618,18 +618,18 @@ class Record implements RecordInterface
     /**
      * Select record(s) from self table by given conditions.
      *
-     * @param  string|array      $where
-     * @param  array|null        $params
-     * @param  string|null       $op
-     * @param  string|array      $fields
-     * @param  int|null          $limit
-     * @param  int|null          $offset
-     * @param  string|null       $order
-     * @param  string|array|null $fetch
+     * @param  string|array $where
+     * @param  array|null   $params
+     * @param  string|null  $op
+     * @param  string|array $fields
+     * @param  int|null     $limit
+     * @param  int|null     $offset
+     * @param  string|null  $order
+     * @param  string|null  $fetch
      * @return array|object|null
      */
     public final function select(string|array $where, array $params = null, string $op = null, string|array $fields = '*',
-        int $limit = null, int $offset = null, string $order = null, string|array $fetch = null): array|object|null
+        int $limit = null, int $offset = null, string $order = null, string $fetch = null): array|object|null
     {
         // If return() called before, simply overrides fields.
         $return = $this->query->pull('return.fields');

@@ -425,11 +425,11 @@ final class Query
      * Add a "RETURNING" clause into query stack.
      *
      * @param  string|array<string>|bool $fields
-     * @param  string|array<string>|null $fetch
+     * @param  string|null               $fetch
      * @return self
      * @since  4.18
      */
-    public function return(string|array|bool $fields, string|array $fetch = null): self
+    public function return(string|array|bool $fields, string $fetch = null): self
     {
         $fields  = ($fields === true) ? '*' : $this->prepareFields($fields);
         $fetch ??= $this->stack['return']['fetch'] ?? null;
@@ -1318,11 +1318,11 @@ final class Query
     /**
      * Run a query stringifying current query stack.
      *
-     * @param  string|array<string>|null $fetch
-     * @param  bool|null                 $sequence
+     * @param  string|null $fetch
+     * @param  bool|null   $sequence
      * @return froq\database\Result
      */
-    public function run(string|array $fetch = null, bool $sequence = null): Result
+    public function run(string $fetch = null, bool $sequence = null): Result
     {
         // From stack if given with return(), insert() etc.
         $fetch    ??= $this->stack['return']['fetch']    ?? null;
@@ -1373,10 +1373,10 @@ final class Query
     /**
      * Get a result row & running current query stack.
      *
-     * @param  string|array<string>|null $fetch
+     * @param  string|null $fetch
      * @return array|object|null
      */
-    public function get(string|array $fetch = null): array|object|null
+    public function get(string $fetch = null): array|object|null
     {
         // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
         if (!$this->has('limit')) {
@@ -1392,11 +1392,11 @@ final class Query
      *
      * Note: For pagination, `paginate()` method must be called before this method.
      *
-     * @param  string|array<string>|null $fetch
-     * @param  int|null                  $limit
+     * @param  string|null $fetch
+     * @param  int|null    $limit
      * @return array|null
      */
-    public function getAll(string|array $fetch = null, int $limit = null): array|null
+    public function getAll(string $fetch = null, int $limit = null): array|null
     {
         // Apply limit limited queries, preventing sytax errors for non-select queries (PgSQL).
         if ($limit) {
@@ -1437,7 +1437,7 @@ final class Query
      */
     public function getClass(string $class): object|null
     {
-        return $this->get(['class', $class]);
+        return $this->get($class);
     }
 
     /**
@@ -1474,18 +1474,18 @@ final class Query
      */
     public function getClassAll(string $class, int $limit = null): array|null
     {
-        return $this->getAll(['class', $class], $limit);
+        return $this->getAll($class, $limit);
     }
 
     /**
      * Get all result rows as collection.
      *
-     * @param  string|array<string>|null $fetch
-     * @param  int|null                  $limit
+     * @param  string|null $fetch
+     * @param  int|null    $limit
      * @return froq\collection\Collection
      * @since  5.0
      */
-    public function getCollection(string|array $fetch = null, int $limit = null): Collection
+    public function getCollection(string $fetch = null, int $limit = null): Collection
     {
         return new Collection($this->getAll($fetch, $limit));
     }

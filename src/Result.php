@@ -21,13 +21,6 @@ use PDO, PDOStatement, PDOException;
  */
 final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
 {
-    /** @const array */
-    public const FETCH = [
-        'array'  => PDO::FETCH_ASSOC,
-        'object' => PDO::FETCH_OBJ,
-        'class'  => PDO::FETCH_CLASS,
-    ];
-
     /** @var int */
     private int $count = 0;
 
@@ -60,22 +53,16 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
 
         // Set fetch option.
         if ($options['fetch']) {
-            $fetch =@ $options['fetch'][0];
-            if ($fetch) {
-                $fetchType =@ self::FETCH[$fetch];
-                $fetchType || throw new ResultException(
-                    'Invalid fetch type `%s` [valids: %a]',
-                    [$fetch, array_keys(self::FETCH)]
-                );
-
-                if ($fetchType == PDO::FETCH_CLASS) {
-                    $fetchClass =@ $options['fetch'][1];
-                    $fetchClass || throw new ResultException(
-                        'No fetch class given, it is required when fetch type '.
-                        'is `class` [tip: give it as second item of `fetch` option]'
-                    );
-                }
-            }
+            match ($options['fetch']) {
+                'array'  => $fetchType = PDO::FETCH_ASSOC,
+                'object' => $fetchType = PDO::FETCH_OBJ,
+                default  => [
+                    // All others are as class.
+                    $fetchType  = PDO::FETCH_CLASS,
+                    $fetchClass = class_exists($options['fetch']) ? $options['fetch'] :
+                        throw new ResultException('No fetch class such `%s`', $options['fetch'])
+                ]
+            };
         }
 
         // Assign count (affected rows etc).
@@ -609,7 +596,6 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
 
         $options = [...$optionsDefault, ...$options ?? []];
 
-        $options['fetch']    = (array) $options['fetch'];
         $options['sequence'] = (bool) ($options['sequence'] ?? true);
 
         return $options;
