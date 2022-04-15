@@ -20,15 +20,15 @@ use froq\pager\Pager;
 trait PagerTrait
 {
     /** @var ?froq\pager\Pager */
-    protected ?Pager $pager;
+    protected ?Pager $pager = null;
 
     /**
      * Set pager property.
      *
-     * @param  froq\pager\Pager $pager
+     * @param  ?froq\pager\Pager $pager
      * @return self
      */
-    public final function setPager(Pager $pager): self
+    public final function setPager(?Pager $pager): self
     {
         $this->pager = $pager;
 
@@ -42,6 +42,6 @@ trait PagerTrait
      */
     public final function getPager(): ?Pager
     {
-        return $this->pager ?? null;
+        return $this->pager;
     }
 }
