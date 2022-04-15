@@ -268,10 +268,10 @@ final class Manager
             // Pager was run?
             if ($pager->totalPages === null) {
                 $count = $pager->totalRecords ?? $record->count($where, $params);
-                [$limit, $offset] = $pager->run($count);
-            } else {
-                [$limit, $offset] = [$pager->limit, $pager->offset];
+                $pager->run($count);
             }
+
+            [$limit, $offset] = [$pager->limit, $pager->offset];
         }
 
         // Order by clause, default is primary.
