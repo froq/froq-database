@@ -207,7 +207,7 @@ final class Database
      * @param  array|null        $params
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
-     * @param  bool|null         $raw For returning a raw Result instance.
+     * @param  bool              $raw For returning a raw Result instance.
      * @return mixed
      */
     public function getAll(string $query, array $params = null, string|array $fetch = null, string|bool $flat = null,
@@ -312,7 +312,7 @@ final class Database
      * @param  string|array|null $fetch
      * @param  string|bool|null  $flat
      * @param  string|null       $op
-     * @param  bool|null         $raw For returning a raw Result instance.
+     * @param  bool              $raw For returning a raw Result instance.
      * @return mixed
      */
     public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,

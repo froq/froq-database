@@ -1390,7 +1390,7 @@ final class Query
     /**
      * Get all result rows & running current query stack.
      *
-     * Note: For pagination purposes, `paginate()` method must be called before this method.
+     * Note: For pagination, `paginate()` method must be called before this method.
      *
      * @param  string|array<string>|null $fetch
      * @param  int|null                  $limit
