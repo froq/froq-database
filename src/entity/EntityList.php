@@ -31,19 +31,22 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     public function __construct(object ...$entities)
     {
         $entities && $this->fill(...$entities);
+
+        $this->pager = null;
     }
 
     /** @magic */
     public function __serialize(): array
     {
-        return EntityUtil::store($this);
+        return ['@' => $this->toArray(), 'pager' => $this->pager];
     }
 
     /** @magic */
     public function __unserialize(array $data): void
     {
-        $data = EntityUtil::unstore($this, $data);
-        $data && $this->fill(...$data);
+        ['@' => $entities, 'pager' => $this->pager] = $data;
+
+        $entities && $this->fill(...$entities);
     }
 
     /**

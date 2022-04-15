@@ -45,14 +45,15 @@ abstract class Entity implements EntityInterface
     /** @magic */
     public function __serialize(): array
     {
-        return EntityUtil::store($this);
+        return ['@' => $this->toArray(), 'state' => $this->state];
     }
 
     /** @magic */
     public function __unserialize(array $data): void
     {
-        $data = EntityUtil::unstore($this, $data);
-        $data && $this->fill(...$data);
+        ['@' => $properties, 'state' => $this->state] = $data;
+
+        $properties && $this->fill(...$properties);
     }
 
     /**
