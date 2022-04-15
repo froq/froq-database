@@ -301,10 +301,10 @@ final class Query
     /**
      * Add an "INSERT" query into query stack.
      *
-     * @param  array|null            $data
-     * @param  bool|null             $batch
-     * @param  bool|null             $sequence
-     * @param bool|string|array|null $return
+     * @param  array|null             $data
+     * @param  bool|null              $batch
+     * @param  bool|null              $sequence
+     * @param  bool|string|array|null $return
      * @return self
      * @throws froq\database\QueryException
      */
@@ -355,9 +355,9 @@ final class Query
     /**
      * Add an "UPDATE" query into query stack.
      *
-     * @param  array|null            $data
-     * @param  bool                  $escape
-     * @param bool|string|array|null $return
+     * @param  array|null             $data
+     * @param  bool                   $escape
+     * @param  bool|string|array|null $return
      * @return self
      * @throws froq\database\QueryException
      */
