@@ -11,7 +11,6 @@ use froq\database\{Database, Query, trait\RecordTrait};
 use froq\database\common\{Helper, Table};
 use froq\validation\ValidationError;
 use froq\common\trait\StateTrait;
-use froq\pager\Pager;
 use State;
 
 /**
@@ -466,7 +465,7 @@ class Record implements RecordInterface
         $id ??= $this->id();
         $id ?? throw new RecordException('Null primary value');
 
-        $that = $this->findAll([$id], $fields, limit: 1)->first() ?? (clone $this);
+        $that = $this->findAll([$id], $fields)[0] ?? (clone $this);
 
         // Required for changing data list => map (thats copy).
         if ($this !== $that) $this->setData($that->getData());
@@ -481,14 +480,10 @@ class Record implements RecordInterface
      *
      * @param  array<int|string>         $ids
      * @param  array|string|null         $fields
-     * @param  int|null                  $page
-     * @param  int|null                  $limit
-     * @param  froq\database\Pager|null &$pager
      * @return froq\database\record\RecordList
      * @throws froq\database\record\RecordException
      */
-    public final function findAll(array $ids, array|string $fields = null, int $page = null, int $limit = null,
-        Pager &$pager = null): RecordList
+    public final function findAll(array $ids, array|string $fields = null): RecordList
     {
         [$table, $primary, $ids] = $this->pack($ids, primary: true);
 
@@ -501,19 +496,13 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
-        if ($pager) {
-            $query->paginate($page, $limit, $pager);
-        } elseif ($limit) {
-            $query->limit($limit);
-        }
-
         $fields = $fields ?: $this->query->pull('return.fields') ?: '*';
         $result = $query->select(select: $fields)->run(fetch: 'array');
 
         // Copy with rows & "finded" state.
         $thats = $this->copy($result->rows(), state: ['finded', $result->count()]);
 
-        return new RecordList($thats, $pager);
+        return new RecordList($thats);
     }
 
     /**
@@ -533,7 +522,7 @@ class Record implements RecordInterface
         $id ??= $this->id();
         $id ?? throw new RecordException('Null primary value');
 
-        $that = $this->removeAll([$id], $return)->first() ?? (clone $this);
+        $that = $this->removeAll([$id], $return)[0] ?? (clone $this);
 
         // Required for changing data list => map (thats copy).
         if ($this !== $that) $this->setData($that->getData());

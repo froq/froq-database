@@ -192,7 +192,7 @@ final class Manager
 
         /** @var froq\database\record\RecordList */
         $records = $this->initRecord($classMeta, $items[0], true)
-            ->findAll($ids, limit: $items->count());
+            ->findAll($ids);
 
         if ($records->count()) {
             // For proper index selection below (null-row safety).
