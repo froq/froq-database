@@ -994,10 +994,7 @@ final class Database
      */
     public function initPager(int $count = null, array $attributes = null): Pager
     {
-        $pager = new Pager($attributes);
-        $pager->run($count);
-
-        return $pager;
+        return (new Pager($attributes))->run($count);
     }
 
     /**
