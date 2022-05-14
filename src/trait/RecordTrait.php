@@ -86,12 +86,8 @@ trait RecordTrait
         }
 
         throw new ValidationError(
-            'Cannot prepare %s (%s), validation failed and $silent argument is false [tip: %s]',
-            [
-                $this instanceof \froq\database\record\Record ? 'record' : 'form',
-                ValidationError::tip(),
-                static::class
-            ],
+            'Cannot prepare %s, validation failed and $silent argument is false [tip: %s]',
+            [static::class, ValidationError::tip()],
             errors: $errors
         );
     }
