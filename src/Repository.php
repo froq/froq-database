@@ -7,9 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\trait\{DbTrait, EmTrait, TableTrait, ValidationTrait};
-use froq\database\entity\Manager as EntityManager;
-use froq\database\common\Helper;
+use froq\database\trait\{DbTrait, EmTrait};
+use froq\database\{common\Helper, entity\Manager as EntityManager};
 
 /**
  * A class, intended to use other repository classes and producers/providers
@@ -22,7 +21,7 @@ use froq\database\common\Helper;
  */
 class Repository
 {
-    use DbTrait, EmTrait, TableTrait, ValidationTrait;
+    use DbTrait, EmTrait;
 
     /**
      * Constructor.
