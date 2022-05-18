@@ -745,7 +745,6 @@ final class Query
      * @param  mixed       $param
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereEqual(string $field, mixed $param, string $op = null): self
     {
@@ -756,10 +755,7 @@ final class Query
             return $this->where($this->prepareField($field) . ' = (?r)', $param, $op);
         }
 
-        $param = (array) $param;
-        $param || throw new QueryException('No parameter given');
-
-        return $this->where($this->prepareField($field) . ' = ?', $param, $op);
+        return $this->where($this->prepareField($field) . ' = ?', [$param], $op);
     }
 
     /**
@@ -769,7 +765,6 @@ final class Query
      * @param  mixed       $param
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereNotEqual(string $field, mixed $param, string $op = null): self
     {
@@ -780,10 +775,7 @@ final class Query
             return $this->where($this->prepareField($field) . ' != (?r)', $param, $op);
         }
 
-        $param = (array) $param;
-        $param || throw new QueryException('No parameter given');
-
-        return $this->where($this->prepareField($field) . ' != ?', $param, $op);
+        return $this->where($this->prepareField($field) . ' != ?', [$param], $op);
     }
 
     /**
@@ -825,15 +817,12 @@ final class Query
      * @param  array|Query $params
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereIn(string $field, array|Query $params, string $op = null): self
     {
         if ($params instanceof Query) {
             return $this->where($this->prepareField($field) . ' IN (' . $params . ')', op: $op);
         }
-
-        $params || throw new QueryException('No parameters given');
 
         return $this->where($this->prepareField($field)
              . ' IN (' . $this->prepareWhereInPlaceholders($params) . ')', $params, $op);
@@ -846,15 +835,12 @@ final class Query
      * @param  array|Query $params
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereNotIn(string $field, array|Query $params, string $op = null): self
     {
         if ($params instanceof Query) {
             return $this->where($this->prepareField($field) . ' NOT IN (' . $params . ')', op: $op);
         }
-
-        $params || throw new QueryException('No parameters given');
 
         return $this->where($this->prepareField($field)
              . ' NOT IN (' . $this->prepareWhereInPlaceholders($params) . ')', $params, $op);
@@ -891,12 +877,9 @@ final class Query
      * @param  array       $params
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereBetween(string $field, array $params, string $op = null): self
     {
-        $params || throw new QueryException('No parameters given');
-
         return $this->where($this->prepareField($field) . ' BETWEEN ? AND ?', $params, $op);
     }
 
@@ -907,12 +890,9 @@ final class Query
      * @param  array       $params
      * @param  string|null $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereNotBetween(string $field, array $params, string $op = null): self
     {
-        $params || throw new QueryException('No parameters given');
-
         return $this->where($this->prepareField($field) . ' NOT BETWEEN ? AND ?', $params, $op);
     }
 
@@ -923,14 +903,10 @@ final class Query
      * @param  string|int|float $param
      * @param  string|null      $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereLessThan(string $field, string|int|float $param, string $op = null): self
     {
-        $param = (array) $param;
-        $param || throw new QueryException('No parameter given');
-
-        return $this->where($this->prepareField($field) . ' < ?', $param, $op);
+        return $this->where($this->prepareField($field) . ' < ?', [$param], $op);
     }
 
     /**
@@ -940,14 +916,10 @@ final class Query
      * @param  string|int|float $param
      * @param  string|null      $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereLessThanEqual(string $field, string|int|float $param, string $op = null): self
     {
-        $param = (array) $param;
-        $param || throw new QueryException('No parameter given');
-
-        return $this->where($this->prepareField($field) . ' <= ?', $param, $op);
+        return $this->where($this->prepareField($field) . ' <= ?', [$param], $op);
     }
 
     /**
@@ -960,10 +932,7 @@ final class Query
      */
     public function whereGreaterThan(string $field, string|int|float $param, string $op = null): self
     {
-        $param = (array) $param;
-        $param || throw new QueryException('No parameter given');
-
-        return $this->where($this->prepareField($field) . ' > ?', $param, $op);
+        return $this->where($this->prepareField($field) . ' > ?', [$param], $op);
     }
 
     /**
@@ -976,10 +945,7 @@ final class Query
      */
     public function whereGreaterThanEqual(string $field, string|int|float $param, string $op = null): self
     {
-        $param = (array) $param;
-        $param || throw new QueryException('No parameter given');
-
-        return $this->where($this->prepareField($field) . ' >= ?', $param, $op);
+        return $this->where($this->prepareField($field) . ' >= ?', [$param], $op);
     }
 
     /**
@@ -990,13 +956,9 @@ final class Query
      * @param  bool         $ilike
      * @param  string|null  $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereLike(string $field, string|array $params, bool $ilike = false, string $op = null): self
     {
-        $params = (array) $params;
-        $params || throw new QueryException('No parameters given');
-
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($params)];
 
         if (!$ilike) {
@@ -1018,13 +980,9 @@ final class Query
      * @param  bool         $ilike
      * @param  string|null  $op
      * @return self
-     * @throws froq\database\QueryException
      */
     public function whereNotLike(string $field, string|array $params, bool $ilike = false, string $op = null): self
     {
-        $params = (array) $params;
-        $param || throw new QueryException('No parameters given');
-
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($params)];
 
         if (!$ilike) {
@@ -2260,19 +2218,13 @@ final class Query
     /**
      * Prepare where-like search.
      *
-     * @param  array $params
+     * @param  string|array $params
      * @return string
-     * @throws froq\database\QueryException
      */
-    private function prepareWhereLikeSearch(array $params): string
+    private function prepareWhereLikeSearch(string|array $params): string
     {
-        $count = count($params);
-
-        if ($count == 1) {
-            return $this->db->escapeLikeString($params[0]);
-        }
-        if ($count < 3) {
-            throw new QueryException('Like parameters count must be 1 or 3, %s given', $count);
+        if (is_string($params)) {
+            return $this->db->escapeLikeString($params);
         }
 
         // Note to me..
@@ -2283,7 +2235,7 @@ final class Query
         // 'f_%_%' Anything starts with "f" and are at least 3 characters in length
         // 'f%o'   Anything starts with "f" and ends with "o"
 
-        [$end, $search, $start] = $params;
+        [$start, $search, $end] = array_pad($params, 3, '');
 
         $search = $this->db->escapeLikeString($search, false);
         $search = $this->db->quote($start . $search . $end);
