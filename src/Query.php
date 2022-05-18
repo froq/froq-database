@@ -497,7 +497,7 @@ final class Query
         }
 
         if (!$update && $action == 'UPDATE') {
-            throw new DatabaseException('Conflict action is `update`, but no update data given');
+            throw new QueryException('Conflict action is `update`, but no update data given');
         }
 
         $fields = $this->prepareFields($fields);
