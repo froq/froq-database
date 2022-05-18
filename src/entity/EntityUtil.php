@@ -88,17 +88,18 @@ class EntityUtil extends \StaticClass
 
             return (string) json_encode($data, $flags);
         } else {
-            $json = '';
+            $json = [];
 
             foreach ($object->toArray() as $item) {
                 if ($item instanceof Entity) {
-                    $json .= $item->toJson($flags, $filter, $map);
+                    $json[] = $item->toJson($flags, $filter, $map);
                 } else {
-                    $json .= (string) json_encode($object, $flags);
+                    // Fallback for non-entity items (in case).
+                    $json[] = (string) json_encode($item, $flags);
                 }
             }
 
-            return $json;
+            return '[' . join(',', $json) . ']';
         }
     }
 }
