@@ -7,8 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\trait\PagerTrait;
-use froq\pager\Pager;
+use froq\pager\{Pager, PagerTrait};
 
 /**
  * A list class, for collecting `Record` instances.

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\trait\PagerTrait;
+use froq\pager\PagerTrait;
 
 /**
  * An abstract entity list class that can be extended by entity list classes used for
