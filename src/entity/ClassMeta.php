@@ -90,7 +90,7 @@ final class ClassMeta extends Meta
      */
     public function getTablePrimary(): string|null
     {
-        return $this->getDataField('primary');
+        return $this->getDataField('primary', default: 'id');
     }
 
     /**
