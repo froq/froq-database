@@ -18,6 +18,20 @@ use froq\database\{Database, DatabaseException};
  */
 final class Helper extends \StaticClass
 {
+    /** @var froq\database\Database */
+    private static Database $database;
+
+    /**
+     * Set active database.
+     *
+     * @param  froq\database\Database $database
+     * @return void
+     */
+    public static function setActiveDatabase(Database $database): void
+    {
+        self::$database = $database;
+    }
+
     /**
      * Get active database.
      *
@@ -27,6 +41,10 @@ final class Helper extends \StaticClass
      */
     public static function getActiveDatabase(string $method = null): Database
     {
+        if (isset(self::$database)) {
+            return self::$database;
+        }
+
         if (function_exists('app')) {
             $database = app()->database;
         }
