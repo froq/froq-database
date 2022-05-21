@@ -170,8 +170,9 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      */
     private function getActionResult(string $action): bool
     {
-        return count($this->items()) == count(array_filter(
-            $this->items(), fn($entity) => $entity->$action()
-        ));
+        return count($this) // Prevent empty list.
+            && count($this) == count(array_filter(
+                $this->items(), fn($entity) => $entity->$action()
+            ));
     }
 }
