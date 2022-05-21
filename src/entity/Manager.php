@@ -578,7 +578,6 @@ final class Manager
             }
         }
 
-        // When properties have "validation" meta on entity class.
         if (!$def) {
             foreach ($classMeta->getProperties() as $name => $propertyMeta) {
                 // Skip entity properties.
