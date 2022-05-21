@@ -7,7 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\pager\PagerTrait;
+use froq\database\entity\proxy\{ProxyTrait, EntityListProxy};
+use froq\pager\{Pager, PagerTrait};
 
 /**
  * An abstract entity list class that can be extended by entity list classes used for
@@ -21,7 +22,7 @@ use froq\pager\PagerTrait;
  */
 abstract class EntityList extends \ItemList implements EntityListInterface
 {
-    use ManagerTrait, PagerTrait;
+    use ProxyTrait, PagerTrait;
 
     /**
      * Constructor.
@@ -32,57 +33,58 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     {
         $entities && $this->fill(...$entities);
 
-        $this->pager = null;
+        $this->proxy = new EntityListProxy();
     }
 
     /** @magic */
     public function __serialize(): array
     {
-        return ['@' => $this->toArray(), 'pager' => $this->pager];
+        return ['@' => $this->toArray(), 'pager' => $this->pager?->toArray()];
     }
 
     /** @magic */
     public function __unserialize(array $data): void
     {
-        ['@' => $entities, 'pager' => $this->pager] = $data;
+        ['@' => $entities, 'pager' => $pager] = $data;
 
         $entities && $this->fill(...$entities);
+
+        // Reset proxy with pager data.
+        $this->proxy = new EntityListProxy();
+        if ($pager) {
+            $this->pager = new Pager((array) $pager);
+            $this->pager->run();
+        }
     }
 
     /**
-     * Run a "save-all" action using manager.
+     * Run a "save-all" action.
      *
      * @return self
      */
     public final function saveAll(): self
     {
-        $this->manager->saveAll($this);
-
-        return $this;
+        return $this->proxy->saveAll($this);
     }
 
     /**
-     * Run a "find-all" action using manager.
+     * Run a "find-all" action.
      *
      * @return self
      */
     public final function findAll(): self
     {
-        $this->manager->findAll($this);
-
-        return $this;
+        return $this->proxy->findAll($this);
     }
 
     /**
-     * Run a "remove-all" action using manager.
+     * Run a "remove-all" action.
      *
      * @return self
      */
     public final function removeAll(): self
     {
-        $this->manager->removeAll($this);
-
-        return $this;
+        return $this->proxy->removeAll($this);
     }
 
     /**
@@ -168,7 +170,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      */
     private function getActionResult(string $action): bool
     {
-        return $this->items() && count($this->items()) == count(array_filter(
+        return count($this->items()) == count(array_filter(
             $this->items(), fn($entity) => $entity->$action()
         ));
     }

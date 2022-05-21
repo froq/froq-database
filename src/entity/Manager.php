@@ -476,7 +476,7 @@ final class Manager
         }
 
         // Set manager & properties.
-        $entity->setManager($this);
+        $entity->proxy()->setManager($this);
         $properties && $entity->fill(...$properties);
 
         return $entity;
@@ -502,7 +502,7 @@ final class Manager
         }
 
         // Set manager & stack items.
-        $entityList->setManager($this);
+        $entityList->proxy()->setManager($this);
         $entities && $entityList->fill(...$entities);
 
         return $entityList;
@@ -542,10 +542,10 @@ final class Manager
     {
         // When entity extends Entity.
         if ($entity instanceof Entity) {
-            $entity->setManager($this);
+            $entity->proxy()->setManager($this);
 
             // Set result state.
-            $state && $entity->setState(...$state);
+            $state && $entity->proxy()->setState(...$state);
         }
     }
 

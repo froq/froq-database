@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\common\trait\StateTrait;
-use State, ReflectionProperty;
+use froq\database\entity\proxy\{ProxyTrait, EntityProxy};
+use ReflectionProperty;
 
 /**
  * An abstract entity class that can be extended by entity classes used for accessing
@@ -22,7 +22,7 @@ use State, ReflectionProperty;
  */
 abstract class Entity implements EntityInterface
 {
-    use ManagerTrait, StateTrait;
+    use ProxyTrait;
 
     /**
      * Constructor.
@@ -33,7 +33,7 @@ abstract class Entity implements EntityInterface
     {
         $properties && $this->fill(...$properties);
 
-        $this->state = new State();
+        $this->proxy = new EntityProxy();
     }
 
     /** @magic */
@@ -45,51 +45,51 @@ abstract class Entity implements EntityInterface
     /** @magic */
     public function __serialize(): array
     {
-        return ['@' => $this->toArray(), 'state' => $this->state];
+        return ['@' => $this->toArray(), 'states' => $this->proxy->getStates()];
     }
 
     /** @magic */
     public function __unserialize(array $data): void
     {
-        ['@' => $properties, 'state' => $this->state] = $data;
+        ['@' => $properties, 'states' => $states] = $data;
 
         $properties && $this->fill(...$properties);
+
+        // Reset proxy with states data.
+        $this->proxy = new EntityProxy();
+        if ($states) {
+            $this->proxy->setStates((array) $states);
+        }
     }
 
     /**
-     * Run a "save" action using manager.
+     * Run a "save" action.
      *
      * @return self.
      */
     public final function save(): self
     {
-        $this->manager->save($this);
-
-        return $this;
+        return $this->proxy->save($this);
     }
 
     /**
-     * Run a "find" action using manager.
+     * Run a "find" action.
      *
      * @return self.
      */
     public final function find(): self
     {
-        $this->manager->find($this);
-
-        return $this;
+        return $this->proxy->find($this);
     }
 
     /**
-     * Run a "remove" action using manager.
+     * Run a "remove" action.
      *
      * @return self.
      */
     public final function remove(): self
     {
-        $this->manager->remove($this);
-
-        return $this;
+        return $this->proxy->remove($this);
     }
 
     /**
@@ -238,11 +238,11 @@ abstract class Entity implements EntityInterface
     }
 
     /**
-     * Get action result.
+     * Get an action result that stored as state (eg: "saved" for isSaved()).
      */
     private function getActionResult(string $state): bool
     {
-        return (bool) $this->getState($state);
+        return (bool) $this->proxy->getState($state);
     }
 
     /**
