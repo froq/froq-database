@@ -21,7 +21,7 @@ class Table
     protected string $name;
 
     /** @var string */
-    protected string $primary;
+    protected string $primary = 'id';
 
     /**
      * Constructor.
