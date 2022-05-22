@@ -903,10 +903,9 @@ final class Database
             }
 
             foreach ($holders as $holder) {
-                $pos = strpos($holder, ':');
                 // Named.
-                if ($pos !== false) {
-                    $key = trim($holder, ':');
+                if ($holder[0] == ':') {
+                    $key = substr($holder, 1);
                     if (!array_key_exists($key, $params)) {
                         throw new DatabaseException(
                             'Replacement key `%s` not found in given parameters', $key
@@ -998,7 +997,7 @@ final class Database
     }
 
     /**
-     * Prepare a prepare input escaping names only (eg: @id => "id").
+     * Prepare an input escaping names only (eg: @id => "id" for PgSQL).
      *
      * @param  string $input
      * @return string
@@ -1009,8 +1008,7 @@ final class Database
 
         if ($input != '') {
             // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
-            $pos = strpos($input, '@');
-            if ($pos !== false) {
+            if (str_contains($input, '@')) {
                 $input = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
                     if (count($match) == 1) {
                         return $this->escapeNames(substr($match[0], 2, -1));
