@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
+use froq\database\DatabaseException;
 use PDOStatement, PDOException;
 
 /**
