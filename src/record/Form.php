@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\{Database, trait\RecordTrait};
-use froq\database\common\{Helper, Table};
+use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException};
+use froq\database\{common\Table, trait\RecordTrait};
 use froq\validation\ValidationError;
 
 /**
@@ -47,8 +47,8 @@ class Form implements FormInterface
     public function __construct(Database $db = null, string|Table $table = null, string|Record $record = null,
         array $data = null, array $options = null, array $validations = null, string $name = null)
     {
-        // Try to use active database when non given.
-        $this->db = $db ?? Helper::getActiveDatabase();
+        // Try to use active database when none given.
+        $this->db = $db ?? DatabaseRegistry::getDefault(__method__);
 
         $data && $this->data = $data;
         $name && $this->name = $name;

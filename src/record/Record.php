@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\{Database, Query, trait\RecordTrait};
-use froq\database\common\{Helper, Table};
+use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
+use froq\database\{common\Table, trait\RecordTrait};
 use froq\validation\ValidationError;
 use froq\common\trait\StateTrait;
 use State;
@@ -51,12 +51,12 @@ class Record implements RecordInterface
     public function __construct(Database $db = null, string|Table $table = null, string|Form $form = null,
         array $data = null, array $options = null, array $validations = null)
     {
-        // Try to use active database when non given.
-        $this->db = $db ?? Helper::getActiveDatabase();
+        // Try to use active database when none given.
+        $this->db = $db ?? DatabaseRegistry::getDefault(__method__);
 
         $data && $this->data = $data;
 
-        $this->query = new Query($db);
+        $this->query = new Query($this->db);
         $this->state = new State();
 
         if ($table) {

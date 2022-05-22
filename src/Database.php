@@ -64,6 +64,9 @@ final class Database
         }
 
         $this->options = $options;
+
+        // Add to registry (if no default database was set yet).
+        DatabaseRegistry::hasDefault() || DatabaseRegistry::setDefault($this);
     }
 
     /**

@@ -7,9 +7,8 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\{Database, DatabaseException, Result, trait\DbTrait};
-use froq\database\common\{Helper, Table};
-use froq\database\record\Record;
+use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException};
+use froq\database\{common\Table, record\Record, trait\DbTrait};
 use froq\validation\ValidationError;
 use froq\pager\Pager;
 use ItemList, ReflectionProperty;
@@ -36,8 +35,8 @@ final class Manager
     public function __construct(Database $db = null)
     {
         if (!$db) try {
-            $db = Helper::getActiveDatabase();
-        } catch (DatabaseException $e) {
+            $db = DatabaseRegistry::getDefault(__method__);
+        } catch (DatabaseRegistryException $e) {
             throw new ManagerException($e->message);
         }
 

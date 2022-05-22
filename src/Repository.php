@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\trait\{DbTrait, EmTrait};
-use froq\database\{common\Helper, entity\Manager as EntityManager};
+use froq\database\entity\Manager as EntityManager;
 
 /**
  * A class, intended to use other repository classes and producers/providers
@@ -33,8 +33,8 @@ class Repository
     public function __construct(Database $db = null, EntityManager $em = null)
     {
         if (!$db) try {
-            $db = Helper::getActiveDatabase();
-        } catch (DatabaseException $e) {
+            $db = DatabaseRegistry::getDefault(__method__);
+        } catch (DatabaseRegistryException $e) {
             throw new RepositoryException($e->message);
         }
 
