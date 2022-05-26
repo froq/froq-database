@@ -237,7 +237,7 @@ final class Manager
      *```
      *
      * @param  object|string          $entity
-     * @param  string|array|null      $where
+     * @param  string|array|null      $where  Query object can be used calling toString() at the end.
      * @param  array|null             $params Used only when $where is string.
      * @param  string|null            $order
      * @param  int|null               $limit
