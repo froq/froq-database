@@ -34,41 +34,93 @@ class QueryParam implements Arrayable
         public string $logic    = 'AND'
     ) {}
 
+    /**
+     * Set field.
+     *
+     * @param  string $field
+     * @return self
+     */
     public function setField(string $field): self
     {
         $this->field = $field;
+
         return $this;
     }
+
+    /**
+     * Get field.
+     *
+     * @return string
+     */
     public function getField(): string
     {
         return $this->field;
     }
 
+    /**
+     * Set operator.
+     *
+     * @param  string $operator
+     * @return self
+     */
     public function setOperator(string $operator): self
     {
         $this->operator = $operator;
+
         return $this;
     }
+
+    /**
+     * Get operator.
+     *
+     * @return string
+     */
     public function getOperator(): string
     {
         return $this->operator;
     }
 
+    /**
+     * Set value.
+     *
+     * @param  mixed $value
+     * @return self
+     */
     public function setValue(mixed $value): self
     {
         $this->value = $value;
+
         return $this;
     }
+
+    /**
+     * Get value.
+     *
+     * @return mixed
+     */
     public function getValue(): mixed
     {
         return $this->value;
     }
 
+    /**
+     * Set logic.
+     *
+     * @param  string $logic
+     * @return self
+     */
     public function setLogic(string $logic): self
     {
         $this->logic = $logic;
+
         return $this;
     }
+
+    /**
+     * Get logic.
+     *
+     * @return string
+     */
     public function getLogic(): string
     {
         return $this->logic;
