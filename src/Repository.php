@@ -11,8 +11,8 @@ use froq\database\trait\{DbTrait, EmTrait};
 use froq\database\entity\Manager as EntityManager;
 
 /**
- * A class, intended to use other repository classes and producers/providers
- * or other database related classes.
+ * A repository class, provides `$db` and `$em` properties, to use in other repository
+ * classes and also producers/providers or any other database related classes.
  *
  * @package froq\database
  * @object  froq\database\Repository

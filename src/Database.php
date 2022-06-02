@@ -15,7 +15,7 @@ use froq\{pager\Pager, logger\Logger};
 use PDO, PDOStatement, PDOException, Throwable;
 
 /**
- * A database worker class, contains some util methods for such operations CRUD'ing and
+ * A database worker class, provides some util methods for such operations CRUD'ing and
  * query preparing, querying/executing SQL commands.
  *
  * @package froq\database

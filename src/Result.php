@@ -12,7 +12,7 @@ use froq\common\interface\Arrayable;
 use PDO, PDOStatement, PDOException;
 
 /**
- * A class, for query result stuff such as count, ids & rows.
+ * A result class, for query result stuff such as count, ids & rows.
  *
  * @package froq\database
  * @object  froq\database\Result
