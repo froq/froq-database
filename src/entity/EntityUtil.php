@@ -14,8 +14,8 @@ namespace froq\database\entity;
  * @object  froq\database\entity\EntityUtil
  * @author  Kerem Güneş
  * @since   6.0
- * @internal
  * @static
+ * @internal
  */
 class EntityUtil extends \StaticClass
 {
