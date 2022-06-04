@@ -8,10 +8,13 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 /**
+ * Internal util class.
+ *
  * @package froq\database\entity
  * @object  froq\database\entity\EntityUtil
  * @author  Kerem Güneş
  * @since   6.0
+ * @internal
  * @static
  */
 class EntityUtil extends \StaticClass
