@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 /**
- * Internal util class.
+ * Internal utility class.
  *
  * @package froq\database\entity
  * @object  froq\database\entity\EntityUtil
@@ -17,7 +17,7 @@ namespace froq\database\entity;
  * @static
  * @internal
  */
-class EntityUtil extends \StaticClass
+final class EntityUtil extends \StaticClass
 {
     /**
      * Make a deep array, used by `toArray()` methods of `Entity` and `EntityList` classes.
