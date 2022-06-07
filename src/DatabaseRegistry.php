@@ -48,7 +48,7 @@ final class DatabaseRegistry
      * Get default database or throw a `DatabaseRegistryException` if none was set.
      *
      * @param  string $caller @internal
-     * @return void
+     * @return froq\database\Database
      * @throws froq\database\DatabaseRegistryException
      */
     public static function getDefault(string $caller = null): Database
@@ -57,7 +57,32 @@ final class DatabaseRegistry
             return $database;
         }
 
+        $callerMethod   = $caller;
+        $callerArgument = 'db';
+
+        // Hard works..
         if (!$caller) {
+            // Try to find caller method & argument from backtrace.
+            $trace = new \Trace();
+            $seeks = [__class__, __function__];
+            $entry = $trace->find(fn(\TraceEntry $e) => (
+                $e->callerMethod && $e->class == $seeks[0] && $e->function == $seeks[1]
+            ));
+
+            if ($entry) {
+                $ref = new \ReflectionCallable($entry->callerMethod);
+                foreach ($ref->getParameters() as $ref) {
+                    if ($ref->getType()?->getPureName() == Database::class) {
+                        $callerMethod   = $entry->callerMethod;
+                        $callerArgument = $ref->getName();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // No caller method.
+        if (!$callerMethod) {
             throw new DatabaseRegistryException(
                 'No default database was set yet, call %s::setDefault()',
                 self::class
@@ -67,8 +92,8 @@ final class DatabaseRegistry
         // For internal calls (eg: entity Manager's constructor).
         throw new DatabaseRegistryException(
             'No database given to deal. Call %s::setDefault() method '.
-            'first or pass $db argument to %s()',
-            [self::class, $caller]
+            'first or pass $%s argument to %s()',
+            [self::class, $callerArgument, $callerMethod]
         );
     }
 

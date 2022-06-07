@@ -35,7 +35,7 @@ final class Manager
     public function __construct(Database $db = null)
     {
         if (!$db) try {
-            $db = DatabaseRegistry::getDefault(__method__);
+            $db = DatabaseRegistry::getDefault();
         } catch (DatabaseRegistryException $e) {
             throw new ManagerException($e->message);
         }

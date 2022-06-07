@@ -33,7 +33,7 @@ class Repository
     public function __construct(Database $db = null, EntityManager $em = null)
     {
         if (!$db) try {
-            $db = DatabaseRegistry::getDefault(__method__);
+            $db = DatabaseRegistry::getDefault();
         } catch (DatabaseRegistryException $e) {
             throw new RepositoryException($e->message);
         }

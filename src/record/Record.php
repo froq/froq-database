@@ -52,7 +52,7 @@ class Record implements RecordInterface
         array $data = null, array $options = null, array $validations = null)
     {
         // Try to use active database when none given.
-        $this->db = $db ?? DatabaseRegistry::getDefault(__method__);
+        $this->db = $db ?? DatabaseRegistry::getDefault();
 
         $data && $this->data = $data;
 
