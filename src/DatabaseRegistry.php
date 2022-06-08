@@ -7,21 +7,20 @@ declare(strict_types=1);
 
 namespace froq\database;
 
+use froq\common\object\Registry;
+
 /**
- * A registry class for pooling default & (in case) other database instances.
+ * A registry class for pooling default & in case, other database instances.
  *
  * @package froq\database
  * @object  froq\database\DatabaseRegistry
  * @author  Kerem Güneş
  * @since   6.0
  */
-final class DatabaseRegistry
+final class DatabaseRegistry extends Registry
 {
     /** @const string */
-    private const DEFAULT = '@default';
-
-    /** @var array<froq\database\Database> */
-    private static array $databases = [];
+    private const DEFAULT_DATABASE_ID = '@default-database';
 
     /**
      * Check whether default database was set.
@@ -30,7 +29,7 @@ final class DatabaseRegistry
      */
     public static function hasDefault(): bool
     {
-        return self::get(self::DEFAULT) != null;
+        return self::has(self::DEFAULT_DATABASE_ID);
     }
 
     /**
@@ -41,11 +40,12 @@ final class DatabaseRegistry
      */
     public static function setDefault(Database $database): void
     {
-        self::add(self::DEFAULT, $database);
+        self::add(self::DEFAULT_DATABASE_ID, $database);
     }
 
     /**
-     * Get default database or throw a `DatabaseRegistryException` if none was set.
+     * Get default database or throw a `DatabaseRegistryException` if none
+     * was set as default.
      *
      * @param  string $caller @internal
      * @return froq\database\Database
@@ -53,7 +53,7 @@ final class DatabaseRegistry
      */
     public static function getDefault(string $caller = null): Database
     {
-        if ($database = self::get(self::DEFAULT)) {
+        if ($database = self::get(self::DEFAULT_DATABASE_ID)) {
             return $database;
         }
 
@@ -91,7 +91,7 @@ final class DatabaseRegistry
 
         // For internal calls (eg: entity Manager's constructor).
         throw new DatabaseRegistryException(
-            'No database given to deal. Call %s::setDefault() method '.
+            'No database given to deal, call %s::setDefault() method '.
             'first or pass $%s argument to %s()',
             [self::class, $callerArgument, $callerMethod]
         );
@@ -102,32 +102,11 @@ final class DatabaseRegistry
      *
      * @param  string                 $id
      * @param  froq\database\Database $database
+     * @param  bool                   $locked
      * @return void
      */
-    public static function add(string $id, Database $database): void
+    public static function add(string $id, Database $database, bool $locked = false): void
     {
-        self::$databases[$id] = $database;
-    }
-
-    /**
-     * Get a database instance by given id.
-     *
-     * @param  string $id
-     * @return froq\database\Database|null
-     */
-    public static function get(string $id): Database|null
-    {
-        return self::$databases[$id] ?? null;
-    }
-
-    /**
-     * Remove a database instance by given id.
-     *
-     * @param  string $id
-     * @return void
-     */
-    public static function remove(string $id): void
-    {
-        unset(self::$databases[$id]);
+        self::set($id, $database, $locked);
     }
 }
