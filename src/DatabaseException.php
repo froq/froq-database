@@ -43,8 +43,8 @@ class DatabaseException extends \froq\common\Exception
 
             // Update sql-state & code.
             if (is_string($code)) {
-                $code = 0;
                 $this->sqlState = $code;
+                $code = 0;
             } else {
                 $this->sqlState = (string) $errorInfo[0];
             }
