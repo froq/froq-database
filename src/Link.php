@@ -129,7 +129,7 @@ final class Link
 
             // Which driver the FUCK?
             if ($message == 'could not find driver') {
-                throw new LinkException('Could not find driver `%s`', $driver, code: $code, cause: $e);
+                $message = sprintf('Could not find driver `%s`', $driver);
             }
 
             throw new LinkException($message, code: $code, cause: $e);

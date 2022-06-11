@@ -91,8 +91,7 @@ final class DatabaseRegistry extends Registry
 
         // For internal calls (eg: entity Manager's constructor).
         throw new DatabaseRegistryException(
-            'No database given to deal, call %s::setDefault() method '.
-            'first or pass $%s argument to %s()',
+            'No database to deal yet, call %s::setDefault() or pass $%s argument to %s()',
             [self::class, $callerArgument, $callerMethod]
         );
     }

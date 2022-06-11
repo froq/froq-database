@@ -37,7 +37,7 @@ final class Manager
         if (!$db) try {
             $db = DatabaseRegistry::getDefault();
         } catch (DatabaseRegistryException $e) {
-            throw new ManagerException($e->message);
+            throw new ManagerException($e);
         }
 
         $this->db = $db;
