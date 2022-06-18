@@ -94,7 +94,7 @@ final class Link
     }
 
     /**
-     * Connect with given options, set timezone & charset if provided.
+     * Connect with given options, set charset & timezone if provided.
      *
      * @return void
      */
