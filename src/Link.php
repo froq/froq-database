@@ -97,6 +97,7 @@ final class Link
      * Connect with given options, set charset & timezone if provided.
      *
      * @return void
+     * @throws froq\database\LinkException
      */
     public function connect(): void
     {
@@ -195,8 +196,6 @@ final class Link
     /**
      * Prepare options.
      *
-     * @param  array $options
-     * @return array
      * @throws froq\database\LinkException
      */
     private static function prepareOptions(array $options): array
