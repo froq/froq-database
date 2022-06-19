@@ -141,7 +141,7 @@ final class Query
     /**
      * Add/append a "SELECT" query into query stack from a raw query or Query instance.
      *
-     * @param  string|Query $query
+     * @param  string|Query $select
      * @param  array|null   $params
      * @param  string|null  $as
      * @param  bool         $wrap
