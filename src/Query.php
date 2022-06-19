@@ -147,13 +147,13 @@ final class Query
      * @param  bool         $wrap
      * @return self
      */
-    public function selectQuery(string|Query $query, array $params = null, string $as = null, bool $wrap = true): self
+    public function selectQuery(string|Query $select, array $params = null, string $as = null, bool $wrap = true): self
     {
-        if (is_string($query)) {
-            $query = $this->prepare($query, $params);
+        if (is_string($select)) {
+            $select = $this->prepare($select, $params);
         }
 
-        return $this->select($query, false, $wrap, $as);
+        return $this->select($select, false, $wrap, $as);
     }
 
     /**
