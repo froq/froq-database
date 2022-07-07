@@ -277,7 +277,8 @@ final class Manager
         $order ??= $classMeta->getTablePrimary();
 
         /** @var froq\database\record\RecordList */
-        $records = $record->findBy($where, $params, limit: $limit, offset: $offset, order: $order, fetch: 'array');
+        $records = $record->findBy($where, $params,
+            limit: $limit, offset: $offset, order: $order, fetch: 'array');
 
         $entityList = $this->initEntityList($classMeta->getListClass());
 

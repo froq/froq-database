@@ -478,8 +478,8 @@ class Record implements RecordInterface
      * throw a `RecordException` if ids are empty or cause a `RecordException` if
      * no table primary presented.
      *
-     * @param  array<int|string>         $ids
-     * @param  array|string|null         $fields
+     * @param  array<int|string> $ids
+     * @param  array|string|null $fields
      * @return froq\database\record\RecordList
      * @throws froq\database\record\RecordException
      */
@@ -567,8 +567,8 @@ class Record implements RecordInterface
      * Find multiple records by given arguments returning a `RecordList` filled by
      * found records.
      *
-     * @param  string|array    $where
-     * @param  mixed        ...$selectArgs For select() method.
+     * @param  string|array $where
+     * @param  mixed     ...$selectArgs For select() method.
      * @return froq\database\record\RecordList
      */
     public final function findBy(string|array $where, mixed ...$selectArgs): RecordList
@@ -590,8 +590,8 @@ class Record implements RecordInterface
      * Remove multiple records by given arguments returning a `RecordList` filled by
      * removed records.
      *
-     * @param  string|array    $where
-     * @param  mixed        ...$deleteArgs For delete() method.
+     * @param  string|array $where
+     * @param  mixed     ...$deleteArgs For delete() method.
      * @return froq\database\record\RecordList
      */
     public final function removeBy(string|array $where, mixed ...$deleteArgs): RecordList
