@@ -166,7 +166,7 @@ abstract class Entity implements EntityInterface
 
         foreach ($properties as $name => $_) {
             if ($ref = $this->getPropertyReflection($entity, $name)) {
-                $data[$name] = $ref->getValue($this);
+                $data[$name] = $ref->isInitialized($this) ? $ref->getValue($this) : null;
             }
         }
 
@@ -212,7 +212,7 @@ abstract class Entity implements EntityInterface
     public function offsetGet(mixed $name): mixed
     {
         if ($ref = $this->getPropertyReflection(null, $name)) {
-            return $ref->getValue($this);
+            return $ref->isInitialized($this) ? $ref->getValue($this) : null;
         }
         return null;
     }
