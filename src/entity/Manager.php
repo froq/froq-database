@@ -92,9 +92,11 @@ final class Manager
         $classMeta = $this->getClassMeta($entity);
 
         $data = [];
-        foreach ($classMeta->getProperties() as $name => $propertyMeta) {
-            $data[$name] = $this->getPropertyValue($entity, $propertyMeta->getReflection())
-                ?? $propertyMeta->getValidationDefault();
+        foreach ($classMeta->getProperties() as $propertyMeta) {
+            if ($field = $propertyMeta->getField()) {
+                $data[$field] = $this->getPropertyValue($entity, $propertyMeta->getReflection())
+                    ?? $propertyMeta->getValidationDefault();
+            }
         }
 
         // Clear null values & discard validations for "update" actions only on existing records.
@@ -164,14 +166,19 @@ final class Manager
         $id = $this->getPrimaryValue($entity, $classMeta);
 
         /** @var froq\database\record\Record */
-        $record = $this->initRecord($classMeta, $entity, true, primaryRequired: true)
-            ->find($id);
+        $record = $this->initRecord($classMeta, $entity, true, primaryRequired: true);
+
+        // Call action method when provided.
+        $this->callAction($entity, 'onQuery', $record->getQuery());
+
+        /** @var froq\database\record\Record */
+        $record = $record->find($id);
 
         $this->setProperties($entity, $record, $classMeta);
         $this->setInternalProperties($entity, $record, ['finded', $record->isFinded()]);
 
         // Call action method when provided.
-        $this->callAction($entity, 'onFind');
+        $this->callAction($entity, 'onFind', $record->getData());
 
         return $entity;
     }
@@ -190,8 +197,13 @@ final class Manager
         [$ids, $items, $primary, $classMeta] = $this->prepareListItems($entityList);
 
         /** @var froq\database\record\RecordList */
-        $records = $this->initRecord($classMeta, $items[0], true)
-            ->findAll($ids);
+        $record = $this->initRecord($classMeta, $entity = $items[0], true);
+
+        // Call action method when provided.
+        $this->callAction($entity, 'onQuery', $record->getQuery());
+
+        /** @var froq\database\record\RecordList */
+        $records = $record->findAll($ids);
 
         if ($records->count()) {
             // For proper index selection below (null-row safety).
@@ -204,7 +216,7 @@ final class Manager
                 $this->setInternalProperties($entity, $record, ['finded', true]);
 
                 // Call action method when provided.
-                $this->callAction($entity, 'onFind');
+                $this->callAction($entity, 'onFind', $record->getData());
             }
         }
 
@@ -260,6 +272,9 @@ final class Manager
         /** @var froq\database\record\Record */
         $record = $this->initRecord($classMeta, $entity, true);
 
+        // Call action method when provided.
+        $this->callAction($entity, 'onQuery', $record->getQuery());
+
         if ($pager) {
             // Disable redirects.
             $pager->redirect = false;
@@ -290,7 +305,7 @@ final class Manager
                 $this->setInternalProperties($entityClone, $record, ['finded', true]);
 
                 // Call action method when provided.
-                $this->callAction($entityClone, 'onFind');
+                $this->callAction($entityClone, 'onFind', $record->getData());
 
                 $entityClones[] = $entityClone;
             }
@@ -579,9 +594,13 @@ final class Manager
         }
 
         if (!$def) {
-            foreach ($classMeta->getProperties() as $name => $propertyMeta) {
-                // Skip entity properties.
-                $propertyMeta->hasEntity() || $ret[] = $name;
+            foreach ($classMeta->getProperties() as $propertyMeta) {
+                // Skip entity properties & non-fields (with no "field" definition).
+                if ($propertyMeta->hasEntity() || !($field = $propertyMeta->getField())) {
+                    continue;
+                }
+
+                $ret[] = $field;
             }
         }
 
@@ -624,9 +643,13 @@ final class Manager
 
         // When properties have "validation" meta on entity class.
         if (!$def) {
-            foreach ($classMeta->getProperties() as $name => $propertyMeta) {
-                // Skip entity properties.
-                $propertyMeta->hasEntity() || $ret[$name] = $propertyMeta->getValidation();
+            foreach ($classMeta->getProperties() as $propertyMeta) {
+                // Skip entity properties & non-fields (with no "field" definition).
+                if ($propertyMeta->hasEntity() || !($field = $propertyMeta->getField())) {
+                    continue;
+                }
+
+                $ret[$field] = $propertyMeta->getValidation();
             }
         }
 
@@ -699,13 +722,18 @@ final class Manager
             $where  = trim($where);
             $params = (array) $params;
         } else {
-            foreach ($classMeta->getProperties() as $name => $propertyMeta) {
+            foreach ($classMeta->getProperties() as $propertyMeta) {
+                // Skip entity properties & non-fields (with no "field" definition).
+                if ($propertyMeta->hasEntity() || !($field = $propertyMeta->getField())) {
+                    continue;
+                }
+
                 // When "where" does not contains a condition already.
-                if (!array_key_exists($name, $where)) {
+                if (!array_key_exists($field, $where)) {
                     $value = $this->getPropertyValue($entity, $propertyMeta->getReflection());
                     // Skip nulls.
                     if ($value !== null) {
-                        $where[$name] = $value;
+                        $where[$field] = $value;
                     }
                 }
             }
@@ -798,12 +826,13 @@ final class Manager
     }
 
     /**
-     * Call an entity method if available, so defined in for find/save/remove actions.
+     * Call an entity method if available, so defined in Entity/EntityList class
+     * for find/save/remove actions.
      */
-    private function callAction(object $entity, string $method): void
+    private function callAction(object $entity, string $method, mixed ...$arguments): void
     {
         if (method_exists($entity, $method)) {
-            $entity->$method();
+            $entity->$method(...$arguments);
         }
     }
 }

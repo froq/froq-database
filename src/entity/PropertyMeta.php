@@ -50,6 +50,16 @@ final class PropertyMeta extends Meta
     }
 
     /**
+     * Get field name.
+     *
+     * @return string|null
+     */
+    public function getField(): string|null
+    {
+        return $this->getDataField('field');
+    }
+
+    /**
      * Get propert value using reflection.
      *
      * @return mixed|null

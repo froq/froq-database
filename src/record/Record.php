@@ -221,6 +221,16 @@ class Record implements RecordInterface
         return $this->id();
     }
 
+    /**
+     * Get query property.
+     *
+     * @return froq\database\Query
+     */
+    public final function getQuery(): Query
+    {
+        return $this->query;
+    }
+
     /** State getters. */
     public final function saved() { return $this->state->saved; }
     public final function finded() { return $this->state->finded; }
@@ -496,6 +506,11 @@ class Record implements RecordInterface
             $query->where($where, op: $op);
         }
 
+        $select = $this->query->pull('select');
+        if ($select) foreach ($select as $select) {
+            $query->select($select, false, false);
+        }
+
         $fields = $fields ?: $this->query->pull('return.fields') ?: '*';
         $result = $query->select(select: $fields)->run(fetch: 'array');
 
@@ -630,6 +645,11 @@ class Record implements RecordInterface
         $where = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
             $query->where($where, op: $op);
+        }
+
+        $select = $this->query->pull('select');
+        if ($select) foreach ($select as $select) {
+            $query->select($select, false, false);
         }
 
         $limit && $query->limit($limit, $offset);
