@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException};
+use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
 use froq\database\{common\Table, record\Record, trait\DbTrait};
 use froq\validation\ValidationError;
 use froq\pager\Pager;
@@ -256,26 +256,26 @@ final class Manager
      *
      * ```
      * $page  = Get from somewhere, eg. $_GET['page'].
-     * $limit = Get from somewhere or set as constant, default is 10.
-     * $count = Count of total records by some conditions. <optional>
+     * $limit = Get from somewhere or set as constant.     // default = 10
+     * $count = Count of total records by some conditions. // optional
      *
-     * $pager = new Pager(['page' => $page, 'limit' => $limit, 'count' => $count])
-     * $pager->run() <optional>
+     * $pager = new Pager(['page' => $page, 'limit' => $limit, 'count' => $count]);
+     * $pager->run(); // optional
      *
-     * $result = $em->findBy($entityObject or $entityClass, pager: $pager, ...<other params>)
+     * $result = $em->findBy(entity object or class, pager: $pager, ...other params);
      *```
      *
-     * @param  object|string          $entity
-     * @param  string|array|null      $where  Query object can be used calling toString() at the end.
-     * @param  array|null             $params Used only when $where is string.
-     * @param  string|null            $order
-     * @param  int|null               $limit
-     * @param  int|null               $offset
-     * @param  froq\pager\Pager|null &$pager
+     * @param  object|string                         $entity
+     * @param  string|array|froq\database\Query|null $where  Discards entity props when it is Query.
+     * @param  array|null                            $params Used only when $where is string.
+     * @param  string|null                           $order
+     * @param  int|null                              $limit
+     * @param  int|null                              $offset
+     * @param  froq\pager\Pager|null                &$pager
      * @return froq\database\entity\EntityList
      * @causes froq\database\entity\ManagerException
      */
-    public function findBy(object|string $entity, string|array $where = null, array $params = null,
+    public function findBy(object|string $entity, string|array|Query $where = null, array $params = null,
         string $order = null, int $limit = null, int $offset = null, Pager &$pager = null): EntityList
     {
         // When no entity instance given.
@@ -284,7 +284,12 @@ final class Manager
         /** @var froq\database\entity\ClassMeta */
         $classMeta = $this->getClassMeta($entity);
 
-        $this->prepareWhere($entity, $classMeta, $where, $params);
+        // Use Query's where dropping "WHERE" part.
+        if ($where instanceof Query) {
+            $where = substr($where->toQueryString('where'), 6);
+        } else {
+            $this->prepareWhere($entity, $classMeta, $where, $params);
+        }
 
         /** @var froq\database\record\Record */
         $record = $this->initRecord($classMeta, $entity, true);
@@ -405,13 +410,13 @@ final class Manager
      * & init/fill given entity class with removed records data when db supports, returning an entity
      * list.
      *
-     * @param  string|object     $entity
-     * @param  string|array|null $where
-     * @param  array|null        $params Used only when $where is string.
+     * @param  string|object                         $entity
+     * @param  string|array|froq\database\Query|null $where  Discards entity props when it is Query.
+     * @param  array|null                            $params Used only when $where is string.
      * @return froq\database\entity\EntityList
      * @causes froq\database\entity\ManagerException
      */
-    public function removeBy(string|object $entity, string|array $where = null, array $params = null): EntityList
+    public function removeBy(string|object $entity, string|array|Query $where = null, array $params = null): EntityList
     {
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
@@ -419,7 +424,12 @@ final class Manager
         /** @var froq\database\entity\ClassMeta */
         $classMeta = $this->getClassMeta($entity);
 
-        $this->prepareWhere($entity, $classMeta, $where, $params);
+        // Use Query's where dropping "WHERE" part.
+        if ($where instanceof Query) {
+            $where = substr($where->toQueryString('where'), 6);
+        } else {
+            $this->prepareWhere($entity, $classMeta, $where, $params);
+        }
 
         /** @var froq\database\record\RecordList */
         $records = $this->initRecord($classMeta, $entity, true)
