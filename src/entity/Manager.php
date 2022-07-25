@@ -79,6 +79,23 @@ final class Manager
     }
 
     /**
+     * Get an entity meta.
+     *
+     * @param  string|object $entity
+     * @return froq\database\entity\ClassMeta|null
+     */
+    public function getMeta(string|object $entity): ClassMeta|null
+    {
+        try {
+            return $this->getClassMeta($entity);
+        }
+        // Catch manager exception only, not "no class exists" etc.
+        catch (ManagerException) {
+            return null;
+        }
+    }
+
+    /**
      * Save an entity.
      *
      * @param  object $entity
