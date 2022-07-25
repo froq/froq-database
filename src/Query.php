@@ -1988,7 +1988,9 @@ final class Query
                             }
                         }
 
-                        $ret = $ws . str_repeat(')', $wsi); // Concat & close parentheses.
+                        // Concat & close parentheses.
+                        $ret = $ws . str_repeat(')', $wsi);
+
                         if ($indent > 1) {
                             $ret = 'WHERE (' . $n . $ts . $ret . $nt . ')';
                         } else {
