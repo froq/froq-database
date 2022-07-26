@@ -459,6 +459,8 @@ final class Manager
 
     /**
      * Init a record by given entity class meta.
+     *
+     * @throws froq\database\entity\ManagerException
      */
     private function initRecord(ClassMeta $classMeta, object $entity = null, bool $fields = null, bool $validations = null,
         bool $primaryRequired = false): Record
@@ -500,6 +502,8 @@ final class Manager
 
     /**
      * Init an entity with/without given class & with/without given properties.
+     *
+     * @throws froq\database\entity\ManagerException
      */
     private function initEntity(string|null $class, array $properties = null): Entity
     {
@@ -526,6 +530,8 @@ final class Manager
 
     /**
      * Init an entity list with/without given class & with/without given entities.
+     *
+     * @throws froq\database\entity\ManagerException
      */
     private function initEntityList(string|null $class, array $entities = null): EntityList
     {
@@ -553,6 +559,8 @@ final class Manager
     /**
      * Get class meta parsing given entity meta attributes/annotations or throw a
      * `ManagerException` if given entity has no meta attributes/annotations.
+     *
+     * @throws froq\database\entity\ManagerException
      */
     private function getClassMeta(string|object $entity): ClassMeta
     {
@@ -594,6 +602,8 @@ final class Manager
     /**
      * Get an entity fields when defined `FIELDS` constant or `fields()` method
      * on entity class, or get them from class meta or return `*` (all) as default.
+     *
+     * @throws froq\database\entity\ManagerException
      */
     private function getFields(object|null $entity, ClassMeta $classMeta): array|string
     {
@@ -642,6 +652,8 @@ final class Manager
     /**
      * Get an entity validations when defined `VALIDATIONS` constant or `validations()`
      * method on entity class, or get them from class meta or return `null`.
+     *
+     * @throws froq\database\entity\ManagerException
      */
     private function getValidations(object|null $entity, ClassMeta $classMeta): array|null
     {
@@ -685,6 +697,8 @@ final class Manager
 
     /**
      * Get an entity primary value using given entity class meta when available.
+     *
+     * @throws froq\database\entity\ManagerException
      */
     private function getPrimaryValue(object $entity, ClassMeta $classMeta, bool $check = true): int|string|null
     {
@@ -768,12 +782,13 @@ final class Manager
     }
 
     /**
-     * Prepare list items for `findAll()` & `removeAll()` methods to reduce code repetition
-     * and ensure:
+     * Prepare list items for `findAll()` & `removeAll()` methods to reduce code repetition and ensure:
      * - Given list is not empty.
      * - Each item is an object (entity) and all same type.
      * - Each item has primary field definition.
      * - Each item has a unique state by primary with not null value.
+     *
+     * @throws froq\database\entity\ManagerException
      */
     private function prepareListItems(array|EntityList $entityList): array
     {
@@ -856,10 +871,10 @@ final class Manager
      * Call an entity method if available, so defined in Entity/EntityList class
      * for find/save/remove actions.
      */
-    private function callAction(object $entity, string $method, mixed ...$arguments): void
+    private function callAction(object $entity, string $method, mixed ...$methodArgs): void
     {
         if (method_exists($entity, $method)) {
-            $entity->$method(...$arguments);
+            $entity->$method(...$methodArgs);
         }
     }
 }
