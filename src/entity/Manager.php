@@ -186,7 +186,7 @@ final class Manager
         $record = $this->initRecord($classMeta, $entity, true, primaryRequired: true);
 
         // Call action method when provided.
-        $this->callAction($entity, 'onQuery', $record->getQuery());
+        $this->callAction($entity, 'onQuery', $record->getQuery(), /* $id */);
 
         /** @var froq\database\record\Record */
         $record = $record->find($id);
@@ -217,7 +217,7 @@ final class Manager
         $record = $this->initRecord($classMeta, $entity = $items[0], true);
 
         // Call action method when provided.
-        $this->callAction($entity, 'onQuery', $record->getQuery());
+        $this->callAction($entity, 'onQuery', $record->getQuery(), /* $ids */);
 
         /** @var froq\database\record\RecordList */
         $records = $record->findAll($ids);
@@ -295,7 +295,7 @@ final class Manager
         $record = $this->initRecord($classMeta, $entity, true);
 
         // Call action method when provided.
-        $this->callAction($entity, 'onQuery', $record->getQuery());
+        $this->callAction($entity, 'onQuery', $record->getQuery(), /* null or getPrimaryValue() if entity is object */);
 
         if ($pager) {
             // Disable redirects.
