@@ -58,7 +58,7 @@ abstract class Entity implements EntityInterface
         // Reset proxy with states data.
         $this->proxy = new EntityProxy();
         if ($states) {
-            $this->proxy->setStates((array) $states);
+            $this->proxy->setStates(...$states);
         }
     }
 
