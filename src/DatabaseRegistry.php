@@ -89,7 +89,7 @@ final class DatabaseRegistry extends Registry
             );
         }
 
-        // For internal calls (eg: entity Manager's constructor).
+        // For internal calls (eg: EntityManager's constructor).
         throw new DatabaseRegistryException(
             'No database to deal yet, call %s::setDefault() or pass $%s argument to %s()',
             [self::class, $callerArgument, $callerMethod]

@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity\proxy;
 
-use froq\database\entity\Manager;
+use froq\database\entity\EntityManager;
 
 /**
  *  A proxy class, provides isolation for entity & entity list classes.
@@ -20,26 +20,26 @@ use froq\database\entity\Manager;
  */
 abstract class Proxy
 {
-    /** @var froq\database\entity\Manager */
-    protected Manager $manager;
+    /** @var froq\database\entity\EntityManager */
+    protected EntityManager $manager;
 
     /**
      * Constructor.
      *
-     * @param froq\database\entity\Manager|null $manager
+     * @param froq\database\entity\EntityManager|null $manager
      */
-    public function __construct(Manager $manager = null)
+    public function __construct(EntityManager $manager = null)
     {
-        $this->manager = $manager ?? new Manager();
+        $this->manager = $manager ?? new EntityManager();
     }
 
     /**
      * Set manager.
      *
-     * @param  froq\database\entity\Manager $manager
+     * @param  froq\database\entity\EntityManager $manager
      * @return void
      */
-    public final function setManager(Manager $manager): void
+    public function setManager(EntityManager $manager): void
     {
         $this->manager = $manager;
     }
@@ -47,9 +47,9 @@ abstract class Proxy
     /**
      * Get manager.
      *
-     * @return froq\database\entity\Manager
+     * @return froq\database\entity\EntityManager
      */
-    public final function getManager(): Manager
+    public function getManager(): EntityManager
     {
         return $this->manager;
     }

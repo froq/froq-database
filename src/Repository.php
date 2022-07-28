@@ -8,11 +8,11 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\database\trait\{DbTrait, EmTrait};
-use froq\database\entity\Manager as EntityManager;
+use froq\database\entity\EntityManager;
 
 /**
  * A repository class, provides `$db` and `$em` properties, to use in other repository
- * classes and also producers/providers or any other database related classes.
+ * classes and also producers/providers or any other database/entity related classes.
  *
  * @package froq\database
  * @object  froq\database\Repository
@@ -26,8 +26,8 @@ class Repository
     /**
      * Constructor.
      *
-     * @param  froq\database\Database|null       $db
-     * @param  froq\database\entity\Manager|null $em
+     * @param  froq\database\Database|null             $db
+     * @param  froq\database\entity\EntityManager|null $em
      * @throws froq\database\RepositoryException
      */
     public function __construct(Database $db = null, EntityManager $em = null)

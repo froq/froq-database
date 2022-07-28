@@ -7,23 +7,22 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
-use froq\database\{common\Table, record\Record, trait\DbTrait};
 use froq\database\entity\meta\{MetaParser, ClassMeta};
+use froq\database\{common\Table, record\Record, trait\DbTrait};
+use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
 use froq\validation\ValidationError;
 use froq\pager\Pager;
 use ItemList, ReflectionProperty;
 
 /**
- * A class, creates & manages data entities using attributes/annotations of these entities,
- * also dial with current open database for queries, executions and transactions.
+ * Entity manager class for creating & managing entities.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\Manager
+ * @object  froq\database\entity\EntityManager
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class Manager
+class EntityManager
 {
     use DbTrait;
 
@@ -31,14 +30,14 @@ final class Manager
      * Constructor.
      *
      * @param  froq\database\Database|null $db
-     * @throws froq\database\entity\ManagerException
+     * @throws froq\database\entity\EntityManagerException
      */
     public function __construct(Database $db = null)
     {
         if (!$db) try {
             $db = DatabaseRegistry::getDefault();
         } catch (DatabaseRegistryException $e) {
-            throw new ManagerException($e);
+            throw new EntityManagerException($e);
         }
 
         $this->db = $db;
@@ -50,7 +49,7 @@ final class Manager
      * @param  string    $class
      * @param  mixed  ...$properties
      * @return object
-     * @causes froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      */
     public function createEntity(string $class, mixed ...$properties): object
     {
@@ -72,7 +71,7 @@ final class Manager
      * @param  string    $class
      * @param  object ...$entities
      * @return object
-     * @causes froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      */
     public function createEntityList(string $class, object ...$entities): object
     {
@@ -91,7 +90,7 @@ final class Manager
             return $this->getClassMeta($entity);
         }
         // Catch manager exception only, not "no class exists" etc.
-        catch (ManagerException) {
+        catch (EntityManagerException) {
             return null;
         }
     }
@@ -101,7 +100,7 @@ final class Manager
      *
      * @param  object $entity
      * @return object
-     * @causes froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      * @throws froq\validation\ValidationError
      */
     public function save(object $entity): object
@@ -154,7 +153,7 @@ final class Manager
      * @param  array|froq\database\entity\EntityList $entityList
      * @param  bool                                  $init
      * @return array|froq\database\entity\EntityList
-     * @causes froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      */
     public function saveAll(array|EntityList $entityList, bool $init = false): array|EntityList
     {
@@ -174,7 +173,7 @@ final class Manager
      *
      * @param  object $entity
      * @return object
-     * @causes froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      */
     public function find(object $entity): object
     {
@@ -207,8 +206,7 @@ final class Manager
      * @param  array<object>|froq\database\entity\EntityList<object> $entityList
      * @param  bool                                                  $init
      * @return array<object>|froq\database\entity\EntityList<object>
-     * @causes froq\database\entity\ManagerException
-     * @throws froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      */
     public function findAll(array|EntityList $entityList, bool $init = false): array|EntityList
     {
@@ -274,7 +272,7 @@ final class Manager
      * @param  int|null                              $offset
      * @param  froq\pager\Pager|null                &$pager
      * @return froq\database\entity\EntityList
-     * @causes froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      */
     public function findBy(object|string $entity, string|array|Query $where = null, array $params = null,
         string $order = null, int $limit = null, int $offset = null, Pager &$pager = null): EntityList
@@ -346,7 +344,7 @@ final class Manager
      *
      * @param  object $entity
      * @return object
-     * @causes froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      */
     public function remove(object $entity): object
     {
@@ -374,7 +372,7 @@ final class Manager
      * @param  array|froq\database\entity\EntityList $entityList
      * @param  bool                                  $init
      * @return array|froq\database\entity\EntityList
-     * @causes froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      */
     public function removeAll(array|EntityList $entityList, bool $init = false): array|EntityList
     {
@@ -415,7 +413,7 @@ final class Manager
      * @param  string|array|froq\database\Query|null $where  Discards entity props when it is Query.
      * @param  array|null                            $params Used only when $where is string.
      * @return froq\database\entity\EntityList
-     * @causes froq\database\entity\ManagerException
+     * @causes froq\database\entity\EntityManagerException
      */
     public function removeBy(string|object $entity, string|array|Query $where = null, array $params = null): EntityList
     {
@@ -461,7 +459,7 @@ final class Manager
     /**
      * Init a record by given entity class meta.
      *
-     * @throws froq\database\entity\ManagerException
+     * @throws froq\database\entity\EntityManagerException
      */
     private function initRecord(ClassMeta $classMeta, object $entity = null, bool $fields = null, bool $validations = null,
         bool $primaryRequired = false): Record
@@ -478,11 +476,11 @@ final class Manager
         [$table, $tablePrimary] = $classMeta->packTableStuff();
 
         if (!$table) {
-            throw new ManagerException('Entity %s has no table definition',
+            throw new EntityManagerException('Entity %s has no table definition',
                 $classMeta->getName());
         }
         if ($primaryRequired && !$tablePrimary) {
-            throw new ManagerException('Entity %s has no primary (id) definition',
+            throw new EntityManagerException('Entity %s has no primary (id) definition',
                 $classMeta->getName());
         }
 
@@ -504,16 +502,16 @@ final class Manager
     /**
      * Init an entity with/without given class & with/without given properties.
      *
-     * @throws froq\database\entity\ManagerException
+     * @throws froq\database\entity\EntityManagerException
      */
     private function initEntity(string|null $class, array $properties = null): Entity
     {
         // Check class validity.
         if ($class) {
-            class_exists($class) || throw new ManagerException(
+            class_exists($class) || throw new EntityManagerException(
                 'Entity class `%s` not exists', $class
             );
-            class_extends($class, Entity::class) || throw new ManagerException(
+            class_extends($class, Entity::class) || throw new EntityManagerException(
                 'Entity class `%s` must extend `%s`', [$class, Entity::class]
             );
 
@@ -532,16 +530,16 @@ final class Manager
     /**
      * Init an entity list with/without given class & with/without given entities.
      *
-     * @throws froq\database\entity\ManagerException
+     * @throws froq\database\entity\EntityManagerException
      */
     private function initEntityList(string|null $class, array $entities = null): EntityList
     {
         // Check class validity.
         if ($class) {
-            class_exists($class) || throw new ManagerException(
+            class_exists($class) || throw new EntityManagerException(
                 'Entity list class `%s` not exists', $class
             );
-            class_extends($class, EntityList::class) || throw new ManagerException(
+            class_extends($class, EntityList::class) || throw new EntityManagerException(
                 'Entity list class `%s` must extend `%s`', [$class, EntityList::class]
             );
 
@@ -559,14 +557,14 @@ final class Manager
 
     /**
      * Get class meta parsing given entity meta attributes/annotations or throw a
-     * `ManagerException` if given entity has no meta attributes/annotations.
+     * `EntityManagerException` if given entity has no meta attributes/annotations.
      *
-     * @throws froq\database\entity\ManagerException
+     * @throws froq\database\entity\EntityManagerException
      */
     private function getClassMeta(string|object $entity): ClassMeta
     {
         return MetaParser::parseClassMeta($entity)
-            ?: throw new ManagerException('No meta in class ' . get_class_name($entity));
+            ?: throw new EntityManagerException('No meta in class ' . get_class_name($entity));
     }
 
     /**
@@ -604,7 +602,7 @@ final class Manager
      * Get an entity fields when defined `FIELDS` constant or `fields()` method
      * on entity class, or get them from class meta or return `*` (all) as default.
      *
-     * @throws froq\database\entity\ManagerException
+     * @throws froq\database\entity\EntityManagerException
      */
     private function getFields(object|null $entity, ClassMeta $classMeta): array|string
     {
@@ -627,7 +625,7 @@ final class Manager
                 $message = ($def == 1)
                     ? 'Constant %s::FIELDS must define array, %t defined'
                     : 'Method %s::fields() must return array, %t returned';
-                throw new ManagerException($message, [$entity::class, $ret]);
+                throw new EntityManagerException($message, [$entity::class, $ret]);
             }
         }
 
@@ -654,7 +652,7 @@ final class Manager
      * Get an entity validations when defined `VALIDATIONS` constant or `validations()`
      * method on entity class, or get them from class meta or return `null`.
      *
-     * @throws froq\database\entity\ManagerException
+     * @throws froq\database\entity\EntityManagerException
      */
     private function getValidations(object|null $entity, ClassMeta $classMeta): array|null
     {
@@ -677,7 +675,7 @@ final class Manager
                 $message = ($def == 1)
                     ? 'Constant %s::VALIDATIONS must define array, %t defined'
                     : 'Method %s::validations() must return array, %t returned';
-                throw new ManagerException($message, [$entity::class, $ret]);
+                throw new EntityManagerException($message, [$entity::class, $ret]);
             }
         }
 
@@ -699,7 +697,7 @@ final class Manager
     /**
      * Get an entity primary value using given entity class meta when available.
      *
-     * @throws froq\database\entity\ManagerException
+     * @throws froq\database\entity\EntityManagerException
      */
     private function getPrimaryValue(object $entity, ClassMeta $classMeta, bool $check = true): int|string|null
     {
@@ -708,7 +706,7 @@ final class Manager
         if ($primary) {
             $primaryMeta = $classMeta->getProperty($primary);
             if (!$primaryMeta) {
-                throw new ManagerException(
+                throw new EntityManagerException(
                     'Primary (%s::$%s) not defined or has no meta',
                     [$entity::class, $primary]
                 );
@@ -716,7 +714,7 @@ final class Manager
 
             $value = $this->getPropertyValue($entity, $primaryMeta->getReflection());
             if ($check && !is_type_of($value, 'int|string')) {
-                throw new ManagerException(
+                throw new EntityManagerException(
                     'Primary (%s::$%s) value must be int|string, %t given',
                     [$entity::class, $primary, $value]
                 );
@@ -789,21 +787,21 @@ final class Manager
      * - Each item has primary field definition.
      * - Each item has a unique state by primary with not null value.
      *
-     * @throws froq\database\entity\ManagerException
+     * @throws froq\database\entity\EntityManagerException
      */
     private function prepareListItems(array|EntityList $entityList): array
     {
-        $item  = $entityList[0] ?: throw new ManagerException('Empty list');
+        $item  = $entityList[0] ?: throw new EntityManagerException('Empty list');
         $items = new ItemList();
 
         foreach ($entityList as $i => $entity) {
-            is_object($entity) || throw new ManagerException(
+            is_object($entity) || throw new EntityManagerException(
                 'Each item must be object, %t given', $entity
             );
 
             // All entities must be same type.
             if ($item::class != $entity::class) {
-                throw new ManagerException(
+                throw new EntityManagerException(
                     'All items must be same type as first item %s, %s is different',
                     [$item::class, $entity::class]
                 );
@@ -814,7 +812,7 @@ final class Manager
             $classMeta = $this->getClassMeta($entity);
 
             if (!$primary = $classMeta->getTablePrimary()) {
-                throw new ManagerException(
+                throw new EntityManagerException(
                     'Item %s[%d] has no primary (id) definition',
                     [$entity::class, $i]
                 );
@@ -822,7 +820,7 @@ final class Manager
 
             $primaryMeta = $classMeta->getProperty($primary);
             if (!$primaryMeta) {
-                throw new ManagerException(
+                throw new EntityManagerException(
                     'Item %s[%d] primary (%s) not defined or has no meta',
                     [$entity::class, $i, $primary]
                 );
@@ -830,13 +828,13 @@ final class Manager
 
             $id = $this->getPropertyValue($entity, $primaryMeta->getReflection());
             if ($id === null) {
-                throw new ManagerException(
+                throw new EntityManagerException(
                     'Item %s[%d] has null primary (%s) value',
                     [$entity::class, $i, $primary]
                 );
             }
             if (!is_type_of($id, 'int|string')) {
-                throw new ManagerException(
+                throw new EntityManagerException(
                     'Item %s[%d] primary (%s) value must be int|string, %t given',
                     [$entity::class, $i, $primary, $id]
                 );
@@ -845,7 +843,7 @@ final class Manager
             // Note: Since cannot get multiple records with same id and also corrupting
             // sorting processes in findAll() & removeAll(), this exception is required.
             if (isset($ids) && ($j = array_search($id, $ids)) !== false) {
-                throw new ManagerException(
+                throw new EntityManagerException(
                     'Item %s[%d] has same primary (%s) value %s with previous item %s[%d]',
                     [$entity::class, $i, $primary, $id, $entity::class, $j]
                 );

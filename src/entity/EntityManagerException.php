@@ -9,9 +9,9 @@ namespace froq\database\entity;
 
 /**
  * @package froq\database\entity
- * @object  froq\database\entity\ManagerException
+ * @object  froq\database\entity\EntityManagerException
  * @author  Kerem Güneş
  * @since   5.0
  */
-class ManagerException extends \froq\database\DatabaseException
+class EntityManagerException extends \froq\database\DatabaseException
 {}

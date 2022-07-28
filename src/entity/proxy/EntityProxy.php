@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity\proxy;
 
-use froq\database\entity\{Manager, Entity};
+use froq\database\entity\{EntityManager, Entity};
 use froq\common\trait\StateTrait;
 
 /**
@@ -26,9 +26,9 @@ final class EntityProxy extends Proxy
     /**
      * Constructor.
      *
-     * @param froq\database\entity\Manager|null $manager
+     * @param froq\database\entity\EntityManager|null $manager
      */
-    public function __construct(Manager $manager = null)
+    public function __construct(EntityManager $manager = null)
     {
         parent::__construct($manager);
 

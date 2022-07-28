@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\entity\proxy;
 
-use froq\database\entity\{Manager, EntityList};
+use froq\database\entity\{EntityManager, EntityList};
 
 /**
  * A proxy class for entity list classes.
@@ -23,9 +23,9 @@ final class EntityListProxy extends Proxy
     /**
      * Constructor.
      *
-     * @param froq\database\entity\Manager|null $manager
+     * @param froq\database\entity\EntityManager|null $manager
      */
-    public function __construct(Manager $manager = null)
+    public function __construct(EntityManager $manager = null)
     {
         parent::__construct($manager);
     }
