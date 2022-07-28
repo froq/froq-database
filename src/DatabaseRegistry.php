@@ -64,9 +64,9 @@ final class DatabaseRegistry extends Registry
         if (!$caller) {
             // Try to find caller method & argument from backtrace.
             $trace = new \Trace();
-            $seeks = [__class__, __function__];
+            $match = [__class__, __function__];
             $entry = $trace->find(fn(\TraceEntry $e) => (
-                $e->callerMethod && $e->class == $seeks[0] && $e->function == $seeks[1]
+                $e->callerMethod && $e->class == $match[0] && $e->function == $match[1]
             ));
 
             if ($entry) {
