@@ -5,11 +5,11 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\entity;
+namespace froq\database\entity\meta;
 
 /**
- * @package froq\database\entity
- * @object  froq\database\entity\MetaException
+ * @package froq\database\entity\meta
+ * @object  froq\database\entity\meta\MetaException
  * @author  Kerem Güneş
  * @since   5.0
  */

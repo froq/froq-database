@@ -5,13 +5,13 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\entity;
+namespace froq\database\entity\meta;
 
 /**
  * A metadata class, keeps parsed property metadata details.
  *
- * @package froq\database\entity
- * @object  froq\database\entity\PropertyMeta
+ * @package froq\database\entity\meta
+ * @object  froq\database\entity\meta\PropertyMeta
  * @author  Kerem Güneş
  * @since   5.0
  */
@@ -80,7 +80,7 @@ final class PropertyMeta extends Meta
     }
 
     /**
-     * Get validation default option for empty/null situations.
+     * Get validation default option for empty/null states.
      *
      * @return mixed|null
      */

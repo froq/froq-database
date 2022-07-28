@@ -5,13 +5,13 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\entity;
+namespace froq\database\entity\meta;
 
 /**
  * A factory class, used for creating `ClassMeta` & `PropertyMeta` instances.
  *
- * @package froq\database\entity
- * @object  froq\database\entity\MetaFactory
+ * @package froq\database\entity\meta
+ * @object  froq\database\entity\meta\MetaFactory
  * @author  Kerem Güneş
  * @since   5.0
  */
@@ -37,8 +37,8 @@ final class MetaFactory
      * @param  string     $name
      * @param  string     $class
      * @param  array|null $data
-     * @return froq\database\entity\Meta
-     * @throws froq\database\entity\MetaException
+     * @return froq\database\entity\meta\Meta
+     * @throws froq\database\entity\meta\MetaException
      */
     public static function init(int $type, string $name, string $class, array $data = null): Meta
     {
@@ -47,7 +47,7 @@ final class MetaFactory
         return self::$cache[$name] ??= match ($type) {
             Meta::TYPE_CLASS    => new ClassMeta($class, $data),
             Meta::TYPE_PROPERTY => new PropertyMeta($name, $class, $data),
-            default             => throw new MetaException('Invalid type `%s`', $type)
+            default             => throw new MetaException('Invalid type %q', $type)
         };
     }
 
@@ -56,7 +56,7 @@ final class MetaFactory
      *
      * @param  string     $class
      * @param  array|null $data
-     * @return froq\entity\ClassMeta
+     * @return froq\database\entity\meta\ClassMeta
      */
     public static function initClassMeta(string $class, array $data = null): ClassMeta
     {
@@ -69,7 +69,7 @@ final class MetaFactory
      * @param  string     $name
      * @param  string     $class
      * @param  array|null $data
-     * @return froq\entity\PropertyMeta
+     * @return froq\database\entity\meta\PropertyMeta
      */
     public static function initPropertyMeta(string $name, string $class, array $data = null):  PropertyMeta
     {
@@ -90,8 +90,8 @@ final class MetaFactory
     /**
      * Set a cache item.
      *
-     * @param  string                    $name
-     * @param  froq\database\entity\Meta $item
+     * @param  string                         $name
+     * @param  froq\database\entity\meta\Meta $item
      * @return void
      */
     public static function setCacheItem(string $name, Meta $item): void
@@ -102,8 +102,8 @@ final class MetaFactory
     /**
      * Get a cache item.
      *
-     * @param  string                         $name
-     * @return froq\database\entity\Meta|null $item
+     * @param  string $name
+     * @return froq\database\entity\meta\Meta|null
      */
     public static function getCacheItem(string $name): Meta|null
     {

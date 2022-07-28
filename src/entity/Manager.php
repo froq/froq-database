@@ -9,6 +9,7 @@ namespace froq\database\entity;
 
 use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
 use froq\database\{common\Table, record\Record, trait\DbTrait};
+use froq\database\entity\meta\{MetaParser, ClassMeta};
 use froq\validation\ValidationError;
 use froq\pager\Pager;
 use ItemList, ReflectionProperty;
@@ -53,7 +54,7 @@ final class Manager
      */
     public function createEntity(string $class, mixed ...$properties): object
     {
-        /** @var froq\database\entity\ClassMeta */
+        /** @var froq\database\entity\meta\ClassMeta */
         $classMeta = $this->getClassMeta($class);
 
         $entity = $this->initEntity($class, $properties);
@@ -82,7 +83,7 @@ final class Manager
      * Get an entity meta.
      *
      * @param  string|object $entity
-     * @return froq\database\entity\ClassMeta|null
+     * @return froq\database\entity\meta\ClassMeta|null
      */
     public function getMeta(string|object $entity): ClassMeta|null
     {
@@ -105,7 +106,7 @@ final class Manager
      */
     public function save(object $entity): object
     {
-        /** @var froq\database\entity\ClassMeta */
+        /** @var froq\database\entity\meta\ClassMeta */
         $classMeta = $this->getClassMeta($entity);
 
         $data = [];
@@ -177,7 +178,7 @@ final class Manager
      */
     public function find(object $entity): object
     {
-        /** @var froq\database\entity\ClassMeta */
+        /** @var froq\database\entity\meta\ClassMeta */
         $classMeta = $this->getClassMeta($entity);
 
         $id = $this->getPrimaryValue($entity, $classMeta);
@@ -281,7 +282,7 @@ final class Manager
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
 
-        /** @var froq\database\entity\ClassMeta */
+        /** @var froq\database\entity\meta\ClassMeta */
         $classMeta = $this->getClassMeta($entity);
 
         // Use Query's where dropping "WHERE" part.
@@ -349,7 +350,7 @@ final class Manager
      */
     public function remove(object $entity): object
     {
-        /** @var froq\database\entity\ClassMeta */
+        /** @var froq\database\entity\meta\ClassMeta */
         $classMeta = $this->getClassMeta($entity);
 
         $id = $this->getPrimaryValue($entity, $classMeta);
@@ -421,7 +422,7 @@ final class Manager
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
 
-        /** @var froq\database\entity\ClassMeta */
+        /** @var froq\database\entity\meta\ClassMeta */
         $classMeta = $this->getClassMeta($entity);
 
         // Use Query's where dropping "WHERE" part.
@@ -809,7 +810,7 @@ final class Manager
             }
             $item = $entity;
 
-            /** @var froq\database\entity\ClassMeta */
+            /** @var froq\database\entity\meta\ClassMeta */
             $classMeta = $this->getClassMeta($entity);
 
             if (!$primary = $classMeta->getTablePrimary()) {
