@@ -1111,7 +1111,7 @@ final class Database
     /**
      * Get returning data for insert/update/delete methods.
      */
-    private function getReturningData(Result $result, bool|string|array|null $return, bool|null $batch, bool $sequence = null): mixed
+    private function getReturningData(Result $result, string|array|bool|null $return, bool|null $batch, bool $sequence = null): mixed
     {
         // If rows/fields wanted as return.
         if ($return) {
