@@ -8,8 +8,6 @@ declare(strict_types=1);
 namespace froq\database\sql;
 
 /**
- * Sql.
- *
  * Used as raw SQL literal in escape & prepare stuff.
  *
  * @package froq\database\sql

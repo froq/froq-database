@@ -7,18 +7,15 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\common\Exception;
-use Throwable, PDOException;
+use Throwable;
 
 /**
- * Database Exception.
- *
  * @package froq\database
  * @object  froq\database\DatabaseException
  * @author  Kerem Güneş
  * @since   1.0
  */
-class DatabaseException extends Exception
+class DatabaseException extends \froq\common\Exception
 {
     /** @var string */
     private string $sqlState = '';
@@ -26,30 +23,30 @@ class DatabaseException extends Exception
     /**
      * Constructor.
      *
-     * @param string|Throwable $message
-     * @param any|null         $messageParams
-     * @param int|string|null  $code
-     * @param Throwable|null   $previous
-     * @param Throwable|null   $cause
+     * @param string|Throwable|null $message
+     * @param mixed|null            $messageParams
+     * @param int|string|null       $code
+     * @param Throwable|null        $previous
+     * @param Throwable|null        $cause
      */
-    public function __construct(string|Throwable $message = null, $messageParams = null, int|string $code = null,
+    public function __construct(string|Throwable $message = null, mixed $messageParams = null, int|string $code = null,
         Throwable $previous = null, Throwable $cause = null)
     {
-        if ($message != null) {
+        if ($message) {
             if (is_string($message)) {
-                $errorInfo = self::parseMessageInfo($message);
+                $errorInfo = $this->parseErrorInfo($message);
             } else {
                 $errorInfo = isset($message->errorInfo)
-                    ? ($message->errorInfo ?: self::parseMessageInfo($message->getMessage()))
-                    : self::parseMessageInfo($message->getMessage());
+                    ? ($message->errorInfo ?: $this->parseErrorInfo($message->getMessage()))
+                    : $this->parseErrorInfo($message->getMessage());
             }
 
             // Update sql-state & code.
-            $this->sqlState = (string) $errorInfo[0];
-
             if (is_string($code)) {
                 $this->sqlState = $code;
                 $code = 0;
+            } else {
+                $this->sqlState = (string) $errorInfo[0];
             }
 
             // Override if null.
@@ -70,18 +67,15 @@ class DatabaseException extends Exception
     }
 
     /**
-     * Parse message info.
-     *
-     * @param  string $message
-     * @return array<string>
+     * Parse error info.
      */
-    private static function parseMessageInfo(string $message): array
+    private function parseErrorInfo(string $message): array
     {
         // For all those FUCKs..
-        // SQLSTATE[08006] [7] FATAL:  password authentication failed for user "root
-        // SQLSTATE[HY000] [1045] Access denied for user 'root'@'localhost' (using password: YES)
-        // SQLSTATE[42601]: Syntax error: 7 ERROR:  unterminated quoted identifier at or near ...
-        // SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax ...
+        // SQLSTATE[08006] [7] FATAL:  password authentication failed for user "root" ..
+        // SQLSTATE[HY000] [1045] Access denied for user 'root'@'localhost' (using password: ..
+        // SQLSTATE[42601]: Syntax error: 7 ERROR:  unterminated quoted identifier at or near ..
+        // SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax ..
         if (preg_match(
             '~^(?:
                 SQLSTATE\[(\w+)\]\s+\[(\d+)\]\s+(?:.*) |
@@ -89,7 +83,7 @@ class DatabaseException extends Exception
             )~x',
             $message, $match
         )) {
-            $match = array_values(array_filter($match, 'strlen'));
+            $match = array_filter_list($match, 'strlen');
 
             return [$match[1], $match[2]];
         }

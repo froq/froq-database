@@ -7,13 +7,10 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
-use froq\common\Exception;
-use froq\validation\Validation;
+use froq\database\common\Validation;
 
 /**
- * Validation Trait.
- *
- * Represents a trait entity that holds validation properties and methods with its state and errors.
+ * A trait, provides validation related stuff.
  *
  * @package froq\database\trait
  * @object  froq\database\trait\ValidationTrait
@@ -22,165 +19,72 @@ use froq\validation\Validation;
  */
 trait ValidationTrait
 {
-    /** @var array, array */
-    protected array $validationRules, $validationOptions;
-
-    /** @var array|null */
-    protected array|null $validationErrors = null;
-
-    /** @var bool|null */
-    protected bool|null $validated = null;
+    /** @var froq\database\common\Validation */
+    protected Validation $validation;
 
     /**
-     * Get validated state.
+     * Set validation.
      *
-     * @return bool|null
-     */
-    public final function validated(): bool|null
-    {
-        return $this->validated;
-    }
-
-    /**
-     * Get errors, alias of getValidationErrors().
-     *
-     * @return array|null
-     */
-    public final function errors(): array|null
-    {
-        return $this->validationErrors;
-    }
-
-    /**
-     * Set validation rules.
-     *
-     * @param  array $validationRules
+     * @param  froq\database\common\Validation
      * @return self
      */
-    public final function setValidationRules(array $validationRules): self
+    public function setValidation(Validation $validation): self
     {
-        $this->validationRules = $validationRules;
+        $this->validation = $validation;
 
         return $this;
     }
 
     /**
-     * Get validation rules.
+     * Get validation.
      *
-     * @return array|null
+     * @return ?froq\database\common\Validation
      */
-    public final function getValidationRules(): array|null
+    public function getValidation(): ?Validation
     {
-        return $this->validationRules ?? null;
+        return $this->validation ?? null;
     }
 
     /**
-     * Set validation options.
+     * Set validations.
      *
-     * @param  array $validationOptions
+     * @param  ?array $validations
      * @return self
      */
-    public final function setValidationOptions(array $validationOptions): self
+    public function setValidations(?array $validations): self
     {
-        $this->validationOptions = $validationOptions;
+        $rules = $options = null;
 
-        return $this;
-    }
+        // Validations can be combined or simple array'ed.
+        if ($validations) {
+            if (isset($validations['@rules'])) {
+                $rules = array_pull($validations, '@rules');
+            }
+            if (isset($validations['@options'])) {
+                $options = array_pull($validations, '@options');
+            }
 
-    /**
-     * Get validation options.
-     *
-     * @return array|null
-     */
-    public final function getValidationOptions(): array|null
-    {
-        return $this->validationOptions ?? null;
-    }
-
-    /**
-     * Set validation errors.
-     *
-     * @param  array $validationErrors
-     * @return self
-     */
-    public final function setValidationErrors(array $validationErrors): self
-    {
-        $this->validationErrors = $validationErrors;
-
-        return $this;
-    }
-
-    /**
-     * Get validation errors.
-     *
-     * @return array|null
-     */
-    public final function getValidationErrors(): array|null
-    {
-        return $this->validationErrors;
-    }
-
-    /**
-     * Load validations from given or default config file.
-     *
-     * @param  string|null $file
-     * @return array
-     * @throws froq\common\Exception
-     */
-    public static final function loadValidations(string $file = null): array
-    {
-        // Try to load default file.
-        $file ??= APP_DIR . '/app/config/validations.php';
-
-        is_file($file) || throw new Exception('No validations file exists such `%s`', $file);
-
-        $validations = include $file;
-        is_array($validations) || throw new Exception('Validation files must return an array, %s returned',
-            get_type($validations));
-
-        return $validations;
-    }
-
-    /**
-     * Load validation rules from given or default config file, with given key.
-     *
-     * @param  string      $key
-     * @param  string|null $file
-     * @return array
-     * @throws froq\common\Exception
-     */
-    public static final function loadValidationRules(string $key, string $file = null): array
-    {
-        $validations = self::loadValidations($file);
-
-        empty($validations[$key]) && throw new Exception('No rules found for key `%s`', $key);
-
-        return $validations[$key];
-    }
-
-    /**
-     * Run a validation for given data by rules & options, filtering/sanitizing `$data` argument and filling
-     * `$errors` argument when validation fails.
-     *
-     * @param  ?array &$data
-     * @param  ?array  $rules
-     * @param  ?array  $options
-     * @param  ?array &$errors
-     * @return bool
-     * @throws froq\common\Exception
-     * @internal
-     */
-    protected final function runValidation(?array &$data, ?array $rules, ?array $options, ?array &$errors): bool
-    {
-        $rules || throw new Exception('No validation rules set yet, call setValidationRules() or define'
-            . ' $validationRules property on %s class', static::class);
-
-        $this->validated = (new Validation($rules, $options))->validate($data, $errors);
-
-        if ($errors !== null) {
-            $this->validationErrors = $errors;
+            // Simple array'ed if no "@rules" field given.
+            $rules ??= $validations;
         }
 
-        return $this->validated;
+        return $this->setValidation(new Validation($rules, $options));
+    }
+
+    /**
+     * Get validations.
+     *
+     * @return ?array
+     */
+    public function getValidations(): ?array
+    {
+        if ($validation = $this->getValidation()) {
+            return [
+                '@rules'   => $validation->getRules(),
+                '@options' => $validation->getOptions()
+            ];
+        }
+
+        return null;
     }
 }

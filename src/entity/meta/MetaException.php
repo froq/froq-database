@@ -5,13 +5,13 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\record;
+namespace froq\database\entity\meta;
 
 /**
- * @package froq\database\record
- * @object  froq\database\record\RecordException
+ * @package froq\database\entity\meta
+ * @object  froq\database\entity\meta\MetaException
  * @author  Kerem Güneş
  * @since   5.0
  */
-class RecordException extends \froq\database\DatabaseException
+class MetaException extends \froq\database\DatabaseException
 {}

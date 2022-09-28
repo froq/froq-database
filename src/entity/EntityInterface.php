@@ -7,13 +7,13 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
+use froq\common\interface\{Arrayable, Objectable, Jsonable};
+
 /**
- * Entity Interface.
- *
  * @package froq\database\entity
  * @object  froq\database\entity\EntityInterface
  * @author  Kerem Güneş
- * @since   5.3
+ * @since   5.0
  */
-interface EntityInterface
+interface EntityInterface extends Arrayable, Objectable, Jsonable, \ArrayAccess
 {}

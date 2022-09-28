@@ -5,37 +5,33 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\entity;
+namespace froq\database\entity\meta;
 
-use froq\database\entity\{MetaException, MetaFactory, Meta, ClassMeta, PropertyMeta};
 use froq\util\Objects;
 use ReflectionClass, ReflectionProperty, ReflectionException;
 
 /**
- * Meta Parser.
+ * A parser class, used for parsing entity classes's metadata info as
+ * `ClassMeta` & `PropertyMeta` classes.
  *
- * Represents a parser class that used for parsing entity classes's metadata info into ClassMeta/PropertyMeta
- * classes.
- *
- * @package froq\database\entity
- * @object  froq\database\entity\MetaParser
+ * @package froq\database\entity\meta
+ * @object  froq\database\entity\meta\MetaParser
  * @author  Kerem Güneş
  * @since   5.0
  */
 final class MetaParser
 {
     /**
-     * Parse a class metadata.
+     * Parse class meta.
      *
-     * @param  object $class
-     * @param  bool   $withProperties
-     * @return froq\database\entity\ClassMeta|null
-     * @throws froq\database\entity\MetaException
+     * @param  string|object $class
+     * @param  bool          $withProperties
+     * @return froq\database\entity\meta\ClassMeta|null
+     * @throws froq\database\entity\meta\MetaException
      */
     public static function parseClassMeta(string|object $class, bool $withProperties = true): ClassMeta|null
     {
-        // When an object given as class.
-        is_object($class) && $class = get_class($class);
+        is_object($class) && $class = $class::class;
 
         // Check MetaFactory cache for only "withProperties" parsing.
         if ($withProperties && MetaFactory::hasCacheItem($class)) {
@@ -53,9 +49,9 @@ final class MetaParser
             return null;
         }
 
-        /** @var froq\database\entity\ClassMeta */
-        $meta = MetaFactory::initClassMeta($class, $data);
-        $meta->setReflector($classRef);
+        /** @var froq\database\entity\meta\ClassMeta */
+        $classMeta = MetaFactory::initClassMeta($class, $data);
+        $classMeta->setReflection($classRef);
 
         // And add properties.
         if ($withProperties) {
@@ -69,34 +65,36 @@ final class MetaParser
                     continue;
                 }
 
-                $propName  = $propRef->name;
-                $propClass = $propRef->class;
+                // Skip non @meta stuff.
+                $data = self::getDataFrom($propRef);
+                if ($data === null) {
+                    continue;
+                }
 
-                /** @var froq\database\entity\PropertyMeta */
-                $prop = MetaFactory::initPropertyMeta($propName, $propClass, data: self::getDataFrom($propRef));
-                $prop->setReflector($propRef);
+                /** @var froq\database\entity\meta\PropertyMeta */
+                $propertyMeta = MetaFactory::initPropertyMeta($propRef->name, $propRef->class, $data);
+                $propertyMeta->setReflection($propRef);
 
-                $props[$propName] = $prop;
+                $props[$propRef->name] = $propertyMeta;
             }
 
-            $meta->setProperties($props);
+            $classMeta->setProperties($props);
         }
 
-        return $meta;
+        return $classMeta;
     }
 
     /**
-     * Parse a property metadata.
+     * Parse property meta.
      *
-     * @param  object $class
-     * @param  string $property
+     * @param  string|object $class
+     * @param  string        $property
      * @return froq\database\entity\PropertyMeta|null
      * @throws froq\database\entity\MetaException
      */
-    public static function parsePropertyMeta(object|string $class, string $property): PropertyMeta|null
+    public static function parsePropertyMeta(string|object $class, string $property): PropertyMeta|null
     {
-        // When an object given as class.
-        is_object($class) && $class = get_class($class);
+        is_object($class) && $class = $class::class;
 
         // Check MetaFactory cache.
         if (MetaFactory::hasCacheItem($name = ($class .'.'. $property))) {
@@ -114,19 +112,17 @@ final class MetaParser
             return null;
         }
 
+        // Skip non @meta stuff.
         $data = self::getDataFrom($propRef->getDeclaringClass());
-        if (!$data) {
+        if ($data === null) {
             return null;
         }
 
-        $propName  = $propRef->name;
-        $propClass = $propRef->class;
+        /** @var froq\database\entity\meta\PropertyMeta */
+        $propertyMeta = MetaFactory::initPropertyMeta($propRef->name, $propRef->class, $data);
+        $propertyMeta->setReflection($propRef);
 
-        /** @var froq\database\entity\PropertyMeta */
-        $meta = MetaFactory::initPropertyMeta($propName, $propClass, $data);
-        $meta->setReflector($propRef);
-
-        return $meta;
+        return $propertyMeta;
     }
 
     /**
@@ -137,13 +133,10 @@ final class MetaParser
      */
     private static function getDataFrom(ReflectionClass|ReflectionProperty $ref): array|null
     {
-        // Eg: #[meta(id:"id", table:"users", ..)]
         if ($attributes = $ref->getAttributes()) {
             return self::getDataFromAttributes($attributes);
         }
 
-        // Eg: @meta(id:"id", table:"users", ..)
-        // Eg: @meta(id="id", table="users", ..)
         if ($annotations = $ref->getDocComment()) {
             return self::getDataFromAnnotations($annotations, $ref);
         }
@@ -159,7 +152,7 @@ final class MetaParser
      */
     private static function getDataFromAttributes(array $attributes): array|null
     {
-        // Eg: #[meta(id:"id", table:"users", ..)]
+        // Eg: #[meta(table:"users", ..)]
         foreach ($attributes as $attribute) {
             $name = Objects::getShortName($attribute->getName());
             if (strtolower($name) == 'meta') {
@@ -179,14 +172,19 @@ final class MetaParser
      */
     private static function getDataFromAnnotations(string $annotations, ReflectionClass|ReflectionProperty $ref): array|null
     {
-        // Eg: @meta(id:"id", table:"users", ..)
-        // Eg: @meta(id="id", table="users", ..)
+        // Eg: @meta, for only select fields usage.
+        if (preg_match('~@meta[^(]~si', $annotations)) {
+            return [];
+        }
+
+        // Eg: @meta(table:"users", ..)
+        // Eg: @meta(table="users", ..)
         if (preg_match('~@meta\s*\((.+)\)~si', $annotations, $match)) {
             $lines = preg_split('~\n~', $match[1], -1, 1);
 
             // Converting to JSON.
             foreach ($lines as &$line) {
-                $line = preg_replace('~^[*\s]+|[\s]+$~', '', $line);
+                $line = preg_replace('~^[\*\s]+|[\s]+$~', '', $line);
 
                 // Comment-outs.
                 if (str_starts_with($line, '//')) {
@@ -194,7 +192,7 @@ final class MetaParser
                     continue;
                 }
 
-                // Prepare entity class & JSON field names.
+                // Prepare entity class & JSON fields.
                 $line = preg_replace('~\\\\(?!["])~', '\\\\\\\\\1', $line);
                 $line = preg_replace('~(\w{2,})\s*[:=](?![=])~', '"\1":', $line);
             }

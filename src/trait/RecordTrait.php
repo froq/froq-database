@@ -7,15 +7,12 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
-use froq\database\trait\{DbTrait, TableTrait, ValidationTrait};
-use froq\common\trait\{DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait,
-    DataCountTrait, DataEmptyTrait, DataToArrayTrait, DataToObjectTrait, OptionTrait};
+use froq\common\trait\{DataTrait, DataAccessTrait, DataAccessMagicTrait};
+use froq\collection\trait\{EmptyTrait, ToArrayTrait, ToObjectTrait};
 use froq\validation\ValidationError;
 
 /**
- * Record Trait.
- *
- * Represents a trait entity that used in `froq\database\record` and holds record related stuff.
+ * A trait, used in `froq\database\record` only and provides record related stuff.
  *
  * @package froq\database\trait
  * @object  froq\database\trait\RecordTrait
@@ -25,30 +22,15 @@ use froq\validation\ValidationError;
  */
 trait RecordTrait
 {
-    /**
-     * @see froq\database\trait\DbTrait
-     * @see froq\database\trait\TableTrait
-     * @see froq\database\trait\ValidationTrait
-     */
     use DbTrait, TableTrait, ValidationTrait;
-
-    /**
-     * @see froq\common\trait\DataTrait
-     * @see froq\common\trait\DataLoadTrait
-     * @see froq\common\trait\DataAccessTrait
-     * @see froq\common\trait\DataAccessMagicTrait
-     * @see froq\common\trait\DataCountTrait
-     * @see froq\common\trait\DataEmptyTrait
-     * @see froq\common\trait\DataToArrayTrait
-     * @see froq\common\trait\DataToObjectTrait
-     * @see froq\common\trait\OptionTrait
-     */
-    use DataTrait, DataLoadTrait, DataAccessTrait, DataAccessMagicTrait, DataCountTrait, DataEmptyTrait,
-        DataToArrayTrait, DataToObjectTrait,
-        OptionTrait;
+    use EmptyTrait, ToArrayTrait, ToObjectTrait;
+    use DataTrait, DataAccessTrait, DataAccessMagicTrait;
 
     /** @var array */
     protected array $data = [];
+
+    /** @var array */
+    protected array $options = [];
 
     /** @var array */
     protected static array $optionsDefault = [
@@ -60,25 +42,53 @@ trait RecordTrait
     ];
 
     /**
+     * Set options.
+     *
+     * @param  ?array $options
+     * @return self
+     * @since  6.0
+     */
+    public final function setOptions(?array $options): self
+    {
+        $this->options = array_options($options, static::$optionsDefault);
+
+        return $this;
+    }
+
+    /**
+     * Get options.
+     *
+     * @return ?array
+     */
+    public final function getOptions(): array
+    {
+        return $this->options;
+    }
+
+    /**
      * Prepare given or own data running validation, throw if validation fails and silent option is not true.
      *
      * @param  array|null &$data
+     * @param  array|null &$errors
      * @param  bool        $silent
      * @return self|null
      * @throws froq\validation\ValidationError
      */
-    public final function prepare(array &$data = null, bool $silent = false): self|null
+    public final function prepare(array &$data = null, array &$errors = null, bool $silent = false): self|null
     {
         $this->isValid($data, $errors);
 
-        if ($errors == null) {
+        if (!$errors) {
             return $this;
         }
         if ($silent) {
             return null;
         }
 
-        throw new ValidationError('Cannot prepare record (%s), validation failed [tip: run prepare()'
-            . ' in a try/catch block and use errors() to see error details]', $this::class, errors: $errors);
+        throw new ValidationError(
+            'Cannot prepare %s, validation failed and $silent argument is false [tip: %s]',
+            [static::class, ValidationError::tip()],
+            errors: $errors
+        );
     }
 }

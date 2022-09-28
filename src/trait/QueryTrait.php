@@ -5,23 +5,21 @@
  */
 declare(strict_types=1);
 
-namespace froq\database;
+namespace froq\database\trait;
 
 /**
- * Query Trait.
+ * A trait, provides short and descriptive methods and used by Query class only.
  *
- * Represents a query builder trait entity which mostly fulfills all building needs with short and
- * descriptive methods.
- *
- * @package froq\database
- * @object  froq\database\QueryTrait
+ * @package froq\database\trait
+ * @object  froq\database\trait\QueryTrait
  * @author  Kerem Güneş
  * @since   4.0
+ * @internal
  */
 trait QueryTrait
 {
     /**
-     * @alias of whereEqual()
+     * @alias whereEqual()
      */
     public function equal(...$args)
     {
@@ -29,7 +27,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotEqual()
+     * @alias whereNotEqual()
      */
     public function notEqual(...$args)
     {
@@ -37,7 +35,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNull()
+     * @alias whereNull()
      */
     public function null(...$args)
     {
@@ -45,7 +43,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotNull()
+     * @alias whereNotNull()
      */
     public function notNull(...$args)
     {
@@ -53,7 +51,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereIs()
+     * @alias whereIs()
      * @since 5.0
      */
     public function is(...$args)
@@ -62,7 +60,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereIsNot()
+     * @alias whereIsNot()
      * @since 5.0
      */
     public function isNot(...$args)
@@ -71,7 +69,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereIn()
+     * @alias whereIn()
      */
     public function in(...$args)
     {
@@ -79,7 +77,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotIn()
+     * @alias whereNotIn()
      */
     public function notIn(...$args)
     {
@@ -87,7 +85,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereBetween()
+     * @alias whereBetween()
      */
     public function between(...$args)
     {
@@ -95,7 +93,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotBetween()
+     * @alias whereNotBetween()
      */
     public function notBetween(...$args)
     {
@@ -103,7 +101,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereLessThan()
+     * @alias whereLessThan()
      */
     public function lessThan(...$args)
     {
@@ -111,7 +109,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereLessThanEqual()
+     * @alias whereLessThanEqual()
      */
     public function lessThanEqual(...$args)
     {
@@ -119,7 +117,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereGreaterThan()
+     * @alias whereGreaterThan()
      */
     public function greaterThan(...$args)
     {
@@ -127,7 +125,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereGreaterThanEqual()
+     * @alias whereGreaterThanEqual()
      */
     public function greaterThanEqual(...$args)
     {
@@ -135,7 +133,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereLike()
+     * @alias whereLike()
      */
     public function like(...$args)
     {
@@ -143,7 +141,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotLike()
+     * @alias whereNotLike()
      */
     public function notLike(...$args)
     {
@@ -151,7 +149,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereLike()
+     * @alias whereLike()
      */
     public function likeStart(...$args)
     {
@@ -161,7 +159,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotLike()
+     * @alias whereNotLike()
      */
     public function notLikeStart(...$args)
     {
@@ -171,7 +169,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereLike()
+     * @alias whereLike()
      */
     public function likeEnd(...$args)
     {
@@ -181,7 +179,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotLike()
+     * @alias whereNotLike()
      */
     public function notLikeEnd(...$args)
     {
@@ -191,7 +189,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereLike()
+     * @alias whereLike()
      */
     public function likeBoth(...$args)
     {
@@ -201,7 +199,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotLike()
+     * @alias whereNotLike()
      */
     public function notLikeBoth(...$args)
     {
@@ -211,7 +209,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereExists()
+     * @alias whereExists()
      */
     public function exists(...$args)
     {
@@ -219,7 +217,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotExists()
+     * @alias whereNotExists()
      */
     public function notExists(...$args)
     {
@@ -227,7 +225,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereRandom()
+     * @alias whereRandom()
      */
     public function random(...$args)
     {
@@ -235,7 +233,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of groupBy()
+     * @alias groupBy()
      */
     public function group(...$args)
     {
@@ -243,7 +241,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of orderBy()
+     * @alias orderBy()
      */
     public function order(...$args)
     {
@@ -251,7 +249,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of orderBy()
+     * @alias orderBy()
      */
     public function sort(...$args)
     {
@@ -259,7 +257,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of orderByRandom()
+     * @alias orderByRandom()
      */
     public function sortRandom()
     {
@@ -267,15 +265,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of indexBy()
-     */
-    public function index(...$args)
-    {
-        return $this->indexBy(...$args);
-    }
-
-    /**
-     * @alias of whereEqual()
+     * @alias whereEqual()
      */
     public function eq(...$args)
     {
@@ -283,7 +273,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereNotEqual()
+     * @alias whereNotEqual()
      */
     public function neq(...$args)
     {
@@ -291,7 +281,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereLessThan()
+     * @alias whereLessThan()
      */
     public function lt(...$args)
     {
@@ -299,7 +289,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereLessThanEqual()
+     * @alias whereLessThanEqual()
      */
     public function lte(...$args)
     {
@@ -307,7 +297,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereGreaterThan()
+     * @alias whereGreaterThan()
      */
     public function gt(...$args)
     {
@@ -315,7 +305,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of whereGreaterThanEqual()
+     * @alias whereGreaterThanEqual()
      */
     public function gte(...$args)
     {
@@ -323,7 +313,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of selectMin()
+     * @alias selectMin()
      * @since 4.4
      */
     public function min(...$args)
@@ -332,7 +322,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of selectMax()
+     * @alias selectMax()
      * @since 4.4
      */
     public function max(...$args)
@@ -341,7 +331,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of selectAvg()
+     * @alias selectAvg()
      * @since 4.4
      */
     public function avg(...$args)
@@ -350,7 +340,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of selectSum()
+     * @alias selectSum()
      * @since 4.4
      */
     public function sum(...$args)
@@ -359,7 +349,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of aggregate()
+     * @alias aggregate()
      * @since 5.0
      */
     public function agg(...$args)
@@ -368,7 +358,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of Database.escape()
+     * @alias Database.escape()
      */
     public function esc(...$args)
     {
@@ -376,7 +366,7 @@ trait QueryTrait
     }
 
     /**
-     * @alias of Database.escapeName()
+     * @alias Database.escapeName()
      */
     public function escName(...$args)
     {

@@ -7,15 +7,11 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\DatabaseException;
-
 /**
- * Database Link Exception.
- *
  * @package froq\database
  * @object  froq\database\DatabaseLinkException
  * @author  Kerem Güneş
- * @since   4.0, 5.0 Replaced with DatabaseConnectionException.
+ * @since   4.0, 5.0
  */
 class DatabaseLinkException extends DatabaseException
 {}

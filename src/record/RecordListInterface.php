@@ -7,13 +7,13 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
+use froq\common\interface\Arrayable;
+
 /**
- * Record List Interface.
- *
  * @package froq\database\record
  * @object  froq\database\record\RecordListInterface
  * @author  Kerem Güneş
  * @since   5.5
  */
-class RecordListInterface
+interface RecordListInterface extends Arrayable, \ArrayAccess
 {}

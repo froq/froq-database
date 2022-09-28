@@ -9,9 +9,9 @@ namespace froq\database;
 
 /**
  * @package froq\database
- * @object  froq\database\DatabaseQueryException
+ * @object  froq\database\DatabaseRegistryException
  * @author  Kerem Güneş
- * @since   4.0
+ * @since   6.0
  */
-class DatabaseQueryException extends DatabaseException
+class DatabaseRegistryException extends DatabaseException
 {}

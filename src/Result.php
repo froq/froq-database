@@ -7,174 +7,423 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\ResultException;
-use froq\common\exception\UnsupportedOperationException;
-use froq\collection\Collection;
-use froq\util\Arrays;
-use PDO, PDOStatement, PDOException, ArrayIterator, Countable, IteratorAggregate, ArrayAccess;
+use froq\database\result\{Ids, Rows, Row};
+use froq\common\interface\Arrayable;
+use PDO, PDOStatement, PDOException;
 
 /**
- * Result.
+ * A result class, for query result stuff such as count, ids & rows.
  *
  * @package froq\database
  * @object  froq\database\Result
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Result implements Countable, IteratorAggregate, ArrayAccess
+final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
 {
     /** @var int */
     private int $count = 0;
 
-    /** @var array<int>|null */
-    private array|null $ids = null;
+    /** @var froq\database\result\Ids<int> */
+    private Ids $ids;
 
-    /** @var array<array|object>|null */
-    private array|null $rows = null;
-
-    /** @var array @since 5.0 */
-    private static array $fetchTypes = ['array', 'object', 'class'];
+    /** @var froq\database\result\Rows<array|object> */
+    private Rows $rows;
 
     /**
      * Constructor.
-     * @param PDO          $pdo
-     * @param PDOStatement $pdoStatement
-     * @param array|null   $options
+     *
+     * @param  PDO           $pdo
+     * @param  PDOStatement  $pdoStatement
+     * @param  array|null    $options
+     * @param  Database|null $db
+     * @throws froq\database\ResultException
      */
-    public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null)
+    public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null, Database $db = null)
     {
-        if ($pdo->errorCode() == '00000' && $pdoStatement->errorCode() == '00000') {
-            // Assign count (affected rows etc).
-            $this->count = $pdoStatement->rowCount();
+        $this->ids  = new Ids();
+        $this->rows = new Rows();
 
-            // Check fetch option.
-            if (isset($options['fetch'])) {
-                $fetch     = (array) $options['fetch'];
-                $fetchType = $fetch[0] ?? null;
+        // Normally an exception must be thrown until here.
+        if ($pdo->errorCode() != '00000' || $pdoStatement->errorCode() != '00000') {
+            return;
+        }
 
-                switch ($fetchType) {
-                    case  'array': $fetchType = PDO::FETCH_ASSOC; break;
-                    case 'object': $fetchType = PDO::FETCH_OBJ;   break;
-                    case  'class':
-                        $fetchClass = $fetch[1] ?? null;
-                        $fetchClass || throw new ResultException(
-                            'No fetch class given, it is required when fetch type is `class`'
-                        );
+        $options = self::prepareOptions($options);
 
-                        $fetchType = PDO::FETCH_CLASS;
-                        break;
-                    default:
-                        if ($fetchType && !in_array($fetchType, self::$fetchTypes)) {
-                            throw new ResultException('Invalid fetch type `%s`, valids are: %s',
-                                [$fetchType, join(', ', self::$fetchTypes)]
-                            );
-                        }
+        // Set fetch option.
+        if ($options['fetch']) {
+            match ($options['fetch']) {
+                'array'  => $fetchType = PDO::FETCH_ASSOC,
+                'object' => $fetchType = PDO::FETCH_OBJ,
+                default  => [
+                    // All others are as class.
+                    $fetchType  = PDO::FETCH_CLASS,
+                    $fetchClass = class_exists($options['fetch']) ? $options['fetch'] :
+                        throw new ResultException('No fetch class such `%s`', $options['fetch'])
+                ]
+            };
+        }
 
-                        unset($fetchType);
-                }
-            }
+        // Assign count (affected rows etc).
+        $this->count = $count = $pdoStatement->rowCount();
 
-            // Set/update sequence option to prevent transaction errors that comes from lastInsertId()
-            // calls but while commit() returning true when sequence field not exists.
-            $sequence = true;
-            if (isset($options['sequence'])) {
-                $sequence = (bool) $options['sequence'];
-            }
+        // Note: Sequence option to prevent transaction errors that comes from lastInsertId()
+        // calls but while commit() returning true when sequence field not exists. Default is
+        // true for "INSERT" queries if no "sequence" option given.
+        $sequence = $options['sequence'] && preg_match('~^\s*INSERT~i', $pdoStatement->queryString);
 
-            $query = ltrim($pdoStatement->queryString);
+        // Insert queries.
+        if ($pdoStatement->rowCount() && $sequence) {
+            $id = null;
 
-            // Select queries & returning clauses (https://www.postgresql.org/docs/current/dml-returning.html).
-            if (stripos($query, 'SELECT') !== false || (
-                stripos($query, 'RETURNING') && preg_match('~^INSERT|UPDATE|DELETE~i', $query)
-            )) {
-                // Set or get default.
-                $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
+            // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that mostly
+            // occurs when a user-provided ID given to insert data. Sequence option for this but cannot
+            // prevent transaction commits when no sequence field exists.
+            try {
+                $id = (int) $pdo->lastInsertId();
+            } catch (PDOException) {}
 
-                $this->rows = (
-                    ($fetchType == PDO::FETCH_CLASS)
-                        ? $pdoStatement->fetchAll($fetchType, $fetchClass)
-                        : $pdoStatement->fetchAll($fetchType)
-                ) ?: null;
+            if ($id) {
+                $ids = [$id];
 
-                // Indexing by given index field.
-                if (isset($options['index']) && $this->rows != null) {
-                    $index = $options['index'];
-                    if (!array_key_exists($index, (array) $this->rows[0])) {
-                        throw new ResultException('Given index `%s` not found in row set', $index);
+                // Handle multiple inserts.
+                if ($count > 1) {
+                    // MySQL awesomeness, last id is first id..
+                    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql') {
+                        $start = $id;
+                        $end   = $id + $count - 1;
+                    } else {
+                        $start = $id - $count + 1;
+                        $end   = $id;
                     }
 
-                    $rows  = [];
-                    $array = is_array($this->rows[0]);
-                    foreach ($this->rows as $row) {
-                        $rows[$array ? $row[$index] : $row->{$index}] = $row;
-                    }
-
-                    // Re-assign.
-                    $this->rows = $rows;
+                    $ids = range($start, $end);
                 }
-            }
 
-            // Insert queries.
-            if ($sequence && stripos($query, 'INSERT') === 0) {
-                $id = null;
+                // Update count, in case.
+                $this->count = count($ids);
 
-                // Prevent "SQLSTATE[55000]: Object not in prerequisite state: 7 ..." error that mostly
-                // occurs when a user-provided ID given to insert data. Sequence option for this but cannot
-                // prevent transaction commits when no sequence field exists.
-                try {
-                    $id = (int) $pdo->lastInsertId();
-                } catch (PDOException) {}
-
-                if ($id) {
-                    $ids = [$id];
-
-                    // Handle multiple inserts.
-                    if ($this->count > 1) {
-                        // MySQL awesomeness, last id is first id..
-                        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql') {
-                            $start = $id;
-                            $end   = $id + $this->count - 1;
-                        } else {
-                            $start = $id - $this->count + 1;
-                            $end   = $id;
-                        }
-
-                        $ids = range($start, $end);
-                    }
-
-                    $this->ids = $ids;
-                }
+                $this->ids->add(...$ids);
+                unset($ids);
             }
         }
 
-        // Flush.
-        $pdoStatement = null;
-    }
+        // Select & other fetchable queries (eg: insert/update/delete with returning clause).
+        if ($pdoStatement->columnCount()) {
+            // Use present type that was set above or get default.
+            $fetchType ??= $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
-    /**
-     * Get rows as array.
-     *
-     * @return array<array|object>
-     */
-    public function toArray(): array
-    {
-        return $this->rows ?? [];
-    }
+            // @tome: Data is populated before the constructor is called.
+            // To populate data after the constructor use PDO::FETCH_PROPS_LATE.
+            $rows = ($fetchType == PDO::FETCH_CLASS)
+                  ? $pdoStatement->fetchAll($fetchType|PDO::FETCH_PROPS_LATE, $fetchClass)
+                  : $pdoStatement->fetchAll($fetchType);
 
-    /**
-     * Get rows as object.
-     *
-     * @return array<object>
-     */
-    public function toObject(): array
-    {
-        $rows = [];
+            if ($rows) {
+                // Update count, in case.
+                $this->count = count($rows);
 
-        foreach ($this->toArray() as $row) {
-            $rows[] = (object) $row;
+                $this->rows->add(...$rows);
+                unset($rows);
+            }
         }
 
-        return $rows;
+        // Return for only no "RETURNING" supported databases that send by query builder via
+        // run() method. See Query.return() & run().
+        if ($count && isset($options['return'])) {
+            $this->applyReturnFallback($options['return'], $db);
+        }
+    }
+
+    /**
+     * Get last insert id.
+     *
+     * @return ?int
+     * @since  6.0
+     */
+    public function getId(): ?int
+    {
+        return $this->id();
+    }
+
+    /**
+     * Get a copy of first row.
+     *
+     * @return ?Row
+     * @since  6.0
+     */
+    public function getRow(): ?Row
+    {
+        return $this->rows(0, true);
+    }
+
+    /**
+     * Get a copy of ids property.
+     *
+     * @return froq\database\result\Ids
+     * @since  6.0
+     */
+    public function getIds(): Ids
+    {
+        return (clone $this->ids);
+    }
+
+    /**
+     * Get a copy of rows property.
+     *
+     * @param  bool $init
+     * @return froq\database\result\Rows
+     * @since  6.0
+     */
+    public function getRows(bool $init = true): Rows
+    {
+        if ($init) {
+            return (clone $this->rows)
+                ->map(fn($row) => $this->toRow($row));
+        }
+        return (clone $this->rows);
+    }
+
+    /**
+     * Get last insert id.
+     *
+     * @return int|null
+     */
+    public function id(): int|null
+    {
+        return $this->ids->last();
+    }
+
+    /**
+     * Get one or all insert ids.
+     *
+     * @param  int|null $index
+     * @return int|array<int>|null
+     */
+    public function ids(int $index = null): int|array|null
+    {
+        if ($index !== null) {
+            return $this->ids->item($index);
+        }
+        return $this->ids->items();
+    }
+
+    /**
+     * Get one row.
+     *
+     * @param  int  $index
+     * @param  bool $init
+     * @return array|object|null
+     */
+    public function row(int $index, bool $init = false): array|object|null
+    {
+        $row = $this->rows->item($index);
+        return $init && $row ? $this->toRow($row) : $row;
+    }
+
+    /**
+     * Get one row or all rows.
+     *
+     * @param  int|null $index
+     * @param  bool     $init
+     * @return array<array|object>|array|object|null
+     */
+    public function rows(int $index = null, bool $init = false): array|object|null
+    {
+        if ($index !== null) {
+            $row = $this->rows->item($index);
+            return $init && $row ? $this->toRow($row) : $row;
+        }
+        $rows = $this->rows->items();
+        return $init ? $this->toRows($rows) : $rows;
+    }
+
+    /**
+     * Get first row.
+     *
+     * @return array|object|null
+     */
+    public function first(): array|object|null
+    {
+        return $this->rows->first();
+    }
+
+    /**
+     * Get last row.
+     *
+     * @return array|object|null
+     */
+    public function last(): array|object|null
+    {
+        return $this->rows->last();
+    }
+
+    /**
+     * Get only columns by given index/field(s).
+     *
+     * @param  int          $index
+     * @param  string|array $field
+     * @return mixed
+     * @since  6.0
+     */
+    public function cols(int $index, string|array $field): mixed
+    {
+        $row = $this->rows($index);
+
+        if ($row && $field != '*') {
+            $orow = new Row((array) $row);
+            // Single field.
+            if (is_string($field)) {
+                return $orow->get($field);
+            } elseif (is_array($field)) {
+                $vals = $orow->select($field, combine: true);
+                return is_array($row) ? $vals : (object) $vals;
+            }
+        }
+
+        return $row;
+    }
+
+    /**
+     * Sort rows.
+     *
+     * @param  callable|null $func
+     * @param  int           $flags
+     * @return self
+     * @since  6.0
+     */
+    public function sort(callable $func = null, int $flags = 0): self
+    {
+        $this->rows->sort($func, $flags);
+
+        return $this;
+    }
+
+    /**
+     * Each for rows.
+     *
+     * @param  callable $func
+     * @return self
+     * @since  5.4
+     */
+    public function each(callable $func): self
+    {
+        $this->rows->each($func);
+
+        return $this;
+    }
+
+    /**
+     * Filter rows.
+     *
+     * @param  callable $func
+     * @return self
+     * @since  5.0
+     */
+    public function filter(callable $func): self
+    {
+        $this->rows->filter($func);
+
+        return $this;
+    }
+
+    /**
+     * Map rows.
+     *
+     * @param  callable $func
+     * @return self
+     * @since  5.0
+     */
+    public function map(callable $func): self
+    {
+        $this->rows->map($func);
+
+        return $this;
+    }
+
+    /**
+     * Reduce rows.
+     *
+     * @param  mixed    $carry
+     * @param  callable $func
+     * @return mixed
+     * @since  5.0
+     */
+    public function reduce(mixed $carry, callable $func): mixed
+    {
+        return $this->rows->reduce($carry, $func);
+    }
+
+    /**
+     * Reverse rows.
+     *
+     * @return self
+     * @since  6.0
+     */
+    public function reverse(): self
+    {
+        $this->rows->reverse();
+
+        return $this;
+    }
+
+    /**
+     * Free all properties.
+     *
+     * @return void
+     * @since  6.0
+     */
+    public function free(): void
+    {
+        // This will set all properties as "uninitialized".
+        unset($this->count, $this->ids, $this->rows);
+    }
+
+    /**
+     * Map all items to given (map-like) class.
+     *
+     * Note: This method is mate of listTo(), so mapTo() must be called first
+     * for listing purposes.
+     *
+     * @param  string $class
+     * @param  array  $classArgs
+     * @return self
+     * @since  6.0
+     */
+    public function mapTo(string $class, array $classArgs = []): self
+    {
+        $object = new $class(...$classArgs);
+        foreach ($this->rows as $i => $row) {
+            $clone = clone $object;
+            foreach ($row as $name => $value) {
+                $clone->$name = $value;
+            }
+            $this->rows[$i] = $clone;
+        }
+
+        return $this;
+    }
+
+    /**
+     * List all items to given (list-like) class.
+     *
+     * Note: This method is mate of mapTo(), so listTo() must be called last
+     * for listing purposes.
+     *
+     * @param  string $class
+     * @param  array  $classArgs
+     * @return object
+     * @since  6.0
+     */
+    public function listTo(string $class, array $classArgs = []): object
+    {
+        $object = new $class(...$classArgs);
+        foreach ($this->rows as $row) {
+            $object[] = $row;
+        }
+
+        return $object;
     }
 
     /**
@@ -187,154 +436,33 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
      */
     public function toClass(string $class, bool $ctor = false, array $ctorArgs = []): array
     {
-        $rows = [];
+        $ret = [];
 
         if (!$ctor) {
+            // When class consumes row fields as property.
             foreach ($this->toArray() as $row) {
                 $class = new $class(...$ctorArgs);
                 foreach ($row as $name => $value) {
-                    $class->{$name} = $value;
+                    $class->$name = $value;
                 }
-                $rows[] = $class;
+                $ret[] = $class;
             }
         } else {
+            // When class consumes row as parameter.
             foreach ($this->toArray() as $row) {
-                $rows[] = new $class($row, ...$ctorArgs);
+                $ret[] = new $class($row, ...$ctorArgs);
             }
         }
 
-        return $rows;
+        return $ret;
     }
 
     /**
-     * Create a collection with rows, for map/filter etc.
-     *
-     * @return froq\collection\Collection
-     * @since  5.0
+     * @inheritDoc froq\common\interface\Arrayable
      */
-    public function toCollection(): Collection
+    public function toArray(bool $deep = false): array
     {
-        return new Collection($this->rows);
-    }
-
-    /**
-     * Get last insert id when available.
-     *
-     * @return int|null
-     */
-    public function id(): int|null
-    {
-        $ids = $this->ids ?? [];
-
-        return end($ids) ?: null;
-    }
-
-    /**
-     * Get all insert ids when available.
-     *
-     * @return array<int>|null
-     */
-    public function ids(): array|null
-    {
-        return $this->ids ?? null;
-    }
-
-    /**
-     * Get a single row.
-     *
-     * @param  int $i
-     * @return array|object|null
-     */
-    public function row(int $i): array|object|null
-    {
-        return $this->rows[$i] ?? null;
-    }
-
-    /**
-     * Get all rows.
-     *
-     * @param  int|null $i
-     * @return array<array|object>|object|null
-     */
-    public function rows(int $i = null): array|object|null
-    {
-        return ($i === null) ? $this->rows : $this->rows[$i] ?? null;
-    }
-
-    /**
-     * Get first row.
-     *
-     * @return array|object|null
-     */
-    public function first(): array|object|null
-    {
-        return $this->rows ? current($this->rows) : null;
-    }
-
-    /**
-     * Get last row.
-     *
-     * @return array|object|null
-     */
-    public function last(): array|object|null
-    {
-        return $this->rows ? end($this->rows) : null;
-    }
-
-    /**
-     * Each.
-     *
-     * @param  callable $func
-     * @return self
-     * @since  5.4
-     */
-    public function each(callable $func): self
-    {
-        Arrays::each($this->rows, $func);
-
-        return $this;
-    }
-
-    /**
-     * Filter.
-     *
-     * @param  callable $func
-     * @param  bool     $keepKeys
-     * @return self
-     * @since  5.0
-     */
-    public function filter(callable $func, bool $keepKeys = false): self
-    {
-        $this->rows = Arrays::filter($this->rows, $func, $keepKeys);
-
-        return $this;
-    }
-
-    /**
-     * Map.
-     *
-     * @param  callable $func
-     * @return self
-     * @since  5.0
-     */
-    public function map(callable $func): self
-    {
-        $this->rows = Arrays::map($this->rows, $func);
-
-        return $this;
-    }
-
-    /**
-     * Reduce.
-     *
-     * @param  any      $carry
-     * @param  callable $func
-     * @return any
-     * @since  5.0
-     */
-    public function reduce($carry, callable $func)
-    {
-        return Arrays::reduce($this->rows, $carry, $func);
+        return $this->rows->toArray($deep);
     }
 
     /**
@@ -348,42 +476,126 @@ final class Result implements Countable, IteratorAggregate, ArrayAccess
     /**
      * @inheritDoc IteratorAggregate
      */
-    public function getIterator(): iterable
+    public function getIterator(): \ArrayIterator
     {
-        return new ArrayIterator($this->toArray());
+        return new \ArrayIterator($this->toArray());
     }
 
     /**
      * @inheritDoc ArrayAccess
      */
-    public function offsetExists($i)
+    public function offsetExists(mixed $index): bool
     {
-        return $this->row($i) !== null;
+        return $this->rows->offsetExists($index);
     }
 
     /**
      * @inheritDoc ArrayAccess
      */
-    public function offsetGet($i)
+    public function offsetGet(mixed $index): mixed
     {
-        return $this->row($i);
+        return $this->rows->offsetGet($index);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\common\exception\UnsupportedOperationException
+     * @throws     ReadonlyError
      */
-    public function offsetSet($i, $row)
+    public function offsetSet(mixed $index, mixed $_): never
     {
-        throw new UnsupportedOperationException('No set() allowed for ' . self::class);
+        throw new \ReadonlyError($this);
     }
 
     /**
      * @inheritDoc ArrayAccess
-     * @throws     froq\common\exception\UnsupportedOperationException
+     * @throws     ReadonlyError
      */
-    public function offsetUnset($i)
+    public function offsetUnset(mixed $index): never
     {
-        throw new UnsupportedOperationException('No unset() allowed for ' . self::class);
+        throw new \ReadonlyError($this);
+    }
+
+    /**
+     * Create a `Row` instance.
+     */
+    private function toRow(array|object $data): Row
+    {
+        return new Row((array) $data);
+    }
+
+    /**
+     * Create a `Rows` instance mapping all items to `Row` instances.
+     */
+    private function toRows(array $data): Rows
+    {
+        return new Rows(array_map([$this, 'toRow'], $data));
+    }
+
+    /**
+     * Apply return fallback that sent by query builder.
+     */
+    private function applyReturnFallback(array $return, Database $db): void
+    {
+        $rows = null;
+
+        // When rows given (delete).
+        if (isset($return['data'])) {
+            $rows = $return['data'];
+        }
+        // When table given (update/insert).
+        elseif (isset($return['table'], $return['fields'])) {
+            [$table, $fields, $fetch] = array_select($return, ['table', 'fields', 'fetch']);
+
+            // Update.
+            if (isset($return['where'])) {
+                $query = $db->initQuery($table);
+                foreach ($return['where'] as [$where, $op]) {
+                    $query->where($where, op: $op);
+                }
+                $rows = $query->select($fields)->getAll($fetch);
+            }
+            // Insert.
+            else {
+                // Search for primary.
+                $rs = $db->executeStatement("SELECT * FROM {$table} LIMIT 1");
+                for ($i = 0; $i < $rs->columnCount(); $i++) {
+                    $column = $rs->getColumnMeta($i);
+                    if ($column['flags'] && in_array('primary_key', $column['flags'])) {
+                        $primary = $column['name'];
+                        break;
+                    }
+                } unset($rs); // @free
+
+                if (isset($primary)) {
+                    $rows = $db->initQuery($table)
+                        ->where($primary, [$this->ids->toArray()])
+                        ->select($fields)->getAll($fetch);
+                }
+            }
+        }
+
+        // Fill rows with returning data.
+        if ($rows) {
+            $this->count = count($rows);
+
+            $this->rows->add(...$rows);
+            unset($rows);
+        }
+    }
+
+    /**
+     * Prepare options with defaults for constructor.
+     */
+    private static function prepareOptions(array|null $options): array
+    {
+        static $optionsDefault = [
+            'fetch' => null, 'sequence' => true,
+        ];
+
+        $options = [...$optionsDefault, ...$options ?? []];
+
+        $options['sequence'] = (bool) ($options['sequence'] ?? true);
+
+        return $options;
     }
 }

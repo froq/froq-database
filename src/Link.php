@@ -7,14 +7,11 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\LinkException;
-use froq\common\trait\InstanceTrait;
+use froq\common\trait\FactoryTrait;
 use PDO, PDOException;
 
 /**
- * Link.
- *
- * Represents a PDO wrapper with some util methods.
+ * A wrapper class for PDO with some utilities.
  *
  * @package froq\database
  * @object  froq\database\Link
@@ -23,62 +20,67 @@ use PDO, PDOException;
  */
 final class Link
 {
-    /**
-     * @see froq\common\trait\InstanceTrait
-     * @since 5.0
-     */
-    use InstanceTrait;
+    use FactoryTrait;
 
-    /** @var PDO|null */
-    private PDO|null $pdo;
+    /** @var ?PDO */
+    private ?PDO $pdo = null;
 
-    /** @var string */
-    private string $driver;
+    /** @var ?string */
+    private ?string $driver = null;
 
     /** @var array */
-    private array $options = [
-        'dsn'     => null, 'driver'   => null,
-        'user'    => null, 'pass'     => null,
-        'charset' => null, 'timezone' => null,
-        'options' => null
-    ];
+    private array $options;
 
     /**
      * Constructor.
      *
      * @param array $options
      */
-    private function __construct(array $options)
+    public function __construct(array $options)
     {
-        $this->options = array_merge($this->options, self::prepareOptions($options));
+        $this->options = self::prepareOptions($options);
     }
 
     /**
      * Hide all debug info.
-     *
-     * @return void
      */
     public function __debugInfo()
     {}
 
     /**
+     * Return valid properties.
+     */
+    public function __sleep()
+    {
+        return ['options'];
+    }
+
+    /**
+     * Re-connect.
+     */
+    public function __wakeup()
+    {
+        $this->connect();
+    }
+
+    /**
      * Get pdo property.
      *
-     * @return PDO|null
+     * @return ?PDO
      */
-    public function pdo(): PDO|null
+    public function pdo(): ?PDO
     {
-        return $this->pdo ?? null;
+        return $this->pdo;
     }
 
     /**
      * Get pdo driver property.
      *
-     * @return string|null
+     * @return ?string
      */
-    public function driver(): string|null
+    public function driver(): ?string
     {
-        return $this->driver ?? null;
+        return $this->driver;
     }
 
     /**
@@ -92,9 +94,10 @@ final class Link
     }
 
     /**
-     * Connect with given options, set timezone & charset if provided.
+     * Connect with given options, set charset & timezone if provided.
      *
      * @return void
+     * @throws froq\database\LinkException
      */
     public function connect(): void
     {
@@ -111,9 +114,11 @@ final class Link
         $options[PDO::ATTR_EMULATE_PREPARES]   ??= true;
         $options[PDO::ATTR_DEFAULT_FETCH_MODE] ??= PDO::FETCH_ASSOC;
 
-        // For a proper return that gives '1' always even with identical values in UPDATE queries.
         if ($driver == 'mysql') {
+            // For a proper return that gives '1' always even with identical values in UPDATE queries.
             $options[PDO::MYSQL_ATTR_FOUND_ROWS] ??= true;
+            // For a proper memory usage.
+            $options[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] ??= false;
         }
 
         try {
@@ -125,7 +130,7 @@ final class Link
 
             // Which driver the FUCK?
             if ($message == 'could not find driver') {
-                throw new LinkException('Could not find driver `%s`', $driver, code: $code, cause: $e);
+                $message = sprintf('Could not find driver `%s`', $driver);
             }
 
             throw new LinkException($message, code: $code, cause: $e);
@@ -136,7 +141,7 @@ final class Link
     }
 
     /**
-     * Disconnect and set pdo property to null.
+     * Disconnect and set pdo property as null.
      *
      * @return void
      */
@@ -149,11 +154,11 @@ final class Link
      * Check connection state.
      *
      * @return bool
-     * @since  5.0 Replaced with isConnected().
+     * @since  5.0
      */
     public function isAlive(): bool
     {
-        return isset($this->pdo);
+        return $this->pdo != null;
     }
 
     /**
@@ -165,7 +170,7 @@ final class Link
      */
     public function setCharset(string $charset): void
     {
-        $this->isAlive() || throw new LinkException('Link is gone');
+        $this->isAlive() || throw new LinkException('Link is dead');
 
         $this->pdo->exec('SET NAMES ' . $this->pdo->quote($charset));
     }
@@ -179,7 +184,7 @@ final class Link
      */
     public function setTimezone(string $timezone): void
     {
-        $this->isAlive() || throw new LinkException('Link is gone');
+        $this->isAlive() || throw new LinkException('Link is dead');
 
         if ($this->driver == 'mysql') {
             $this->pdo->exec('SET time_zone = ' . $this->pdo->quote($timezone));
@@ -191,26 +196,34 @@ final class Link
     /**
      * Prepare options.
      *
-     * @param  array $options
-     * @return array
      * @throws froq\database\LinkException
      */
     private static function prepareOptions(array $options): array
     {
+        static $optionsDefault = [
+            'dsn'     => null, 'driver'   => null,
+            'user'    => null, 'pass'     => null,
+            'charset' => null, 'timezone' => null,
+            'options' => null
+        ];
+
         if (empty($options['dsn'])) {
             throw new LinkException('Empty `dsn` option given');
         }
 
+        // Drop (in case).
+        $options['driver'] = null;
+
         $dsn = trim((string) $options['dsn'], ';');
         if (preg_match('~^(\w+):~', $dsn, $match)) {
-            $driver = $match[1];
+            $options['driver'] = $match[1];
         }
 
         // Throw a proper exeption instead of PDOException('could not find driver').
-        if (empty($driver)) {
+        if (empty($options['driver'])) {
             throw new LinkException('Invalid scheme given in `dsn` option, no driver specified');
         }
 
-        return ['dsn' => $dsn, 'driver' => $driver] + $options;
+        return [...$optionsDefault, ...$options];
     }
 }

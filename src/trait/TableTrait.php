@@ -7,28 +7,28 @@ declare(strict_types=1);
 
 namespace froq\database\trait;
 
+use froq\database\common\Table;
+
 /**
- * Table Trait.
- *
- * Represents a trait entity that holds `$table` and `$tablePrimary` properties and related methods.
+ * A trait, provides table related stuff.
  *
  * @package froq\database\trait
  * @object  froq\database\trait\TableTrait
  * @author  Kerem Güneş
- * @since   5.0
+ * @since   5.0, 6.0
  */
 trait TableTrait
 {
-    /** @var string, string */
-    protected string $table, $tablePrimary;
+    /** @var froq\database\common\Table */
+    protected Table $table;
 
     /**
      * Set table.
      *
-     * @param  string $table
+     * @param  froq\database\common\Table
      * @return self
      */
-    public final function setTable(string $table): self
+    public final function setTable(Table $table): self
     {
         $this->table = $table;
 
@@ -38,33 +38,10 @@ trait TableTrait
     /**
      * Get table.
      *
-     * @return string|null
+     * @return ?froq\database\common\Table
      */
-    public final function getTable(): string|null
+    public final function getTable(): ?Table
     {
         return $this->table ?? null;
-    }
-
-    /**
-     * Set table primary.
-     *
-     * @param  string $tablePrimary
-     * @return self
-     */
-    public final function setTablePrimary(string $tablePrimary): self
-    {
-        $this->tablePrimary = $tablePrimary;
-
-        return $this;
-    }
-
-    /**
-     * Get table primary.
-     *
-     * @return string|null
-     */
-    public final function getTablePrimary(): string|null
-    {
-        return $this->tablePrimary ?? null;
     }
 }

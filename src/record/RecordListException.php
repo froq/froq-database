@@ -7,15 +7,11 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\database\DatabaseException;
-
 /**
- * Record List Exception.
- *
  * @package froq\database\record
  * @object  froq\database\record\RecordListException
  * @author  Kerem Güneş
  * @since   5.0
  */
-class RecordListException extends DatabaseException
+class RecordListException extends \froq\database\DatabaseException
 {}

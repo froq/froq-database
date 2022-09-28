@@ -7,11 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\sql;
 
-use froq\database\sql\SqlException;
-
 /**
- * Abstract Sql.
- *
  * @package froq\database\sql
  * @object  froq\database\sql\AbstractSql
  * @author  Kerem Güneş
@@ -31,20 +27,20 @@ abstract class AbstractSql
     public function __construct(string $content)
     {
         $content = trim($content);
-
-        if ($content === '') {
-            throw new SqlException('Empty content given to `%s` object', static::class);
+        if ($content == '') {
+            throw new SqlException(
+                'Empty content given to `%s` object',
+                static::class
+            );
         }
 
         $this->content = $content;
     }
 
-    /**
-     * Magic - string.
-     */
-    public function __toString()
+    /** @magic */
+    public function __toString(): string
     {
-        return $this->content();
+        return $this->content;
     }
 
     /**

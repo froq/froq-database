@@ -5,23 +5,19 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\entity;
-
-use froq\database\entity\{Meta, PropertyMeta};
+namespace froq\database\entity\meta;
 
 /**
- * Class Meta.
+ * A metadata class, keeps parsed class metadata details.
  *
- * Represents a metadata class entity that keeps a parsed class metadata details.
- *
- * @package froq\database\entity
- * @object  froq\database\entity\ClassMeta
+ * @package froq\database\entity\meta
+ * @object  froq\database\entity\meta\ClassMeta
  * @author  Kerem Güneş
  * @since   5.0
  */
 final class ClassMeta extends Meta
 {
-    /** @var array<froq\database\entity\PropertyMeta> */
+    /** @var array<froq\database\entity\meta\PropertyMeta> */
     private array $properties = [];
 
     /**
@@ -38,7 +34,7 @@ final class ClassMeta extends Meta
     /**
      * Set all properties.
      *
-     * @param  array<froq\database\entity\PropertyMeta> $properties
+     * @param  array<froq\database\entity\meta\PropertyMeta> $properties
      * @return void
      */
     public function setProperties(array $properties): void
@@ -49,7 +45,7 @@ final class ClassMeta extends Meta
     /**
      * Get all properties.
      *
-     * @return array<froq\database\entity\PropertyMeta|void>
+     * @return array<froq\database\entity\meta\PropertyMeta|null>
      */
     public function getProperties(): array
     {
@@ -60,7 +56,7 @@ final class ClassMeta extends Meta
      * Get a property by given name.
      *
      * @param  string $name
-     * @return froq\database\entity\PropertyMeta|null
+     * @return froq\database\entity\meta\PropertyMeta|null
      */
     public function getProperty(string $name): PropertyMeta|null
     {
@@ -75,16 +71,6 @@ final class ClassMeta extends Meta
     public function getPropertyNames(): array
     {
         return array_keys($this->properties);
-    }
-
-    /**
-     * Check whether class metadata contains sequence option.
-     *
-     * @return bool
-     */
-    public function hasSequence(): bool
-    {
-        return (bool) $this->getOption('sequence', default: true);
     }
 
     /**
@@ -104,14 +90,7 @@ final class ClassMeta extends Meta
      */
     public function getTablePrimary(): string|null
     {
-        $ret = $this->getDataField('id', default: 'id');
-
-        // We use only one/first column (@fornow).
-        if ($ret && strpos($ret, ',')) {
-            $ret = split('\s*,\s*', $ret)[1];
-        }
-
-        return $ret;
+        return $this->getDataField('primary', default: 'id');
     }
 
     /**

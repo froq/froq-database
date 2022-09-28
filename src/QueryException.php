@@ -7,11 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\DatabaseException;
-
 /**
- * Query Exception.
- *
  * @package froq\database
  * @object  froq\database\QueryException
  * @author  Kerem Güneş

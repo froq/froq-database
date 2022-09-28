@@ -7,11 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\database\DatabaseException;
-
 /**
- * Profiler Exception.
- *
  * @package froq\database
  * @object  froq\database\ProfilerException
  * @author  Kerem Güneş

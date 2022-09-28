@@ -5,32 +5,28 @@
  */
 declare(strict_types=1);
 
-namespace froq\database\entity;
+namespace froq\database\entity\meta;
 
-use froq\database\entity\MetaException;
 use froq\util\Objects;
 use ReflectionClass, ReflectionProperty;
 
 /**
- * Meta.
+ * Base metadata class of `ClassMeta` & `PropertyMeta` classes.
  *
- * Represents a base metadata class entity that used internally for ClassMeta/PropertyMeta classes.
- *
- * @package froq\database\entity
- * @object  froq\database\entity\Meta
+ * @package froq\database\entity\meta
+ * @object  froq\database\entity\meta\Meta
  * @author  Kerem Güneş
  * @since   5.0
- * @internal
  */
 class Meta
 {
     /** @const int */
-    public const TYPE_CLASS    = 1,
-                 TYPE_PROPERTY = 2,
-                 TYPE_METHOD   = 3; // Not implemented (reserved).
+    public final const TYPE_CLASS    = 1,
+                       TYPE_PROPERTY = 2,
+                       TYPE_METHOD   = 3; // Not implemented (reserved).
 
     /** @var ReflectionClass|ReflectionProperty */
-    private ReflectionClass|ReflectionProperty $reflector;
+    private ReflectionClass|ReflectionProperty $reflection;
 
     /** @var int */
     private int $type;
@@ -92,8 +88,8 @@ class Meta
     public final function getShortName(): string
     {
         return match ($this->type) {
-            self::TYPE_CLASS    => array_last(explode('\\', $this->name)),
-            self::TYPE_PROPERTY => array_last(explode('.', $this->name)),
+            self::TYPE_CLASS    => last(explode('\\', $this->name)),
+            self::TYPE_PROPERTY => last(explode('.', $this->name)),
         };
     }
 
@@ -112,18 +108,9 @@ class Meta
      *
      * @param  array $data
      * @return void
-     * @throws froq\database\entity\MetaException
      */
     public final function setData(array $data): void
     {
-        // Annotation "list" is for only classes.
-        if (isset($data['list']) && ($this->type == self::TYPE_PROPERTY)) {
-            throw new MetaException(
-                'Invalid annotation directive `list` for property `%s`',
-                $this->name
-            );
-        }
-
         foreach ($data as $key => &$value) {
             switch ($key) {
                 case 'entity':
@@ -140,7 +127,10 @@ class Meta
 
                     // When a non-fully-qualified class name given.
                     if (!str_contains($value, '\\')) {
-                        $value = Objects::getNamespace($this->class) . '\\' . $value;
+                        $namespace = Objects::getNamespace($this->class);
+                        if ($namespace) {
+                            $value = $namespace . '\\' . $value;
+                        }
                     }
                     break;
             }
@@ -173,46 +163,46 @@ class Meta
     /**
      * Get a data field by given key.
      *
-     * @param  string   $key
-     * @param  any|null $default
-     * @return any|null
+     * @param  string     $key
+     * @param  mixed|null $default
+     * @return mixed
      */
-    public final function getDataField(string $key, $default = null)
+    public final function getDataField(string $key, mixed $default = null): mixed
     {
-        return array_fetch($this->data, $key, $default);
+        return array_get($this->data, $key, $default);
     }
 
     /**
      * Get a data field by given key as a bool option.
      *
-     * @param  string   $key
-     * @param  any|null $default
+     * @param  string     $key
+     * @param  mixed|null $default
      * @return bool
      */
-    public final function getOption(string $name, $default = null): bool
+    public final function getOption(string $name, mixed $default = null): bool
     {
         return (bool) $this->getDataField($name, $default);
     }
 
     /**
-     * Set reflector.
+     * Set reflection.
      *
-     * @param  ReflectionClass|ReflectionProperty $reflector
+     * @param  ReflectionClass|ReflectionProperty $reflection
      * @return void
      */
-    public final function setReflector(ReflectionClass|ReflectionProperty $reflector): void
+    public final function setReflection(ReflectionClass|ReflectionProperty $reflection): void
     {
-        $this->reflector = $reflector;
+        $this->reflection = $reflection;
     }
 
     /**
-     * Get reflector.
+     * Get reflection.
      *
      * @return ReflectionClass|ReflectionProperty|null
      */
-    public final function getReflector(): ReflectionClass|ReflectionProperty|null
+    public final function getReflection(): ReflectionClass|ReflectionProperty|null
     {
-        return $this->reflector ?? null;
+        return $this->reflection ?? null;
     }
 
     /**
@@ -228,7 +218,7 @@ class Meta
         [$name, $class] = array_map('trim', [$name, $class]);
 
         // Fully-qualified name for properties.
-        if ($type == self::TYPE_PROPERTY && !strpos($name, '.')) {
+        if ($type == self::TYPE_PROPERTY && !str_contains($name, '.')) {
             $name = $class . '.' . $name;
         }
 

@@ -7,15 +7,11 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\DatabaseException;
-
 /**
- * Meta Exception.
- *
  * @package froq\database\entity
- * @object  froq\database\entity\MetaException
+ * @object  froq\database\entity\EntityManagerException
  * @author  Kerem Güneş
  * @since   5.0
  */
-class MetaException extends DatabaseException
+class EntityManagerException extends \froq\database\DatabaseException
 {}
