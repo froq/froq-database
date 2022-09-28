@@ -1115,7 +1115,8 @@ final class Database
     {
         // If rows/fields wanted as return.
         if ($return) {
-            return $batch ? $result->rows() : $result->cols(0, $return);
+            return $batch ? $result->rows()
+                 : $result->cols(0, $return === true ? '*' : $return);
         }
 
         // If sequence isn't false return id/ids (@default=true).
