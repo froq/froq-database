@@ -275,9 +275,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             $orow = new Row((array) $row);
             // Single field.
             if (is_string($field)) {
-                if ($orow->has($field)) {
-                    return $orow->get($field);
-                }
+                return $orow->get($field);
             } elseif (is_array($field)) {
                 $vals = $orow->select($field, combine: true);
                 return is_array($row) ? $vals : (object) $vals;
