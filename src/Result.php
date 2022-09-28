@@ -543,7 +543,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
             $rows = $return['data'];
         }
         // When table given (update/insert).
-        elseif(isset($return['table'], $return['fields'])) {
+        elseif (isset($return['table'], $return['fields'])) {
             [$table, $fields, $fetch] = array_select($return, ['table', 'fields', 'fetch']);
 
             // Update.
