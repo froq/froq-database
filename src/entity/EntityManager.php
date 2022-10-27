@@ -83,6 +83,7 @@ class EntityManager
      *
      * @param  string|object $entity
      * @return froq\database\entity\meta\ClassMeta|null
+     * @causes froq\database\entity\meta\MetaException
      */
     public function getMeta(string|object $entity): ClassMeta|null
     {
