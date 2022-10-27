@@ -17,13 +17,13 @@ namespace froq\database\entity\meta;
  */
 final class MetaFactory
 {
-    /** @var array */
+    /** @var array<froq\database\entity\meta\Meta> */
     private static array $cache = [];
 
     /**
      * Cache getter.
      *
-     * @return array
+     * @return array<froq\database\entity\meta\Meta>
      */
     public static function cache(): array
     {
