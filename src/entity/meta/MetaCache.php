@@ -132,7 +132,8 @@ final class MetaCache
                 return null;
             }
 
-            $apc = new Apcu();
+            // Init with 1 hour TTL.
+            $apc = new Apcu('', ['ttl' => 3600]);
         }
 
         return $apc ? [$apc, $key] : null;
