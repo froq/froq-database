@@ -33,13 +33,26 @@ final class MetaParser
     {
         is_object($class) && $class = $class::class;
 
-        // Check MetaFactory cache for only "withProperties" parsing.
-        if ($withProperties && MetaFactory::hasCacheItem($class)) {
-            return MetaFactory::getCacheItem($class);
+        // Check cache & a missing stuff (cos' of APCu cache).
+        if ($withProperties && ($classMeta = MetaCache::getItem($class))) {
+            if (!$classMeta->getReflection()) {
+                $classMeta->setReflection(
+                    $classRef = new ReflectionClass($class)
+                );
+            }
+            if (!$classMeta->getProperties()) {
+                $classRef ??= new ReflectionClass($class);
+                foreach ($classRef->getProperties() as $propRef) {
+                    $propertyMeta = self::parsePropertyMeta($classRef->name, $propRef->name);
+                    $propertyMeta && $classMeta->addProperty($propRef->name, $propertyMeta);
+                }
+            }
+
+            return $classMeta;
         }
 
         try {
-            $classRef = new ReflectionClass($class);
+            $classRef ??= new ReflectionClass($class);
         } catch (ReflectionException $e) {
             throw new MetaException($e);
         }
@@ -65,8 +78,9 @@ final class MetaParser
                     continue;
                 }
 
-                // Skip non @meta stuff.
                 $data = self::getDataFrom($propRef);
+
+                // Skip non @meta stuff.
                 if ($data === null) {
                     continue;
                 }
@@ -96,13 +110,19 @@ final class MetaParser
     {
         is_object($class) && $class = $class::class;
 
-        // Check MetaFactory cache.
-        if (MetaFactory::hasCacheItem($name = ($class .'.'. $property))) {
-            return MetaFactory::getCacheItem($name);
+        // Check cache & add missing stuff (cos' of APCu cache).
+        if ($propertyMeta = MetaCache::getItem($class .'.'. $property)) {
+            if (!$propertyMeta->getReflection()) {
+                $propertyMeta->setReflection(
+                    $propRef = new ReflectionProperty($class, $property)
+                );
+            }
+
+            return $propertyMeta;
         }
 
         try {
-            $propRef = new ReflectionProperty($class, $property);
+            $propRef ??= new ReflectionProperty($class, $property);
         } catch (ReflectionException $e) {
             throw new MetaException($e);
         }
@@ -112,8 +132,9 @@ final class MetaParser
             return null;
         }
 
+        $data = self::getDataFrom($propRef);
+
         // Skip non @meta stuff.
-        $data = self::getDataFrom($propRef->getDeclaringClass());
         if ($data === null) {
             return null;
         }
@@ -126,10 +147,7 @@ final class MetaParser
     }
 
     /**
-     * Get data from a reflection class/property.
-     *
-     * @param  ReflectionClass|ReflectionProperty $ref
-     * @return array|null
+     * Get data from a reflection class/property annotations or attributes.
      */
     private static function getDataFrom(ReflectionClass|ReflectionProperty $ref): array|null
     {
@@ -145,10 +163,7 @@ final class MetaParser
     }
 
     /**
-     * Get data from given attributes.
-     *
-     * @param  array $attributes
-     * @return array|null
+     * Get data from attributes.
      */
     private static function getDataFromAttributes(array $attributes): array|null
     {
@@ -164,11 +179,9 @@ final class MetaParser
     }
 
     /**
-     * Get data from given annotations.
+     * Get data from annotations.
      *
-     * @param  string                             $annotations
-     * @param  ReflectionClass|ReflectionProperty $ref
-     * @return array|null
+     * @throws froq\database\entity\meta\MetaException
      */
     private static function getDataFromAnnotations(string $annotations, ReflectionClass|ReflectionProperty $ref): array|null
     {

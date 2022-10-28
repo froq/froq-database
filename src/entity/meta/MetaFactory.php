@@ -17,21 +17,8 @@ namespace froq\database\entity\meta;
  */
 final class MetaFactory
 {
-    /** @var array<froq\database\entity\meta\Meta> */
-    private static array $cache = [];
-
     /**
-     * Cache getter.
-     *
-     * @return array<froq\database\entity\meta\Meta>
-     */
-    public static function cache(): array
-    {
-        return self::$cache;
-    }
-
-    /**
-     * Init a meta class.
+     * Init a class/property meta.
      *
      * @param  int        $type
      * @param  string     $name
@@ -44,11 +31,21 @@ final class MetaFactory
     {
         $name = Meta::prepareName($type, $name, $class);
 
-        return self::$cache[$name] ??= match ($type) {
+        // Return current meta.
+        if ($meta = MetaCache::getItem($name)) {
+            return $meta;
+        }
+
+        $meta = match ($type) {
             Meta::TYPE_CLASS    => new ClassMeta($class, $data),
             Meta::TYPE_PROPERTY => new PropertyMeta($name, $class, $data),
             default             => throw new MetaException('Invalid type %q', $type)
         };
+
+        // Cache created meta.
+        MetaCache::setItem($name, $meta);
+
+        return $meta;
     }
 
     /**
@@ -74,50 +71,5 @@ final class MetaFactory
     public static function initPropertyMeta(string $name, string $class, array $data = null):  PropertyMeta
     {
         return self::init(Meta::TYPE_PROPERTY, $name, $class, $data);
-    }
-
-    /**
-     * Check a cache item.
-     *
-     * @param  string $name
-     * @return bool
-     */
-    public static function hasCacheItem(string $name): bool
-    {
-        return isset(self::$cache[$name]);
-    }
-
-    /**
-     * Set a cache item.
-     *
-     * @param  string                         $name
-     * @param  froq\database\entity\meta\Meta $item
-     * @return void
-     */
-    public static function setCacheItem(string $name, Meta $item): void
-    {
-        self::$cache[$name] = $item;
-    }
-
-    /**
-     * Get a cache item.
-     *
-     * @param  string $name
-     * @return froq\database\entity\meta\Meta|null
-     */
-    public static function getCacheItem(string $name): Meta|null
-    {
-        return self::$cache[$name] ?? null;
-    }
-
-    /**
-     * Delete a cache item.
-     *
-     * @param  string $name
-     * @return void
-     */
-    public static function deleteCacheItem(string $name): void
-    {
-        unset(self::$cache[$name]);
     }
 }

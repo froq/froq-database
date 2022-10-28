@@ -53,7 +53,19 @@ final class ClassMeta extends Meta
     }
 
     /**
-     * Get a property by given name.
+     * Add a property (meta).
+     *
+     * @param  string                                 $name
+     * @param  froq\database\entity\meta\PropertyMeta $meta
+     * @return void
+     */
+    public function addProperty(string $name, PropertyMeta $meta): void
+    {
+        $this->properties[$name] = $meta;
+    }
+
+    /**
+     * Get a property (meta).
      *
      * @param  string $name
      * @return froq\database\entity\meta\PropertyMeta|null
