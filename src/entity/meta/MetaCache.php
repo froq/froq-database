@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace froq\database\entity\meta;
 
 use froq\cache\agent\Apcu;
-use APCuIterator;
 
 /**
  * A cache class, used for storing parsed meta.
