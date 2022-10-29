@@ -7,12 +7,13 @@ declare(strict_types=1);
 
 namespace froq\database\entity;
 
-use froq\database\entity\meta\{MetaParser, ClassMeta};
-use froq\database\{common\Table, record\Record, trait\DbTrait};
+use froq\database\entity\meta\{MetaParser, Meta, ClassMeta, PropertyMeta};
 use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
+use froq\database\{common\Table, record\Record, trait\DbTrait};
 use froq\validation\ValidationError;
+use froq\reflection\ReflectionType;
 use froq\pager\Pager;
-use ItemList, ReflectionProperty;
+use ItemList, ReflectionProperty, ReflectionMethod;
 
 /**
  * Entity manager class for creating & managing entities.
@@ -82,13 +83,16 @@ class EntityManager
      * Get an entity meta.
      *
      * @param  string|object $entity
-     * @return froq\database\entity\meta\ClassMeta|null
+     * @param  string|null   $property
+     * @return froq\database\entity\meta\Meta|null
      * @causes froq\database\entity\meta\MetaException
      */
-    public function getMeta(string|object $entity): ClassMeta|null
+    public function getMeta(string|object $entity, string $property = null): Meta|null
     {
         try {
-            return $this->getClassMeta($entity);
+            return (func_num_args() == 1)
+                 ? $this->getClassMeta($entity)
+                 : $this->getPropertyMeta($entity, $property);
         }
         // Catch manager exception only, not "no class exists" etc.
         catch (EntityManagerException) {
@@ -110,7 +114,7 @@ class EntityManager
         $classMeta = $this->getClassMeta($entity);
 
         $data = [];
-        foreach ($classMeta->getProperties() as $propertyMeta) {
+        foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
             if ($field = $propertyMeta->getField()) {
                 $data[$field] = $this->getPropertyValue($entity, $propertyMeta->getReflection())
                     ?? $propertyMeta->getValidationDefault();
@@ -557,46 +561,29 @@ class EntityManager
     }
 
     /**
-     * Get class meta parsing given entity meta attributes/annotations or throw a
+     * Get a class meta parsing given entity meta attributes/annotations or throw an
      * `EntityManagerException` if given entity has no meta attributes/annotations.
      *
      * @throws froq\database\entity\EntityManagerException
+     * @causes froq\database\entity\meta\MetaException
      */
     private function getClassMeta(string|object $entity): ClassMeta
     {
         return MetaParser::parseClassMeta($entity)
-            ?: throw new EntityManagerException('No meta in class ' . get_class_name($entity));
+            ?: throw new EntityManagerException('No meta on class %s', get_class_name($entity));
     }
 
     /**
-     * Set entity properties.
+     * Get a property meta parsing given entity property meta attributes/annotations or throw an
+     * `EntityManagerException` if given entity property has no meta attributes/annotations.
+     *
+     * @throws froq\database\entity\EntityManagerException
+     * @causes froq\database\entity\meta\MetaException
      */
-    private function setProperties(object $entity, array|Record $record, ClassMeta $classMeta): void
+    private function getPropertyMeta(string|object $entity, string $property): PropertyMeta
     {
-        $data = is_array($record) ? $record : $record->toArray();
-        if ($data) {
-            $properties = $classMeta->getProperties();
-            foreach ($data as $name => $value) {
-                // Set present (defined/parsed) properties only.
-                if (isset($properties[$name])) {
-                    $this->setPropertyValue($entity, $properties[$name]->getReflection(), $value);
-                }
-            }
-        }
-    }
-
-    /**
-     * Set entity internal properties.
-     */
-    private function setInternalProperties(object $entity, Record $record, array $state = null): void
-    {
-        // When entity extends Entity.
-        if ($entity instanceof Entity) {
-            $entity->proxy()->setManager($this);
-
-            // Set result state.
-            $state && $entity->proxy()->setState(...$state);
-        }
+        return MetaParser::parsePropertyMeta($entity, $property)
+            ?: throw new EntityManagerException('No meta on class property %s:$s', get_class_name($entity), $property);
     }
 
     /**
@@ -631,9 +618,9 @@ class EntityManager
         }
 
         if (!$def) {
-            foreach ($classMeta->getProperties() as $propertyMeta) {
+            foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
                 // Skip entity properties & non-fields (with no "field" definition).
-                if ($propertyMeta->hasEntity() || !($field = $propertyMeta->getField())) {
+                if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
                     continue;
                 }
 
@@ -682,9 +669,9 @@ class EntityManager
 
         // When properties have "validation" meta on entity class.
         if (!$def) {
-            foreach ($classMeta->getProperties() as $propertyMeta) {
+            foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
                 // Skip entity properties & non-fields (with no "field" definition).
-                if ($propertyMeta->hasEntity() || !($field = $propertyMeta->getField())) {
+                if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
                     continue;
                 }
 
@@ -693,6 +680,35 @@ class EntityManager
         }
 
         return $ret;
+    }
+
+    /**
+     * Set entity properties received from record data.
+     */
+    private function setProperties(object $entity, array|Record $record, ClassMeta $classMeta): void
+    {
+        $data = is_array($record) ? $record : $record->toArray();
+
+        foreach ($data as $name => $value) {
+            // Set present (defined/parsed) properties only.
+            if ($propertyMeta = $classMeta->getPropertyMeta($name)) {
+                $this->setPropertyValue($entity, $propertyMeta->getReflection(), $value);
+            }
+        }
+    }
+
+    /**
+     * Set entity internal properties used in this manager.
+     */
+    private function setInternalProperties(object $entity, Record $record, array $state = null): void
+    {
+        // When entity extends Entity.
+        if ($entity instanceof Entity) {
+            $entity->proxy()->setManager($this);
+
+            // Set result state.
+            $state && $entity->proxy()->setState(...$state);
+        }
     }
 
     /**
@@ -705,7 +721,7 @@ class EntityManager
         $primary = (string) $classMeta->getTablePrimary();
 
         if ($primary) {
-            $primaryMeta = $classMeta->getProperty($primary);
+            $primaryMeta = $classMeta->getPropertyMeta($primary);
             if (!$primaryMeta) {
                 throw new EntityManagerException(
                     'Primary (%s::$%s) not defined or has no meta',
@@ -736,6 +752,22 @@ class EntityManager
             return;
         }
 
+        // Typed properties.
+        if ($property->hasType()) {
+            $valueType = get_type($value);
+
+            // Try to cast.
+            $propertyType = ReflectionType::from($property->getType());
+            if ($propertyType->isBuiltin() && $propertyType->getName() != $valueType) {
+                settype($value, $propertyType->getName());
+            }
+
+            // Prevent invalid types.
+            if (!$propertyType->contains($valueType)) {
+                return;
+            }
+        }
+
         $property->setValue($entity, $value);
     }
 
@@ -763,9 +795,9 @@ class EntityManager
             $where  = trim($where);
             $params = (array) $params;
         } else {
-            foreach ($classMeta->getProperties() as $propertyMeta) {
+            foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
                 // Skip entity properties & non-fields (with no "field" definition).
-                if ($propertyMeta->hasEntity() || !($field = $propertyMeta->getField())) {
+                if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
                     continue;
                 }
 
@@ -819,7 +851,7 @@ class EntityManager
                 );
             }
 
-            $primaryMeta = $classMeta->getProperty($primary);
+            $primaryMeta = $classMeta->getPropertyMeta($primary);
             if (!$primaryMeta) {
                 throw new EntityManagerException(
                     'Item %s[%d] primary (%s) not defined or has no meta',
@@ -868,13 +900,17 @@ class EntityManager
     }
 
     /**
-     * Call an entity method if available, so defined in Entity/EntityList class
-     * for find/save/remove actions.
+     * Call an entity method if defined in Entity for find/save/remove/query actions.
+     *
+     * Note: These methods always called regardless if they are public or encapsulaed
+     * as private/protected. So they can be hidden from outer scope to prevent outer
+     * calls by users.
      */
     private function callAction(object $entity, string $method, mixed ...$methodArgs): void
     {
-        if (method_exists($entity, $method)) {
-            $entity->$method(...$methodArgs);
+        if ($entity instanceof Entity && method_exists($entity, $method)) {
+            $ref = new ReflectionMethod($entity, $method);
+            $ref->invokeArgs($entity, $methodArgs);
         }
     }
 }

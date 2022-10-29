@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\proxy\{ProxyTrait, EntityProxy};
-use ReflectionProperty;
+use XClass, ReflectionProperty;
 
 /**
  * An abstract entity class that can be extended by entity classes used for accessing
@@ -24,6 +24,9 @@ abstract class Entity implements EntityInterface
 {
     use ProxyTrait;
 
+    /** Real entity class. */
+    private XClass $class;
+
     /**
      * Constructor.
      *
@@ -31,9 +34,10 @@ abstract class Entity implements EntityInterface
      */
     public function __construct(mixed ...$properties)
     {
-        $properties && $this->fill(...$properties);
-
         $this->proxy = new EntityProxy();
+        $this->class = new XClass(static::class);
+
+        $properties && $this->fill(...$properties);
     }
 
     /** @magic */
@@ -45,18 +49,23 @@ abstract class Entity implements EntityInterface
     /** @magic */
     public function __serialize(): array
     {
-        return ['@' => $this->toArray(), 'states' => $this->proxy->getStates()];
+        return [
+            '@' => $this->toArray(),
+            'states' => $this->proxy->getStates()
+        ];
     }
 
     /** @magic */
     public function __unserialize(array $data): void
     {
+        $this->proxy = new EntityProxy();
+        $this->class = new XClass(static::class);
+
         ['@' => $properties, 'states' => $states] = $data;
 
         $properties && $this->fill(...$properties);
 
-        // Reset proxy with states data.
-        $this->proxy = new EntityProxy();
+        // Reset states data.
         if ($states) {
             $this->proxy->setStates(...$states);
         }
@@ -125,7 +134,7 @@ abstract class Entity implements EntityInterface
     /**
      * @alias isFinded()
      */
-    public final function isFound(): bool
+    public final function isFound()
     {
         return $this->isFinded();
     }
@@ -143,10 +152,8 @@ abstract class Entity implements EntityInterface
             'Parameter $properties must be an associative array'
         );
 
-        $entity = static::class;
-
         foreach ($properties as $name => $value) {
-            if ($ref = $this->getPropertyReflection($entity, $name)) {
+            if ($ref = $this->getPropertyReflection($name)) {
                 $ref->setValue($this, $value);
             }
         }
@@ -161,11 +168,8 @@ abstract class Entity implements EntityInterface
     {
         $data = [];
 
-        $entity = static::class;
-        $properties = get_class_vars($entity);
-
-        foreach ($properties as $name => $_) {
-            if ($ref = $this->getPropertyReflection($entity, $name)) {
+        foreach ($this->class->getProperties() as $name => $_) {
+            if ($ref = $this->getPropertyReflection($name)) {
                 $data[$name] = $ref->isInitialized($this) ? $ref->getValue($this) : null;
             }
         }
@@ -200,7 +204,7 @@ abstract class Entity implements EntityInterface
      */
     public function offsetExists(mixed $name): bool
     {
-        if ($this->getPropertyReflection(null, $name)) {
+        if ($this->getPropertyReflection($name)) {
             return true;
         }
         return false;
@@ -211,7 +215,7 @@ abstract class Entity implements EntityInterface
      */
     public function offsetGet(mixed $name): mixed
     {
-        if ($ref = $this->getPropertyReflection(null, $name)) {
+        if ($ref = $this->getPropertyReflection($name)) {
             return $ref->isInitialized($this) ? $ref->getValue($this) : null;
         }
         return null;
@@ -222,7 +226,7 @@ abstract class Entity implements EntityInterface
      */
     public function offsetSet(mixed $name, mixed $value): void
     {
-        if ($ref = $this->getPropertyReflection(null, $name)) {
+        if ($ref = $this->getPropertyReflection($name)) {
             $ref->setValue($this, $value);
         }
     }
@@ -232,7 +236,7 @@ abstract class Entity implements EntityInterface
      */
     public function offsetUnset(mixed $name): void
     {
-        if ($ref = $this->getPropertyReflection(null, $name)) {
+        if ($ref = $this->getPropertyReflection($name)) {
             $ref->setValue($this, null);
         }
     }
@@ -246,19 +250,29 @@ abstract class Entity implements EntityInterface
     }
 
     /**
-     * Get property reflection.
+     * Get a property reflection defined in subclass entity.
      */
-    private function getPropertyReflection(string|null $class, string $property): ReflectionProperty|null
+    private function getPropertyReflection(string $name): ReflectionProperty|null
     {
-        $class ??= static::class;
+        $class = $this->class->getName();
 
-        if (property_exists($class, $property)) {
-            $ref = new ReflectionProperty($class, $property);
+        // Try to get in regular way.
+        if ($this->class->hasProperty($name)) {
+            $ref = $this->class->reflectProperty($name);
 
-            // Must be same class & non-static/non-private.
-            if ($ref->class === $class && !$ref->isStatic() && !$ref->isPrivate()) {
+            // Must be same class & non-static.
+            if ($ref->class === $class && !$ref->isStatic()) {
                 return $ref;
             }
+
+        }
+
+        // Try to get from parsed entity meta, looking for ClassMeta properties.
+        // @tome: Do NOT use this method like getMeta(class, property) as it catches EntityManagerException only
+        // for empty meta, NOT absent property exceptions (reflection related, so MetaException in MetaParser).
+        $propertyMeta = $this->proxy->getManager()?->getMeta($class)?->getPropertyMeta($name);
+        if ($propertyMeta) {
+            return $propertyMeta->getReflection();
         }
 
         return null;

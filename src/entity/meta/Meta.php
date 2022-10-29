@@ -18,7 +18,7 @@ use ReflectionClass, ReflectionProperty;
  * @author  Kerem Güneş
  * @since   5.0
  */
-class Meta
+abstract class Meta
 {
     /** @const int */
     public final const TYPE_CLASS    = 1,
@@ -38,7 +38,7 @@ class Meta
     private string $class;
 
     /** @var array */
-    protected array $data = [];
+    private array $data = [];
 
     /**
      * Constructor.
@@ -150,30 +150,30 @@ class Meta
     }
 
     /**
-     * Check a data field by given key.
+     * Check a data item by given key.
      *
      * @param  string $key
      * @return bool
      */
-    public final function hasDataField(string $key): bool
+    public final function hasDataItem(string $key): bool
     {
-        return array_isset($this->data, $key);
+        return array_get($this->data, $key) != null;
     }
 
     /**
-     * Get a data field by given key.
+     * Get a data item by given key.
      *
      * @param  string     $key
      * @param  mixed|null $default
      * @return mixed
      */
-    public final function getDataField(string $key, mixed $default = null): mixed
+    public final function getDataItem(string $key, mixed $default = null): mixed
     {
         return array_get($this->data, $key, $default);
     }
 
     /**
-     * Get a data field by given key as a bool option.
+     * Get a data item by given key as a bool option.
      *
      * @param  string     $key
      * @param  mixed|null $default
@@ -181,7 +181,7 @@ class Meta
      */
     public final function getOption(string $name, mixed $default = null): bool
     {
-        return (bool) $this->getDataField($name, $default);
+        return (bool) $this->getDataItem($name, $default);
     }
 
     /**
@@ -213,7 +213,7 @@ class Meta
      * @param  string $class
      * @return string
      */
-    public static function prepareName(int $type, string $name, string $class): string
+    public static final function prepareName(int $type, string $name, string $class): string
     {
         [$name, $class] = array_map('trim', [$name, $class]);
 

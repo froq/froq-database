@@ -31,26 +31,30 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      */
     public function __construct(object ...$entities)
     {
-        $entities && $this->fill(...$entities);
-
         $this->proxy = new EntityListProxy();
+
+        $entities && $this->fill(...$entities);
     }
 
     /** @magic */
     public function __serialize(): array
     {
-        return ['@' => $this->toArray(), 'pager' => $this->pager?->toArray()];
+        return [
+            '@' => $this->toArray(),
+            'pager' => $this->pager?->toArray()
+        ];
     }
 
     /** @magic */
     public function __unserialize(array $data): void
     {
+        $this->proxy = new EntityListProxy();
+
         ['@' => $entities, 'pager' => $pager] = $data;
 
         $entities && $this->fill(...$entities);
 
-        // Reset proxy with pager data.
-        $this->proxy = new EntityListProxy();
+        // Reset pager data.
         if ($pager) {
             $this->pager = new Pager((array) $pager);
             $this->pager->run();

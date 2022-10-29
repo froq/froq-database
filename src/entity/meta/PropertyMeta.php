@@ -30,33 +30,23 @@ final class PropertyMeta extends Meta
     }
 
     /**
-     * Get entity class.
-     *
-     * @return string|null
-     */
-    public function getEntityClass(): string|null
-    {
-        return $this->getDataField('entity');
-    }
-
-    /**
-     * Get entity list class.
-     *
-     * @return string|null
-     */
-    public function getEntityListClass(): string|null
-    {
-        return $this->getDataField('entityList');
-    }
-
-    /**
      * Get field name.
      *
      * @return string|null
      */
     public function getField(): string|null
     {
-        return $this->getDataField('field');
+        return $this->getDataItem('field');
+    }
+
+    /**
+     * Get field type.
+     *
+     * @return string|null
+     */
+    public function getFieldType(): string|null
+    {
+        return $this->getDataItem('fieldType');
     }
 
     /**
@@ -76,7 +66,7 @@ final class PropertyMeta extends Meta
      */
     public function getValidation(): array|null
     {
-        return $this->getDataField('validation');
+        return $this->getDataItem('validation');
     }
 
     /**
@@ -86,7 +76,7 @@ final class PropertyMeta extends Meta
      */
     public function getValidationDefault(): mixed
     {
-        return $this->getDataField('validation.default');
+        return $this->getDataItem('validation.default');
     }
 
     /**
@@ -94,9 +84,9 @@ final class PropertyMeta extends Meta
      *
      * @return bool
      */
-    public function hasEntity(): bool
+    public function hasEntityClass(): bool
     {
-        return !empty($this->data['entity']);
+        return $this->hasDataItem('entity');
     }
 
     /**
@@ -104,8 +94,28 @@ final class PropertyMeta extends Meta
      *
      * @return bool
      */
-    public function hasEntityList(): bool
+    public function hasEntityListClass(): bool
     {
-        return !empty($this->data['entityList']);
+        return $this->hasDataItem('entityList');
+    }
+
+    /**
+     * Get entity class.
+     *
+     * @return string|null
+     */
+    public function getEntityClass(): string|null
+    {
+        return $this->getDataItem('entity');
+    }
+
+    /**
+     * Get entity list class.
+     *
+     * @return string|null
+     */
+    public function getEntityListClass(): string|null
+    {
+        return $this->getDataItem('entityList');
     }
 }

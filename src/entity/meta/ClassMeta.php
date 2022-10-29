@@ -18,7 +18,7 @@ namespace froq\database\entity\meta;
 final class ClassMeta extends Meta
 {
     /** @var array<froq\database\entity\meta\PropertyMeta> */
-    private array $properties = [];
+    private array $propertyMetas = [];
 
     /**
      * Constructor.
@@ -32,57 +32,51 @@ final class ClassMeta extends Meta
     }
 
     /**
-     * Set all properties.
+     * Set property metas.
      *
-     * @param  array<froq\database\entity\meta\PropertyMeta> $properties
+     * @param  array<froq\database\entity\meta\PropertyMeta> $propertyMetas
      * @return void
      */
-    public function setProperties(array $properties): void
+    public function setPropertyMetas(array $propertyMetas): void
     {
-        $this->properties = $properties;
+        $this->propertyMetas = $propertyMetas;
     }
 
     /**
-     * Get all properties.
+     * Get property metas.
      *
-     * @return array<froq\database\entity\meta\PropertyMeta|null>
+     * @return array<froq\database\entity\meta\PropertyMeta>
      */
-    public function getProperties(): array
+    public function getPropertyMetas(): array
     {
-        return $this->properties;
+        return $this->propertyMetas;
     }
 
     /**
-     * Add a property (meta).
+     * Add property meta.
      *
      * @param  string                                 $name
      * @param  froq\database\entity\meta\PropertyMeta $meta
      * @return void
      */
-    public function addProperty(string $name, PropertyMeta $meta): void
+    public function addPropertyMeta(string $name, PropertyMeta $meta): void
     {
-        $this->properties[$name] = $meta;
+        $this->propertyMetas[$name] = $meta;
     }
 
     /**
-     * Get a property (meta).
+     * Get property meta.
      *
      * @param  string $name
      * @return froq\database\entity\meta\PropertyMeta|null
      */
-    public function getProperty(string $name): PropertyMeta|null
+    public function getPropertyMeta(string $name): PropertyMeta|null
     {
-        return $this->properties[$name] ?? null;
-    }
-
-    /**
-     * Get all property names.
-     *
-     * @return array<string|void>
-     */
-    public function getPropertyNames(): array
-    {
-        return array_keys($this->properties);
+        return $this->propertyMetas[$name] ??
+            // Try with "field" definition.
+            array_find($this->propertyMetas, fn($property) => (
+                $property->getField() === $name
+            ));
     }
 
     /**
@@ -92,7 +86,7 @@ final class ClassMeta extends Meta
      */
     public function getTable(): string|null
     {
-        return $this->getDataField('table');
+        return $this->getDataItem('table');
     }
 
     /**
@@ -102,7 +96,7 @@ final class ClassMeta extends Meta
      */
     public function getTablePrimary(): string|null
     {
-        return $this->getDataField('primary', default: 'id');
+        return $this->getDataItem('primary', default: 'id');
     }
 
     /**
@@ -112,7 +106,7 @@ final class ClassMeta extends Meta
      */
     public function getListClass(): string|null
     {
-        return $this->getDataField('list');
+        return $this->getDataItem('list');
     }
 
     /**
@@ -122,7 +116,7 @@ final class ClassMeta extends Meta
      */
     public function getRecordClass(): string|null
     {
-        return $this->getDataField('record');
+        return $this->getDataItem('record');
     }
 
     /**

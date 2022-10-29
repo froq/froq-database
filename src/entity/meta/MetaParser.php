@@ -40,11 +40,11 @@ final class MetaParser
                     $classRef = new ReflectionClass($class)
                 );
             }
-            if (!$classMeta->getProperties()) {
+            if (!$classMeta->getPropertyMetas()) {
                 $classRef ??= new ReflectionClass($class);
                 foreach ($classRef->getProperties() as $propRef) {
                     $propertyMeta = self::parsePropertyMeta($classRef->name, $propRef->name);
-                    $propertyMeta && $classMeta->addProperty($propRef->name, $propertyMeta);
+                    $propertyMeta && $classMeta->addPropertyMeta($propRef->name, $propertyMeta);
                 }
             }
 
@@ -68,11 +68,9 @@ final class MetaParser
 
         // And add properties.
         if ($withProperties) {
-            // We use only "public/protected" properties, not "static/private" ones.
-            $types = ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED;
-            $props = [];
+            $propertyMetas = [];
 
-            foreach ($classRef->getProperties($types) as $propRef) {
+            foreach ($classRef->getProperties() as $propRef) {
                 // We don't use static properties.
                 if ($propRef->isStatic()) {
                     continue;
@@ -89,10 +87,10 @@ final class MetaParser
                 $propertyMeta = MetaFactory::initPropertyMeta($propRef->name, $propRef->class, $data);
                 $propertyMeta->setReflection($propRef);
 
-                $props[$propRef->name] = $propertyMeta;
+                $propertyMetas[$propRef->name] = $propertyMeta;
             }
 
-            $classMeta->setProperties($props);
+            $classMeta->setPropertyMetas($propertyMetas);
         }
 
         return $classMeta;
@@ -127,8 +125,8 @@ final class MetaParser
             throw new MetaException($e);
         }
 
-        // We don't use static & private properties.
-        if ($propRef->isStatic() || $propRef->isPrivate()) {
+        // We don't use static properties.
+        if ($propRef->isStatic()) {
             return null;
         }
 
