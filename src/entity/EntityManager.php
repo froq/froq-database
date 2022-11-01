@@ -60,8 +60,8 @@ class EntityManager
         $entity = $this->initEntity($class, $properties);
         $record = $this->initRecord($classMeta, $entity, true, true);
 
-        $this->setProperties($entity, $record, $classMeta);
-        $this->setInternalProperties($entity, $record);
+        $this->setPropertyValues($entity, $record, $classMeta);
+        $this->setInternalPropertyValues($entity, $record);
 
         return $entity;
     }
@@ -143,8 +143,8 @@ class EntityManager
             );
         }
 
-        $this->setProperties($entity, $record, $classMeta);
-        $this->setInternalProperties($entity, $record, ['saved', $record->isSaved()]);
+        $this->setPropertyValues($entity, $record, $classMeta);
+        $this->setInternalPropertyValues($entity, $record, ['saved', $record->isSaved()]);
 
         // Call action method when provided.
         $this->callAction($entity, 'onSave');
@@ -196,8 +196,8 @@ class EntityManager
         /** @var froq\database\record\Record */
         $record = $record->find($id);
 
-        $this->setProperties($entity, $record, $classMeta);
-        $this->setInternalProperties($entity, $record, ['finded', $record->isFinded()]);
+        $this->setPropertyValues($entity, $record, $classMeta);
+        $this->setInternalPropertyValues($entity, $record, ['finded', $record->isFinded()]);
 
         // Call action method when provided.
         $this->callAction($entity, 'onFind', $record->getData());
@@ -233,8 +233,8 @@ class EntityManager
             foreach ($records as $i => $record) {
                 $entity = $items[$i];
 
-                $this->setProperties($entity, $record, $classMeta);
-                $this->setInternalProperties($entity, $record, ['finded', true]);
+                $this->setPropertyValues($entity, $record, $classMeta);
+                $this->setInternalPropertyValues($entity, $record, ['finded', true]);
 
                 // Call action method when provided.
                 $this->callAction($entity, 'onFind', $record->getData());
@@ -327,8 +327,8 @@ class EntityManager
             foreach ($records as $record) {
                 $entityClone = clone $entity;
 
-                $this->setProperties($entityClone, $record, $classMeta);
-                $this->setInternalProperties($entityClone, $record, ['finded', true]);
+                $this->setPropertyValues($entityClone, $record, $classMeta);
+                $this->setInternalPropertyValues($entityClone, $record, ['finded', true]);
 
                 // Call action method when provided.
                 $this->callAction($entityClone, 'onFind', $record->getData());
@@ -362,8 +362,8 @@ class EntityManager
         $record = $this->initRecord($classMeta, $entity, true, primaryRequired: true)
             ->remove($id);
 
-        $this->setProperties($entity, $record, $classMeta);
-        $this->setInternalProperties($entity, $record, ['removed', $record->isRemoved()]);
+        $this->setPropertyValues($entity, $record, $classMeta);
+        $this->setInternalPropertyValues($entity, $record, ['removed', $record->isRemoved()]);
 
         // Call action method when provided.
         $this->callAction($entity, 'onRemove');
@@ -394,8 +394,8 @@ class EntityManager
             foreach ($records as $i => $record) {
                 $entity = $items[$i];
 
-                $this->setProperties($entity, $record, $classMeta);
-                $this->setInternalProperties($entity, $record, ['removed', true]);
+                $this->setPropertyValues($entity, $record, $classMeta);
+                $this->setInternalPropertyValues($entity, $record, ['removed', true]);
 
                 // Call action method when provided.
                 $this->callAction($entity, 'onRemove');
@@ -445,8 +445,8 @@ class EntityManager
             foreach ($records as $record) {
                 $entityClone = clone $entity;
 
-                $this->setProperties($entityClone, $record, $classMeta);
-                $this->setInternalProperties($entityClone, $record, ['removed', true]);
+                $this->setPropertyValues($entityClone, $record, $classMeta);
+                $this->setInternalPropertyValues($entityClone, $record, ['removed', true]);
 
                 // Call action method when provided.
                 $this->callAction($entityClone, 'onRemove');
@@ -683,9 +683,9 @@ class EntityManager
     }
 
     /**
-     * Set entity properties received from record data.
+     * Set entity property values received from record data.
      */
-    private function setProperties(object $entity, array|Record $record, ClassMeta $classMeta): void
+    private function setPropertyValues(object $entity, array|Record $record, ClassMeta $classMeta): void
     {
         $data = is_array($record) ? $record : $record->toArray();
 
@@ -698,9 +698,9 @@ class EntityManager
     }
 
     /**
-     * Set entity internal properties used in this manager.
+     * Set entity internal property values used in the manager.
      */
-    private function setInternalProperties(object $entity, Record $record, array $state = null): void
+    private function setInternalPropertyValues(object $entity, Record $record, array $state = null): void
     {
         // When entity extends Entity.
         if ($entity instanceof Entity) {
