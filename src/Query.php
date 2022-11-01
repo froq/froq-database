@@ -22,7 +22,7 @@ use froq\pager\Pager;
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Query
+final class Query implements \Stringable
 {
     use DbTrait, QueryTrait;
 
@@ -50,7 +50,9 @@ final class Query
         $table && $this->table($table);
     }
 
-    /** @magic */
+    /**
+     * @magic
+     */
     public function __toString(): string
     {
         return $this->toString();

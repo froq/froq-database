@@ -8,12 +8,15 @@ declare(strict_types=1);
 namespace froq\database\sql;
 
 /**
+ * Base class of `Sql` and `Name` classes.
+ *
  * @package froq\database\sql
  * @object  froq\database\sql\AbstractSql
  * @author  Kerem Güneş
  * @since   4.0
+ * @internal
  */
-abstract class AbstractSql
+abstract class AbstractSql implements \Stringable
 {
     /** @var string */
     protected string $content;
@@ -27,7 +30,8 @@ abstract class AbstractSql
     public function __construct(string $content)
     {
         $content = trim($content);
-        if ($content == '') {
+
+        if ($content === '') {
             throw new SqlException(
                 'Empty content given to `%s` object',
                 static::class
@@ -37,7 +41,9 @@ abstract class AbstractSql
         $this->content = $content;
     }
 
-    /** @magic */
+    /**
+     * @magic
+     */
     public function __toString(): string
     {
         return $this->content;
