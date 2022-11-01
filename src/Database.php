@@ -713,25 +713,32 @@ final class Database
      */
     public function escape(mixed $input, string $format = null): mixed
     {
-        if (is_array($input) && $format != '?a') {
+        $format = (string) $format;
+
+        if (is_array($input) && $format !== '?a') {
             return array_map(fn($input) => $this->escape($input, $format), $input);
         }
 
         if (is_object($input)) {
             return match (true) {
-                ($input instanceof Sql)   => $input->content(),
-                ($input instanceof Name)  => $this->escapeName($input->content()),
+                // Internals.
+                ($input instanceof Sql) => $input->content(),
+                ($input instanceof Name) => $this->escapeName($input->content()),
                 ($input instanceof Query) => '(' . $input->toString() . ')',
 
+                // Externals.
+                ($input instanceof \Stringable) => $this->escapeString((string) $input),
+                ($input instanceof \DateTimeInterface) => $this->escapeString($input->format('Y-m-d H:i:s')),
+
                 default => throw new DatabaseException(
-                    'Invalid input object `%s` [valids: Query, sql\{Sql, Name}]',
-                    $input::class
+                    'Invalid input object `%s` [valids: %A]',
+                    [$input::class, [Query::class, Sql::class, Name::class, \Stringable::class, \DateTimeInterface::class]]
                 )
             };
         }
 
         // Available formats: ?, ??, ?s, ?i, ?f, ?b, ?r, ?n, ?a.
-        if ($format) {
+        if ($format !== '') {
             return match ($format) {
                 '?'  => $this->escape($input),
                 '??' => $this->escapeName($input),
@@ -749,16 +756,15 @@ final class Database
             };
         }
 
-        $type = get_type($input);
-
-        return match ($type) {
+        // Internal types.
+        return match (get_type($input)) {
             'null'         => 'NULL',
             'string'       => $this->escapeString($input),
             'int', 'float' => $input,
             'bool'         => $input ? 'true' : 'false',
 
             default => throw new DatabaseException(
-                'Unimplemented input type `%s`', $type
+                'Unimplemented input type `%t`', $input
             )
         };
     }
