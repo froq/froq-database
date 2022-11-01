@@ -1710,6 +1710,16 @@ final class Query
     }
 
     /**
+     * Get query hash (for caching etc.).
+     *
+     * @return string
+     */
+    public function toHash(): string
+    {
+        return md5($this::class . serialize(sorted($this->toArray(), key: true)));
+    }
+
+    /**
      * Get query stack.
      *
      * @return array
@@ -1780,9 +1790,10 @@ final class Query
             }
         }
 
+        $stack = $this->toArray();
+
         $ret = '';
 
-        $stack = $this->stack;
         switch ($key) {
             case 'with':
                 if (isset($stack['with'])) {
