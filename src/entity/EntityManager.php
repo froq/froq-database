@@ -743,6 +743,9 @@ class EntityManager
 
     /**
      * Set an entity property value.
+     *
+     * @throws froq\database\entity\EntityManagerException
+     * @todo Use ObjectMapper?
      */
     private function setPropertyValue(object $entity, ReflectionProperty $property, mixed $value): void
     {
@@ -754,16 +757,35 @@ class EntityManager
 
         // Typed properties.
         if ($property->hasType()) {
-            $valueType = get_type($value);
+            $valueType    = get_type($value);
+            $propertyType = ReflectionType::from($property->getType());
+            $canSet       = $propertyType->contains($valueType);
 
             // Try to cast.
-            $propertyType = ReflectionType::from($property->getType());
-            if ($propertyType->isBuiltin() && $propertyType->getName() != $valueType) {
-                settype($value, $propertyType->getName());
+            if ($propertyType->getName() !== $valueType) {
+                // Internals (eg: int, float).
+                if ($propertyType->isCastable()) {
+                    settype($value, $propertyType->getName());
+                    $canSet = true;
+                }
+                // Classes (eg: DateTime).
+                elseif ($propertyType->isClass() && $valueType !== 'null') {
+                    $class = $propertyType->getName();
+
+                    if (!class_exists($class)) {
+                        throw new EntityManagerException(
+                            'Class %q not found for typed property %s::$%s',
+                            [$class, $property->class, $property->name]
+                        );
+                    }
+
+                    $value  = new $class($value);
+                    $canSet = true;
+                }
             }
 
             // Prevent invalid types.
-            if (!$propertyType->contains($valueType)) {
+            if (!$canSet) {
                 return;
             }
         }
@@ -773,6 +795,8 @@ class EntityManager
 
     /**
      * Get an entity property value.
+     *
+     * @todo Use ObjectMapper?
      */
     private function getPropertyValue(object $entity, ReflectionProperty $property): mixed
     {
