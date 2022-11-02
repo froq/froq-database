@@ -11,9 +11,8 @@ use froq\database\entity\meta\{MetaParser, Meta, ClassMeta, PropertyMeta};
 use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
 use froq\database\{common\Table, record\Record, trait\DbTrait};
 use froq\validation\ValidationError;
-use froq\reflection\ReflectionType;
 use froq\pager\Pager;
-use ItemList, ReflectionProperty, ReflectionMethod;
+use ItemList, ReflectionProperty, ReflectionMethod, XReflectionType;
 use DateTime, DateTimeImmutable, DateTimeInterface;
 
 /**
@@ -759,7 +758,7 @@ class EntityManager
         // Typed properties.
         if ($property->hasType()) {
             $valueType    = get_type($value);
-            $propertyType = ReflectionType::from($property->getType());
+            $propertyType = XReflectionType::from($property->getType());
             $canSet       = $propertyType->contains($valueType);
 
             // Try to cast.
