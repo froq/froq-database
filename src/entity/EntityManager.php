@@ -14,6 +14,7 @@ use froq\validation\ValidationError;
 use froq\reflection\ReflectionType;
 use froq\pager\Pager;
 use ItemList, ReflectionProperty, ReflectionMethod;
+use DateTime, DateTimeImmutable, DateTimeInterface;
 
 /**
  * Entity manager class for creating & managing entities.
@@ -762,25 +763,45 @@ class EntityManager
             $canSet       = $propertyType->contains($valueType);
 
             // Try to cast.
-            if ($propertyType->getName() !== $valueType) {
+            if ($propertyType->getPureName() !== $valueType) {
                 // Internals (eg: int, float).
                 if ($propertyType->isCastable()) {
                     settype($value, $propertyType->getName());
                     $canSet = true;
                 }
                 // Classes (eg: DateTime).
-                elseif ($propertyType->isClass() && $valueType !== 'null') {
-                    $class = $propertyType->getName();
+                elseif ($value !== null) {
+                    $class = null;
 
-                    if (!class_exists($class)) {
-                        throw new EntityManagerException(
+                    // Special case of date/time stuff (interface, subclass or union).
+                    if (($interface = $propertyType->isClassOf(DateTimeInterface::class))
+                        || $propertyType->contains(DateTime::class, DateTimeImmutable::class, DateTimeInterface::class)
+                    ) {
+                        $class = $interface ? DateTime::class : $propertyType->names()->find(
+                            fn(string $name): bool => is_subclass_of($name, DateTimeInterface::class)
+                        );
+                    }
+                    // Single classes.
+                    elseif ($propertyType->isClass()) {
+                        $class = $propertyType->getPureName();
+                    }
+                    // Choose a class (for unions).
+                    else foreach ($propertyType->getNames() as $name) {
+                        if (class_exists($name)) {
+                            $class = $name;
+                            break;
+                        }
+                    }
+
+                    if ($class !== null) {
+                        class_exists($class) || throw new EntityManagerException(
                             'Class %q not found for typed property %s::$%s',
                             [$class, $property->class, $property->name]
                         );
-                    }
 
-                    $value  = new $class($value);
-                    $canSet = true;
+                        $value  = new $class($value);
+                        $canSet = true;
+                    }
                 }
             }
 
