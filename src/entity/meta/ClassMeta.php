@@ -74,8 +74,8 @@ final class ClassMeta extends Meta
     {
         return $this->propertyMetas[$name] ??
             // Try with "field" definition.
-            array_find($this->propertyMetas, fn($property) => (
-                $property->getField() === $name
+            array_find($this->propertyMetas, fn(PropertyMeta $propertyMeta): bool => (
+                $propertyMeta->getField() === $name
             ));
     }
 
