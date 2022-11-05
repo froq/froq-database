@@ -187,10 +187,10 @@ final class Database
     /**
      * Get a single row running given query or return `null` if no match.
      *
-     * @param  string            $query
-     * @param  array|null        $params
-     * @param  string|null       $fetch
-     * @param  string|bool|null  $flat
+     * @param  string           $query
+     * @param  array|null       $params
+     * @param  string|null      $fetch
+     * @param  string|bool|null $flat
      * @return mixed
      */
     public function get(string $query, array $params = null, string $fetch = null, string|bool $flat = null): mixed
@@ -206,11 +206,11 @@ final class Database
     /**
      * Get all rows running given query or return `null` if no matches.
      *
-     * @param  string            $query
-     * @param  array|null        $params
-     * @param  string|null       $fetch
-     * @param  string|bool|null  $flat
-     * @param  bool              $raw For returning a raw Result instance.
+     * @param  string           $query
+     * @param  array|null       $params
+     * @param  string|null      $fetch
+     * @param  string|bool|null $flat
+     * @param  bool             $raw For returning a raw Result instance.
      * @return mixed
      */
     public function getAll(string $query, array $params = null, string $fetch = null, string|bool $flat = null,
@@ -232,7 +232,7 @@ final class Database
     /**
      * Bridge method to `getAll()` for returning a `Result` instance.
      *
-     * @param  mixed ...$args Same with getAll().
+     * @param  mixed ...$args Same as in `getAll()` method.
      * @return froq\database\Result
      * @since  6.0
      */
@@ -247,7 +247,7 @@ final class Database
      * Bridge method to `getResult()` for returning a `Row` instance.
      *
      * @param  string   $query
-     * @param  mixed ...$args Same with getResult().
+     * @param  mixed ...$args Same as in `getResult()` method.
      * @return froq\database\result\Row|null
      * @since  6.0
      */
@@ -262,7 +262,7 @@ final class Database
      * Bridge method to `getResult()` for returning a `Row` instance.
      *
      * @param  string   $query
-     * @param  mixed ...$args Same with getResult().
+     * @param  mixed ...$args Same as in `getResult()` method.
      * @return froq\database\result\Rows
      * @since  6.0
      */
@@ -345,7 +345,7 @@ final class Database
      * Bridge method to `selectAll()` for returning a `Result` instance.
      *
      * @param  string   $table
-     * @param  mixed ...$args Same with selectAll().
+     * @param  mixed ...$args Same as in `selectAll()` method.
      * @return froq\database\Result
      * @since  6.0
      */
@@ -360,7 +360,7 @@ final class Database
      * Bridge method to `selectResult()` for returning a `Row` instance.
      *
      * @param  string   $table
-     * @param  mixed ...$args Same with selectResult().
+     * @param  mixed ...$args Same as in `selectResult()` method.
      * @return froq\database\result\Row|null
      * @since  6.0
      */
@@ -375,7 +375,7 @@ final class Database
      * Bridge method to `selectResult()` for returning a `Rows` instance.
      *
      * @param  string   $table
-     * @param  mixed ...$args Same with selectResult().
+     * @param  mixed ...$args Same as in `selectResult()` method.
      * @return froq\database\result\Rows
      * @since  6.0
      */
