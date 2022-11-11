@@ -1007,9 +1007,6 @@ final class Database
 
     /**
      * Prepare an input escaping names only (eg: @id => "id" for PgSQL).
-     *
-     * @param  string $input
-     * @return string
      */
     private function prepareNameInput(string $input): string
     {
@@ -1033,12 +1030,8 @@ final class Database
     /**
      * Prepare a where input.
      *
-     * @param  string|array $input
-     * @param  array|null   $params
-     * @param  string|null  $op
-     * @return array
-     * @since  4.15
      * @throws froq\database\DatabaseException
+     * @since  4.15
      */
     private function prepareWhereInput(string|array $input, array $params = null, string $op = null): array
     {

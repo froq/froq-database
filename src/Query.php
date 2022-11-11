@@ -2180,11 +2180,6 @@ final class Query implements \Stringable
     /**
      * Prepare increase/decrease data for update.
      *
-     * @param  string       $sign
-     * @param  string|array $field
-     * @param  int|float    $value
-     * @param  bool|null    $return
-     * @return array
      * @throws froq\database\QueryException
      * @since  5.0
      */
@@ -2221,9 +2216,6 @@ final class Query implements \Stringable
 
     /**
      * Prepare where-in placeholders.
-     *
-     * @param  array $params
-     * @return string
      */
     private function prepareWhereInPlaceholders(array $params): string
     {
@@ -2232,9 +2224,6 @@ final class Query implements \Stringable
 
     /**
      * Prepare where-like search.
-     *
-     * @param  string|array $params
-     * @return string
      */
     private function prepareWhereLikeSearch(string|array $params): string
     {
@@ -2261,9 +2250,6 @@ final class Query implements \Stringable
     /**
      * Add a clause/statement to query stack.
      *
-     * @param  string $key
-     * @param  mixed  $item
-     * @param  bool   $merge
      * @return self
      */
     private function add(string $key, mixed $item, bool $merge = true): self
@@ -2279,9 +2265,6 @@ final class Query implements \Stringable
     /**
      * Add a clause/statement operator to query stack.
      *
-     * @param  string $key
-     * @param  string $item
-     * @return self
      * @throws froq\database\QueryException
      * @since  5.0
      */
