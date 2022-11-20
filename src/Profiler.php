@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database;
 
-use froq\util\misc\{Timer, Storage};
+use froq\util\{Timer, storage\Storage};
 use PDOStatement;
 
 /**
@@ -20,10 +20,18 @@ use PDOStatement;
  */
 final class Profiler
 {
-    /** @var froq\util\misc\Storage */
+    /**
+     * Profiles.
+     *
+     * @var froq\util\Storage
+     */
     private Storage $profiles;
 
-    /** @var int */
+    /**
+     * Query count.
+     *
+     * @var int
+     */
     private int $queryCount = 0;
 
     /**
