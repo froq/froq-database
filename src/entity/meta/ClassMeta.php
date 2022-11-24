@@ -96,7 +96,11 @@ final class ClassMeta extends Meta
      */
     public function getTablePrimary(): string|null
     {
-        return $this->getDataItem('primary', default: 'id');
+        return $this->getDataItem('primary', default: 'id') ??
+            // Try with "primary" definition.
+            array_find($this->propertyMetas, fn(PropertyMeta $propertyMeta): bool =>
+                $propertyMeta->isPrimary() === true
+            )?->getField();
     }
 
     /**

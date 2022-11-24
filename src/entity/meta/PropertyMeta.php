@@ -50,7 +50,7 @@ final class PropertyMeta extends Meta
     }
 
     /**
-     * Get propert value using reflection.
+     * Get property value using reflection.
      *
      * @return mixed|null
      */
@@ -117,5 +117,15 @@ final class PropertyMeta extends Meta
     public function getEntityListClass(): string|null
     {
         return $this->getDataItem('entityList');
+    }
+
+    /**
+     * Check whether this property is marked as "primary" field.
+     *
+     * @return bool
+     */
+    public function isPrimary(): bool
+    {
+        return $this->getOption('primary', default: false);
     }
 }
