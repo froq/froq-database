@@ -511,7 +511,7 @@ class EntityManager
     private function initEntity(string|null $class, array $properties = null): Entity
     {
         // Check class validity.
-        if ($class) {
+        if ($class !== null) {
             class_exists($class) || throw new EntityManagerException(
                 'Entity class `%s` not exists', $class
             );
@@ -539,7 +539,7 @@ class EntityManager
     private function initEntityList(string|null $class, array $entities = null): EntityList
     {
         // Check class validity.
-        if ($class) {
+        if ($class !== null) {
             class_exists($class) || throw new EntityManagerException(
                 'Entity list class `%s` not exists', $class
             );
