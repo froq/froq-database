@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\proxy\{ProxyTrait, EntityProxy};
-use XClass, ReflectionProperty;
+use XObject, ReflectionProperty;
 
 /**
  * An abstract entity class that can be extended by entity classes used for accessing
@@ -24,8 +24,12 @@ abstract class Entity implements EntityInterface
 {
     use ProxyTrait;
 
-    /** Real entity class. */
-    private XClass $class;
+    /**
+     * The real entity object.
+     *
+     * @var XObject
+     */
+    private XObject $child;
 
     /**
      * Constructor.
@@ -35,7 +39,7 @@ abstract class Entity implements EntityInterface
     public function __construct(mixed ...$properties)
     {
         $this->proxy = new EntityProxy();
-        $this->class = new XClass(static::class);
+        $this->child = new XObject($this);
 
         $properties && $this->fill(...$properties);
     }
@@ -59,7 +63,7 @@ abstract class Entity implements EntityInterface
     public function __unserialize(array $data): void
     {
         $this->proxy = new EntityProxy();
-        $this->class = new XClass(static::class);
+        $this->child = new XObject($this);
 
         ['@' => $properties, 'states' => $states] = $data;
 
@@ -168,7 +172,7 @@ abstract class Entity implements EntityInterface
     {
         $data = [];
 
-        foreach ($this->class->getProperties() as $name => $_) {
+        foreach ($this->child->getProperties() as $name => $_) {
             if ($ref = $this->getPropertyReflection($name)) {
                 $data[$name] = $ref->isInitialized($this) ? $ref->getValue($this) : null;
             }
@@ -254,17 +258,16 @@ abstract class Entity implements EntityInterface
      */
     private function getPropertyReflection(string $name): ReflectionProperty|null
     {
-        $class = $this->class->getName();
+        $class = $this->child->getName();
 
         // Try to get in regular way.
-        if ($this->class->hasProperty($name)) {
-            $ref = $this->class->reflectProperty($name);
+        if ($this->child->hasProperty($name)) {
+            $ref = $this->child->reflectProperty($name);
 
             // Must be same class & non-static.
             if ($ref->class === $class && !$ref->isStatic()) {
                 return $ref;
             }
-
         }
 
         // Try to get from parsed entity meta, looking for ClassMeta properties.
