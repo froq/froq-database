@@ -12,8 +12,7 @@ use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query}
 use froq\database\{common\Table, record\Record, trait\DbTrait};
 use froq\validation\ValidationError;
 use froq\pager\Pager;
-use ItemList, ReflectionProperty, ReflectionMethod, XReflectionType;
-use DateTime, DateTimeImmutable, DateTimeInterface;
+use ItemList, ReflectionProperty, ReflectionMethod;
 
 /**
  * Entity manager class for creating & managing entities.
@@ -744,70 +743,20 @@ class EntityManager
     /**
      * Set an entity property value.
      *
-     * @throws froq\database\entity\EntityManagerException
-     * @todo Use ObjectMapper?
+     * Note: This method does not cover to set complex property types. So, setter methods must be used
+     * for complex typed properties.
      */
     private function setPropertyValue(object $entity, ReflectionProperty $property, mixed $value): void
     {
         // When property-specific setter is available.
-        if (method_exists($entity, ($method = ('set' . $property->name)))) {
+        if (method_exists($entity, $method = 'set' . $property->name)) {
             $entity->$method($value);
             return;
         }
 
-        // Typed properties.
-        if ($property->hasType()) {
-            $valueType    = get_type($value);
-            $propertyType = XReflectionType::from($property->getType());
-            $canSet       = $propertyType->contains($valueType);
-
-            // Try to cast.
-            if ($propertyType->getPureName() !== $valueType) {
-                // Internals (eg: int, float).
-                if ($propertyType->isCastable()) {
-                    settype($value, $propertyType->getName());
-                    $canSet = true;
-                }
-                // Classes (eg: DateTime).
-                elseif ($value !== null) {
-                    $class = null;
-
-                    // Special case of date/time stuff (interface, subclass or union).
-                    if (($interface = $propertyType->isClassOf(DateTimeInterface::class))
-                        || $propertyType->contains(DateTime::class, DateTimeImmutable::class, DateTimeInterface::class)
-                    ) {
-                        $class = $interface ? DateTime::class : $propertyType->names()->find(
-                            fn(string $name): bool => is_subclass_of($name, DateTimeInterface::class)
-                        );
-                    }
-                    // Single classes.
-                    elseif ($propertyType->isClass()) {
-                        $class = $propertyType->getPureName();
-                    }
-                    // Choose a class (for unions).
-                    else foreach ($propertyType->getNames() as $name) {
-                        if (class_exists($name)) {
-                            $class = $name;
-                            break;
-                        }
-                    }
-
-                    if ($class !== null) {
-                        class_exists($class) || throw new EntityManagerException(
-                            'Class %q not found for typed property %s::$%s',
-                            [$class, $property->class, $property->name]
-                        );
-
-                        $value  = new $class($value);
-                        $canSet = true;
-                    }
-                }
-            }
-
-            // Prevent invalid types.
-            if (!$canSet) {
-                return;
-            }
+        // Prevent invalid types.
+        if ($value === null && $property->getType()?->allowsNull() === false) {
+            return;
         }
 
         $property->setValue($entity, $value);
@@ -815,13 +764,11 @@ class EntityManager
 
     /**
      * Get an entity property value.
-     *
-     * @todo Use ObjectMapper?
      */
     private function getPropertyValue(object $entity, ReflectionProperty $property): mixed
     {
         // When property-specific getter is available.
-        if (method_exists($entity, ($method = ('get' . $property->name)))) {
+        if (method_exists($entity, $method = 'get' . $property->name)) {
             return $entity->$method();
         }
 
