@@ -124,7 +124,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     /**
      * @alias isFindedAll()
      */
-    public final function isFoundAll(): bool
+    public final function isFoundAll()
     {
         return $this->isFindedAll();
     }
@@ -170,13 +170,14 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     }
 
     /**
-     * Get action result filtering items by given action.
+     * Get action result filtering items by given entity method.
      */
-    private function getActionResult(string $action): bool
+    private function getActionResult(string $method): bool
     {
         return count($this) // Prevent empty list.
-            && count($this) == count(array_filter(
-                $this->items(), fn($entity) => $entity->$action()
+            && count($this) === count(array_filter(
+                $this->items(),
+                fn(Entity $entity): bool => $entity->$method()
             ));
     }
 }

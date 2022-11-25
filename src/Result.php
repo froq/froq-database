@@ -180,7 +180,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     {
         if ($init) {
             return (clone $this->rows)
-                ->map(fn($row) => $this->toRow($row));
+                ->map(fn($row): Row => $this->toRow($row));
         }
         return (clone $this->rows);
     }

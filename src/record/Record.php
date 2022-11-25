@@ -749,7 +749,7 @@ class Record implements RecordInterface
         }
 
         // Filter multiple ids by not-null check.
-        is_array($id) && $id = array_filter($id, fn($id) => $id !== null);
+        is_array($id) && $id = array_filter($id, fn($id): bool => $id !== null);
 
         return [$table->getName(), $table->getPrimary(), $id];
     }

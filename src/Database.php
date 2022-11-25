@@ -716,7 +716,10 @@ final class Database
         $format = (string) $format;
 
         if (is_array($input) && $format !== '?a') {
-            return array_map(fn($input) => $this->escape($input, $format), $input);
+            return array_map(
+                fn(mixed $input): mixed => $this->escape($input, $format),
+                $input
+            );
         }
 
         if (is_object($input)) {

@@ -117,9 +117,14 @@ final class Query implements \Stringable
             if (is_array($select)) {
                 if ($sas != '') {
                     // Prefix all fields with "sas" argument.
-                    $select = array_map(fn($field) => $this->prepareField("{$sas}.{$field}"), $select);
+                    $select = array_map(
+                        fn($field): string => $this->prepareField("{$sas}.{$field}"),
+                        $select
+                    );
+
                     $prepare = false;
                 }
+
                 $select = join(', ', $select);
             }
 
@@ -332,7 +337,7 @@ final class Query implements \Stringable
         } elseif (isset($data[0])) {
             // Eg: [["name" => "Kerem", ..], ..].
             $fields = array_keys($data[0]);
-            $values = array_map(fn($d) => array_values($d), $data);
+            $values = array_map(fn($d): array => array_values($d), $data);
         }
 
         if (!$fields || !$values) {
@@ -1898,7 +1903,7 @@ final class Query implements \Stringable
                             if (is_list($update)) {
                                 $temp = $this->prepareFields($update);
                                 $sets = [sprintf('(%s) = (%s)', $temp, implode(', ', array_map(
-                                    fn($t) => 'EXCLUDED.' . $t, explode(', ', $temp)))
+                                    fn($t): string => 'EXCLUDED.' . $t, explode(', ', $temp)))
                                 )];
                             } else {
                                 $temp = [];

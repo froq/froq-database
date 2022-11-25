@@ -885,7 +885,7 @@ class EntityManager
      */
     private function sortListItemsByPrimary(ItemList $recordList, ItemList $entityList, string $primary): void
     {
-        $fn = fn($a, $b) => $a->$primary <=> $b->$primary;
+        $fn = fn(object $a, object $b): int => $a->$primary <=> $b->$primary;
 
         $recordList->sort($fn); $entityList->sort($fn);
     }
