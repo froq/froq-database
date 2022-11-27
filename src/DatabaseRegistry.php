@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace froq\database;
 
 use froq\common\object\Registry;
+use TraceStack, Trace, ReflectionCallable;
 
 /**
  * A registry class for pooling default & in case, other database instances.
@@ -63,17 +64,16 @@ final class DatabaseRegistry extends Registry
         // Hard works..
         if (!$caller) {
             // Try to find caller method & argument from backtrace.
-            $trace = new \Trace();
             $match = [__CLASS__, __FUNCTION__];
-            $entry = $trace->find(fn(\TraceEntry $e): bool => (
-                $e->callerMethod && $e->class === $match[0] && $e->function === $match[1]
+            $trace = (new TraceStack)->find(fn(Trace $t): bool => (
+                $t->callerMethod && $t->class === $match[0] && $t->function === $match[1]
             ));
 
-            if ($entry) {
-                $ref = new \ReflectionCallable($entry->callerMethod);
+            if ($trace) {
+                $ref = new ReflectionCallable($trace->callerMethod);
                 foreach ($ref->getParameters() as $ref) {
                     if ($ref->getType()?->getPureName() === Database::class) {
-                        $callerMethod   = $entry->callerMethod;
+                        $callerMethod   = $trace->callerMethod;
                         $callerArgument = $ref->getName();
                         break;
                     }
