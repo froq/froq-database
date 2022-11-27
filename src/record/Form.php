@@ -135,10 +135,10 @@ class Form implements FormInterface
     public final function setRecordClass(string $recordClass): self
     {
         if (!class_exists($recordClass)) {
-            throw new FormException('Given record class `%s` not exists', $recordClass);
+            throw new FormException('Given record class %q not exists', $recordClass);
         }
         if (!class_extends($recordClass, Record::class)) {
-            throw new FormException('Given record class `%s` must extend class `%s`',
+            throw new FormException('Given record class %q must extend class %q',
                 [$recordClass, Record::class]);
         }
 

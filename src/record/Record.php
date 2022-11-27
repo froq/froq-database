@@ -137,14 +137,15 @@ class Record implements RecordInterface
      *
      * @param  string $formClass
      * @return self
+     * @throws froq\database\record\RecordException
      */
     public final function setFormClass(string $formClass): self
     {
         if (!class_exists($formClass)) {
-            throw new RecordException('Given form class `%s` not exists', $formClass);
+            throw new RecordException('Given form class %q not exists', $formClass);
         }
         if (!class_extends($formClass, Form::class)) {
-            throw new RecordException('Given form class `%s` must extend class `%s`',
+            throw new RecordException('Given form class %q must extend class %q',
                 [$formClass, Form::class]);
         }
 

@@ -348,7 +348,7 @@ final class Query implements \Stringable
         foreach ($values as $i => $value) {
             $value = (array) $value;
             if (count($value) != $fieldsCount) {
-                throw new QueryException('Count of value set `%s` not matched with fields count', $i);
+                throw new QueryException('Count of value set #%i not matched with fields count', $i);
             }
 
             $values[$i] = '(' . join(', ', $this->db->escape($value)) . ')';
@@ -495,7 +495,7 @@ final class Query implements \Stringable
         $action = strtoupper($action);
 
         if (!in_array($action, ['NOTHING', 'UPDATE'], true)) {
-            throw new QueryException('Invalid conflict action `%s` [valids: NOTHING, UPDATE]', $action);
+            throw new QueryException('Invalid conflict action %q [valids: NOTHING, UPDATE]', $action);
         }
 
         // Comma separated update (fields).
@@ -504,7 +504,7 @@ final class Query implements \Stringable
         }
 
         if (!$update && $action == 'UPDATE') {
-            throw new QueryException('Conflict action is `update`, but no update data given');
+            throw new QueryException('Conflict action is \'update\', but no update data given');
         }
 
         $fields = $this->prepareFields($fields);
@@ -1217,7 +1217,7 @@ final class Query implements \Stringable
                             || $this->stack['table'] .= ' AS ' . $as, // Concat.
             'select' => strpos($this->stack['select'][count($this->stack['select']) - 1], ' AS ')
                             || $this->stack['select'][count($this->stack['select']) - 1] .= ' AS ' . $as,
-            default  => throw new QueryException('Invalid key `%s` for as()', $this->key)
+            default  => throw new QueryException('Invalid key %q for as()', $this->key)
         };
 
         return $this;
@@ -1561,7 +1561,7 @@ final class Query implements \Stringable
             return $this->select($func . '_agg(' . $distinct . $field . $order . ')' . $as, false);
         }
 
-        throw new QueryException('Invalid aggregate function `%s` [valids: count, sum, min, max, avg,'
+        throw new QueryException('Invalid aggregate function %q [valids: count, sum, min, max, avg,'
             . ' array, string, json, json_object, jsonb, jsonb_object]', $func);
     }
 
@@ -1946,7 +1946,7 @@ final class Query implements \Stringable
                         throw new QueryException('Table is not defined yet, call table() to continue');
 
                     if (!isset($stack['where'])) {
-                        throw new QueryException('No `where` for update yet, it must be provided for security'
+                        throw new QueryException('No \'where\' for update yet, it must be provided for security'
                             . ' reasons, call at least where("1=1") proving you are aware of what is going on');
                     }
 
@@ -1968,7 +1968,7 @@ final class Query implements \Stringable
                         throw new QueryException('Table is not defined yet, call from() or table() to continue');
 
                     if (!isset($stack['where'])) {
-                        throw new QueryException('No `where` for delete yet, it must be provided for security'
+                        throw new QueryException('No \'where\' for delete yet, it must be provided for security'
                             . ' reasons, call at least where("1=1") proving you are aware of what is going on');
                     }
 
@@ -2179,7 +2179,7 @@ final class Query implements \Stringable
             return ($op > '-1') ? 'ASC' : 'DESC';
         }
 
-        throw new QueryException('Invalid op `%s` [valids: AND, OR for where & ASC, DESC, 1, +1, -1 for order]', $op);
+        throw new QueryException('Invalid op %q [valids: AND, OR for where & ASC, DESC, 1, +1, -1 for order]', $op);
     }
 
     /**
@@ -2204,8 +2204,8 @@ final class Query implements \Stringable
             $fields = [];
 
             foreach ($field as $name => $value) {
-                is_string($name)  || throw new QueryException('Invalid field name `%s`', $name);
-                is_number($value) || throw new QueryException('Invalid field value `%s`', $value);
+                is_string($name)  || throw new QueryException('Invalid field name %q', $name);
+                is_number($value) || throw new QueryException('Invalid field value %q', $value);
 
                 $data[$name] = $this->db->escapeName($name) . ' ' . $sign . ' ' . $value;
 
@@ -2274,7 +2274,7 @@ final class Query implements \Stringable
         if (!isset($this->stack[$key])) {
             $op = substr(trim($item), 0, strpos(trim($item), ' '));
             throw new QueryException(
-                'No `%s` statement yet in query stack to apply `%s` operator, '.
+                'No %q statement yet in query stack to apply %q operator, '.
                 'call %s() first to apply', [$key, $op, $key]
             );
         }

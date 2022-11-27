@@ -60,7 +60,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                     // All others are as class.
                     $fetchType  = PDO::FETCH_CLASS,
                     $fetchClass = class_exists($options['fetch']) ? $options['fetch'] :
-                        throw new ResultException('No fetch class such `%s`', $options['fetch'])
+                        throw new ResultException('Fetch class %q not found', $options['fetch'])
                 ]
             };
         }

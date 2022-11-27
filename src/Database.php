@@ -634,7 +634,7 @@ final class Database
         // For row(..) or other parenthesis stuff.
         if (strpos($input, '(') === 0) {
             $rpos = strpos($input, ')'); // Not parsed array[(foo, ..)] stuff, sorry.
-            $rpos || throw new DatabaseException('Unclosed parenthesis in `%s` input', $input);
+            $rpos || throw new DatabaseException('Unclosed parenthesis in %q input', $input);
 
             $name = substr($input, 1, $rpos - 1); // Eg: part foo of (foo).
             $rest = substr($input, $rpos + 1) ?: ''; // Eg: part ::int of (foo)::int.
@@ -734,8 +734,8 @@ final class Database
                 ($input instanceof \DateTimeInterface) => $this->escapeString($input->format('Y-m-d H:i:s')),
 
                 default => throw new DatabaseException(
-                    'Invalid input object `%s` [valids: %A]',
-                    [$input::class, [Query::class, Sql::class, Name::class, \Stringable::class, \DateTimeInterface::class]]
+                    'Invalid input object %q [valids: %A]',
+                    [$input::class, [Query::class, Sql::class, Name::class, 'Stringable', 'DateTimeInterface']]
                 )
             };
         }
@@ -754,20 +754,20 @@ final class Database
                 '?a' => join(', ', (array) $this->escape($input)),
 
                 default => throw new DatabaseException(
-                    'Unimplemented input format `%s`', $format
+                    'Unimplemented input format %q', $format
                 )
             };
         }
 
         // Internal types.
-        return match (get_type($input)) {
+        return match ($type = get_type($input)) {
             'null'         => 'NULL',
             'string'       => $this->escapeString($input),
             'int', 'float' => $input,
             'bool'         => $input ? 'true' : 'false',
 
             default => throw new DatabaseException(
-                'Unimplemented input type `%t`', $input
+                'Unimplemented input type %q', $type
             )
         };
     }
@@ -890,7 +890,7 @@ final class Database
                     $ipos = $pos - 1;
                     if (!array_key_exists($ipos, $params)) {
                         throw new DatabaseException(
-                            'Replacement `%s` not found in given parameters', $ipos
+                            'Replacement #%i not found in given parameters', $ipos
                         );
                     }
 
@@ -920,7 +920,7 @@ final class Database
                     $key = substr($holder, 1);
                     if (!array_key_exists($key, $params)) {
                         throw new DatabaseException(
-                            'Replacement key `%s` not found in given parameters', $key
+                            'Replacement key %q not found in given parameters', $key
                         );
                     }
 
@@ -936,7 +936,7 @@ final class Database
                 else {
                     if (!array_key_exists($i, $params)) {
                         throw new DatabaseException(
-                            'Replacement index `%s` not found in given parameters', $i
+                            'Replacement index %q not found in given parameters', $i
                         );
                     }
 
@@ -1057,7 +1057,7 @@ final class Database
 
                     $sign = ' = ';
                     if (in_array($field[-1], $signs, true)) {
-                        $sign  = sprintf(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
+                        $sign  = format(' %s ', $field[-1] === '!' ? '!=' : $field[-1]);
                         $field = substr($field, 0, -1);
                     }
 
@@ -1067,7 +1067,7 @@ final class Database
                     // }
 
                     // ctype_alnum($field) || throw new DatabaseException(
-                    //     'Invalid field name `%s` in where input, use an alphanumeric name', $field
+                    //     'Invalid field name %q in where input, use an alphanumeric name', $field
                     // );
 
                     if (is_array($value)) {
