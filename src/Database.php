@@ -1009,7 +1009,7 @@ final class Database
     }
 
     /**
-     * Prepare an input escaping names only (eg: @id => "id" for PgSQL).
+     * Prepare an input escaping names only (eg: `@id => 'id'` for PgSQL).
      */
     private function prepareNameInput(string $input): string
     {
@@ -1034,7 +1034,6 @@ final class Database
      * Prepare a where input.
      *
      * @throws froq\database\DatabaseException
-     * @since  4.15
      */
     private function prepareWhereInput(string|array $input, array $params = null, string $op = null): array
     {

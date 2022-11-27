@@ -2186,7 +2186,6 @@ final class Query implements \Stringable
      * Prepare increase/decrease data for update.
      *
      * @throws froq\database\QueryException
-     * @since  5.0
      */
     private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = null): array
     {
@@ -2254,8 +2253,6 @@ final class Query implements \Stringable
 
     /**
      * Add a clause/statement to query stack.
-     *
-     * @return self
      */
     private function add(string $key, mixed $item, bool $merge = true): self
     {
@@ -2271,7 +2268,6 @@ final class Query implements \Stringable
      * Add a clause/statement operator to query stack.
      *
      * @throws froq\database\QueryException
-     * @since  5.0
      */
     private function addTo(string $key, string $item): self
     {
