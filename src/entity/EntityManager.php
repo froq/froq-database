@@ -513,10 +513,10 @@ class EntityManager
         // Check class validity.
         if ($class !== null) {
             class_exists($class) || throw new EntityManagerException(
-                'Entity class `%s` not exists', $class
+                'Entity class %q not exists', $class
             );
             class_extends($class, Entity::class) || throw new EntityManagerException(
-                'Entity class `%s` must extend `%s`', [$class, Entity::class]
+                'Entity class %q must extend class %q', [$class, Entity::class]
             );
 
             $entity = new $class();
@@ -541,10 +541,10 @@ class EntityManager
         // Check class validity.
         if ($class !== null) {
             class_exists($class) || throw new EntityManagerException(
-                'Entity list class `%s` not exists', $class
+                'Entity list class %q not exists', $class
             );
             class_extends($class, EntityList::class) || throw new EntityManagerException(
-                'Entity list class `%s` must extend `%s`', [$class, EntityList::class]
+                'Entity list class %q must extend class %q', [$class, EntityList::class]
             );
 
             $entityList = new $class();
