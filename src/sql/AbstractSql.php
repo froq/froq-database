@@ -32,10 +32,7 @@ abstract class AbstractSql implements \Stringable
         $content = trim($content);
 
         if ($content === '') {
-            throw new SqlException(
-                'Empty content given to `%s` object',
-                static::class
-            );
+            throw new SqlException('Empty content given to %q object', static::class);
         }
 
         $this->content = $content;

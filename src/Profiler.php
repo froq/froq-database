@@ -245,10 +245,7 @@ final class Profiler
                 $this->profiles->query[$this->queryCount]['timer'] = new Timer();
                 break;
             default:
-                throw new ProfilerException(
-                    'Invalid type `%s` [valids: connection, query]',
-                    $type
-                );
+                throw new ProfilerException('Invalid type %q [valids: connection, query]', $type);
         }
     }
 
@@ -271,10 +268,7 @@ final class Profiler
                 unset($this->profiles->query[$this->queryCount]['timer']);
                 break;
             default:
-                throw new ProfilerException(
-                    'Invalid type `%s` [valids: connection, query]',
-                    $type
-                );
+                throw new ProfilerException('Invalid type %q [valids: connection, query]', $type);
         }
     }
 }

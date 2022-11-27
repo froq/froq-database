@@ -230,7 +230,7 @@ class QueryParams implements Arrayable
                     break;
                 default:
                     if (!in_array($operator, self::OPERATORS, true)) {
-                        throw new \ValueError(sprintf('Invalid operator `%s`', $operator));
+                        throw new \ValueError(format('Invalid operator %q', $operator));
                     }
 
                     if (!in_array($operator, self::EQUAL_OPERATORS, true)) {

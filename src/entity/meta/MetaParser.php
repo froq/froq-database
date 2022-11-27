@@ -217,7 +217,7 @@ final class MetaParser
                 $refType = isset($ref->class) ? 'property' : 'class';
 
                 throw new MetaException(
-                    'Failed to parse meta annotation of `%s` %s [error: %s]',
+                    'Failed to parse meta annotation of %q %s [error: %s]',
                     [$refName, $refType, strtolower($error)]
                 );
             }
