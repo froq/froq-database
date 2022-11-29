@@ -12,7 +12,7 @@ use froq\database\query\QueryParams;
 use froq\database\result\{Row, Rows};
 use froq\database\sql\{Sql, Name};
 use froq\collection\Collection;
-use froq\pager\Pager;
+use froq\pagination\Paginator;
 
 /**
  * A query builder class, fulfills most building needings with descriptive methods.
@@ -1355,7 +1355,8 @@ final class Query implements \Stringable
     /**
      * Get all result rows & running current query stack.
      *
-     * Note: For pagination, `paginate()` method must be called before this method.
+     * Note: For pagination, `paginate()` method must be called before calling this method
+     * and other related methods.
      *
      * @param  string|null $fetch
      * @param  int|null    $limit
@@ -1566,44 +1567,25 @@ final class Query implements \Stringable
     }
 
     /**
-     * Paginate query result setting offset/limit stuff & assigning ref'ed pager instance.
+     * Paginate query result to set this query's offset / limit.
      *
-     * @param  int|null               $page
-     * @param  int|null               $limit
-     * @param  froq\pager\Pager|null &$pager
-     * @param  int|null               $count
+     * @param  int                             $page
+     * @param  int|null                        $limit
+     * @param  froq\pagination\Paginator|null &$paginator
      * @return self
      */
-    public function paginate(int $page = null, int $limit = null, Pager &$pager = null, int $count = null): self
+    public function paginate(int $page, int $limit = 10, Paginator &$paginator = null): self
     {
-        // Limit/offset. @default
-        static $defaults = [10, 0];
-
-        $page ??= Pager::getStartParam() ?? 1;
-        $limit ??= $this->stack['limit'] ?? $defaults[0];
-        // $offset = $this->stack['offset'] ?? $defaults[1]; // @discard
-
-        $page = abs($page);
-        $limit = abs($limit);
-
-        $page = ($page > 0) ? $page : 1;
+        $limit  = abs($limit);
         $offset = ($page * $limit) - $limit;
 
-        // This will also get a count() result if no count given.
-        $pager ??= $this->db->initPager($count ?? $this->count(), ['start' => $page, 'stop' => $limit]);
+        // Paginator wanted.
+        if (func_num_args() === 3) {
+            $paginator = new Paginator($page, perPage: $limit);
+            $paginator->paginate($this->count());
+        }
 
         return $this->limit($limit, $offset);
-    }
-
-    /**
-     * Paginate query result with given pager instance.
-     *
-     * @param  froq\pager\Pager $pager
-     * @return self
-     */
-    public function paginateWith(Pager $pager): self
-    {
-        return $this->limit($pager->limit, $pager->offset);
     }
 
     /**

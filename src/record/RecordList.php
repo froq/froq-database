@@ -7,8 +7,6 @@ declare(strict_types=1);
 
 namespace froq\database\record;
 
-use froq\pager\{Pager, PagerTrait};
-
 /**
  * A list class, for collecting `Record` instances.
  *
@@ -19,19 +17,14 @@ use froq\pager\{Pager, PagerTrait};
  */
 class RecordList extends \ItemList implements RecordListInterface
 {
-    use PagerTrait;
-
     /**
      * Constructor.
      *
-     * @param array                 $items
-     * @param froq\pager\Pager|null $pager
+     * @param array $items
      */
-    public function __construct(array $items = [], Pager $pager = null)
+    public function __construct(array $items = [])
     {
         parent::__construct($items);
-
-        $this->pager = $pager;
     }
 
     /**

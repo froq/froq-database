@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace froq\database\entity;
 
 use froq\database\entity\proxy\{ProxyTrait, EntityListProxy};
-use froq\pager\{Pager, PagerTrait};
 
 /**
  * An abstract entity list class that can be extended by entity list classes used for
@@ -22,7 +21,7 @@ use froq\pager\{Pager, PagerTrait};
  */
 abstract class EntityList extends \ItemList implements EntityListInterface
 {
-    use ProxyTrait, PagerTrait;
+    use ProxyTrait;
 
     /**
      * Constructor.
@@ -40,8 +39,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     public function __serialize(): array
     {
         return [
-            '@' => $this->toArray(),
-            'pager' => $this->pager?->toArray()
+            '@' => $this->toArray()
         ];
     }
 
@@ -50,15 +48,9 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     {
         $this->proxy = new EntityListProxy();
 
-        ['@' => $entities, 'pager' => $pager] = $data;
+        ['@' => $entities] = $data;
 
         $entities && $this->fill(...$entities);
-
-        // Reset pager data.
-        if ($pager) {
-            $this->pager = new Pager((array) $pager);
-            $this->pager->run();
-        }
     }
 
     /**

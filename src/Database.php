@@ -11,7 +11,7 @@ use froq\database\sql\{Sql, Name};
 use froq\database\result\{Row, Rows};
 use froq\database\trait\StatementTrait;
 use froq\common\trait\FactoryTrait;
-use froq\{pager\Pager, logger\Logger};
+use froq\logger\Logger;
 use PDO, PDOStatement, PDOException, Throwable;
 
 /**
@@ -994,18 +994,6 @@ final class Database
     public function initQuery(string $table = null): Query
     {
         return new Query($this, $table);
-    }
-
-    /**
-     * Init a `Pager` object.
-     *
-     * @param  int|null   $count
-     * @param  array|null $attributes
-     * @return froq\pager\Pager
-     */
-    public function initPager(int $count = null, array $attributes = null): Pager
-    {
-        return (new Pager($attributes))->run($count);
     }
 
     /**

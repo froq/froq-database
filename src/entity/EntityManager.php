@@ -11,7 +11,6 @@ use froq\database\entity\meta\{MetaParser, Meta, ClassMeta, PropertyMeta};
 use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
 use froq\database\{common\Table, record\Record, trait\DbTrait};
 use froq\validation\ValidationError;
-use froq\pager\Pager;
 use ItemList, ReflectionProperty, ReflectionMethod;
 
 /**
@@ -255,31 +254,17 @@ class EntityManager
      * Note: To prevent all of given entity object properties be used as search parameters, an
      * empty entity object or entity class can be given.
      *
-     * When pagination desired, following example can be used.
-     *
-     * ```
-     * $page  = Get from somewhere, eg. $_GET['page'].
-     * $limit = Get from somewhere or set as constant.     // default = 10
-     * $count = Count of total records by some conditions. // optional
-     *
-     * $pager = new Pager(['page' => $page, 'limit' => $limit, 'count' => $count]);
-     * $pager->run(); // optional
-     *
-     * $result = $em->findBy(entity object or class, pager: $pager, ...other params);
-     *```
-     *
      * @param  object|string                         $entity
      * @param  string|array|froq\database\Query|null $where  Discards entity props when it is Query.
      * @param  array|null                            $params Used only when $where is string.
      * @param  string|null                           $order
      * @param  int|null                              $limit
      * @param  int|null                              $offset
-     * @param  froq\pager\Pager|null                &$pager
      * @return froq\database\entity\EntityList
      * @causes froq\database\entity\EntityManagerException
      */
     public function findBy(object|string $entity, string|array|Query $where = null, array $params = null,
-        string $order = null, int $limit = null, int $offset = null, Pager &$pager = null): EntityList
+        string $order = null, int $limit = null, int $offset = null): EntityList
     {
         // When no entity instance given.
         is_string($entity) && $entity = new $entity();
@@ -300,25 +285,11 @@ class EntityManager
         // Call action method when provided.
         $this->callAction($entity, 'onQuery', $record->getQuery(), /* null or getPrimaryValue() if entity is object */);
 
-        if ($pager) {
-            // Disable redirects.
-            $pager->redirect = false;
-
-            // Pager was run?
-            if ($pager->totalPages === null) {
-                $count = $pager->totalRecords ?? $record->count($where, $params);
-                $pager->run($count);
-            }
-
-            [$limit, $offset] = [$pager->limit, $pager->offset];
-        }
-
         // Order by clause, default is primary.
         $order ??= $classMeta->getTablePrimary();
 
         /** @var froq\database\record\RecordList */
-        $records = $record->findBy($where, $params,
-            limit: $limit, offset: $offset, order: $order, fetch: 'array');
+        $records = $record->findBy($where, $params, limit: $limit, offset: $offset, order: $order, fetch: 'array');
 
         $entityList = $this->initEntityList($classMeta->getListClass());
 
@@ -335,9 +306,8 @@ class EntityManager
                 $entityClones[] = $entityClone;
             }
 
-            // Fill entity list & set pager.
+            // Fill entity list.
             $entityList->fill(...$entityClones);
-            $pager && $entityList->setPager($pager);
         }
 
         return $entityList;
