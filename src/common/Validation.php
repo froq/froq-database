@@ -87,9 +87,9 @@ class Validation
     /**
      * Get rules.
      *
-     * @return ?array
+     * @return array|null
      */
-    public function getRules(): ?array
+    public function getRules(): array|null
     {
         return $this->rules ?? null;
     }
@@ -110,9 +110,9 @@ class Validation
     /**
      * Get options.
      *
-     * @return ?array
+     * @return array|null
      */
-    public function getOptions(): ?array
+    public function getOptions(): array|null
     {
         return $this->options ?? null;
     }
