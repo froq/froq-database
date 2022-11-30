@@ -19,7 +19,7 @@ use froq\database\common\Table;
  */
 trait TableTrait
 {
-    /** @var froq\database\common\Table */
+    /** Table instance. */
     protected Table $table;
 
     /**
@@ -38,9 +38,9 @@ trait TableTrait
     /**
      * Get table.
      *
-     * @return ?froq\database\common\Table
+     * @return froq\database\common\Table|null
      */
-    public final function getTable(): ?Table
+    public final function getTable(): Table|null
     {
         return $this->table ?? null;
     }

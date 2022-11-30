@@ -19,7 +19,7 @@ use froq\database\common\Validation;
  */
 trait ValidationTrait
 {
-    /** @var froq\database\common\Validation */
+    /** Validation instance. */
     protected Validation $validation;
 
     /**
@@ -38,9 +38,9 @@ trait ValidationTrait
     /**
      * Get validation.
      *
-     * @return ?froq\database\common\Validation
+     * @return froq\database\common\Validation|null
      */
-    public function getValidation(): ?Validation
+    public function getValidation(): Validation|null
     {
         return $this->validation ?? null;
     }
@@ -48,10 +48,10 @@ trait ValidationTrait
     /**
      * Set validations.
      *
-     * @param  ?array $validations
+     * @param  array|null $validations
      * @return self
      */
-    public function setValidations(?array $validations): self
+    public function setValidations(array|null $validations): self
     {
         $rules = $options = null;
 
@@ -74,9 +74,9 @@ trait ValidationTrait
     /**
      * Get validations.
      *
-     * @return ?array
+     * @return array|null
      */
-    public function getValidations(): ?array
+    public function getValidations(): array|null
     {
         if ($validation = $this->getValidation()) {
             return [

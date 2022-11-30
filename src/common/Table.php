@@ -17,10 +17,10 @@ namespace froq\database\common;
  */
 class Table
 {
-    /** @var string */
+    /** Table name. */
     protected string $name;
 
-    /** @var string */
+    /** Primary column name. */
     protected string $primary = 'id';
 
     /**
@@ -51,9 +51,9 @@ class Table
     /**
      * Get name.
      *
-     * @return ?string
+     * @return string|null
      */
-    public function getName(): ?string
+    public function getName(): string|null
     {
         return $this->name ?? null;
     }
@@ -74,9 +74,9 @@ class Table
     /**
      * Get primary.
      *
-     * @return ?string
+     * @return string|null
      */
-    public function getPrimary(): ?string
+    public function getPrimary(): string|null
     {
         return $this->primary ?? null;
     }

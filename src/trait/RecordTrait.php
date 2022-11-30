@@ -26,13 +26,13 @@ trait RecordTrait
     use EmptyTrait, ToArrayTrait, ToObjectTrait;
     use DataTrait, DataAccessTrait, DataAccessMagicTrait;
 
-    /** @var array */
+    /** Data as map. */
     protected array $data = [];
 
-    /** @var array */
+    /** Options for queries. */
     protected array $options = [];
 
-    /** @var array */
+    /** Default options. */
     protected static array $optionsDefault = [
         'transaction' => true, // Whether save actions will be done in a transaction wrap.
         'sequence'    => true, // Whether saved record has a ID sequence.
@@ -58,7 +58,7 @@ trait RecordTrait
     /**
      * Get options.
      *
-     * @return ?array
+     * @return array
      */
     public final function getOptions(): array
     {
