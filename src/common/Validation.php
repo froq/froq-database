@@ -121,13 +121,13 @@ class Validation
      * Run validation for given data by rules & options, filtering/sanitizing `$data` argument
      * and filling `$errors` argument when validation fails.
      *
-     * @param  ?array &$data
-     * @param  ?array &$errors
-     * @param  ?array  $rules
-     * @param  ?array  $options
+     * @param  array|null &$data
+     * @param  array|null &$errors
+     * @param  array|null  $rules
+     * @param  array|null  $options
      * @return bool
      */
-    public function run(?array &$data, ?array &$errors, ?array $rules, ?array $options): bool
+    public function run(array|null &$data, array|null &$errors, array|null $rules, array|null $options): bool
     {
         $this->result = (new RealValidation($rules, $options))->validate($data, $errors);
 

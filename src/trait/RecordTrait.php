@@ -44,11 +44,11 @@ trait RecordTrait
     /**
      * Set options.
      *
-     * @param  ?array $options
+     * @param  array|null $options
      * @return self
      * @since  6.0
      */
-    public final function setOptions(?array $options): self
+    public final function setOptions(array|null $options): self
     {
         $this->options = array_options($options, static::$optionsDefault);
 
