@@ -26,7 +26,7 @@ trait ProxyTrait
      *
      * @return froq\database\entity\proxy\Proxy|null
      */
-    public final function proxy(): ?Proxy
+    public final function proxy(): Proxy|null
     {
         return $this->proxy;
     }
