@@ -21,13 +21,19 @@ use PDO, PDOStatement, PDOException;
  */
 final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
 {
-    /** @var int */
+    /** Count of this result. */
     private int $count = 0;
 
-    /** @var froq\database\result\Ids<int> */
+    /**
+     * IDs of this result.
+     * @var froq\database\result\Ids<int>
+     */
     private Ids $ids;
 
-    /** @var froq\database\result\Rows<array|object> */
+    /**
+     * Rows of this result.
+     * @var froq\database\result\Rows<array|object>
+     */
     private Rows $rows;
 
     /**
