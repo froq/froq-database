@@ -20,17 +20,13 @@ use froq\common\interface\Arrayable;
  */
 class QueryParams implements Arrayable
 {
-    /** @const array */
-    public final const OPERATORS = [
-        '=', '!=', '>', '<', '>=', '<=',
-    ];
+    /** Available operators. */
+    public const OPERATORS = ['=', '!=', '>', '<', '>=', '<='];
 
-    /** @const array */
-    public final const EQUAL_OPERATORS = [
-        '=', '!='
-    ];
+    /** Available equal operators. */
+    public const EQUAL_OPERATORS = ['=', '!='];
 
-    /** @var array */
+    /** Stack. */
     protected array $stack = [];
 
     /**

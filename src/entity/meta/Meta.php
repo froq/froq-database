@@ -20,10 +20,10 @@ use ReflectionClass, ReflectionProperty;
  */
 abstract class Meta
 {
-    /** @const int */
-    public final const TYPE_CLASS    = 1,
-                       TYPE_PROPERTY = 2,
-                       TYPE_METHOD   = 3; // Not implemented (reserved).
+    /** Types. */
+    public const TYPE_CLASS    = 1,
+                 TYPE_PROPERTY = 2,
+                 TYPE_METHOD   = 3; // Not implemented (reserved).
 
     /** @var ReflectionClass|ReflectionProperty */
     private ReflectionClass|ReflectionProperty $reflection;
