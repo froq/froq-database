@@ -139,10 +139,10 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get last insert id.
      *
-     * @return ?int
+     * @return int|null
      * @since  6.0
      */
-    public function getId(): ?int
+    public function getId(): int|null
     {
         return $this->id();
     }
@@ -150,10 +150,10 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get a copy of first row.
      *
-     * @return ?Row
+     * @return Row|null
      * @since  6.0
      */
-    public function getRow(): ?Row
+    public function getRow(): Row|null
     {
         return $this->rows(0, true);
     }

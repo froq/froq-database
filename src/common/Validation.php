@@ -43,9 +43,9 @@ class Validation
     /**
      * Get errors.
      *
-     * @return ?array
+     * @return array|null
      */
-    public function errors(): ?array
+    public function errors(): array|null
     {
         return $this->errors;
     }
@@ -53,9 +53,9 @@ class Validation
     /**
      * Get result.
      *
-     * @return ?bool
+     * @return bool|null
      */
-    public function result(): ?bool
+    public function result(): bool|null
     {
         return $this->result;
     }

@@ -66,9 +66,9 @@ final class Link
     /**
      * Get pdo property.
      *
-     * @return ?PDO
+     * @return PDO|null
      */
-    public function pdo(): ?PDO
+    public function pdo(): PDO|null
     {
         return $this->pdo;
     }
@@ -76,9 +76,9 @@ final class Link
     /**
      * Get pdo driver property.
      *
-     * @return ?string
+     * @return string|null
      */
-    public function driver(): ?string
+    public function driver(): string|null
     {
         return $this->driver;
     }
