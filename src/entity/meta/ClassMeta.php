@@ -15,7 +15,7 @@ namespace froq\database\entity\meta;
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class ClassMeta extends Meta
+class ClassMeta extends Meta
 {
     /** @var array<froq\database\entity\meta\PropertyMeta> */
     private array $propertyMetas = [];

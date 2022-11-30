@@ -22,7 +22,7 @@ use froq\pagination\Paginator;
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Query implements \Stringable
+class Query implements \Stringable
 {
     use DbTrait, QueryTrait;
 

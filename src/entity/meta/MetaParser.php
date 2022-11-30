@@ -19,7 +19,7 @@ use ReflectionClass, ReflectionProperty, ReflectionException;
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class MetaParser
+class MetaParser
 {
     /**
      * Parse class meta.

@@ -19,7 +19,7 @@ use PDO, PDOStatement, PDOException;
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
+class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
 {
     /** Count of this result. */
     private int $count = 0;

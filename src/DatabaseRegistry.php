@@ -18,7 +18,7 @@ use TraceStack, Trace, ReflectionCallable;
  * @author  Kerem Güneş
  * @since   6.0
  */
-final class DatabaseRegistry extends Registry
+class DatabaseRegistry extends Registry
 {
     /** @const string */
     private const DEFAULT_DATABASE_ID = '@default-database';

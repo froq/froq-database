@@ -19,7 +19,7 @@ use froq\common\trait\StateTrait;
  * @since   6.0
  * @internal
  */
-final class EntityProxy extends Proxy
+class EntityProxy extends Proxy
 {
     use StateTrait;
 

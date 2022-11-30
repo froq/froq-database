@@ -17,7 +17,7 @@ use froq\cache\agent\Apcu;
  * @author  Kerem Güneş
  * @since   6.1
  */
-final class MetaCache
+class MetaCache
 {
     /**
      * Fallback storage if no APCu available.

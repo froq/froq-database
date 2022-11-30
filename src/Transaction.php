@@ -17,7 +17,7 @@ use PDO, PDOException;
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class Transaction
+class Transaction
 {
     /** @var PDO */
     private PDO $pdo;

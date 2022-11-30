@@ -18,7 +18,7 @@ use PDO, PDOException;
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Link
+class Link
 {
     use FactoryTrait;
 

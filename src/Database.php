@@ -23,7 +23,7 @@ use PDO, PDOStatement, PDOException, Throwable;
  * @author  Kerem Güneş
  * @since   1.0, 4.0
  */
-final class Database
+class Database
 {
     use FactoryTrait, StatementTrait;
 

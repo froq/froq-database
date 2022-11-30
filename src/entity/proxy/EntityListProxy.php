@@ -18,7 +18,7 @@ use froq\database\entity\{EntityManager, EntityList};
  * @since   6.0
  * @internal
  */
-final class EntityListProxy extends Proxy
+class EntityListProxy extends Proxy
 {
     /**
      * Constructor.

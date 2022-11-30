@@ -15,7 +15,7 @@ namespace froq\database\entity\meta;
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class PropertyMeta extends Meta
+class PropertyMeta extends Meta
 {
     /**
      * Constructor.

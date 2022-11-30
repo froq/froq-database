@@ -17,7 +17,7 @@ namespace froq\database\entity;
  * @static
  * @internal
  */
-final class EntityUtil extends \StaticClass
+class EntityUtil extends \StaticClass
 {
     /**
      * Make a deep array, used by `toArray()` methods of `Entity` and `EntityList` classes.

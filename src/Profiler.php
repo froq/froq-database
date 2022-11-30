@@ -18,7 +18,7 @@ use PDOStatement;
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Profiler
+class Profiler
 {
     /**
      * Profiles.
