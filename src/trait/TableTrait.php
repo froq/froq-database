@@ -28,7 +28,7 @@ trait TableTrait
      * @param  froq\database\common\Table
      * @return self
      */
-    public final function setTable(Table $table): self
+    public function setTable(Table $table): self
     {
         $this->table = $table;
 
@@ -40,7 +40,7 @@ trait TableTrait
      *
      * @return froq\database\common\Table|null
      */
-    public final function getTable(): Table|null
+    public function getTable(): Table|null
     {
         return $this->table ?? null;
     }

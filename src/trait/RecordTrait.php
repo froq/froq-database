@@ -48,7 +48,7 @@ trait RecordTrait
      * @return self
      * @since  6.0
      */
-    public final function setOptions(array|null $options): self
+    public function setOptions(array|null $options): self
     {
         $this->options = array_options($options, static::$optionsDefault);
 
@@ -60,7 +60,7 @@ trait RecordTrait
      *
      * @return array
      */
-    public final function getOptions(): array
+    public function getOptions(): array
     {
         return $this->options;
     }
