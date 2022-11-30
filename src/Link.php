@@ -22,13 +22,13 @@ final class Link
 {
     use FactoryTrait;
 
-    /** @var ?PDO */
+    /** PDO instance. */
     private ?PDO $pdo = null;
 
-    /** @var ?string */
+    /** Driver name. */
     private ?string $driver = null;
 
-    /** @var array */
+    /** Options. */
     private array $options;
 
     /**

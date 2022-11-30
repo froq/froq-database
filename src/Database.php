@@ -15,8 +15,8 @@ use froq\logger\Logger;
 use PDO, PDOStatement, PDOException, Throwable;
 
 /**
- * A database worker class, provides some util methods for such operations CRUD'ing and
- * query preparing, querying/executing SQL commands.
+ * A database worker class, provides some utility methods for such operations CRUD'ing
+ * and preparing queries, querying/executing SQL commands.
  *
  * @package froq\database
  * @object  froq\database\Database
@@ -27,16 +27,16 @@ final class Database
 {
     use FactoryTrait, StatementTrait;
 
-    /** @var ?froq\logger\Logger */
+    /** Logger instance. */
     public readonly ?Logger $logger;
 
-    /** @var ?froq\database\Profiler */
+    /** Profiler instance. */
     public readonly ?Profiler $profiler;
 
-    /** @var froq\database\Link */
+    /** Link instance */
     public readonly Link $link;
 
-    /** @var array */
+    /** Options. */
     private array $options;
 
     /**

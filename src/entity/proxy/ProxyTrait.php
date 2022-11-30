@@ -18,13 +18,13 @@ namespace froq\database\entity\proxy;
  */
 trait ProxyTrait
 {
-    /** @var ?froq\database\entity\proxy\Proxy */
+    /** Proxy instance. */
     private ?Proxy $proxy = null;
 
     /**
      * Get proxy property.
      *
-     * @return ?froq\database\entity\proxy\Proxy
+     * @return froq\database\entity\proxy\Proxy|null
      */
     public final function proxy(): ?Proxy
     {

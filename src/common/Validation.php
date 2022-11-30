@@ -19,13 +19,13 @@ use froq\validation\{Validation as BaseValidation};
  */
 class Validation
 {
-    /** @var array, array */
+    /** Rules & options */
     protected array $rules, $options;
 
-    /** @var ?array */
+    /** Validation errors. */
     protected ?array $errors = null;
 
-    /** @var ?bool */
+    /** Validation result. */
     protected ?bool $result = null;
 
     /**
