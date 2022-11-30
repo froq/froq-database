@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace froq\database\common;
 
-use froq\validation\{Validation as BaseValidation};
+use froq\validation\Validation as RealValidation;
 
 /**
  * Validation wrapper, holds validation related stuff.
@@ -129,7 +129,7 @@ class Validation
      */
     public function run(?array &$data, ?array &$errors, ?array $rules, ?array $options): bool
     {
-        $this->result = (new BaseValidation($rules, $options))->validate($data, $errors);
+        $this->result = (new RealValidation($rules, $options))->validate($data, $errors);
 
         if ($errors !== null) {
             $this->errors = $errors;
