@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\result;
 
 use froq\common\interface\Arrayable;
@@ -13,10 +11,9 @@ use froq\common\interface\Arrayable;
  * A class, for collecting `Result` rows as list.
  *
  * @package froq\database\result
- * @object  froq\database\result\Rows
+ * @class   froq\database\result\Rows
  * @author  Kerem Güneş
  * @since   6.0
- * @internal
  */
 class Rows extends \ItemList
 {

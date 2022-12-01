@@ -1,17 +1,15 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\common;
 
 /**
  * Table wrapper, holds a table name & primary related stuff.
  *
  * @package froq\database\common
- * @object  froq\database\common\Table
+ * @class   froq\database\common\Table
  * @author  Kerem Güneş
  * @since   6.0
  */
@@ -20,7 +18,7 @@ class Table
     /** Table name. */
     protected string $name;
 
-    /** Primary column name. */
+    /** Table primary name. */
     protected string $primary = 'id';
 
     /**

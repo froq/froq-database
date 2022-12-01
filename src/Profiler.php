@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\util\{Timer, storage\Storage};
@@ -14,24 +12,16 @@ use PDOStatement;
  * A profiling class for database connection & queries.
  *
  * @package froq\database
- * @object  froq\database\Profiler
+ * @class   froq\database\Profiler
  * @author  Kerem Güneş
  * @since   4.0
  */
 class Profiler
 {
-    /**
-     * Profiles.
-     *
-     * @var froq\util\Storage
-     */
+    /** Profile storage. */
     private Storage $profiles;
 
-    /**
-     * Query count.
-     *
-     * @var int
-     */
+    /** Query count. */
     private int $queryCount = 0;
 
     /**

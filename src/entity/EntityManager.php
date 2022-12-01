@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity;
 
 use froq\database\entity\meta\{MetaParser, Meta, ClassMeta, PropertyMeta};
@@ -17,7 +15,7 @@ use ItemList, ReflectionProperty, ReflectionMethod;
  * Entity manager class for creating & managing entities.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\EntityManager
+ * @class   froq\database\entity\EntityManager
  * @author  Kerem Güneş
  * @since   5.0
  */

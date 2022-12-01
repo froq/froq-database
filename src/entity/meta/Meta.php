@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity\meta;
 
 use froq\util\Objects;
@@ -14,7 +12,7 @@ use ReflectionClass, ReflectionProperty;
  * Base metadata class of `ClassMeta` & `PropertyMeta` classes.
  *
  * @package froq\database\entity\meta
- * @object  froq\database\entity\meta\Meta
+ * @class   froq\database\entity\meta\Meta
  * @author  Kerem Güneş
  * @since   5.0
  */
@@ -25,19 +23,14 @@ abstract class Meta
                  TYPE_PROPERTY = 2,
                  TYPE_METHOD   = 3; // Not implemented (reserved).
 
-    /** @var ReflectionClass|ReflectionProperty */
+    /** Reflection of class / property. */
     private ReflectionClass|ReflectionProperty $reflection;
 
-    /** @var int */
     private int $type;
-
-    /** @var string */
     private string $name;
-
-    /** @var string */
     private string $class;
 
-    /** @var array */
+    /** Map of parsed data. */
     private array $data = [];
 
     /**
@@ -157,7 +150,7 @@ abstract class Meta
      */
     public function hasDataItem(string $key): bool
     {
-        return array_get($this->data, $key) != null;
+        return array_get($this->data, $key) !== null;
     }
 
     /**
@@ -218,7 +211,7 @@ abstract class Meta
         [$name, $class] = array_map('trim', [$name, $class]);
 
         // Fully-qualified name for properties.
-        if ($type == self::TYPE_PROPERTY && !str_contains($name, '.')) {
+        if ($type === self::TYPE_PROPERTY && !str_contains($name, '.')) {
             $name = $class . '.' . $name;
         }
 

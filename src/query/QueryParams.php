@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\query;
 
 use froq\database\Query;
@@ -14,7 +12,7 @@ use froq\common\interface\Arrayable;
  * A class, for collecting query params to use in query builder.
  *
  * @package froq\database\query
- * @object  froq\database\query\QueryParams
+ * @class   froq\database\query\QueryParams
  * @author  Kerem Güneş
  * @since   6.0
  */

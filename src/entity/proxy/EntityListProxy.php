@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity\proxy;
 
 use froq\database\entity\{EntityManager, EntityList};
@@ -13,7 +11,7 @@ use froq\database\entity\{EntityManager, EntityList};
  * A proxy class for entity list classes.
  *
  * @package froq\database\entity\proxy
- * @object  froq\database\entity\proxy\EntityListProxy
+ * @class   froq\database\entity\proxy\EntityListProxy
  * @author  Kerem Güneş
  * @since   6.0
  * @internal
@@ -31,7 +29,7 @@ class EntityListProxy extends Proxy
     }
 
     /**
-     * Proxy method for manager's saveAll() method.
+     * Proxy method for manager's `saveAll()` method.
      *
      * @param  froq\database\entity\EntityList $entityList
      * @return froq\database\entity\EntityList
@@ -42,7 +40,7 @@ class EntityListProxy extends Proxy
     }
 
     /**
-     * Proxy method for manager's findAll() method.
+     * Proxy method for manager's `findAll()` method.
      *
      * @param  froq\database\entity\EntityList $entityList
      * @return froq\database\entity\EntityList
@@ -53,7 +51,7 @@ class EntityListProxy extends Proxy
     }
 
     /**
-     * Proxy method for manager's removeAll() method.
+     * Proxy method for manager's `removeAll()` method.
      *
      * @param  froq\database\entity\EntityList $entityList
      * @return froq\database\entity\EntityList

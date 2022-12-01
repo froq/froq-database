@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\database\sql\{Sql, Name};
@@ -19,7 +17,7 @@ use PDO, PDOStatement, PDOException, Throwable;
  * and preparing queries, querying/executing SQL commands.
  *
  * @package froq\database
- * @object  froq\database\Database
+ * @class   froq\database\Database
  * @author  Kerem Güneş
  * @since   1.0, 4.0
  */

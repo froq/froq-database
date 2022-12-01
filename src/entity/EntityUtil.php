@@ -1,20 +1,17 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity;
 
 /**
- * Internal utility class.
+ * Internal entity utility class.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\EntityUtil
+ * @class   froq\database\entity\EntityUtil
  * @author  Kerem Güneş
  * @since   6.0
- * @static
  * @internal
  */
 class EntityUtil extends \StaticClass

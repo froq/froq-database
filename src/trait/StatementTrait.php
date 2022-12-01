@@ -1,20 +1,18 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\trait;
 
 use froq\database\DatabaseException;
 use PDOStatement, PDOException;
 
 /**
- * A trait, provides `PDOStatement` related stuff used by `Database` only.
+ * A trait, provides `PDOStatement` related stuff & used by `Database` only.
  *
  * @package froq\database\trait
- * @object  froq\database\trait\StatementTrait
+ * @class   froq\database\trait\StatementTrait
  * @author  Kerem Güneş
  * @since   6.0
  */

@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\common\trait\FactoryTrait;
@@ -14,7 +12,7 @@ use PDO, PDOException;
  * A wrapper class for PDO with some utilities.
  *
  * @package froq\database
- * @object  froq\database\Link
+ * @class   froq\database\Link
  * @author  Kerem Güneş
  * @since   4.0
  */

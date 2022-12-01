@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\record;
 
 use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException};
@@ -16,7 +14,7 @@ use froq\validation\ValidationError;
  * to save the validated data via a `$record` property.
  *
  * @package froq\database\record
- * @object  froq\database\record\Form
+ * @class   froq\database\record\Form
  * @author  Kerem Güneş
  * @since   5.0
  */
@@ -24,13 +22,13 @@ class Form implements FormInterface
 {
     use RecordTrait;
 
-    /** @var froq\database\record\Record */
+    /** Record instance. */
     protected Record $record;
 
-    /** @var string */
+    /** Record class. */
     protected string $recordClass;
 
-    /** @var string */
+    /** Form name (from HTML form). */
     protected string $name;
 
     /**
@@ -250,7 +248,7 @@ class Form implements FormInterface
             return isset($_POST[$name]);
         }
 
-        return strtoupper($_SERVER['REQUEST_METHOD'] ?? '') == 'POST';
+        return strtoupper($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
     }
 
     /**

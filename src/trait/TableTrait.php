@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\trait;
 
 use froq\database\common\Table;
@@ -13,7 +11,7 @@ use froq\database\common\Table;
  * A trait, provides table related stuff.
  *
  * @package froq\database\trait
- * @object  froq\database\trait\TableTrait
+ * @class   froq\database\trait\TableTrait
  * @author  Kerem Güneş
  * @since   5.0, 6.0
  */

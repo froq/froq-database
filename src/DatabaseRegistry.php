@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\common\object\Registry;
@@ -14,13 +12,13 @@ use TraceStack, Trace, ReflectionCallable;
  * A registry class for pooling default & in case, other database instances.
  *
  * @package froq\database
- * @object  froq\database\DatabaseRegistry
+ * @class   froq\database\DatabaseRegistry
  * @author  Kerem Güneş
  * @since   6.0
  */
 class DatabaseRegistry extends Registry
 {
-    /** @const string */
+    /** Default database id. */
     private const DEFAULT_DATABASE_ID = '@default-database';
 
     /**

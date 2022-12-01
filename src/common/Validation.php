@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\common;
 
 use froq\validation\Validation as RealValidation;
@@ -13,7 +11,7 @@ use froq\validation\Validation as RealValidation;
  * Validation wrapper, holds validation related stuff.
  *
  * @package froq\database\common
- * @object  froq\database\common\Validation
+ * @class   froq\database\common\Validation
  * @author  Kerem Güneş
  * @since   6.0
  */

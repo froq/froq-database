@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\database\result\{Ids, Rows, Row};
@@ -15,7 +13,7 @@ use PDO, PDOStatement, PDOException;
  * A result class, for query result stuff such as count, ids & rows.
  *
  * @package froq\database
- * @object  froq\database\Result
+ * @class   froq\database\Result
  * @author  Kerem Güneş
  * @since   4.0
  */

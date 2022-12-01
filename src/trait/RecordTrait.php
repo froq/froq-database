@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\trait;
 
 use froq\common\trait\{DataTrait, DataAccessTrait, DataAccessMagicTrait};
@@ -15,7 +13,7 @@ use froq\validation\ValidationError;
  * A trait, used in `froq\database\record` only and provides record related stuff.
  *
  * @package froq\database\trait
- * @object  froq\database\trait\RecordTrait
+ * @class   froq\database\trait\RecordTrait
  * @author  Kerem Güneş
  * @since   5.0
  * @internal
@@ -26,7 +24,7 @@ trait RecordTrait
     use EmptyTrait, ToArrayTrait, ToObjectTrait;
     use DataTrait, DataAccessTrait, DataAccessMagicTrait;
 
-    /** Data as map. */
+    /** Data map. */
     protected array $data = [];
 
     /** Options for queries. */

@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use PDO, PDOException;
@@ -13,13 +11,13 @@ use PDO, PDOException;
  * A wrapper class for PDO transactions with some utilities.
  *
  * @package froq\database
- * @object  froq\database\Transaction
+ * @class   froq\database\Transaction
  * @author  Kerem Güneş
  * @since   5.0
  */
 class Transaction
 {
-    /** @var PDO */
+    /** PDO instance. */
     private PDO $pdo;
 
     /**

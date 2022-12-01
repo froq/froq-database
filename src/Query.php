@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\database\trait\{DbTrait, QueryTrait};
@@ -18,7 +16,7 @@ use froq\pagination\Paginator;
  * A query builder class, fulfills most building needings with descriptive methods.
  *
  * @package froq\database
- * @object  froq\database\Query
+ * @class   froq\database\Query
  * @author  Kerem Güneş
  * @since   4.0
  */
@@ -26,14 +24,10 @@ class Query implements \Stringable
 {
     use DbTrait, QueryTrait;
 
-    /**
-     * Key, tick for last call via add().
-     * @var string
-     * @since 5.0
-     */
+    /** Key, tick for last call via `add()`. */
     private string $key;
 
-    /** @var array */
+    /** Query stack. */
     private array $stack = [];
 
     /**
@@ -1761,7 +1755,7 @@ class Query implements \Stringable
      * Get a part of query stack as string.
      *
      * @param  string        $key
-     * @param  int|bool|null $indent
+     * @param  int|bool|null $indent @todo Use "true" type.
      * @return string
      * @throws froq\database\QueryException
      */
@@ -1769,8 +1763,9 @@ class Query implements \Stringable
     {
         $n  = ' '; $t  = '';
         $nt = ' '; $ts = '';
-        if ($indent) {
-            if ($indent == 1) {
+
+        if ($indent = (int) $indent) {
+            if ($indent === 1) {
                 $n  = "\n"; $t  = "\t";
                 $nt = "\n"; $ts = "\t";
             } elseif ($indent > 1) {

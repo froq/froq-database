@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\database\trait\{DbTrait, EmTrait};
@@ -15,7 +13,7 @@ use froq\database\entity\EntityManager;
  * classes and also producers/providers or any other database/entity related classes.
  *
  * @package froq\database
- * @object  froq\database\Repository
+ * @class   froq\database\Repository
  * @author  Kerem Güneş
  * @since   5.2
  */

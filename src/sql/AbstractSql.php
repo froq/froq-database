@@ -1,24 +1,22 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\sql;
 
 /**
  * Base class of `Sql` and `Name` classes.
  *
  * @package froq\database\sql
- * @object  froq\database\sql\AbstractSql
+ * @class   froq\database\sql\AbstractSql
  * @author  Kerem Güneş
  * @since   4.0
  * @internal
  */
 abstract class AbstractSql implements \Stringable
 {
-    /** @var string */
+    /** Content. */
     protected string $content;
 
     /**
