@@ -216,11 +216,11 @@ class QueryParams implements Arrayable
                     break;
                 case 'LIKE':
                 case 'ILIKE':
-                    $query->whereLike($field, $value, ($operator == 'ILIKE'), $logic);
+                    $query->whereLike($field, $value, ($operator === 'ILIKE'), $logic);
                     break;
                 case 'NOT-LIKE':
                 case 'NOT-ILIKE':
-                    $query->whereNotLike($field, $value, ($operator == 'NOT-ILIKE'), $logic);
+                    $query->whereNotLike($field, $value, ($operator === 'NOT-ILIKE'), $logic);
                     break;
                 default:
                     if (!in_array($operator, self::OPERATORS, true)) {
@@ -234,7 +234,7 @@ class QueryParams implements Arrayable
                         if (!is_array($value)) {
                             $query->where(sprintf('%s %s ?', $field, $operator), [$value], $logic);
                         } else {
-                            $operator = ($operator == '=') ? 'IN' : 'NOT IN';
+                            $operator = ($operator === '=') ? 'IN' : 'NOT IN';
                             $query->where(sprintf('%s %s (?)', $field, $operator), [$value], $logic);
                         }
                     }

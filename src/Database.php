@@ -171,7 +171,7 @@ class Database
             // Extra check for unknown stuff.
             if ($pdoResult === false) {
                 $errorCode = $pdo->errorCode();
-                if ($errorCode != '00000' || $errorCode != '01000') {
+                if ($errorCode !== '00000' || $errorCode !== '01000') {
                     throw new PDOException('Unknown error');
                 }
             }
@@ -424,7 +424,7 @@ class Database
             if (!$action) {
                 throw new DatabaseException('Conflict action is not given');
             }
-            if (!$update && strtolower($action) == 'update') {
+            if (!$update && strtolower($action) === 'update') {
                 throw new DatabaseException('Conflict action is update, but no update data given');
             }
 
@@ -621,11 +621,11 @@ class Database
      */
     public function quoteName(string $input): string
     {
-        if ($input == '*') {
+        if ($input === '*') {
             return $input;
         }
 
-        if ($input && $input[0] == '@') {
+        if ($input && $input[0] === '@') {
             $input = substr($input, 1);
         }
 
@@ -647,8 +647,7 @@ class Database
                    $this->quoteNames(substr($input, $pos + 1));
         }
 
-        $driver = $this->link()->driver();
-        if ($driver == 'pgsql') {
+        if ($this->link()->driver() === 'pgsql') {
             // Cast notations (eg: foo::int).
             if ($pos = strpos($input, '::')) {
                 return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
@@ -664,13 +663,13 @@ class Database
                     $last = ']';
                 }
 
-                return (strtolower($name) == 'array')
+                return (strtolower($name) === 'array')
                      ? $name . '[' . $this->quoteNames($rest) . $last
                      : $this->quoteName($name) . '[' . $rest . $last;
             }
         }
 
-        return match ($driver) {
+        return match ($this->link()->driver()) {
             'mysql' => '`' . trim($input, '`')  . '`',
             'mssql' => '[' . trim($input, '[]') . ']',
             default => '"' . trim($input, '"')  . '"'
@@ -914,7 +913,7 @@ class Database
 
             foreach ($holders as $holder) {
                 // Named.
-                if ($holder[0] == ':') {
+                if ($holder[0] === ':') {
                     $key = substr($holder, 1);
                     if (!array_key_exists($key, $params)) {
                         throw new DatabaseException(
@@ -1001,11 +1000,11 @@ class Database
     {
         $input = trim($input);
 
-        if ($input != '') {
+        if ($input !== '') {
             // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
             if (str_contains($input, '@')) {
                 $input = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
-                    if (count($match) == 1) {
+                    if (count($match) === 1) {
                         return $this->escapeNames(substr($match[0], 2, -1));
                     }
                     return $this->escapeName($match[1]);
@@ -1086,7 +1085,7 @@ class Database
     {
         if ($data) {
             $data = is_list($data) ? $data : (array) $data;
-            if ($limit == 1) {
+            if ($limit === 1) {
                 $data = array_select($data, is_string($flat) ? $flat : key($data));
             } else {
                 $data = array_column($data, is_string($flat) ? $flat : key($data[0]));

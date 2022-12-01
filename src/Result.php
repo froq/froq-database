@@ -49,7 +49,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
         $this->rows = new Rows();
 
         // Normally an exception must be thrown until here.
-        if ($pdo->errorCode() != '00000' || $pdoStatement->errorCode() != '00000') {
+        if ($pdo->errorCode() !== '00000' || $pdoStatement->errorCode() !== '00000') {
             return;
         }
 
@@ -94,7 +94,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
                 // Handle multiple inserts.
                 if ($count > 1) {
                     // MySQL awesomeness, last id is first id..
-                    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql') {
+                    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
                         $start = $id;
                         $end   = $id + $count - 1;
                     } else {
@@ -120,7 +120,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
 
             // @tome: Data is populated before the constructor is called.
             // To populate data after the constructor use PDO::FETCH_PROPS_LATE.
-            $rows = ($fetchType == PDO::FETCH_CLASS)
+            $rows = ($fetchType === PDO::FETCH_CLASS)
                   ? $pdoStatement->fetchAll($fetchType|PDO::FETCH_PROPS_LATE, $fetchClass)
                   : $pdoStatement->fetchAll($fetchType);
 
@@ -275,7 +275,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
     {
         $row = $this->rows($index);
 
-        if ($row && $field != '*') {
+        if ($row && $field !== '*') {
             $orow = new Row((array) $row);
             // Single field.
             if (is_string($field)) {

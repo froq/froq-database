@@ -86,7 +86,7 @@ class EntityManager
     public function getMeta(string|object $entity, string $property = null): Meta|null
     {
         try {
-            return (func_num_args() == 1)
+            return (func_num_args() === 1)
                  ? $this->getClassMeta($entity)
                  : $this->getPropertyMeta($entity, $property);
         }
@@ -577,7 +577,7 @@ class EntityManager
             }
 
             if ($def && !is_type_of($ret, 'array|string')) {
-                $message = ($def == 1)
+                $message = ($def === 1)
                     ? 'Constant %s::FIELDS must define array, %t defined'
                     : 'Method %s::fields() must return array, %t returned';
                 throw new EntityManagerException($message, [$entity::class, $ret]);
@@ -627,7 +627,7 @@ class EntityManager
             }
 
             if ($def && !is_type_of($ret, 'array')) {
-                $message = ($def == 1)
+                $message = ($def === 1)
                     ? 'Constant %s::VALIDATIONS must define array, %t defined'
                     : 'Method %s::validations() must return array, %t returned';
                 throw new EntityManagerException($message, [$entity::class, $ret]);
@@ -792,7 +792,7 @@ class EntityManager
             );
 
             // All entities must be same type.
-            if ($item::class != $entity::class) {
+            if ($item::class !== $entity::class) {
                 throw new EntityManagerException(
                     'All items must be same type as first item %s, %s is different',
                     [$item::class, $entity::class]
