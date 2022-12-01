@@ -33,7 +33,9 @@ abstract class EntityList extends \ItemList implements EntityListInterface
         $entities && $this->fill(...$entities);
     }
 
-    /** @magic */
+    /**
+     * @magic
+     */
     public function __serialize(): array
     {
         return [
@@ -41,7 +43,9 @@ abstract class EntityList extends \ItemList implements EntityListInterface
         ];
     }
 
-    /** @magic */
+    /**
+     * @magic
+     */
     public function __unserialize(array $data): void
     {
         $this->proxy = new EntityListProxy();

@@ -38,13 +38,17 @@ abstract class Entity implements EntityInterface
         $properties && $this->fill(...$properties);
     }
 
-    /** @magic */
+    /**
+     * @magic
+     */
     public function __debugInfo(): array
     {
         return $this->toArray();
     }
 
-    /** @magic */
+    /**
+     * @magic
+     */
     public function __serialize(): array
     {
         return [
@@ -53,7 +57,9 @@ abstract class Entity implements EntityInterface
         ];
     }
 
-    /** @magic */
+    /**
+     * @magic
+     */
     public function __unserialize(array $data): void
     {
         $this->proxy = new EntityProxy();
