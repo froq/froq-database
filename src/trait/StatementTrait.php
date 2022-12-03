@@ -47,12 +47,13 @@ trait StatementTrait
      */
     public function executeStatement(string|PDOStatement $input, array $params = null): PDOStatement
     {
-        if (is_string($input)) {
-            $statement = $this->prepareStatement($input);
+        $statement = is_string($input) ? $this->prepareStatement($input) : $input;
+
+        try {
+            $statement->execute($params);
+            return $statement;
+        } catch (PDOException $e) {
+            throw new DatabaseException($e);
         }
-
-        $statement->execute($params);
-
-        return $statement;
     }
 }
