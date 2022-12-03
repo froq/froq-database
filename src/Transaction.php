@@ -8,7 +8,8 @@ namespace froq\database;
 use PDO, PDOException;
 
 /**
- * A wrapper class for PDO transactions with some utilities.
+ * A wrapper class for PDO transactions with nesting support for MySQL, PostgreSQL
+ * and SQLite platforms.
  *
  * @package froq\database
  * @class   froq\database\Transaction
@@ -20,6 +21,12 @@ class Transaction
     /** PDO instance. */
     private PDO $pdo;
 
+    /** Savepoint level. */
+    private int $savepointLevel;
+
+    /** Savepoint available state. */
+    private bool $savepointAvailable;
+
     /**
      * Constructor.
      *
@@ -27,7 +34,39 @@ class Transaction
      */
     public function __construct(PDO $pdo)
     {
-        $this->pdo = $pdo;
+        $this->pdo                = $pdo;
+        $this->savepointLevel     = 0;
+        $this->savepointAvailable = $this->supportsSavepoints($pdo);
+    }
+
+    /**
+     * Check active state.
+     *
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->savepointLevel > 0;
+    }
+
+    /**
+     * Get savepoint level.
+     *
+     * @return int
+     */
+    public function savepointLevel(): int
+    {
+        return $this->savepointLevel;
+    }
+
+    /**
+     * Get savepoint available state.
+     *
+     * @return bool
+     */
+    public function savepointAvailable(): bool
+    {
+        return $this->savepointAvailable;
     }
 
     /**
@@ -39,8 +78,20 @@ class Transaction
     public function begin(): bool
     {
         try {
-            return $this->pdo->beginTransaction()
-                || throw new TransactionException('Failed to begin transaction');
+            $result = false;
+
+            if (!$this->savepointLevel || !$this->savepointAvailable) {
+                $result = $this->pdo->beginTransaction();
+            } else {
+                $result = $this->pdo->exec('SAVEPOINT savepoint_' . $this->savepointLevel);
+                if ($result === false) {
+                    throw new TransactionException('Cannot create savepoint');
+                }
+            }
+
+            $this->savepointLevel++;
+
+            return $result !== false;
         } catch (PDOException $e) {
             throw new TransactionException($e);
         }
@@ -54,8 +105,25 @@ class Transaction
      */
     public function commit(): bool
     {
+        if (!$this->isActive()) {
+            throw new TransactionException('No active transaction to commit');
+        }
+
         try {
-            return $this->pdo->commit();
+            $result = false;
+
+            $this->savepointLevel--;
+
+            if (!$this->savepointLevel || !$this->savepointAvailable) {
+                $result = $this->pdo->commit();
+            } else {
+                $result = $this->pdo->exec('RELEASE SAVEPOINT savepoint_' . $this->savepointLevel);
+                if ($result === false) {
+                    throw new TransactionException('Cannot release savepoint');
+                }
+            }
+
+            return $result !== false;
         } catch (PDOException $e) {
             throw new TransactionException($e);
         }
@@ -69,15 +137,36 @@ class Transaction
      */
     public function rollback(): bool
     {
+        if (!$this->isActive()) {
+            throw new TransactionException('No active transaction to rollback');
+        }
+
         try {
-            return $this->pdo->rollback();
+            $result = false;
+
+            $this->savepointLevel--;
+
+            if (!$this->savepointLevel || !$this->savepointAvailable) {
+                $result = $this->pdo->rollback();
+            } else {
+                $result = $this->pdo->exec('ROLLBACK TO SAVEPOINT savepoint_' . $this->savepointLevel);
+                if ($result === false) {
+                    throw new TransactionException('Cannot rollback savepoint');
+                }
+            }
+
+            return $result !== false;
         } catch (PDOException $e) {
             throw new TransactionException($e);
         }
     }
 
-    /** Aliases */
-    public function start()  { return $this->begin(); }
-    public function end()    { return $this->commit(); }
-    public function cancel() { return $this->rollback(); }
+    /**
+     * Get support state for savepoints.
+     * https://4js.com/techdocs/fjs-fgl-manual/index.html#fgl-topics/c_fgl_sql_programming_095.html
+     */
+    private function supportsSavepoints(PDO $pdo): bool
+    {
+        return in_array($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), ['mysql', 'pgsql', 'sqlite'], true);
+    }
 }
