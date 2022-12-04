@@ -24,9 +24,6 @@ class Query implements \Stringable
 {
     use DbTrait, QueryTrait;
 
-    /** Key, tick for last call via `add()`. */
-    private string $key;
-
     /** Query stack. */
     private array $stack = [];
 
@@ -425,7 +422,7 @@ class Query implements \Stringable
     /**
      * Add a "RETURNING" clause into query stack.
      *
-     * @param  string|array<string>|bool $fields
+     * @param  string|array<string>|bool $fields @todo Use "true" type.
      * @param  string|null               $fetch
      * @return self
      * @since  4.18
@@ -1065,7 +1062,7 @@ class Query implements \Stringable
      * Add/append a "GROUP BY .." clause into query stack.
      *
      * @param  string      $field
-     * @param  string|bool $rollup
+     * @param  string|bool $rollup @todo Use "true" type.
      * @return self
      */
     public function groupBy(string $field, string|bool $rollup = null): self
@@ -1129,8 +1126,10 @@ class Query implements \Stringable
         // Eg: ("id ASC") or ("id ASC, name DESC").
         if (strpos($field, ' ')) {
             $fields = [];
+
             foreach (split('\s*,\s*', $field) as $i => $field) {
                 [$field, $op] = split('\s+', trim($field), 2);
+
                 $fields[$i] = $this->prepareField($field) . $collate;
                 if ($op !== null) {
                     $fields[$i] .= ' ' . $this->prepareOp($op, true);
@@ -1185,35 +1184,6 @@ class Query implements \Stringable
         }
 
         throw new QueryException('Limit not set yet, call limit() first');
-    }
-
-    /**
-     * Add/append an "AS" operator into query stack for a table or field.
-     *
-     * @param  string $as
-     * @param  bool   $prepare
-     * @return self
-     * @throws froq\database\QueryException
-     * @since  4.16, 5.0
-     */
-    public function as(string $as, bool $prepare = true): self
-    {
-        if (empty($this->key)) {
-            throw new QueryException('No table/select statement yet in query stack to apply AS operator,'
-                . ' call one of them first to apply');
-        }
-
-        $prepare && $as = $this->prepareField($as);
-
-        match ($this->key) {
-            'table'  => strpos($this->stack['table'], ' AS ')
-                            || $this->stack['table'] .= ' AS ' . $as, // Concat.
-            'select' => strpos($this->stack['select'][count($this->stack['select']) - 1], ' AS ')
-                            || $this->stack['select'][count($this->stack['select']) - 1] .= ' AS ' . $as,
-            default  => throw new QueryException('Invalid key %q for as()', $this->key)
-        };
-
-        return $this;
     }
 
     /**
@@ -1636,9 +1606,7 @@ class Query implements \Stringable
     public function clone(bool $reset = false): self
     {
         $that = new self($this->db);
-
         if (!$reset) {
-            $that->key   = $this->key;
             $that->stack = $this->stack;
         }
 
@@ -1652,7 +1620,6 @@ class Query implements \Stringable
      */
     public function reset(): self
     {
-        $this->key   = '';
         $this->stack = [];
 
         return $this;
@@ -2021,7 +1988,7 @@ class Query implements \Stringable
                     foreach ($stack['join'] as $join) {
                         @ [$content, $context] = $join;
                         if (!$context) {
-                            throw new QueryException('No join context yet, use 2. argument of join() or call'
+                            throw new QueryException('No join context yet, use 2nd argument of join() or call'
                                 . ' on()/using() method');
                         }
                         $joins[] = trim($content . ' ' . $context);
@@ -2236,9 +2203,11 @@ class Query implements \Stringable
      */
     private function add(string $key, mixed $item, bool $merge = true): self
     {
-        $merge && $item = [...($this->stack[$key] ?? []), $item];
+        if ($merge) {
+            $this->items[$key] ??= [];
+            $item = [...$this->items[$key], $item];
+        }
 
-        $this->key         = $key; // Tick for last call.
         $this->stack[$key] = $item;
 
         return $this;
