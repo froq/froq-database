@@ -1103,10 +1103,9 @@ class Query implements \Stringable
         }
 
         // Extract options (with defaults).
-        [$collate, $nulls] = [
-            $options['collate'] ?? null,
-            $options['nulls']   ?? null,
-        ];
+        [$collate, $nulls] = array_select(
+            (array) $options, ['collate', 'nulls'], [null, null]
+        );
 
         // Eg: "tr_TR" or "tr_TR.utf8".
         if ($collate !== null) {
@@ -1527,14 +1526,17 @@ class Query implements \Stringable
     public function aggregate(string $func, string|array $field, string $as = null, array $options = null): self
     {
         // Extract options (with defaults).
-        [$distinct, $prepare, $order] = [
-            $options['distinct'] ?? false,
-            $options['prepare']  ?? true,
-            $options['order']    ?? null,
-        ];
+        [$distinct, $prepare, $order] = array_select(
+            (array) $options, ['distinct', 'prepare', 'order'], [false, true, null]
+        );
 
         $distinct && $distinct = 'DISTINCT ';
         $prepare  && $field    = $this->prepareFields($field);
+
+        // For syntax errors.
+        if ($field === '*') {
+            $order = null;
+        }
 
         // Dirty hijack..
         if ($order !== null) {
@@ -1617,7 +1619,8 @@ class Query implements \Stringable
     {
         $query ??= $this;
 
-        if ($query instanceof Query) { // Get & clean behind.
+        // Get & clean behind.
+        if ($query instanceof Query) {
             [$query] = [$this->toString($indent, false), $query->reset()];
         }
 
