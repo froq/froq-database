@@ -1592,10 +1592,8 @@ class Query implements \Stringable
      */
     public function clone(bool $reset = false): self
     {
-        $that = new self($this->db);
-        if (!$reset) {
-            $that->stack = $this->stack;
-        }
+        $that = clone $this;
+        $reset && $that->reset();
 
         return $that;
     }
