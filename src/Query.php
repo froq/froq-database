@@ -196,12 +196,8 @@ class Query implements \Stringable
         }
 
         $list = is_list($selects);
-
-        $func = match ($this->db->link->driver()) {
-            'pgsql' => $list ? 'jsonb_build_array' : 'jsonb_build_object',
-            'mysql' => $list ? 'json_array'        : 'json_object',
-            default => throw new QueryException('Method selectJson() available for PgSQL & MySQL only')
-        };
+        $func = $this->db->platform->getJsonFunction($list)
+            ?? throw new QueryException('Method selectJson() is for only PgSQL & MySQL');
 
         if ($list) {
             $select = $this->prepareFields($selects);
@@ -433,7 +429,7 @@ class Query implements \Stringable
         $fetch ??= $this->stack['return']['fetch'] ?? null;
 
         // Return fallback for no "RETURNING" supported databases.
-        if (!in_array($this->db->link->driver(), ['pgsql', 'oci'], true)) {
+        if (!$this->db->platform->equals('pgsql', 'oci')) {
             // For insert stuff.
             if (isset($this->stack['table'], $this->stack['insert'])) {
                 $this->stack['return.fallback'] = [
@@ -959,13 +955,8 @@ class Query implements \Stringable
     {
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($params)];
 
-        if (!$ilike) {
-            $where = $field . ' LIKE ' . $search;
-        } else {
-            $where = ($this->db->link->driver() === 'pgsql')
-                   ? sprintf('%s ILIKE %s', $field, $search)
-                   : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
-        }
+        $where = $ilike ? $this->db->platform->formatILike($field, $search)
+               : $field . ' LIKE ' . $search;
 
         return $this->where($where, op: $op);
     }
@@ -983,13 +974,8 @@ class Query implements \Stringable
     {
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($params)];
 
-        if (!$ilike) {
-            $where = $field . ' NOT LIKE ' . $search;
-        } else {
-            $where = ($this->db->link->driver() === 'pgsql')
-                ? sprintf('%s NOT ILIKE %s', $field, $search)
-                : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
-        }
+        $where = $ilike ? $this->db->platform->formatNotILike($field, $search)
+               : $field . ' NOT LIKE ' . $search;
 
         return $this->where($where, op: $op);
     }
@@ -1037,9 +1023,9 @@ class Query implements \Stringable
      */
     public function whereRandom(float $value = 0.01, string $op = null): self
     {
-        return ($this->db->link->driver() === 'pgsql')
-             ? $this->where('random() < ' . $value, op: $op)
-             : $this->where('rand() < ' . $value, op: $op);
+        $func = $this->db->platform->getRandomFunction();
+
+        return $this->where($func . ' < ' . $value, op: $op);
     }
 
     /**
@@ -1070,7 +1056,7 @@ class Query implements \Stringable
         $field = $this->prepareFields($field);
 
         if ($rollup) {
-            $field .= ($this->db->link->driver() === 'mysql') ? ' WITH ROLLUP' : ' ROLLUP (' . (
+            $field .= $this->db->platform->equals('mysql') ? ' WITH ROLLUP' : ' ROLLUP (' . (
                 is_string($rollup) ? $this->prepareFields($rollup) : $field
             ) . ')';
         }
@@ -1107,7 +1093,7 @@ class Query implements \Stringable
         // Eg: "tr_TR" or "tr_TR.utf8".
         if ($collate !== null) {
             $collate = trim($collate);
-            if ($this->db->link->driver() === 'pgsql') {
+            if ($this->db->platform->equals('pgsql')) {
                 $collate = '"' . trim($collate, '"') . '"';
             }
             $collate = ' COLLATE ' . $collate;
@@ -1149,8 +1135,9 @@ class Query implements \Stringable
      */
     public function orderByRandom(): self
     {
-        return ($this->db->link->driver() === 'pgsql')
-             ? $this->add('order', 'random()') : $this->add('order', 'rand()');
+        $func = $this->db->platform->getRandomFunction();
+
+        return $this->add('order', $func);
     }
 
     /**
@@ -1308,7 +1295,7 @@ class Query implements \Stringable
     {
         // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
         if (!$this->has('limit')) {
-            $ok = $this->has('select') || $this->db->link->driver() !== 'pgsql';
+            $ok = $this->has('select') || !$this->db->platform->equals('pgsql');
             $ok && $this->limit(1);
         }
 
@@ -1329,7 +1316,7 @@ class Query implements \Stringable
     {
         // Apply limit limited queries, preventing sytax errors for non-select queries (PgSQL).
         if ($limit) {
-            $ok = $this->has('select') || $this->db->link->driver() !== 'pgsql';
+            $ok = $this->has('select') || !$this->db->platform->equals('pgsql');
             $ok && $this->limit($limit);
         }
 
@@ -1685,7 +1672,7 @@ class Query implements \Stringable
     /**
      * Get query stack as string.
      *
-     * @param  int|bool|null $indent
+     * @param  int|bool|null $indent @todo Use "true" type.
      * @param  bool          $trim @internal
      * @return string
      * @throws froq\database\QueryException
@@ -1835,7 +1822,7 @@ class Query implements \Stringable
                         $ret .= match ($driver = $this->db->link->driver()) {
                             'pgsql' => $nt . 'ON CONFLICT (' . $fields . ') DO ' . $action,
                             'mysql' => $nt . 'ON DUPLICATE KEY ' . ($action = 'UPDATE'),
-                            default => throw new QueryException('Method conflict() available for PgSQL & MySQL only')
+                            default => throw new QueryException('Method conflict() is for only PgSQL & MySQL')
                         };
 
                         if ($action === 'UPDATE') {
@@ -1863,7 +1850,6 @@ class Query implements \Stringable
                                         $temp[$field] = $this->escape($value);
                                     }
                                 }
-
                                 $sets = $that->update($temp, false)->pull('update');
                             }
 
@@ -2204,8 +2190,8 @@ class Query implements \Stringable
     private function add(string $key, mixed $item, bool $merge = true): self
     {
         if ($merge) {
-            $this->items[$key] ??= [];
-            $item = [...$this->items[$key], $item];
+            $this->stack[$key] ??= [];
+            $item = [...$this->stack[$key], $item];
         }
 
         $this->stack[$key] = $item;
@@ -2220,11 +2206,10 @@ class Query implements \Stringable
      */
     private function addTo(string $key, string $item): self
     {
-        if (!isset($this->stack[$key])) {
-            $op = substr(trim($item), 0, strpos(trim($item), ' '));
+        if (empty($this->stack[$key])) {
             throw new QueryException(
-                'No %q statement yet in query stack to apply %q operator, '.
-                'call %s() first to apply', [$key, $op, $key]
+                'No %q statement yet in query stack to apply %q operator, try calling %s()',
+                [$key, substr($item = trim($item), 0, strpos($item, ' ') ?: strlen($item)), $key]
             );
         }
 

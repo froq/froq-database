@@ -7,7 +7,7 @@ namespace froq\database;
 
 use froq\database\sql\{Sql, Name};
 use froq\database\result\{Row, Rows};
-use froq\database\common\{Platform, Profiler};
+use froq\database\common\{Profiler, Platform};
 use froq\database\trait\StatementTrait;
 use froq\common\trait\FactoryTrait;
 use froq\log\Logger;
@@ -31,6 +31,9 @@ class Database
 
     /** Profiler instance. */
     public readonly ?Profiler $profiler;
+
+    /** Platform instance. */
+    public readonly Platform $platform;
 
     /** Link instance */
     public readonly Link $link;
@@ -60,6 +63,11 @@ class Database
             $this->profiler = new Profiler();
         } else {
             $this->profiler = null;
+        }
+
+        if ($dsn =@ $options['dsn']) {
+            $driver = strbcut($dsn, ':');
+            $this->platform = new Platform($driver);
         }
 
         $this->options = $options;
@@ -648,7 +656,7 @@ class Database
                    $this->quoteNames(substr($input, $pos + 1));
         }
 
-        if ($this->link()->driver() === 'pgsql') {
+        if ($this->platform->equals('pgsql')) {
             // Cast notations (eg: foo::int).
             if ($pos = strpos($input, '::')) {
                 return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
@@ -670,11 +678,7 @@ class Database
             }
         }
 
-        return match ($this->link()->driver()) {
-            'mysql' => '`' . trim($input, '`')  . '`',
-            'mssql' => '[' . trim($input, '[]') . ']',
-            default => '"' . trim($input, '"')  . '"'
-        };
+        return $this->platform->quoteName($input);
     }
 
     /**
@@ -808,11 +812,7 @@ class Database
      */
     public function escapeName(string $input): string
     {
-        $input = match ($this->link()->driver()) {
-            'mysql' => str_replace('`', '``', $input),
-            'mssql' => str_replace(']', ']]', $input),
-            default => str_replace('"', '""', $input)
-        };
+        $input = $this->platform->escapeName($input);
 
         return $this->quoteName($input);
     }
