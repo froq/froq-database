@@ -110,8 +110,8 @@ class Query implements \Stringable
         } else {
             if (is_array($select)) {
                 if ($sas !== null) {
-                    // Prefix all fields with "sas" argument.
                     $select = array_map(
+                        // Prefix all fields with "sas" argument.
                         fn($field): string => $this->prepareField("{$sas}.{$field}"),
                         $select
                     );
