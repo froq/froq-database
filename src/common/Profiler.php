@@ -3,16 +3,16 @@
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-namespace froq\database;
+namespace froq\database\common;
 
 use froq\util\{Timer, storage\Storage};
 use PDOStatement;
 
 /**
- * A profiling class for database connection & queries.
+ * A profiler class for database connection & queries.
  *
- * @package froq\database
- * @class   froq\database\Profiler
+ * @package froq\database\common
+ * @class   froq\database\common\Profiler
  * @author  Kerem Güneş
  * @since   4.0
  */

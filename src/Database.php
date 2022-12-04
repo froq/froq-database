@@ -7,6 +7,7 @@ namespace froq\database;
 
 use froq\database\sql\{Sql, Name};
 use froq\database\result\{Row, Rows};
+use froq\database\common\{Platform, Profiler};
 use froq\database\trait\StatementTrait;
 use froq\common\trait\FactoryTrait;
 use froq\log\Logger;
