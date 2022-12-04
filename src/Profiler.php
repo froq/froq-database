@@ -224,6 +224,8 @@ class Profiler
 
     /**
      * Start a profile entry for a connection or query.
+     *
+     * @throws Exception
      */
     private function start(string $type): void
     {
@@ -235,12 +237,14 @@ class Profiler
                 $this->profiles->query[$this->queryCount]['timer'] = new Timer();
                 break;
             default:
-                throw new ProfilerException('Invalid type %q [valids: connection, query]', $type);
+                throw new \Exception(format('Invalid type %q [valids: connection, query]', $type));
         }
     }
 
     /**
      * End a profile entry for a connection or query.
+     *
+     * @throws Exception
      */
     private function end(string $type): void
     {
@@ -258,7 +262,7 @@ class Profiler
                 unset($this->profiles->query[$this->queryCount]['timer']);
                 break;
             default:
-                throw new ProfilerException('Invalid type %q [valids: connection, query]', $type);
+                throw new \Exception(format('Invalid type %q [valids: connection, query]', $type));
         }
     }
 }
