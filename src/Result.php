@@ -264,7 +264,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
     }
 
     /**
-     * Get only columns by given index/field(s).
+     * Get only columns by given index / field(s).
      *
      * @param  int          $index
      * @param  string|array $field

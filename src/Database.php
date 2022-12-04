@@ -970,7 +970,7 @@ class Database
     }
 
     /**
-     * Init a `Sql` object with/without given params.
+     * Init a `Sql` object with/without given params to prepare.
      *
      * @param  string     $input
      * @param  array|null $params
@@ -995,7 +995,7 @@ class Database
     }
 
     /**
-     * Prepare an input escaping names only (eg: `@id => 'id'` for PgSQL).
+     * Prepare an input escaping names only (eg: `@id => "id"` for PgSQL).
      */
     private function prepareNameInput(string $input): string
     {
@@ -1092,6 +1092,7 @@ class Database
                 $data = array_column($data, is_string($flat) ? $flat : key($data[0]));
             }
         }
+
         return $data;
     }
 
