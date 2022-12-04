@@ -9,7 +9,7 @@ use froq\util\{Timer, storage\Storage};
 use PDOStatement;
 
 /**
- * A profiler class for database connection & queries.
+ * Profiler class for database connection & queries.
  *
  * @package froq\database\common
  * @class   froq\database\common\Profiler

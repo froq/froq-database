@@ -6,7 +6,7 @@
 namespace froq\database\common;
 
 /**
- *  Platform class provides some utilities by given driver name.
+ * Platform class provides some utilities by given driver name.
  *
  * @package froq\database\common
  * @class   froq\database\common\Platform
