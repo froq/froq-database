@@ -206,13 +206,13 @@ class Query implements \Stringable
             foreach ($selects as $key => $field) {
                 $prep = $prepare;
                 if ($field instanceof Query || $field instanceof Sql) {
-                    $field = '(' . $field . ')'; // For raw/query fields.
+                    $field = '(' . $field . ')';
                     $prep  = false;
                 }
 
                 // Eg: 'id', "id".
                 $select[] = join(', ', [
-                    $this->prepare('?', [(string) $key]), // Escape too.
+                    $this->prepare('?', [(string) $key]),
                     $prep ? $this->prepareField((string) $field) : $field,
                 ]);
             }
