@@ -204,14 +204,17 @@ class Query implements \Stringable
         } else {
             $select = [];
             foreach ($selects as $key => $field) {
+                $prep = $prepare;
                 if ($field instanceof Query || $field instanceof Sql) {
                     $field = '(' . $field . ')'; // For raw/query fields.
-                    $prepare = false;
+                    $prep  = false;
                 }
 
-                $select[] = sprintf("'%s', %s", $key, (
-                    $prepare ? $this->prepareField((string) $field) : $field
-                ));
+                // Eg: 'id', "id".
+                $select[] = join(', ', [
+                    $this->prepare('?', [(string) $key]), // Escape too.
+                    $prep ? $this->prepareField((string) $field) : $field,
+                ]);
             }
 
             $select = join(', ', $select);
