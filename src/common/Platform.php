@@ -76,8 +76,9 @@ class Platform
     public function getJsonFunction(bool $array): string|null
     {
         return match ($this->name) {
-            'pgsql' => $array ? 'jsonb_build_array' : 'jsonb_build_object',
-            'mysql' => $array ? 'json_array'        : 'json_object',
+            // @tome: "jsonb_" stuff changes given field order.
+            'pgsql' => $array ? 'json_build_array' : 'json_build_object',
+            'mysql' => $array ? 'json_array'       : 'json_object',
             default => null
         };
     }
