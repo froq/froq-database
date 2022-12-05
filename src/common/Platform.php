@@ -15,15 +15,18 @@ namespace froq\database\common;
  */
 class Platform
 {
+    /** Platform name. */
+    private string $name;
+
     /**
      * Constructor.
      *
      * @param string $name
      */
-    public function __construct(
-        public readonly string $name
-    )
-    {}
+    public function __construct(string $name)
+    {
+        $this->name = $name;
+    }
 
     /**
      * Check whether this name equals given name or names.
@@ -34,7 +37,7 @@ class Platform
      */
     public function equals(string $name, string ...$names): bool
     {
-        return equals($this->name, $name, $names);
+        return equals($this->name, $name, ...$names);
     }
 
     /**
