@@ -10,7 +10,7 @@
         "ext-pdo": "*",
         "froq/froq-common": "^6.0",
         "froq/froq-cache": "^6.0",
-        "froq/froq-logger": "^6.0",
+        "froq/froq-log": "^6.0",
         "froq/froq-pagination": "^6.0",
         "froq/froq-validation": "^6.0"
     },
