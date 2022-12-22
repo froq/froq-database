@@ -6,10 +6,9 @@
 namespace froq\database;
 
 use froq\database\trait\{DbTrait, QueryTrait};
-use froq\database\query\QueryParams;
 use froq\database\result\{Row, Rows};
+use froq\database\query\QueryParams;
 use froq\database\sql\{Sql, Name};
-use froq\collection\Collection;
 use froq\pagination\Paginator;
 
 /**
@@ -1397,19 +1396,6 @@ class Query implements \Stringable
     }
 
     /**
-     * Get all result rows as collection.
-     *
-     * @param  string|null $fetch
-     * @param  int|null    $limit
-     * @return froq\collection\Collection
-     * @since  5.0
-     */
-    public function getCollection(string $fetch = null, int $limit = null): Collection
-    {
-        return new Collection($this->getAll($fetch, $limit));
-    }
-
-    /**
      * Run an insert query and get last insert id.
      *
      * @return int|null
@@ -1423,10 +1409,10 @@ class Query implements \Stringable
     /**
      * Run an insert query and get all insert ids.
      *
-     * @return array|null
+     * @return array
      * @since  5.0
      */
-    public function getIds(): array|null
+    public function getIds(): array
     {
         return $this->run()->ids();
     }
