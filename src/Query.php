@@ -1973,7 +1973,7 @@ class Query implements \Stringable
                     $joins = [];
 
                     foreach ($stack['join'] as $join) {
-                        @ [$content, $context] = $join;
+                        @[$content, $context] = $join;
                         if (!$context) {
                             throw new QueryException('No join context yet, use 2nd argument of join() or call'
                                 . ' on()/using() method');
