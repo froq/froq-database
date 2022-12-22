@@ -1049,8 +1049,8 @@ class Query implements \Stringable
     /**
      * Add/append a "GROUP BY .." clause into query stack.
      *
-     * @param  string      $field
-     * @param  string|bool $rollup @todo Use "true" type.
+     * @param  string           $field
+     * @param  string|bool|null $rollup
      * @return self
      */
     public function groupBy(string $field, string|bool $rollup = null): self
@@ -1659,7 +1659,7 @@ class Query implements \Stringable
     /**
      * Get query stack as string.
      *
-     * @param  int|bool|null $indent @todo Use "true" type.
+     * @param  int|bool|null $indent
      * @param  bool          $trim @internal
      * @return string
      * @throws froq\database\QueryException
@@ -1699,7 +1699,7 @@ class Query implements \Stringable
      * Get a part of query stack as string.
      *
      * @param  string        $key
-     * @param  int|bool|null $indent @todo Use "true" type.
+     * @param  int|bool|null $indent
      * @return string
      * @throws froq\database\QueryException
      */
