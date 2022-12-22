@@ -297,14 +297,14 @@ class Query implements \Stringable
     /**
      * Add an "INSERT" query into query stack.
      *
-     * @param  array|null             $data
-     * @param  bool|null              $batch
-     * @param  bool|null              $sequence
-     * @param  bool|string|array|null $return
+     * @param  array<mixed>|null         $data
+     * @param  bool|null                 $batch
+     * @param  bool|null                 $sequence
+     * @param  string|array<string>|null $return
      * @return self
      * @throws froq\database\QueryException
      */
-    public function insert(array $data = null, bool $batch = null, bool $sequence = null, bool|string|array $return = null): self
+    public function insert(array $data = null, bool $batch = null, bool $sequence = null, string|array $return = null): self
     {
         $return && $this->return($return);
 
@@ -351,13 +351,13 @@ class Query implements \Stringable
     /**
      * Add an "UPDATE" query into query stack.
      *
-     * @param  array|null             $data
-     * @param  bool                   $escape
-     * @param  bool|string|array|null $return
+     * @param  array<string, mixed>|null $data
+     * @param  bool                      $escape
+     * @param  string|array<string>|null $return
      * @return self
      * @throws froq\database\QueryException
      */
-    public function update(array $data = null, bool $escape = true, bool|string|array $return = null): self
+    public function update(array $data = null, bool $escape = true, string|array $return = null): self
     {
         $return && $this->return($return);
 
@@ -380,10 +380,10 @@ class Query implements \Stringable
     /**
      * Add/append "DELETE" query into query stack.
      *
-     * @param bool|string|array|null $return
+     * @param  string|array<string>|null $return
      * @return self
      */
-    public function delete(bool|string|array $return = null): self
+    public function delete(string|array $return = null): self
     {
         $return && $this->return($return);
 
@@ -420,14 +420,14 @@ class Query implements \Stringable
     /**
      * Add a "RETURNING" clause into query stack.
      *
-     * @param  string|array<string>|bool $fields @todo Use "true" type.
-     * @param  string|null               $fetch
+     * @param  string|array<string> $fields
+     * @param  string|null          $fetch
      * @return self
      * @since  4.18
      */
-    public function return(string|array|bool $fields, string $fetch = null): self
+    public function return(string|array $fields, string $fetch = null): self
     {
-        $fields  = ($fields === true) ? '*' : $this->prepareFields($fields);
+        $fields  = $this->prepareFields($fields);
         $fetch ??= $this->stack['return']['fetch'] ?? null;
 
         // Return fallback for no "RETURNING" supported databases.
@@ -534,12 +534,12 @@ class Query implements \Stringable
      * Add an increase command into query stack.
      *
      * @param  array     $field
-     * @param  float|int $value
-     * @param  bool|null $return
+     * @param  int|float $value
+     * @param  bool      $return
      * @return self
      * @since  5.0
      */
-    public function increase(string|array $field, int|float $value = 1, bool $return = null): self
+    public function increase(string|array $field, int|float $value = 1, bool $return = false): self
     {
         $data = $this->prepareIncreaseDecrease('+', $field, $value, $return);
 
@@ -550,12 +550,12 @@ class Query implements \Stringable
      * Add a decrease command into query stack.
      *
      * @param  array     $field
-     * @param  float|int $value
-     * @param  bool|null $return
+     * @param  int|float $value
+     * @param  bool      $return
      * @return self
      * @since  5.0
      */
-    public function decrease(string|array $field, int|float $value = 1, bool $return = null): self
+    public function decrease(string|array $field, int|float $value = 1, bool $return = false): self
     {
         $data = $this->prepareIncreaseDecrease('-', $field, $value, $return);
 
@@ -2061,6 +2061,10 @@ class Query implements \Stringable
      */
     public function prepareFields(string|array $fields): string
     {
+        if ($fields === '*') {
+            return '*';
+        }
+
         if (is_array($fields)) {
             $fields = join(', ', $fields);
         }
@@ -2107,7 +2111,7 @@ class Query implements \Stringable
      *
      * @throws froq\database\QueryException
      */
-    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = null): array
+    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = false): array
     {
         $data = [];
 

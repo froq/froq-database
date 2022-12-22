@@ -306,11 +306,11 @@ class Record implements RecordInterface
     /**
      * Apply returning clause for insert/update/delete actions.
      *
-     * @param  string|array<string>|bool $fields
-     * @param  string|null               $fetch
+     * @param  string|array<string> $fields
+     * @param  string|null          $fetch
      * @return self
      */
-    public final function return(string|array|bool $fields, string $fetch = null): self
+    public final function return(string|array $fields, string $fetch = null): self
     {
         $this->query->return($fields, $fetch);
 
