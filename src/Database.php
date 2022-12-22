@@ -65,8 +65,8 @@ class Database
             $this->profiler = null;
         }
 
-        if ($dsn =@ $options['dsn']) {
-            $driver = strbcut($dsn, ':');
+        if (isset($options['dsn'])) {
+            $driver = strbcut($options['dsn'], ':');
             $this->platform = new Platform($driver);
         }
 
