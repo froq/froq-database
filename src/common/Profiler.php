@@ -120,6 +120,7 @@ class Profiler
     /**
      * Get last query.
      *
+     * @param  string|null $key
      * @return float|string|array|null
      */
     public function lastQuery(string $key = null): float|string|array|null
