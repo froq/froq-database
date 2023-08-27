@@ -6,11 +6,11 @@
 namespace froq\database;
 
 use froq\database\query\{QueryParam, QueryParams};
-use froq\database\trait\{DbTrait, EmTrait};
+use froq\database\trait\{DbTrait, EmTrait, RepositoryTrait};
 use froq\database\entity\EntityManager;
 
 /**
- * A repository class, provides `$db` and `$em` properties, to use in other repository
+ * A repository class, provides `$db` and `$em` properties to use in other repository
  * classes and also producers/providers or any other database/entity related classes.
  *
  * @package froq\database
@@ -20,7 +20,7 @@ use froq\database\entity\EntityManager;
  */
 class Repository
 {
-    use DbTrait, EmTrait;
+    use DbTrait, EmTrait, RepositoryTrait;
 
     /**
      * Constructor.
