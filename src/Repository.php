@@ -5,6 +5,7 @@
  */
 namespace froq\database;
 
+use froq\database\query\{QueryParam, QueryParams};
 use froq\database\trait\{DbTrait, EmTrait};
 use froq\database\entity\EntityManager;
 
@@ -38,5 +39,36 @@ class Repository
 
         $this->db = $db;
         $this->em = $em ?? new EntityManager($db);
+    }
+
+    /**
+     * Init a Query instance.
+     *
+     * @param  string|null $table
+     * @return froq\database\Query
+     */
+    public final function initQuery(string $table = null): Query
+    {
+        return new Query($this->db, $table);
+    }
+
+    /**
+     * Init a QueryParam instance.
+     *
+     * @return froq\database\query\QueryParam
+     */
+    public final function initQueryParam(): QueryParam
+    {
+        return new QueryParam();
+    }
+
+    /**
+     * Init a QueryParams instance.
+     *
+     * @return froq\database\query\QueryParams
+     */
+    public final function initQueryParams(): QueryParams
+    {
+        return new QueryParams();
     }
 }
