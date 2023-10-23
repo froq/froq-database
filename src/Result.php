@@ -75,7 +75,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
         // Note: Sequence option to prevent transaction errors that comes from lastInsertId()
         // calls but while commit() returning true when sequence field not exists. Default is
         // true for "INSERT" queries if no "sequence" option given.
-        $sequence = $options['sequence'] && preg_match('~^\s*INSERT~i', $pdoStatement->queryString);
+        $sequence = $options['sequence'] && preg_match('~^\s*INSERT\s+~i', $pdoStatement->queryString);
 
         // Insert queries.
         if ($pdoStatement->rowCount() && $sequence) {
