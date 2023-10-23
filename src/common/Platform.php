@@ -73,7 +73,7 @@ class Platform
     /**
      * Get JSON function for select oparations (available for only PgSQL & MySQL).
      *
-     * @param  bool $list
+     * @param  bool $array
      * @return string|null
      */
     public function getJsonFunction(bool $array): string|null
