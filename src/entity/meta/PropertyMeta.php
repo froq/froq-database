@@ -1,21 +1,19 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity\meta;
 
 /**
  * A metadata class, keeps parsed property metadata details.
  *
  * @package froq\database\entity\meta
- * @object  froq\database\entity\meta\PropertyMeta
+ * @class   froq\database\entity\meta\PropertyMeta
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class PropertyMeta extends Meta
+class PropertyMeta extends Meta
 {
     /**
      * Constructor.
@@ -50,7 +48,7 @@ final class PropertyMeta extends Meta
     }
 
     /**
-     * Get propert value using reflection.
+     * Get property value using reflection.
      *
      * @return mixed|null
      */
@@ -117,5 +115,15 @@ final class PropertyMeta extends Meta
     public function getEntityListClass(): string|null
     {
         return $this->getDataItem('entityList');
+    }
+
+    /**
+     * Check whether this property is marked as "primary" field.
+     *
+     * @return bool
+     */
+    public function isPrimary(): bool
+    {
+        return $this->getOption('primary', default: false);
     }
 }

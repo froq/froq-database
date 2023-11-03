@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\record;
 
 use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
@@ -18,7 +16,7 @@ use State;
  * to handle CRUD operations in a safe way via `$form` property with validation.
  *
  * @package froq\database\record
- * @object  froq\database\record\Record
+ * @class   froq\database\record\Record
  * @author  Kerem Güneş
  * @since   5.0
  */
@@ -26,16 +24,16 @@ class Record implements RecordInterface
 {
     use RecordTrait, StateTrait;
 
-    /** @var froq\database\record\Form */
+    /** Form instance. */
     protected Form $form;
 
-    /** @var string */
+    /** Form class. */
     protected string $formClass;
 
-    /** @var froq\database\Query */
+    /** Query instance. */
     protected Query $query;
 
-    /** @var int|string|null */
+    /** Given or result id. */
     private int|string|null $id;
 
     /**
@@ -137,14 +135,15 @@ class Record implements RecordInterface
      *
      * @param  string $formClass
      * @return self
+     * @throws froq\database\record\RecordException
      */
     public final function setFormClass(string $formClass): self
     {
         if (!class_exists($formClass)) {
-            throw new RecordException('Given form class `%s` not exists', $formClass);
+            throw new RecordException('Given form class %q not exists', $formClass);
         }
         if (!class_extends($formClass, Form::class)) {
-            throw new RecordException('Given form class `%s` must extend class `%s`',
+            throw new RecordException('Given form class %q must extend class %q',
                 [$formClass, Form::class]);
         }
 
@@ -307,11 +306,11 @@ class Record implements RecordInterface
     /**
      * Apply returning clause for insert/update/delete actions.
      *
-     * @param  string|array<string>|bool $fields
-     * @param  string|null               $fetch
+     * @param  string|array<string> $fields
+     * @param  string|null          $fetch
      * @return self
      */
-    public final function return(string|array|bool $fields, string $fetch = null): self
+    public final function return(string|array $fields, string $fetch = null): self
     {
         $this->query->return($fields, $fetch);
 
@@ -591,7 +590,7 @@ class Record implements RecordInterface
         $rows = $this->select($where, ...$selectArgs);
 
         // For single records.
-        if (value($selectArgs, 'limit') == 1) {
+        if (value($selectArgs, 'limit') === 1) {
             $rows = [(array) $rows];
         }
 
@@ -657,7 +656,7 @@ class Record implements RecordInterface
 
         $result = $query->run($fetch);
 
-        return ($limit == 1) ? $result->rows(0) : $result->rows();
+        return ($limit === 1) ? $result->rows(0) : $result->rows();
     }
 
     /**
@@ -749,7 +748,7 @@ class Record implements RecordInterface
         }
 
         // Filter multiple ids by not-null check.
-        is_array($id) && $id = array_filter($id, fn($id) => $id !== null);
+        is_array($id) && $id = array_filter($id, fn($id): bool => $id !== null);
 
         return [$table->getName(), $table->getPrimary(), $id];
     }

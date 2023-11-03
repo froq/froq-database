@@ -1,37 +1,28 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\record;
-
-use froq\pager\{Pager, PagerTrait};
 
 /**
  * A list class, for collecting `Record` instances.
  *
  * @package froq\database\record
- * @object  froq\database\record\RecordList
+ * @class   froq\database\record\RecordList
  * @author  Kerem Güneş
  * @since   5.0
  */
 class RecordList extends \ItemList implements RecordListInterface
 {
-    use PagerTrait;
-
     /**
      * Constructor.
      *
-     * @param array                 $items
-     * @param froq\pager\Pager|null $pager
+     * @param array<froq\database\record\Record> $items
      */
-    public function __construct(array $items = [], Pager $pager = null)
+    public function __construct(array $items = [])
     {
-        parent::__construct($items);
-
-        $this->pager = $pager;
+        parent::__construct($items, type: Record::class);
     }
 
     /**

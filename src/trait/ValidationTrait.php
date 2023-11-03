@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\trait;
 
 use froq\database\common\Validation;
@@ -13,13 +11,13 @@ use froq\database\common\Validation;
  * A trait, provides validation related stuff.
  *
  * @package froq\database\trait
- * @object  froq\database\trait\ValidationTrait
+ * @class   froq\database\trait\ValidationTrait
  * @author  Kerem Güneş
  * @since   5.0
  */
 trait ValidationTrait
 {
-    /** @var froq\database\common\Validation */
+    /** Validation instance. */
     protected Validation $validation;
 
     /**
@@ -38,9 +36,9 @@ trait ValidationTrait
     /**
      * Get validation.
      *
-     * @return ?froq\database\common\Validation
+     * @return froq\database\common\Validation|null
      */
-    public function getValidation(): ?Validation
+    public function getValidation(): Validation|null
     {
         return $this->validation ?? null;
     }
@@ -48,10 +46,10 @@ trait ValidationTrait
     /**
      * Set validations.
      *
-     * @param  ?array $validations
+     * @param  array|null $validations
      * @return self
      */
-    public function setValidations(?array $validations): self
+    public function setValidations(array|null $validations): self
     {
         $rules = $options = null;
 
@@ -74,9 +72,9 @@ trait ValidationTrait
     /**
      * Get validations.
      *
-     * @return ?array
+     * @return array|null
      */
-    public function getValidations(): ?array
+    public function getValidations(): array|null
     {
         if ($validation = $this->getValidation()) {
             return [

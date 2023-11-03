@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\trait;
 
 use froq\common\trait\{DataTrait, DataAccessTrait, DataAccessMagicTrait};
@@ -15,7 +13,7 @@ use froq\validation\ValidationError;
  * A trait, used in `froq\database\record` only and provides record related stuff.
  *
  * @package froq\database\trait
- * @object  froq\database\trait\RecordTrait
+ * @class   froq\database\trait\RecordTrait
  * @author  Kerem Güneş
  * @since   5.0
  * @internal
@@ -26,13 +24,13 @@ trait RecordTrait
     use EmptyTrait, ToArrayTrait, ToObjectTrait;
     use DataTrait, DataAccessTrait, DataAccessMagicTrait;
 
-    /** @var array */
+    /** Data map. */
     protected array $data = [];
 
-    /** @var array */
+    /** Options for queries. */
     protected array $options = [];
 
-    /** @var array */
+    /** Default options. */
     protected static array $optionsDefault = [
         'transaction' => true, // Whether save actions will be done in a transaction wrap.
         'sequence'    => true, // Whether saved record has a ID sequence.
@@ -44,11 +42,11 @@ trait RecordTrait
     /**
      * Set options.
      *
-     * @param  ?array $options
+     * @param  array|null $options
      * @return self
      * @since  6.0
      */
-    public final function setOptions(?array $options): self
+    public function setOptions(array|null $options): self
     {
         $this->options = array_options($options, static::$optionsDefault);
 
@@ -58,9 +56,9 @@ trait RecordTrait
     /**
      * Get options.
      *
-     * @return ?array
+     * @return array
      */
-    public final function getOptions(): array
+    public function getOptions(): array
     {
         return $this->options;
     }

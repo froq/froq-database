@@ -1,17 +1,15 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\trait;
 
 /**
  * A trait, provides short and descriptive methods and used by Query class only.
  *
  * @package froq\database\trait
- * @object  froq\database\trait\QueryTrait
+ * @class   froq\database\trait\QueryTrait
  * @author  Kerem Güneş
  * @since   4.0
  * @internal

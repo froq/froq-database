@@ -1,26 +1,24 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\common;
 
 /**
  * Table wrapper, holds a table name & primary related stuff.
  *
  * @package froq\database\common
- * @object  froq\database\common\Table
+ * @class   froq\database\common\Table
  * @author  Kerem Güneş
  * @since   6.0
  */
 class Table
 {
-    /** @var string */
+    /** Table name. */
     protected string $name;
 
-    /** @var string */
+    /** Table primary name. */
     protected string $primary = 'id';
 
     /**
@@ -51,9 +49,9 @@ class Table
     /**
      * Get name.
      *
-     * @return ?string
+     * @return string|null
      */
-    public function getName(): ?string
+    public function getName(): string|null
     {
         return $this->name ?? null;
     }
@@ -74,9 +72,9 @@ class Table
     /**
      * Get primary.
      *
-     * @return ?string
+     * @return string|null
      */
-    public function getPrimary(): ?string
+    public function getPrimary(): string|null
     {
         return $this->primary ?? null;
     }

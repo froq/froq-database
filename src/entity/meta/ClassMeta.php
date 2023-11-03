@@ -1,23 +1,24 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity\meta;
 
 /**
  * A metadata class, keeps parsed class metadata details.
  *
  * @package froq\database\entity\meta
- * @object  froq\database\entity\meta\ClassMeta
+ * @class   froq\database\entity\meta\ClassMeta
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class ClassMeta extends Meta
+class ClassMeta extends Meta
 {
-    /** @var array<froq\database\entity\meta\PropertyMeta> */
+    /**
+     * Map of property metas.
+     * @var array<froq\database\entity\meta\PropertyMeta>
+     */
     private array $propertyMetas = [];
 
     /**
@@ -96,7 +97,11 @@ final class ClassMeta extends Meta
      */
     public function getTablePrimary(): string|null
     {
-        return $this->getDataItem('primary', default: 'id');
+        return $this->getDataItem('primary', default: 'id') ??
+            // Try with "primary" definition.
+            array_find($this->propertyMetas, fn(PropertyMeta $propertyMeta): bool =>
+                $propertyMeta->isPrimary() === true
+            )?->getField();
     }
 
     /**

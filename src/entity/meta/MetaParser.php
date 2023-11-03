@@ -1,25 +1,23 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity\meta;
 
 use froq\util\Objects;
 use ReflectionClass, ReflectionProperty, ReflectionException;
 
 /**
- * A parser class, used for parsing entity classes's metadata info as
- * `ClassMeta` & `PropertyMeta` classes.
+ * A parser class, used for parsing entity classes's metadata info as `ClassMeta`
+ * & `PropertyMeta` classes.
  *
  * @package froq\database\entity\meta
- * @object  froq\database\entity\meta\MetaParser
+ * @class   froq\database\entity\meta\MetaParser
  * @author  Kerem Güneş
  * @since   5.0
  */
-final class MetaParser
+class MetaParser
 {
     /**
      * Parse class meta.
@@ -145,7 +143,7 @@ final class MetaParser
     }
 
     /**
-     * Get data from a reflection class/property annotations or attributes.
+     * Get data from a reflection class / property annotations or attributes.
      */
     private static function getDataFrom(ReflectionClass|ReflectionProperty $ref): array|null
     {
@@ -168,7 +166,7 @@ final class MetaParser
         // Eg: #[meta(table:"users", ..)]
         foreach ($attributes as $attribute) {
             $name = Objects::getShortName($attribute->getName());
-            if (strtolower($name) == 'meta') {
+            if (strtolower($name) === 'meta') {
                 return $attribute->getArguments();
             }
         }
@@ -217,7 +215,7 @@ final class MetaParser
                 $refType = isset($ref->class) ? 'property' : 'class';
 
                 throw new MetaException(
-                    'Failed to parse meta annotation of `%s` %s [error: %s]',
+                    'Failed to parse meta annotation of %q %s [error: %s]',
                     [$refName, $refType, strtolower($error)]
                 );
             }

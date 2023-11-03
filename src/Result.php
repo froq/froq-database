@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\database\result\{Ids, Rows, Row};
@@ -15,19 +13,25 @@ use PDO, PDOStatement, PDOException;
  * A result class, for query result stuff such as count, ids & rows.
  *
  * @package froq\database
- * @object  froq\database\Result
+ * @class   froq\database\Result
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
+class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
 {
-    /** @var int */
+    /** Count of this result. */
     private int $count = 0;
 
-    /** @var froq\database\result\Ids<int> */
+    /**
+     * IDs of this result.
+     * @var froq\database\result\Ids<int>
+     */
     private Ids $ids;
 
-    /** @var froq\database\result\Rows<array|object> */
+    /**
+     * Rows of this result.
+     * @var froq\database\result\Rows<array|object>
+     */
     private Rows $rows;
 
     /**
@@ -45,7 +49,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
         $this->rows = new Rows();
 
         // Normally an exception must be thrown until here.
-        if ($pdo->errorCode() != '00000' || $pdoStatement->errorCode() != '00000') {
+        if ($pdo->errorCode() !== '00000' || $pdoStatement->errorCode() !== '00000') {
             return;
         }
 
@@ -60,7 +64,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                     // All others are as class.
                     $fetchType  = PDO::FETCH_CLASS,
                     $fetchClass = class_exists($options['fetch']) ? $options['fetch'] :
-                        throw new ResultException('No fetch class such `%s`', $options['fetch'])
+                        throw new ResultException('Fetch class %q not found', $options['fetch'])
                 ]
             };
         }
@@ -71,7 +75,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
         // Note: Sequence option to prevent transaction errors that comes from lastInsertId()
         // calls but while commit() returning true when sequence field not exists. Default is
         // true for "INSERT" queries if no "sequence" option given.
-        $sequence = $options['sequence'] && preg_match('~^\s*INSERT~i', $pdoStatement->queryString);
+        $sequence = $options['sequence'] && preg_match('~^\s*INSERT\s+~i', $pdoStatement->queryString);
 
         // Insert queries.
         if ($pdoStatement->rowCount() && $sequence) {
@@ -90,7 +94,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
                 // Handle multiple inserts.
                 if ($count > 1) {
                     // MySQL awesomeness, last id is first id..
-                    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql') {
+                    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
                         $start = $id;
                         $end   = $id + $count - 1;
                     } else {
@@ -116,7 +120,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
 
             // @tome: Data is populated before the constructor is called.
             // To populate data after the constructor use PDO::FETCH_PROPS_LATE.
-            $rows = ($fetchType == PDO::FETCH_CLASS)
+            $rows = ($fetchType === PDO::FETCH_CLASS)
                   ? $pdoStatement->fetchAll($fetchType|PDO::FETCH_PROPS_LATE, $fetchClass)
                   : $pdoStatement->fetchAll($fetchType);
 
@@ -139,10 +143,10 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get last insert id.
      *
-     * @return ?int
+     * @return int|null
      * @since  6.0
      */
-    public function getId(): ?int
+    public function getId(): int|null
     {
         return $this->id();
     }
@@ -150,10 +154,10 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     /**
      * Get a copy of first row.
      *
-     * @return ?Row
+     * @return Row|null
      * @since  6.0
      */
-    public function getRow(): ?Row
+    public function getRow(): Row|null
     {
         return $this->rows(0, true);
     }
@@ -180,7 +184,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     {
         if ($init) {
             return (clone $this->rows)
-                ->map(fn($row) => $this->toRow($row));
+                ->map(fn($row): Row => $this->toRow($row));
         }
         return (clone $this->rows);
     }
@@ -260,7 +264,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     }
 
     /**
-     * Get only columns by given index/field(s).
+     * Get only columns by given index / field(s).
      *
      * @param  int          $index
      * @param  string|array $field
@@ -271,7 +275,7 @@ final class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayA
     {
         $row = $this->rows($index);
 
-        if ($row && $field != '*') {
+        if ($row && $field !== '*') {
             $orow = new Row((array) $row);
             // Single field.
             if (is_string($field)) {

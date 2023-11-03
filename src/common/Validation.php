@@ -1,31 +1,29 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\common;
 
-use froq\validation\{Validation as BaseValidation};
+use froq\validation\Validation as RealValidation;
 
 /**
  * Validation wrapper, holds validation related stuff.
  *
  * @package froq\database\common
- * @object  froq\database\common\Validation
+ * @class   froq\database\common\Validation
  * @author  Kerem Güneş
  * @since   6.0
  */
 class Validation
 {
-    /** @var array, array */
+    /** Rules & options */
     protected array $rules, $options;
 
-    /** @var ?array */
+    /** Validation errors. */
     protected ?array $errors = null;
 
-    /** @var ?bool */
+    /** Validation result. */
     protected ?bool $result = null;
 
     /**
@@ -43,9 +41,9 @@ class Validation
     /**
      * Get errors.
      *
-     * @return ?array
+     * @return array|null
      */
-    public function errors(): ?array
+    public function errors(): array|null
     {
         return $this->errors;
     }
@@ -53,9 +51,9 @@ class Validation
     /**
      * Get result.
      *
-     * @return ?bool
+     * @return bool|null
      */
-    public function result(): ?bool
+    public function result(): bool|null
     {
         return $this->result;
     }
@@ -87,9 +85,9 @@ class Validation
     /**
      * Get rules.
      *
-     * @return ?array
+     * @return array|null
      */
-    public function getRules(): ?array
+    public function getRules(): array|null
     {
         return $this->rules ?? null;
     }
@@ -110,9 +108,9 @@ class Validation
     /**
      * Get options.
      *
-     * @return ?array
+     * @return array|null
      */
-    public function getOptions(): ?array
+    public function getOptions(): array|null
     {
         return $this->options ?? null;
     }
@@ -121,15 +119,15 @@ class Validation
      * Run validation for given data by rules & options, filtering/sanitizing `$data` argument
      * and filling `$errors` argument when validation fails.
      *
-     * @param  ?array &$data
-     * @param  ?array &$errors
-     * @param  ?array  $rules
-     * @param  ?array  $options
+     * @param  array|null &$data
+     * @param  array|null &$errors
+     * @param  array|null  $rules
+     * @param  array|null  $options
      * @return bool
      */
-    public function run(?array &$data, ?array &$errors, ?array $rules, ?array $options): bool
+    public function run(array|null &$data, array|null &$errors, array|null $rules, array|null $options): bool
     {
-        $this->result = (new BaseValidation($rules, $options))->validate($data, $errors);
+        $this->result = (new RealValidation($rules, $options))->validate($data, $errors);
 
         if ($errors !== null) {
             $this->errors = $errors;

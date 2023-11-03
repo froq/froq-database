@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity\meta;
 
 use froq\cache\agent\Apcu;
@@ -13,15 +11,14 @@ use froq\cache\agent\Apcu;
  * A cache class, used for storing parsed meta.
  *
  * @package froq\database\entity\meta
- * @object  froq\database\entity\meta\MetaCache
+ * @class   froq\database\entity\meta\MetaCache
  * @author  Kerem Güneş
  * @since   6.1
  */
-final class MetaCache
+class MetaCache
 {
     /**
      * Fallback storage if no APCu available.
-     *
      * @var array<froq\database\entity\meta\Meta>
      */
     private static array $items = [];

@@ -1,14 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity;
 
 use froq\database\entity\proxy\{ProxyTrait, EntityListProxy};
-use froq\pager\{Pager, PagerTrait};
 
 /**
  * An abstract entity list class that can be extended by entity list classes used for
@@ -16,13 +13,13 @@ use froq\pager\{Pager, PagerTrait};
  * `removeAll()` and checkers for these methods.
  *
  * @package froq\database\entity
- * @object  froq\database\entity\EntityList
+ * @class   froq\database\entity\EntityList
  * @author  Kerem Güneş
  * @since   5.0
  */
 abstract class EntityList extends \ItemList implements EntityListInterface
 {
-    use ProxyTrait, PagerTrait;
+    use ProxyTrait;
 
     /**
      * Constructor.
@@ -36,29 +33,26 @@ abstract class EntityList extends \ItemList implements EntityListInterface
         $entities && $this->fill(...$entities);
     }
 
-    /** @magic */
+    /**
+     * @magic
+     */
     public function __serialize(): array
     {
         return [
-            '@' => $this->toArray(),
-            'pager' => $this->pager?->toArray()
+            '@' => $this->toArray()
         ];
     }
 
-    /** @magic */
+    /**
+     * @magic
+     */
     public function __unserialize(array $data): void
     {
         $this->proxy = new EntityListProxy();
 
-        ['@' => $entities, 'pager' => $pager] = $data;
+        ['@' => $entities] = $data;
 
         $entities && $this->fill(...$entities);
-
-        // Reset pager data.
-        if ($pager) {
-            $this->pager = new Pager((array) $pager);
-            $this->pager->run();
-        }
     }
 
     /**
@@ -124,7 +118,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     /**
      * @alias isFindedAll()
      */
-    public final function isFoundAll(): bool
+    public final function isFoundAll()
     {
         return $this->isFindedAll();
     }
@@ -170,13 +164,14 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     }
 
     /**
-     * Get action result filtering items by given action.
+     * Get action result filtering items by given entity method.
      */
-    private function getActionResult(string $action): bool
+    private function getActionResult(string $method): bool
     {
         return count($this) // Prevent empty list.
-            && count($this) == count(array_filter(
-                $this->items(), fn($entity) => $entity->$action()
+            && count($this) === count(array_filter(
+                $this->items(),
+                fn(Entity $entity): bool => $entity->$method()
             ));
     }
 }

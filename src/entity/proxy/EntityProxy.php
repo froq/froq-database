@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity\proxy;
 
 use froq\database\entity\{EntityManager, Entity};
@@ -14,12 +12,12 @@ use froq\common\trait\StateTrait;
  * A proxy class for entity classes.
  *
  * @package froq\database\entity\proxy
- * @object  froq\database\entity\proxy\EntityProxy
+ * @class   froq\database\entity\proxy\EntityProxy
  * @author  Kerem Güneş
  * @since   6.0
  * @internal
  */
-final class EntityProxy extends Proxy
+class EntityProxy extends Proxy
 {
     use StateTrait;
 
@@ -36,7 +34,7 @@ final class EntityProxy extends Proxy
     }
 
     /**
-     * Proxy method for manager's save() method.
+     * Proxy method for manager's `save()` method.
      *
      * @param  froq\database\entity\Entity $entity
      * @return froq\database\entity\Entity
@@ -47,7 +45,7 @@ final class EntityProxy extends Proxy
     }
 
     /**
-     * Proxy method for manager's find() method.
+     * Proxy method for manager's `find()` method.
      *
      * @param  froq\database\entity\Entity $entity
      * @return froq\database\entity\Entity
@@ -58,7 +56,7 @@ final class EntityProxy extends Proxy
     }
 
     /**
-     * Proxy method for manager's remove() method.
+     * Proxy method for manager's `remove()` method.
      *
      * @param  froq\database\entity\Entity $entity
      * @return froq\database\entity\Entity

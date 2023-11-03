@@ -1,39 +1,29 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\database\trait\{DbTrait, QueryTrait};
-use froq\database\query\QueryParams;
 use froq\database\result\{Row, Rows};
+use froq\database\query\QueryParams;
 use froq\database\sql\{Sql, Name};
-use froq\collection\Collection;
-use froq\pager\Pager;
+use froq\pagination\Paginator;
 
 /**
  * A query builder class, fulfills most building needings with descriptive methods.
  *
  * @package froq\database
- * @object  froq\database\Query
+ * @class   froq\database\Query
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Query implements \Stringable
+class Query implements \Stringable
 {
     use DbTrait, QueryTrait;
 
-    /**
-     * Key, tick for last call via add().
-     * @var string
-     * @since 5.0
-     */
-    private string $key;
-
-    /** @var array */
+    /** Query stack. */
     private array $stack = [];
 
     /**
@@ -90,7 +80,7 @@ final class Query implements \Stringable
 
         $prepare && $from = $this->prepareFields($from);
 
-        if ($as != '') {
+        if ($as !== null) {
             $from .= ' AS ' . $this->prepareField($as);
         }
 
@@ -115,25 +105,30 @@ final class Query implements \Stringable
             $wrap = true;
         } else {
             if (is_array($select)) {
-                if ($sas != '') {
-                    // Prefix all fields with "sas" argument.
-                    $select = array_map(fn($field) => $this->prepareField("{$sas}.{$field}"), $select);
+                if ($sas !== null) {
+                    $select = array_map(
+                        // Prefix all fields with "sas" argument.
+                        fn($field): string => $this->prepareField("{$sas}.{$field}"),
+                        $select
+                    );
+
                     $prepare = false;
                 }
+
                 $select = join(', ', $select);
             }
 
             $select = trim($select);
             $select || throw new QueryException('Empty select given');
 
-            if ($prepare && $select != '*') {
+            if ($prepare && $select !== '*') {
                 $select = $this->prepareFields($select);
             }
         }
 
         $select = $wrap ? '(' . $select . ')' : $select;
 
-        if ($as != '') {
+        if ($as !== null) {
             $select .= ' AS ' . $this->prepareField($as);
         }
 
@@ -200,26 +195,25 @@ final class Query implements \Stringable
         }
 
         $list = is_list($selects);
-
-        $func = match ($this->db->link->driver()) {
-            'pgsql' => $list ? 'jsonb_build_array' : 'jsonb_build_object',
-            'mysql' => $list ? 'json_array'        : 'json_object',
-            default => throw new QueryException('Method selectJson() available for PgSQL & MySQL only')
-        };
+        $func = $this->db->platform->getJsonFunction($list)
+            ?? throw new QueryException('Method selectJson() is for only PgSQL & MySQL');
 
         if ($list) {
             $select = $this->prepareFields($selects);
         } else {
             $select = [];
             foreach ($selects as $key => $field) {
+                $prep = $prepare;
                 if ($field instanceof Query || $field instanceof Sql) {
-                    $field = '(' . $field . ')'; // For raw/query fields.
-                    $prepare = false;
+                    $field = '(' . $field . ')';
+                    $prep  = false;
                 }
 
-                $select[] = sprintf("'%s', %s", $key, (
-                    $prepare ? $this->prepareField((string) $field) : $field
-                ));
+                // Eg: 'id', "id".
+                $select[] = join(', ', [
+                    $this->prepare('?', [(string) $key]),
+                    $prep ? $this->prepareField((string) $field) : $field,
+                ]);
             }
 
             $select = join(', ', $select);
@@ -227,7 +221,7 @@ final class Query implements \Stringable
 
         $select = $func . '(' . $select . ')';
 
-        if ($as != '') {
+        if ($as !== null) {
             $select .= ' AS ' . $this->prepareField($as);
         }
 
@@ -303,14 +297,14 @@ final class Query implements \Stringable
     /**
      * Add an "INSERT" query into query stack.
      *
-     * @param  array|null             $data
-     * @param  bool|null              $batch
-     * @param  bool|null              $sequence
-     * @param  bool|string|array|null $return
+     * @param  array<mixed>|null         $data
+     * @param  bool|null                 $batch
+     * @param  bool|null                 $sequence
+     * @param  string|array<string>|null $return
      * @return self
      * @throws froq\database\QueryException
      */
-    public function insert(array $data = null, bool $batch = null, bool $sequence = null, bool|string|array $return = null): self
+    public function insert(array $data = null, bool $batch = null, bool $sequence = null, string|array $return = null): self
     {
         $return && $this->return($return);
 
@@ -332,7 +326,7 @@ final class Query implements \Stringable
         } elseif (isset($data[0])) {
             // Eg: [["name" => "Kerem", ..], ..].
             $fields = array_keys($data[0]);
-            $values = array_map(fn($d) => array_values($d), $data);
+            $values = array_map(fn($d): array => array_values($d), $data);
         }
 
         if (!$fields || !$values) {
@@ -342,8 +336,8 @@ final class Query implements \Stringable
         $fieldsCount = count($fields);
         foreach ($values as $i => $value) {
             $value = (array) $value;
-            if (count($value) != $fieldsCount) {
-                throw new QueryException('Count of value set `%s` not matched with fields count', $i);
+            if (count($value) !== $fieldsCount) {
+                throw new QueryException('Count of value set #%i not matched with fields count', $i);
             }
 
             $values[$i] = '(' . join(', ', $this->db->escape($value)) . ')';
@@ -357,13 +351,13 @@ final class Query implements \Stringable
     /**
      * Add an "UPDATE" query into query stack.
      *
-     * @param  array|null             $data
-     * @param  bool                   $escape
-     * @param  bool|string|array|null $return
+     * @param  array<string, mixed>|null $data
+     * @param  bool                      $escape
+     * @param  string|array<string>|null $return
      * @return self
      * @throws froq\database\QueryException
      */
-    public function update(array $data = null, bool $escape = true, bool|string|array $return = null): self
+    public function update(array $data = null, bool $escape = true, string|array $return = null): self
     {
         $return && $this->return($return);
 
@@ -386,10 +380,10 @@ final class Query implements \Stringable
     /**
      * Add/append "DELETE" query into query stack.
      *
-     * @param bool|string|array|null $return
+     * @param  string|array<string>|null $return
      * @return self
      */
-    public function delete(bool|string|array $return = null): self
+    public function delete(string|array $return = null): self
     {
         $return && $this->return($return);
 
@@ -426,18 +420,18 @@ final class Query implements \Stringable
     /**
      * Add a "RETURNING" clause into query stack.
      *
-     * @param  string|array<string>|bool $fields
-     * @param  string|null               $fetch
+     * @param  string|array<string> $fields
+     * @param  string|null          $fetch
      * @return self
      * @since  4.18
      */
-    public function return(string|array|bool $fields, string $fetch = null): self
+    public function return(string|array $fields, string $fetch = null): self
     {
-        $fields  = ($fields === true) ? '*' : $this->prepareFields($fields);
+        $fields  = $this->prepareFields($fields);
         $fetch ??= $this->stack['return']['fetch'] ?? null;
 
         // Return fallback for no "RETURNING" supported databases.
-        if (!in_array($this->db->link->driver(), ['pgsql', 'oci'], true)) {
+        if (!$this->db->platform->equals('pgsql', 'oci')) {
             // For insert stuff.
             if (isset($this->stack['table'], $this->stack['insert'])) {
                 $this->stack['return.fallback'] = [
@@ -490,16 +484,16 @@ final class Query implements \Stringable
         $action = strtoupper($action);
 
         if (!in_array($action, ['NOTHING', 'UPDATE'], true)) {
-            throw new QueryException('Invalid conflict action `%s` [valids: NOTHING, UPDATE]', $action);
+            throw new QueryException('Invalid conflict action %q [valids: NOTHING, UPDATE]', $action);
         }
 
         // Comma separated update (fields).
-        if (is_string($update) && $update != '*') {
+        if (is_string($update) && $update !== '*') {
             $update = split('\s*,\s*', $update);
         }
 
-        if (!$update && $action == 'UPDATE') {
-            throw new QueryException('Conflict action is `update`, but no update data given');
+        if (!$update && $action === 'UPDATE') {
+            throw new QueryException('Conflict action is \'update\', but no update data given');
         }
 
         $fields = $this->prepareFields($fields);
@@ -540,12 +534,12 @@ final class Query implements \Stringable
      * Add an increase command into query stack.
      *
      * @param  array     $field
-     * @param  float|int $value
-     * @param  bool|null $return
+     * @param  int|float $value
+     * @param  bool      $return
      * @return self
      * @since  5.0
      */
-    public function increase(string|array $field, int|float $value = 1, bool $return = null): self
+    public function increase(string|array $field, int|float $value = 1, bool $return = false): self
     {
         $data = $this->prepareIncreaseDecrease('+', $field, $value, $return);
 
@@ -556,12 +550,12 @@ final class Query implements \Stringable
      * Add a decrease command into query stack.
      *
      * @param  array     $field
-     * @param  float|int $value
-     * @param  bool|null $return
+     * @param  int|float $value
+     * @param  bool      $return
      * @return self
      * @since  5.0
      */
-    public function decrease(string|array $field, int|float $value = 1, bool $return = null): self
+    public function decrease(string|array $field, int|float $value = 1, bool $return = false): self
     {
         $data = $this->prepareIncreaseDecrease('-', $field, $value, $return);
 
@@ -581,7 +575,7 @@ final class Query implements \Stringable
     {
         $type && $type = strtoupper($type) . ' ';
 
-        if ($on != '') {
+        if ($on !== null) {
             $on = 'ON (' . $this->prepare($on, $params) . ')';
         }
 
@@ -720,7 +714,7 @@ final class Query implements \Stringable
             foreach ($where as $field => $param) {
                 $sign = ' = ';
                 if (in_array($field[-1], $signs, true)) {
-                    $sign  = sprintf(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
+                    $sign  = sprintf(' %s ', ($field[-1] === '!') ? '!=' : $field[-1]);
                     $field = substr($field, 0, -1);
                 }
 
@@ -963,13 +957,8 @@ final class Query implements \Stringable
     {
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($params)];
 
-        if (!$ilike) {
-            $where = $field . ' LIKE ' . $search;
-        } else {
-            $where = ($this->db->link->driver() == 'pgsql')
-                   ? sprintf('%s ILIKE %s', $field, $search)
-                   : sprintf('lower(%s) LIKE lower(%s)', $field, $search);
-        }
+        $where = $ilike ? $this->db->platform->formatILike($field, $search)
+               : $field . ' LIKE ' . $search;
 
         return $this->where($where, op: $op);
     }
@@ -987,13 +976,8 @@ final class Query implements \Stringable
     {
         [$field, $search] = [$this->prepareField($field), $this->prepareWhereLikeSearch($params)];
 
-        if (!$ilike) {
-            $where = $field . ' NOT LIKE ' . $search;
-        } else {
-            $where = ($this->db->link->driver() == 'pgsql')
-                ? sprintf('%s NOT ILIKE %s', $field, $search)
-                : sprintf('lower(%s) NOT LIKE lower(%s)', $field, $search);
-        }
+        $where = $ilike ? $this->db->platform->formatNotILike($field, $search)
+               : $field . ' NOT LIKE ' . $search;
 
         return $this->where($where, op: $op);
     }
@@ -1041,9 +1025,9 @@ final class Query implements \Stringable
      */
     public function whereRandom(float $value = 0.01, string $op = null): self
     {
-        return ($this->db->link->driver() == 'pgsql')
-             ? $this->where('random() < ' . $value, op: $op)
-             : $this->where('rand() < ' . $value, op: $op);
+        $func = $this->db->platform->getRandomFunction();
+
+        return $this->where($func . ' < ' . $value, op: $op);
     }
 
     /**
@@ -1065,8 +1049,8 @@ final class Query implements \Stringable
     /**
      * Add/append a "GROUP BY .." clause into query stack.
      *
-     * @param  string      $field
-     * @param  string|bool $rollup
+     * @param  string           $field
+     * @param  string|bool|null $rollup
      * @return self
      */
     public function groupBy(string $field, string|bool $rollup = null): self
@@ -1074,7 +1058,7 @@ final class Query implements \Stringable
         $field = $this->prepareFields($field);
 
         if ($rollup) {
-            $field .= ($this->db->link->driver() == 'mysql') ? ' WITH ROLLUP' : ' ROLLUP (' . (
+            $field .= $this->db->platform->equals('mysql') ? ' WITH ROLLUP' : ' ROLLUP (' . (
                 is_string($rollup) ? $this->prepareFields($rollup) : $field
             ) . ')';
         }
@@ -1099,27 +1083,26 @@ final class Query implements \Stringable
         $field || throw new QueryException('No field given');
 
         // Eg: ("id", "ASC") or ("id", 1) or ("id", -1).
-        if ($op != null) {
+        if ($op !== null) {
             $field .= ' ' . $this->prepareOp($op, true);
         }
 
         // Extract options (with defaults).
-        [$collate, $nulls] = [
-            $options['collate'] ?? null,
-            $options['nulls']   ?? null,
-        ];
+        [$collate, $nulls] = array_select(
+            (array) $options, ['collate', 'nulls'], [null, null]
+        );
 
         // Eg: "tr_TR" or "tr_TR.utf8".
-        if ($collate != null) {
+        if ($collate !== null) {
             $collate = trim($collate);
-            if ($this->db->link->driver() == 'pgsql') {
+            if ($this->db->platform->equals('pgsql')) {
                 $collate = '"' . trim($collate, '"') . '"';
             }
             $collate = ' COLLATE ' . $collate;
         }
 
         // Eg: "FIRST" or "LAST".
-        if ($nulls != null) {
+        if ($nulls !== null) {
             $nulls = ' NULLS ' . strtoupper($nulls);
         }
 
@@ -1131,10 +1114,12 @@ final class Query implements \Stringable
         // Eg: ("id ASC") or ("id ASC, name DESC").
         if (strpos($field, ' ')) {
             $fields = [];
+
             foreach (split('\s*,\s*', $field) as $i => $field) {
                 [$field, $op] = split('\s+', trim($field), 2);
+
                 $fields[$i] = $this->prepareField($field) . $collate;
-                if ($op != null) {
+                if ($op !== null) {
                     $fields[$i] .= ' ' . $this->prepareOp($op, true);
                 }
             }
@@ -1152,8 +1137,9 @@ final class Query implements \Stringable
      */
     public function orderByRandom(): self
     {
-        return ($this->db->link->driver() == 'pgsql')
-             ? $this->add('order', 'random()') : $this->add('order', 'rand()');
+        $func = $this->db->platform->getRandomFunction();
+
+        return $this->add('order', $func);
     }
 
     /**
@@ -1187,35 +1173,6 @@ final class Query implements \Stringable
         }
 
         throw new QueryException('Limit not set yet, call limit() first');
-    }
-
-    /**
-     * Add/append an "AS" operator into query stack for a table or field.
-     *
-     * @param  string $as
-     * @param  bool   $prepare
-     * @return self
-     * @throws froq\database\QueryException
-     * @since  4.16, 5.0
-     */
-    public function as(string $as, bool $prepare = true): self
-    {
-        if (empty($this->key)) {
-            throw new QueryException('No table/select statement yet in query stack to apply AS operator,'
-                . ' call one of them first to apply');
-        }
-
-        $prepare && $as = $this->prepareField($as);
-
-        match ($this->key) {
-            'table'  => strpos($this->stack['table'], ' AS ')
-                            || $this->stack['table'] .= ' AS ' . $as, // Concat.
-            'select' => strpos($this->stack['select'][count($this->stack['select']) - 1], ' AS ')
-                            || $this->stack['select'][count($this->stack['select']) - 1] .= ' AS ' . $as,
-            default  => throw new QueryException('Invalid key `%s` for as()', $this->key)
-        };
-
-        return $this;
     }
 
     /**
@@ -1340,7 +1297,7 @@ final class Query implements \Stringable
     {
         // Optimize one-record queries, preventing sytax errors for non-select queries (PgSQL).
         if (!$this->has('limit')) {
-            $ok = $this->has('select') || $this->db->link->driver() != 'pgsql';
+            $ok = $this->has('select') || !$this->db->platform->equals('pgsql');
             $ok && $this->limit(1);
         }
 
@@ -1350,7 +1307,8 @@ final class Query implements \Stringable
     /**
      * Get all result rows & running current query stack.
      *
-     * Note: For pagination, `paginate()` method must be called before this method.
+     * Note: For pagination, `paginate()` method must be called before calling this method
+     * and other related methods.
      *
      * @param  string|null $fetch
      * @param  int|null    $limit
@@ -1360,7 +1318,7 @@ final class Query implements \Stringable
     {
         // Apply limit limited queries, preventing sytax errors for non-select queries (PgSQL).
         if ($limit) {
-            $ok = $this->has('select') || $this->db->link->driver() != 'pgsql';
+            $ok = $this->has('select') || !$this->db->platform->equals('pgsql');
             $ok && $this->limit($limit);
         }
 
@@ -1438,19 +1396,6 @@ final class Query implements \Stringable
     }
 
     /**
-     * Get all result rows as collection.
-     *
-     * @param  string|null $fetch
-     * @param  int|null    $limit
-     * @return froq\collection\Collection
-     * @since  5.0
-     */
-    public function getCollection(string $fetch = null, int $limit = null): Collection
-    {
-        return new Collection($this->getAll($fetch, $limit));
-    }
-
-    /**
      * Run an insert query and get last insert id.
      *
      * @return int|null
@@ -1464,10 +1409,10 @@ final class Query implements \Stringable
     /**
      * Run an insert query and get all insert ids.
      *
-     * @return array|null
+     * @return array
      * @since  5.0
      */
-    public function getIds(): array|null
+    public function getIds(): array
     {
         return $this->run()->ids();
     }
@@ -1527,22 +1472,25 @@ final class Query implements \Stringable
     public function aggregate(string $func, string|array $field, string $as = null, array $options = null): self
     {
         // Extract options (with defaults).
-        [$distinct, $prepare, $order] = [
-            $options['distinct'] ?? false,
-            $options['prepare']  ?? true,
-            $options['order']    ?? null,
-        ];
+        [$distinct, $prepare, $order] = array_select(
+            (array) $options, ['distinct', 'prepare', 'order'], [false, true, null]
+        );
 
         $distinct && $distinct = 'DISTINCT ';
         $prepare  && $field    = $this->prepareFields($field);
 
+        // For syntax errors.
+        if ($field === '*') {
+            $order = null;
+        }
+
         // Dirty hijack..
-        if ($order != null) {
+        if ($order !== null) {
             $order = current($this->clone(true)->orderBy($order)->stack['order']);
             $order = ' ORDER BY ' . $order;
         }
 
-        if ($as != '') {
+        if ($as !== null) {
             $as = ' AS ' . $this->prepareField($as);
         }
 
@@ -1556,49 +1504,30 @@ final class Query implements \Stringable
             return $this->select($func . '_agg(' . $distinct . $field . $order . ')' . $as, false);
         }
 
-        throw new QueryException('Invalid aggregate function `%s` [valids: count, sum, min, max, avg,'
+        throw new QueryException('Invalid aggregate function %q [valids: count, sum, min, max, avg,'
             . ' array, string, json, json_object, jsonb, jsonb_object]', $func);
     }
 
     /**
-     * Paginate query result setting offset/limit stuff & assigning ref'ed pager instance.
+     * Paginate query result to set this query's offset / limit.
      *
-     * @param  int|null               $page
-     * @param  int|null               $limit
-     * @param  froq\pager\Pager|null &$pager
-     * @param  int|null               $count
+     * @param  int                             $page
+     * @param  int|null                        $limit
+     * @param  froq\pagination\Paginator|null &$paginator
      * @return self
      */
-    public function paginate(int $page = null, int $limit = null, Pager &$pager = null, int $count = null): self
+    public function paginate(int $page, int $limit = 10, Paginator &$paginator = null): self
     {
-        // Limit/offset. @default
-        static $defaults = [10, 0];
-
-        $page ??= Pager::getStartParam() ?? 1;
-        $limit ??= $this->stack['limit'] ?? $defaults[0];
-        // $offset = $this->stack['offset'] ?? $defaults[1]; // @discard
-
-        $page = abs($page);
-        $limit = abs($limit);
-
-        $page = ($page > 0) ? $page : 1;
+        $limit  = abs($limit);
         $offset = ($page * $limit) - $limit;
 
-        // This will also get a count() result if no count given.
-        $pager ??= $this->db->initPager($count ?? $this->count(), ['start' => $page, 'stop' => $limit]);
+        // Paginator wanted.
+        if (func_num_args() === 3) {
+            $paginator = new Paginator($page, perPage: $limit);
+            $paginator->paginate($this->count());
+        }
 
         return $this->limit($limit, $offset);
-    }
-
-    /**
-     * Paginate query result with given pager instance.
-     *
-     * @param  froq\pager\Pager $pager
-     * @return self
-     */
-    public function paginateWith(Pager $pager): self
-    {
-        return $this->limit($pager->limit, $pager->offset);
     }
 
     /**
@@ -1636,7 +1565,8 @@ final class Query implements \Stringable
     {
         $query ??= $this;
 
-        if ($query instanceof Query) { // Get & clean behind.
+        // Get & clean behind.
+        if ($query instanceof Query) {
             [$query] = [$this->toString($indent, false), $query->reset()];
         }
 
@@ -1651,12 +1581,8 @@ final class Query implements \Stringable
      */
     public function clone(bool $reset = false): self
     {
-        $that = new self($this->db);
-
-        if (!$reset) {
-            $that->key   = $this->key;
-            $that->stack = $this->stack;
-        }
+        $that = clone $this;
+        $reset && $that->reset();
 
         return $that;
     }
@@ -1668,7 +1594,6 @@ final class Query implements \Stringable
      */
     public function reset(): self
     {
-        $this->key   = '';
         $this->stack = [];
 
         return $this;
@@ -1782,8 +1707,9 @@ final class Query implements \Stringable
     {
         $n  = ' '; $t  = '';
         $nt = ' '; $ts = '';
-        if ($indent) {
-            if ($indent == 1) {
+
+        if ($indent = (int) $indent) {
+            if ($indent === 1) {
                 $n  = "\n"; $t  = "\t";
                 $nt = "\n"; $ts = "\t";
             } elseif ($indent > 1) {
@@ -1803,7 +1729,7 @@ final class Query implements \Stringable
 
                     foreach ($stack['with'] as [$name, $query, $fields, $recursive, $materialized]) {
                         $as = $recursive ? 'RECURSIVE ' . $name : $name;
-                        if ($fields != null) {
+                        if ($fields !== null) {
                             $as .= ' (' . $fields . ')';
                         }
 
@@ -1831,7 +1757,7 @@ final class Query implements \Stringable
                     $table = $stack['from'] ?? $stack['table'] ??
                         throw new QueryException('Table is not defined yet, call from() or table() to continue');
 
-                    if ($stack['select'] != '*') {
+                    if ($stack['select'] !== '*') {
                         foreach ($stack['select'] as $field) {
                             $select[] = $n . $ts . $field;
                         }
@@ -1866,7 +1792,7 @@ final class Query implements \Stringable
                     $table = $stack['into'] ?? $stack['table'] ??
                         throw new QueryException('Table is not defined yet, call into() or table() to continue');
 
-                    if ($stack['insert'] == '1') {
+                    if ($stack['insert'] === '1') {
                         $ret = $nt . 'INSERT INTO ' . $table;
                     } else {
                         [$fields, $values] = $stack['insert'];
@@ -1883,12 +1809,12 @@ final class Query implements \Stringable
                         $ret .= match ($driver = $this->db->link->driver()) {
                             'pgsql' => $nt . 'ON CONFLICT (' . $fields . ') DO ' . $action,
                             'mysql' => $nt . 'ON DUPLICATE KEY ' . ($action = 'UPDATE'),
-                            default => throw new QueryException('Method conflict() available for PgSQL & MySQL only')
+                            default => throw new QueryException('Method conflict() is for only PgSQL & MySQL')
                         };
 
-                        if ($action == 'UPDATE') {
+                        if ($action === 'UPDATE') {
                             // Use all insert fields for excluded stuff below.
-                            if ($update == '*') {
+                            if ($update === '*') {
                                 $update = [$stack['insert'][0]];
                             }
 
@@ -1898,7 +1824,7 @@ final class Query implements \Stringable
                             if (is_list($update)) {
                                 $temp = $this->prepareFields($update);
                                 $sets = [sprintf('(%s) = (%s)', $temp, implode(', ', array_map(
-                                    fn($t) => 'EXCLUDED.' . $t, explode(', ', $temp)))
+                                    fn($t): string => 'EXCLUDED.' . $t, explode(', ', $temp)))
                                 )];
                             } else {
                                 $temp = [];
@@ -1911,15 +1837,14 @@ final class Query implements \Stringable
                                         $temp[$field] = $this->escape($value);
                                     }
                                 }
-
                                 $sets = $that->update($temp, false)->pull('update');
                             }
 
-                            $ret .= ($driver == 'pgsql')
+                            $ret .= ($driver === 'pgsql')
                                   ? $nt . 'SET ' . join(', ', $sets)
                                   : $nt . join(', ', $sets);
 
-                            if ($where != null) {
+                            if ($where !== null) {
                                 $where = (array) $where;
                                 [$where, $params] = array_select($where, [0, 1]);
                                 $ret .= $nt . trim($that->where((string) $where, (array) $params)
@@ -1941,7 +1866,7 @@ final class Query implements \Stringable
                         throw new QueryException('Table is not defined yet, call table() to continue');
 
                     if (!isset($stack['where'])) {
-                        throw new QueryException('No `where` for update yet, it must be provided for security'
+                        throw new QueryException('No \'where\' for update yet, it must be provided for security'
                             . ' reasons, call at least where("1=1") proving you are aware of what is going on');
                     }
 
@@ -1963,7 +1888,7 @@ final class Query implements \Stringable
                         throw new QueryException('Table is not defined yet, call from() or table() to continue');
 
                     if (!isset($stack['where'])) {
-                        throw new QueryException('No `where` for delete yet, it must be provided for security'
+                        throw new QueryException('No \'where\' for delete yet, it must be provided for security'
                             . ' reasons, call at least where("1=1") proving you are aware of what is going on');
                     }
 
@@ -1981,7 +1906,7 @@ final class Query implements \Stringable
             case 'where':
                 if (isset($stack['where'])) {
                     $wheres = $stack['where'];
-                    if (count($wheres) == 1) {
+                    if (count($wheres) === 1) {
                         $ret = 'WHERE ' . $wheres[0][0];
                     } else {
                         $ws = ''; $wsi = 0;
@@ -1995,7 +1920,7 @@ final class Query implements \Stringable
                                 $ws .= ' ' . $op . ' ';
                             }
 
-                            if ($op != $nxop && $nxop && $nxnx) {
+                            if ($op !== $nxop && $nxop && $nxnx) {
                                 $ws .= '(';
                                 $wsi++;
                             }
@@ -2034,9 +1959,9 @@ final class Query implements \Stringable
                     $joins = [];
 
                     foreach ($stack['join'] as $join) {
-                        @ [$content, $context] = $join;
+                        @[$content, $context] = $join;
                         if (!$context) {
-                            throw new QueryException('No join context yet, use 2. argument of join() or call'
+                            throw new QueryException('No join context yet, use 2nd argument of join() or call'
                                 . ' on()/using() method');
                         }
                         $joins[] = trim($content . ' ' . $context);
@@ -2093,7 +2018,7 @@ final class Query implements \Stringable
         }
 
         $input = trim($input);
-        if ($input == '') {
+        if ($input === '') {
             throw new QueryException('Empty input given');
         }
 
@@ -2115,7 +2040,7 @@ final class Query implements \Stringable
     public function prepareField(string $field): string
     {
         $field = trim($field);
-        if ($field == '') {
+        if ($field === '') {
             throw new QueryException('Empty field given');
         }
 
@@ -2136,12 +2061,16 @@ final class Query implements \Stringable
      */
     public function prepareFields(string|array $fields): string
     {
+        if ($fields === '*') {
+            return '*';
+        }
+
         if (is_array($fields)) {
             $fields = join(', ', $fields);
         }
 
         $fields = trim($fields);
-        if ($fields == '') {
+        if ($fields === '') {
             throw new QueryException('Empty fields given');
         }
 
@@ -2174,21 +2103,15 @@ final class Query implements \Stringable
             return ($op > '-1') ? 'ASC' : 'DESC';
         }
 
-        throw new QueryException('Invalid op `%s` [valids: AND, OR for where & ASC, DESC, 1, +1, -1 for order]', $op);
+        throw new QueryException('Invalid op %q [valids: AND, OR for where & ASC, DESC, 1, +1, -1 for order]', $op);
     }
 
     /**
      * Prepare increase/decrease data for update.
      *
-     * @param  string       $sign
-     * @param  string|array $field
-     * @param  int|float    $value
-     * @param  bool|null    $return
-     * @return array
      * @throws froq\database\QueryException
-     * @since  5.0
      */
-    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = null): array
+    private function prepareIncreaseDecrease(string $sign, string|array $field, int|float $value = 1, bool $return = false): array
     {
         $data = [];
 
@@ -2205,8 +2128,8 @@ final class Query implements \Stringable
             $fields = [];
 
             foreach ($field as $name => $value) {
-                is_string($name)  || throw new QueryException('Invalid field name `%s`', $name);
-                is_number($value) || throw new QueryException('Invalid field value `%s`', $value);
+                is_string($name)  || throw new QueryException('Invalid field name %q', $name);
+                is_number($value) || throw new QueryException('Invalid field value %q', $value);
 
                 $data[$name] = $this->db->escapeName($name) . ' ' . $sign . ' ' . $value;
 
@@ -2221,9 +2144,6 @@ final class Query implements \Stringable
 
     /**
      * Prepare where-in placeholders.
-     *
-     * @param  array $params
-     * @return string
      */
     private function prepareWhereInPlaceholders(array $params): string
     {
@@ -2232,9 +2152,6 @@ final class Query implements \Stringable
 
     /**
      * Prepare where-like search.
-     *
-     * @param  string|array $params
-     * @return string
      */
     private function prepareWhereLikeSearch(string|array $params): string
     {
@@ -2260,17 +2177,14 @@ final class Query implements \Stringable
 
     /**
      * Add a clause/statement to query stack.
-     *
-     * @param  string $key
-     * @param  mixed  $item
-     * @param  bool   $merge
-     * @return self
      */
     private function add(string $key, mixed $item, bool $merge = true): self
     {
-        $merge && $item = [...($this->stack[$key] ?? []), $item];
+        if ($merge) {
+            $this->stack[$key] ??= [];
+            $item = [...$this->stack[$key], $item];
+        }
 
-        $this->key         = $key; // Tick for last call.
         $this->stack[$key] = $item;
 
         return $this;
@@ -2279,19 +2193,14 @@ final class Query implements \Stringable
     /**
      * Add a clause/statement operator to query stack.
      *
-     * @param  string $key
-     * @param  string $item
-     * @return self
      * @throws froq\database\QueryException
-     * @since  5.0
      */
     private function addTo(string $key, string $item): self
     {
-        if (!isset($this->stack[$key])) {
-            $op = substr(trim($item), 0, strpos(trim($item), ' '));
+        if (empty($this->stack[$key])) {
             throw new QueryException(
-                'No `%s` statement yet in query stack to apply `%s` operator, '.
-                'call %s() first to apply', [$key, $op, $key]
+                'No %q statement yet in query stack to apply %q operator, try calling %s()',
+                [$key, substr($item = trim($item), 0, strpos($item, ' ') ?: strlen($item)), $key]
             );
         }
 

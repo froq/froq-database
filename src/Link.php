@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\common\trait\FactoryTrait;
@@ -14,21 +12,21 @@ use PDO, PDOException;
  * A wrapper class for PDO with some utilities.
  *
  * @package froq\database
- * @object  froq\database\Link
+ * @class   froq\database\Link
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Link
+class Link
 {
     use FactoryTrait;
 
-    /** @var ?PDO */
+    /** PDO instance. */
     private ?PDO $pdo = null;
 
-    /** @var ?string */
+    /** Driver name. */
     private ?string $driver = null;
 
-    /** @var array */
+    /** Options. */
     private array $options;
 
     /**
@@ -66,9 +64,9 @@ final class Link
     /**
      * Get pdo property.
      *
-     * @return ?PDO
+     * @return PDO|null
      */
-    public function pdo(): ?PDO
+    public function pdo(): PDO|null
     {
         return $this->pdo;
     }
@@ -76,9 +74,9 @@ final class Link
     /**
      * Get pdo driver property.
      *
-     * @return ?string
+     * @return string|null
      */
-    public function driver(): ?string
+    public function driver(): string|null
     {
         return $this->driver;
     }
@@ -114,7 +112,7 @@ final class Link
         $options[PDO::ATTR_EMULATE_PREPARES]   ??= true;
         $options[PDO::ATTR_DEFAULT_FETCH_MODE] ??= PDO::FETCH_ASSOC;
 
-        if ($driver == 'mysql') {
+        if ($driver === 'mysql') {
             // For a proper return that gives '1' always even with identical values in UPDATE queries.
             $options[PDO::MYSQL_ATTR_FOUND_ROWS] ??= true;
             // For a proper memory usage.
@@ -129,8 +127,8 @@ final class Link
             $message      = $e->getMessage();
 
             // Which driver the FUCK?
-            if ($message == 'could not find driver') {
-                $message = sprintf('Could not find driver `%s`', $driver);
+            if ($message === 'could not find driver') {
+                $message = format('Could not find driver %q', $driver);
             }
 
             throw new LinkException($message, code: $code, cause: $e);
@@ -158,7 +156,7 @@ final class Link
      */
     public function isAlive(): bool
     {
-        return $this->pdo != null;
+        return $this->pdo !== null;
     }
 
     /**
@@ -186,7 +184,7 @@ final class Link
     {
         $this->isAlive() || throw new LinkException('Link is dead');
 
-        if ($this->driver == 'mysql') {
+        if ($this->driver === 'mysql') {
             $this->pdo->exec('SET time_zone = ' . $this->pdo->quote($timezone));
         } else {
             $this->pdo->exec('SET TIME ZONE ' . $this->pdo->quote($timezone));
@@ -208,7 +206,7 @@ final class Link
         ];
 
         if (empty($options['dsn'])) {
-            throw new LinkException('Empty `dsn` option given');
+            throw new LinkException('Empty "dsn" option given');
         }
 
         // Drop (in case).
@@ -221,7 +219,7 @@ final class Link
 
         // Throw a proper exeption instead of PDOException('could not find driver').
         if (empty($options['driver'])) {
-            throw new LinkException('Invalid scheme given in `dsn` option, no driver specified');
+            throw new LinkException('Invalid scheme given in "dsn" option, no driver specified');
         }
 
         return [...$optionsDefault, ...$options];

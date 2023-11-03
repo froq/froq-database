@@ -1,10 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\entity\meta;
 
 use froq\util\Objects;
@@ -14,30 +12,25 @@ use ReflectionClass, ReflectionProperty;
  * Base metadata class of `ClassMeta` & `PropertyMeta` classes.
  *
  * @package froq\database\entity\meta
- * @object  froq\database\entity\meta\Meta
+ * @class   froq\database\entity\meta\Meta
  * @author  Kerem Güneş
  * @since   5.0
  */
 abstract class Meta
 {
-    /** @const int */
-    public final const TYPE_CLASS    = 1,
-                       TYPE_PROPERTY = 2,
-                       TYPE_METHOD   = 3; // Not implemented (reserved).
+    /** Types. */
+    public const TYPE_CLASS    = 1,
+                 TYPE_PROPERTY = 2,
+                 TYPE_METHOD   = 3; // Not implemented (reserved).
 
-    /** @var ReflectionClass|ReflectionProperty */
+    /** Reflection of class / property. */
     private ReflectionClass|ReflectionProperty $reflection;
 
-    /** @var int */
     private int $type;
-
-    /** @var string */
     private string $name;
-
-    /** @var string */
     private string $class;
 
-    /** @var array */
+    /** Map of parsed data. */
     private array $data = [];
 
     /**
@@ -65,7 +58,7 @@ abstract class Meta
      *
      * @return int
      */
-    public final function getType(): int
+    public function getType(): int
     {
         return $this->type;
     }
@@ -75,7 +68,7 @@ abstract class Meta
      *
      * @return string
      */
-    public final function getName(): string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -85,7 +78,7 @@ abstract class Meta
      *
      * @return string
      */
-    public final function getShortName(): string
+    public function getShortName(): string
     {
         return match ($this->type) {
             self::TYPE_CLASS    => last(explode('\\', $this->name)),
@@ -98,7 +91,7 @@ abstract class Meta
      *
      * @return string
      */
-    public final function getClass(): string
+    public function getClass(): string
     {
         return $this->class;
     }
@@ -109,7 +102,7 @@ abstract class Meta
      * @param  array $data
      * @return void
      */
-    public final function setData(array $data): void
+    public function setData(array $data): void
     {
         foreach ($data as $key => &$value) {
             switch ($key) {
@@ -144,7 +137,7 @@ abstract class Meta
      *
      * @return array
      */
-    public final function getData(): array
+    public function getData(): array
     {
         return $this->data;
     }
@@ -155,9 +148,9 @@ abstract class Meta
      * @param  string $key
      * @return bool
      */
-    public final function hasDataItem(string $key): bool
+    public function hasDataItem(string $key): bool
     {
-        return array_get($this->data, $key) != null;
+        return array_get($this->data, $key) !== null;
     }
 
     /**
@@ -167,7 +160,7 @@ abstract class Meta
      * @param  mixed|null $default
      * @return mixed
      */
-    public final function getDataItem(string $key, mixed $default = null): mixed
+    public function getDataItem(string $key, mixed $default = null): mixed
     {
         return array_get($this->data, $key, $default);
     }
@@ -179,7 +172,7 @@ abstract class Meta
      * @param  mixed|null $default
      * @return bool
      */
-    public final function getOption(string $name, mixed $default = null): bool
+    public function getOption(string $name, mixed $default = null): bool
     {
         return (bool) $this->getDataItem($name, $default);
     }
@@ -190,7 +183,7 @@ abstract class Meta
      * @param  ReflectionClass|ReflectionProperty $reflection
      * @return void
      */
-    public final function setReflection(ReflectionClass|ReflectionProperty $reflection): void
+    public function setReflection(ReflectionClass|ReflectionProperty $reflection): void
     {
         $this->reflection = $reflection;
     }
@@ -200,7 +193,7 @@ abstract class Meta
      *
      * @return ReflectionClass|ReflectionProperty|null
      */
-    public final function getReflection(): ReflectionClass|ReflectionProperty|null
+    public function getReflection(): ReflectionClass|ReflectionProperty|null
     {
         return $this->reflection ?? null;
     }
@@ -213,12 +206,12 @@ abstract class Meta
      * @param  string $class
      * @return string
      */
-    public static final function prepareName(int $type, string $name, string $class): string
+    public static function prepareName(int $type, string $name, string $class): string
     {
         [$name, $class] = array_map('trim', [$name, $class]);
 
         // Fully-qualified name for properties.
-        if ($type == self::TYPE_PROPERTY && !str_contains($name, '.')) {
+        if ($type === self::TYPE_PROPERTY && !str_contains($name, '.')) {
             $name = $class . '.' . $name;
         }
 

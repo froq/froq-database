@@ -1,42 +1,44 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database;
 
 use froq\database\sql\{Sql, Name};
 use froq\database\result\{Row, Rows};
+use froq\database\common\{Profiler, Platform};
 use froq\database\trait\StatementTrait;
 use froq\common\trait\FactoryTrait;
-use froq\{pager\Pager, logger\Logger};
+use froq\log\Logger;
 use PDO, PDOStatement, PDOException, Throwable;
 
 /**
- * A database worker class, provides some util methods for such operations CRUD'ing and
- * query preparing, querying/executing SQL commands.
+ * A database worker class, provides some utility methods for such operations CRUD'ing
+ * and preparing queries, querying/executing SQL commands.
  *
  * @package froq\database
- * @object  froq\database\Database
+ * @class   froq\database\Database
  * @author  Kerem Güneş
  * @since   1.0, 4.0
  */
-final class Database
+class Database
 {
     use FactoryTrait, StatementTrait;
 
-    /** @var ?froq\logger\Logger */
+    /** Logger instance. */
     public readonly ?Logger $logger;
 
-    /** @var ?froq\database\Profiler */
+    /** Profiler instance. */
     public readonly ?Profiler $profiler;
 
-    /** @var froq\database\Link */
+    /** Platform instance. */
+    public readonly Platform $platform;
+
+    /** Link instance */
     public readonly Link $link;
 
-    /** @var array */
+    /** Options. */
     private array $options;
 
     /**
@@ -61,6 +63,11 @@ final class Database
             $this->profiler = new Profiler();
         } else {
             $this->profiler = null;
+        }
+
+        if (isset($options['dsn'])) {
+            $driver = strbcut($options['dsn'], ':');
+            $this->platform = new Platform($driver);
         }
 
         $this->options = $options;
@@ -173,7 +180,7 @@ final class Database
             // Extra check for unknown stuff.
             if ($pdoResult === false) {
                 $errorCode = $pdo->errorCode();
-                if ($errorCode != '00000' || $errorCode != '01000') {
+                if ($errorCode !== '00000' || $errorCode !== '01000') {
                     throw new PDOException('Unknown error');
                 }
             }
@@ -187,10 +194,10 @@ final class Database
     /**
      * Get a single row running given query or return `null` if no match.
      *
-     * @param  string            $query
-     * @param  array|null        $params
-     * @param  string|null       $fetch
-     * @param  string|bool|null  $flat
+     * @param  string           $query
+     * @param  array|null       $params
+     * @param  string|null      $fetch
+     * @param  string|bool|null $flat
      * @return mixed
      */
     public function get(string $query, array $params = null, string $fetch = null, string|bool $flat = null): mixed
@@ -206,11 +213,11 @@ final class Database
     /**
      * Get all rows running given query or return `null` if no matches.
      *
-     * @param  string            $query
-     * @param  array|null        $params
-     * @param  string|null       $fetch
-     * @param  string|bool|null  $flat
-     * @param  bool              $raw For returning a raw Result instance.
+     * @param  string           $query
+     * @param  array|null       $params
+     * @param  string|null      $fetch
+     * @param  string|bool|null $flat
+     * @param  bool             $raw For returning a raw Result instance.
      * @return mixed
      */
     public function getAll(string $query, array $params = null, string $fetch = null, string|bool $flat = null,
@@ -232,7 +239,7 @@ final class Database
     /**
      * Bridge method to `getAll()` for returning a `Result` instance.
      *
-     * @param  mixed ...$args Same with getAll().
+     * @param  mixed ...$args Same as in `getAll()` method.
      * @return froq\database\Result
      * @since  6.0
      */
@@ -247,7 +254,7 @@ final class Database
      * Bridge method to `getResult()` for returning a `Row` instance.
      *
      * @param  string   $query
-     * @param  mixed ...$args Same with getResult().
+     * @param  mixed ...$args Same as in `getResult()` method.
      * @return froq\database\result\Row|null
      * @since  6.0
      */
@@ -262,7 +269,7 @@ final class Database
      * Bridge method to `getResult()` for returning a `Row` instance.
      *
      * @param  string   $query
-     * @param  mixed ...$args Same with getResult().
+     * @param  mixed ...$args Same as in `getResult()` method.
      * @return froq\database\result\Rows
      * @since  6.0
      */
@@ -345,7 +352,7 @@ final class Database
      * Bridge method to `selectAll()` for returning a `Result` instance.
      *
      * @param  string   $table
-     * @param  mixed ...$args Same with selectAll().
+     * @param  mixed ...$args Same as in `selectAll()` method.
      * @return froq\database\Result
      * @since  6.0
      */
@@ -360,7 +367,7 @@ final class Database
      * Bridge method to `selectResult()` for returning a `Row` instance.
      *
      * @param  string   $table
-     * @param  mixed ...$args Same with selectResult().
+     * @param  mixed ...$args Same as in `selectResult()` method.
      * @return froq\database\result\Row|null
      * @since  6.0
      */
@@ -375,7 +382,7 @@ final class Database
      * Bridge method to `selectResult()` for returning a `Rows` instance.
      *
      * @param  string   $table
-     * @param  mixed ...$args Same with selectResult().
+     * @param  mixed ...$args Same as in `selectResult()` method.
      * @return froq\database\result\Rows
      * @since  6.0
      */
@@ -426,7 +433,7 @@ final class Database
             if (!$action) {
                 throw new DatabaseException('Conflict action is not given');
             }
-            if (!$update && strtolower($action) == 'update') {
+            if (!$update && strtolower($action) === 'update') {
                 throw new DatabaseException('Conflict action is update, but no update data given');
             }
 
@@ -623,18 +630,18 @@ final class Database
      */
     public function quoteName(string $input): string
     {
-        if ($input == '*') {
+        if ($input === '*') {
             return $input;
         }
 
-        if ($input && $input[0] == '@') {
+        if ($input && $input[0] === '@') {
             $input = substr($input, 1);
         }
 
         // For row(..) or other parenthesis stuff.
         if (strpos($input, '(') === 0) {
             $rpos = strpos($input, ')'); // Not parsed array[(foo, ..)] stuff, sorry.
-            $rpos || throw new DatabaseException('Unclosed parenthesis in `%s` input', $input);
+            $rpos || throw new DatabaseException('Unclosed parenthesis in %q input', $input);
 
             $name = substr($input, 1, $rpos - 1); // Eg: part foo of (foo).
             $rest = substr($input, $rpos + 1) ?: ''; // Eg: part ::int of (foo)::int.
@@ -649,8 +656,7 @@ final class Database
                    $this->quoteNames(substr($input, $pos + 1));
         }
 
-        $driver = $this->link()->driver();
-        if ($driver == 'pgsql') {
+        if ($this->platform->equals('pgsql')) {
             // Cast notations (eg: foo::int).
             if ($pos = strpos($input, '::')) {
                 return $this->quoteName(substr($input, 0, $pos)) . substr($input, $pos);
@@ -666,17 +672,13 @@ final class Database
                     $last = ']';
                 }
 
-                return (strtolower($name) == 'array')
+                return (strtolower($name) === 'array')
                      ? $name . '[' . $this->quoteNames($rest) . $last
                      : $this->quoteName($name) . '[' . $rest . $last;
             }
         }
 
-        return match ($driver) {
-            'mysql' => '`' . trim($input, '`')  . '`',
-            'mssql' => '[' . trim($input, '[]') . ']',
-            default => '"' . trim($input, '"')  . '"'
-        };
+        return $this->platform->quoteName($input);
     }
 
     /**
@@ -716,7 +718,10 @@ final class Database
         $format = (string) $format;
 
         if (is_array($input) && $format !== '?a') {
-            return array_map(fn($input) => $this->escape($input, $format), $input);
+            return array_map(
+                fn(mixed $input): mixed => $this->escape($input, $format),
+                $input
+            );
         }
 
         if (is_object($input)) {
@@ -731,8 +736,8 @@ final class Database
                 ($input instanceof \DateTimeInterface) => $this->escapeString($input->format('Y-m-d H:i:s')),
 
                 default => throw new DatabaseException(
-                    'Invalid input object `%s` [valids: %A]',
-                    [$input::class, [Query::class, Sql::class, Name::class, \Stringable::class, \DateTimeInterface::class]]
+                    'Invalid input object %q [valids: %A]',
+                    [$input::class, [Query::class, Sql::class, Name::class, 'Stringable', 'DateTimeInterface']]
                 )
             };
         }
@@ -751,20 +756,20 @@ final class Database
                 '?a' => join(', ', (array) $this->escape($input)),
 
                 default => throw new DatabaseException(
-                    'Unimplemented input format `%s`', $format
+                    'Unimplemented input format %q', $format
                 )
             };
         }
 
         // Internal types.
-        return match (get_type($input)) {
+        return match ($type = get_type($input)) {
             'null'         => 'NULL',
             'string'       => $this->escapeString($input),
             'int', 'float' => $input,
             'bool'         => $input ? 'true' : 'false',
 
             default => throw new DatabaseException(
-                'Unimplemented input type `%t`', $input
+                'Unimplemented input type %q', $type
             )
         };
     }
@@ -807,11 +812,7 @@ final class Database
      */
     public function escapeName(string $input): string
     {
-        $input = match ($this->link()->driver()) {
-            'mysql' => str_replace('`', '``', $input),
-            'mssql' => str_replace(']', ']]', $input),
-            default => str_replace('"', '""', $input)
-        };
+        $input = $this->platform->escapeName($input);
 
         return $this->quoteName($input);
     }
@@ -887,7 +888,7 @@ final class Database
                     $ipos = $pos - 1;
                     if (!array_key_exists($ipos, $params)) {
                         throw new DatabaseException(
-                            'Replacement `%s` not found in given parameters', $ipos
+                            'Replacement #%i not found in given parameters', $ipos
                         );
                     }
 
@@ -913,11 +914,11 @@ final class Database
 
             foreach ($holders as $holder) {
                 // Named.
-                if ($holder[0] == ':') {
+                if ($holder[0] === ':') {
                     $key = substr($holder, 1);
                     if (!array_key_exists($key, $params)) {
                         throw new DatabaseException(
-                            'Replacement key `%s` not found in given parameters', $key
+                            'Replacement key %q not found in given parameters', $key
                         );
                     }
 
@@ -933,7 +934,7 @@ final class Database
                 else {
                     if (!array_key_exists($i, $params)) {
                         throw new DatabaseException(
-                            'Replacement index `%s` not found in given parameters', $i
+                            'Replacement index %q not found in given parameters', $i
                         );
                     }
 
@@ -969,7 +970,7 @@ final class Database
     }
 
     /**
-     * Init a `Sql` object with/without given params.
+     * Init a `Sql` object with/without given params to prepare.
      *
      * @param  string     $input
      * @param  array|null $params
@@ -994,32 +995,17 @@ final class Database
     }
 
     /**
-     * Init a `Pager` object.
-     *
-     * @param  int|null   $count
-     * @param  array|null $attributes
-     * @return froq\pager\Pager
-     */
-    public function initPager(int $count = null, array $attributes = null): Pager
-    {
-        return (new Pager($attributes))->run($count);
-    }
-
-    /**
-     * Prepare an input escaping names only (eg: @id => "id" for PgSQL).
-     *
-     * @param  string $input
-     * @return string
+     * Prepare an input escaping names only (eg: `@id => "id"` for PgSQL).
      */
     private function prepareNameInput(string $input): string
     {
         $input = trim($input);
 
-        if ($input != '') {
+        if ($input !== '') {
             // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
             if (str_contains($input, '@')) {
                 $input = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
-                    if (count($match) == 1) {
+                    if (count($match) === 1) {
                         return $this->escapeNames(substr($match[0], 2, -1));
                     }
                     return $this->escapeName($match[1]);
@@ -1033,11 +1019,6 @@ final class Database
     /**
      * Prepare a where input.
      *
-     * @param  string|array $input
-     * @param  array|null   $params
-     * @param  string|null  $op
-     * @return array
-     * @since  4.15
      * @throws froq\database\DatabaseException
      */
     private function prepareWhereInput(string|array $input, array $params = null, string $op = null): array
@@ -1062,7 +1043,7 @@ final class Database
 
                     $sign = ' = ';
                     if (in_array($field[-1], $signs, true)) {
-                        $sign  = sprintf(' %s ', ($field[-1] == '!') ? '!=' : $field[-1]);
+                        $sign  = format(' %s ', $field[-1] === '!' ? '!=' : $field[-1]);
                         $field = substr($field, 0, -1);
                     }
 
@@ -1072,7 +1053,7 @@ final class Database
                     // }
 
                     // ctype_alnum($field) || throw new DatabaseException(
-                    //     'Invalid field name `%s` in where input, use an alphanumeric name', $field
+                    //     'Invalid field name %q in where input, use an alphanumeric name', $field
                     // );
 
                     if (is_array($value)) {
@@ -1105,12 +1086,13 @@ final class Database
     {
         if ($data) {
             $data = is_list($data) ? $data : (array) $data;
-            if ($limit == 1) {
+            if ($limit === 1) {
                 $data = array_select($data, is_string($flat) ? $flat : key($data));
             } else {
                 $data = array_column($data, is_string($flat) ? $flat : key($data[0]));
             }
         }
+
         return $data;
     }
 

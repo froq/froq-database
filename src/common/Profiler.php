@@ -1,29 +1,27 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
+namespace froq\database\common;
 
-namespace froq\database;
-
-use froq\util\misc\{Timer, Storage};
+use froq\util\{Timer, storage\Storage};
 use PDOStatement;
 
 /**
- * A profiling class for database connection & queries.
+ * Profiler class for database connection & queries.
  *
- * @package froq\database
- * @object  froq\database\Profiler
+ * @package froq\database\common
+ * @class   froq\database\common\Profiler
  * @author  Kerem Güneş
  * @since   4.0
  */
-final class Profiler
+class Profiler
 {
-    /** @var froq\util\misc\Storage */
+    /** Profile storage. */
     private Storage $profiles;
 
-    /** @var int */
+    /** Query count. */
     private int $queryCount = 0;
 
     /**
@@ -122,6 +120,7 @@ final class Profiler
     /**
      * Get last query.
      *
+     * @param  string|null $key
      * @return float|string|array|null
      */
     public function lastQuery(string $key = null): float|string|array|null
@@ -226,6 +225,8 @@ final class Profiler
 
     /**
      * Start a profile entry for a connection or query.
+     *
+     * @throws Exception
      */
     private function start(string $type): void
     {
@@ -237,15 +238,14 @@ final class Profiler
                 $this->profiles->query[$this->queryCount]['timer'] = new Timer();
                 break;
             default:
-                throw new ProfilerException(
-                    'Invalid type `%s` [valids: connection, query]',
-                    $type
-                );
+                throw new \Exception(format('Invalid type %q [valids: connection, query]', $type));
         }
     }
 
     /**
      * End a profile entry for a connection or query.
+     *
+     * @throws Exception
      */
     private function end(string $type): void
     {
@@ -263,10 +263,7 @@ final class Profiler
                 unset($this->profiles->query[$this->queryCount]['timer']);
                 break;
             default:
-                throw new ProfilerException(
-                    'Invalid type `%s` [valids: connection, query]',
-                    $type
-                );
+                throw new \Exception(format('Invalid type %q [valids: connection, query]', $type));
         }
     }
 }

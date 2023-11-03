@@ -1,20 +1,18 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * Copyright (c) 2015 · Kerem Güneş
  * Apache License 2.0 · http://github.com/froq/froq-database
  */
-declare(strict_types=1);
-
 namespace froq\database\trait;
 
 use froq\database\DatabaseException;
 use PDOStatement, PDOException;
 
 /**
- * A trait, provides `PDOStatement` related stuff used by `Database` only.
+ * A trait, provides `PDOStatement` related stuff & used by `Database` only.
  *
  * @package froq\database\trait
- * @object  froq\database\trait\StatementTrait
+ * @class   froq\database\trait\StatementTrait
  * @author  Kerem Güneş
  * @since   6.0
  */
@@ -49,12 +47,13 @@ trait StatementTrait
      */
     public function executeStatement(string|PDOStatement $input, array $params = null): PDOStatement
     {
-        if (is_string($input)) {
-            $statement = $this->prepareStatement($input);
+        $statement = is_string($input) ? $this->prepareStatement($input) : $input;
+
+        try {
+            $statement->execute($params);
+            return $statement;
+        } catch (PDOException $e) {
+            throw new DatabaseException($e);
         }
-
-        $statement->execute($params);
-
-        return $statement;
     }
 }
