@@ -40,7 +40,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
      * @param  PDO           $pdo
      * @param  PDOStatement  $pdoStatement
      * @param  array|null    $options
-     * @param  Database|null $db
+     * @param  Database|null $db @internal
      * @throws froq\database\ResultException
      */
     public function __construct(PDO $pdo, PDOStatement $pdoStatement, array $options = null, Database $db = null)
@@ -61,7 +61,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
                 'array'  => $fetchType = PDO::FETCH_ASSOC,
                 'object' => $fetchType = PDO::FETCH_OBJ,
                 default  => [
-                    // All others are as class.
+                    // All others are class.
                     $fetchType  = PDO::FETCH_CLASS,
                     $fetchClass = class_exists($options['fetch']) ? $options['fetch'] :
                         throw new ResultException('Fetch class %q not found', $options['fetch'])
@@ -598,6 +598,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
 
         $options = [...$optionsDefault, ...$options ?? []];
 
+        // As default (for insert queries).
         $options['sequence'] = (bool) ($options['sequence'] ?? true);
 
         return $options;
