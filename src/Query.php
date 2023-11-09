@@ -69,7 +69,6 @@ class Query implements \Stringable
      * @param  string|null  $as
      * @param  bool         $prepare
      * @return self
-     * @throws froq\database\QueryException
      */
     public function from(string|Query $from, string $as = null, bool $prepare = true): self
     {
@@ -107,7 +106,7 @@ class Query implements \Stringable
             if (is_array($select)) {
                 if ($sas !== null) {
                     $select = array_map(
-                        // Prefix all fields with "sas" argument.
+                        // Prefix all fields with "sas" argument (eg: User.id).
                         fn($field): string => $this->prepareField("{$sas}.{$field}"),
                         $select
                     );
@@ -503,9 +502,9 @@ class Query implements \Stringable
     }
 
     /**
-     * Set sequence directive of query stack.
+     * Set sequence directive of query stack (@see Result).
      *
-     * @param  string|array $option
+     * @param  bool $option
      * @return self
      * @since  5.0
      */
@@ -517,9 +516,9 @@ class Query implements \Stringable
     }
 
     /**
-     * Set fetch directive of query stack.
+     * Set fetch directive of query stack (@see Result).
      *
-     * @param  string|array $option
+     * @param  string $option Eg: "array", "object" or class-name.
      * @return self
      * @since  5.0
      */
@@ -1512,19 +1511,20 @@ class Query implements \Stringable
      * Paginate query result to set this query's offset / limit.
      *
      * @param  int                             $page
-     * @param  int|null                        $limit
+     * @param  int                             $limit
+     * @param  int|null                        $count If already taken before (performance).
      * @param  froq\pagination\Paginator|null &$paginator
      * @return self
      */
-    public function paginate(int $page, int $limit = 10, Paginator &$paginator = null): self
+    public function paginate(int $page, int $limit = 10, int $count = null, Paginator &$paginator = null): self
     {
         $limit  = abs($limit);
         $offset = ($page * $limit) - $limit;
 
-        // Paginator wanted.
-        if (func_num_args() === 3) {
+        // If paginator wanted.
+        if (func_num_args() === 4) {
             $paginator = new Paginator($page, perPage: $limit);
-            $paginator->paginate($this->count());
+            $paginator->paginate($count ?? $this->count());
         }
 
         return $this->limit($limit, $offset);
