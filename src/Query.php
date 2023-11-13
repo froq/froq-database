@@ -1643,7 +1643,7 @@ class Query implements \Stringable
      */
     public function toHash(): string
     {
-        return md5($this::class . serialize(sorted($this->toArray(), key: true)));
+        return md5($this::class . serialize(sorted($this->stack, key: true)));
     }
 
     /**
