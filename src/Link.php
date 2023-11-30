@@ -211,6 +211,7 @@ class Link
         // Drop (in case).
         $options['driver'] = null;
 
+        // Eg: pgsql:host=localhost;dbname=bugs ...
         if ($driver = strbcut($options['dsn'], ':')) {
             $options['driver'] = $driver;
         }

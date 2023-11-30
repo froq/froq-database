@@ -80,6 +80,7 @@ class Transaction
         try {
             $result = false;
 
+            // When single (0) level or no support.
             if (!$this->savepointLevel || !$this->savepointAvailable) {
                 $result = $this->pdo->beginTransaction();
             } else {
@@ -114,6 +115,7 @@ class Transaction
 
             $this->savepointLevel--;
 
+            // When single (0) level or no support.
             if (!$this->savepointLevel || !$this->savepointAvailable) {
                 $result = $this->pdo->commit();
             } else {
@@ -146,6 +148,7 @@ class Transaction
 
             $this->savepointLevel--;
 
+            // When single (0) level or no support.
             if (!$this->savepointLevel || !$this->savepointAvailable) {
                 $result = $this->pdo->rollback();
             } else {
