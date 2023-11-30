@@ -32,7 +32,7 @@ class Platform
             ));
         }
 
-        $this->name = strtolower($name);
+        $this->name = $name;
     }
 
     /**
