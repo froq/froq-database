@@ -36,7 +36,7 @@ class Transaction
     {
         $this->pdo                = $pdo;
         $this->savepointLevel     = 0;
-        $this->savepointAvailable = $this->supportsSavepoints($pdo);
+        $this->savepointAvailable = $this->supportsSavepoints();
     }
 
     /**
@@ -165,8 +165,12 @@ class Transaction
      * Get support state for savepoints.
      * https://4js.com/techdocs/fjs-fgl-manual/index.html#fgl-topics/c_fgl_sql_programming_095.html
      */
-    private function supportsSavepoints(PDO $pdo): bool
+    private function supportsSavepoints(): bool
     {
-        return in_array($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), ['mysql', 'pgsql', 'sqlite'], true);
+        return in_array(
+            $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
+            ['mysql', 'pgsql', 'sqlite'],
+            true
+        );
     }
 }
