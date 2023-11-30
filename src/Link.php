@@ -103,6 +103,7 @@ class Link
             return;
         }
 
+        // Extract prepared options.
         ['dsn'     => $dsn,     'driver'   => $driver,
          'user'    => $user,    'pass'     => $pass,
          'charset' => $charset, 'timezone' => $timezone,
@@ -115,7 +116,7 @@ class Link
         if ($driver === 'mysql') {
             // For a proper return that gives '1' always even with identical values in UPDATE queries.
             $options[PDO::MYSQL_ATTR_FOUND_ROWS] ??= true;
-            // For a proper memory usage.
+            // For a proper memory usage (needs PDOStatement free action for consecutive queries, eg: $stmt=null).
             $options[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] ??= false;
         }
 

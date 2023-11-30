@@ -65,6 +65,7 @@ class Database
             $this->profiler = null;
         }
 
+        // Grab driver name.
         if (isset($options['dsn'])) {
             $driver = strbcut($options['dsn'], ':');
             $this->platform = new Platform($driver);
@@ -579,8 +580,8 @@ class Database
     /**
      * Run a transaction in a try/catch block or return a `Transaction` object.
      *
-     * @param  callable|null $call
-     * @param  callable|null $callError
+     * @param  callable|null $call      Eg: fn(Database $db) ...
+     * @param  callable|null $callError Eg: fn(Throwable $e, ?Database $db) ...
      * @return mixed
      * @throws Throwable
      */
