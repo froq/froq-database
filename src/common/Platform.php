@@ -22,10 +22,17 @@ class Platform
      * Constructor.
      *
      * @param string $name
+     * @param Exception
      */
     public function __construct(string $name)
     {
-        $this->name = $name;
+        if (!ctype_alpha($name)) {
+            throw new \Exception(format(
+                'Invalid platform name: %q, must be alphabetic name', $name
+            ));
+        }
+
+        $this->name = strtolower($name);
     }
 
     /**
