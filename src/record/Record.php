@@ -5,7 +5,7 @@
  */
 namespace froq\database\record;
 
-use froq\database\{Database, DatabaseRegistry, DatabaseRegistryException, Query};
+use froq\database\{Database, DatabaseRegistry, Query};
 use froq\database\{common\Table, trait\RecordTrait};
 use froq\validation\ValidationError;
 use froq\common\trait\StateTrait;
@@ -45,6 +45,7 @@ class Record implements RecordInterface
      * @param  array|null                             $data
      * @param  array|null                             $options
      * @param  array|null                             $validations
+     * @causes froq\database\DatabaseRegistryException If no default database present.
      */
     public function __construct(Database $db = null, string|Table $table = null, string|Form $form = null,
         array $data = null, array $options = null, array $validations = null)
