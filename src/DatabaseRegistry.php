@@ -64,7 +64,9 @@ class DatabaseRegistry extends Registry
             // Try to find caller method & argument from backtrace.
             $match = [__CLASS__, __FUNCTION__];
             $trace = (new TraceStack)->find(fn(Trace $t): bool => (
-                $t->callerMethod && $t->class === $match[0] && $t->function === $match[1]
+                   $t->callerMethod !== null
+                && $t->class        === $match[0]
+                && $t->function     === $match[1]
             ));
 
             if ($trace) {
