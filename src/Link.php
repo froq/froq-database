@@ -193,8 +193,6 @@ class Link
     }
 
     /**
-     * Prepare options.
-     *
      * @throws froq\database\LinkException
      */
     private static function prepareOptions(array $options): array
@@ -213,12 +211,11 @@ class Link
         // Drop (in case).
         $options['driver'] = null;
 
-        $dsn = trim((string) $options['dsn'], ';');
-        if (preg_match('~^(\w+):~', $dsn, $match)) {
-            $options['driver'] = $match[1];
+        if ($driver = strbcut($options['dsn'], ':')) {
+            $options['driver'] = $driver;
         }
 
-        // Throw a proper exeption instead of PDOException('could not find driver').
+        // Throw a proper exception instead of PDOException('could not find driver').
         if (empty($options['driver'])) {
             throw new LinkException('Invalid scheme given in "dsn" option, no driver specified');
         }
