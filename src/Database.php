@@ -110,15 +110,15 @@ class Database
      * Run a SQL query and returning its result as `Result` object, or throw a
      * `DatabaseQueryException` if any query error occurs.
      *
-     * @param  string     $query
-     * @param  array|null $params
-     * @param  array|null $options
+     * @param  string|Query $query
+     * @param  array|null   $params
+     * @param  array|null   $options
      * @return froq\database\Result
      * @throws froq\database\{DatabaseException|DatabaseQueryException}
      */
-    public function query(string $query, array $params = null, array $options = null): Result
+    public function query(string|Query $query, array $params = null, array $options = null): Result
     {
-        $query = $params ? $this->prepare($query, $params) : trim($query);
+        $query = $params ? $this->prepare((string) $query, $params) : trim((string) $query);
         $query || throw new DatabaseException('Empty query');
 
         try {
@@ -149,15 +149,14 @@ class Database
      * Run a SQL query and returning its result as `int` or `null`, or throw a
      * `DatabaseQueryException` if any error occurs.
      *
-     * @param  string     $query
-     * @param  array|null $params
+     * @param  string|Query $query
+     * @param  array|null   $params
      * @return int
      * @throws froq\database\{DatabaseException|DatabaseQueryException}
-     * @since  4.3
      */
-    public function execute(string $query, array $params = null): int
+    public function execute(string|Query $query, array $params = null): int
     {
-        $query = $params ? $this->prepare($query, $params) : trim($query);
+        $query = $params ? $this->prepare((string) $query, $params) : trim((string) $query);
         $query || throw new DatabaseException('Empty query');
 
         try {
@@ -195,13 +194,13 @@ class Database
     /**
      * Get a single row running given query or return `null` if no match.
      *
-     * @param  string           $query
+     * @param  string|Query     $query
      * @param  array|null       $params
      * @param  string|null      $fetch
      * @param  string|bool|null $flat
      * @return mixed
      */
-    public function get(string $query, array $params = null, string $fetch = null, string|bool $flat = null): mixed
+    public function get(string|Query $query, array $params = null, string $fetch = null, string|bool $flat = null): mixed
     {
         $row = $this->query($query, $params, ['fetch' => $fetch])->rows(0);
 
@@ -214,14 +213,14 @@ class Database
     /**
      * Get all rows running given query or return `null` if no matches.
      *
-     * @param  string           $query
+     * @param  string|Query     $query
      * @param  array|null       $params
      * @param  string|null      $fetch
      * @param  string|bool|null $flat
      * @param  bool             $raw For returning a raw Result instance.
      * @return mixed
      */
-    public function getAll(string $query, array $params = null, string $fetch = null, string|bool $flat = null,
+    public function getAll(string|Query $query, array $params = null, string $fetch = null, string|bool $flat = null,
         bool $raw = false): mixed
     {
         $result = $this->query($query, $params, ['fetch' => $fetch]);
@@ -244,7 +243,7 @@ class Database
      * @return froq\database\Result
      * @since  6.0
      */
-    public function getResult(string $query, mixed ...$args): Result
+    public function getResult(string|Query $query, mixed ...$args): Result
     {
         $args['raw'] = true;
 
@@ -259,7 +258,7 @@ class Database
      * @return froq\database\result\Row|null
      * @since  6.0
      */
-    public function getRow(string $query, mixed ...$args): Row|null
+    public function getRow(string|Query $query, mixed ...$args): Row|null
     {
         $args = ['fetch' => 'array', 'flat' => null] + $args;
 
@@ -274,7 +273,7 @@ class Database
      * @return froq\database\result\Rows
      * @since  6.0
      */
-    public function getRows(string $query, mixed ...$args): Rows
+    public function getRows(string|Query $query, mixed ...$args): Rows
     {
         $args = ['fetch' => 'array', 'flat' => null] + $args;
 
