@@ -264,7 +264,7 @@ class EntityManager
     public function findBy(object|string $entity, string|array|Query $where = null, array $params = null,
         string $order = null, int $limit = null, int $offset = null): EntityList
     {
-        // When no entity instance given.
+        // If no entity instance given.
         is_string($entity) && $entity = new $entity();
 
         /** @var froq\database\entity\meta\ClassMeta */
@@ -389,7 +389,7 @@ class EntityManager
      */
     public function removeBy(string|object $entity, string|array|Query $where = null, array $params = null): EntityList
     {
-        // When no entity instance given.
+        // If no entity instance given.
         is_string($entity) && $entity = new $entity();
 
         /** @var froq\database\entity\meta\ClassMeta */
@@ -565,12 +565,12 @@ class EntityManager
         $ref = $classMeta->getReflection();
 
         if ($entity) {
-            // When "FIELDS" constant is defined on entity class.
+            // If FIELDS constant is defined on entity class.
             if ($ref->hasConstant('FIELDS')) {
                 $ret = $entity::FIELDS;
                 $def = 1;
             }
-            // When "fields()" method exists on entity class.
+            // If fields() method is defined on entity class.
             elseif ($ref->hasMethod('fields')) {
                 $ret = $entity->fields();
                 $def = 2;
@@ -578,15 +578,15 @@ class EntityManager
 
             if ($def && !is_type_of($ret, 'array|string')) {
                 $message = ($def === 1)
-                    ? 'Constant %s::FIELDS must define array, %t defined'
-                    : 'Method %s::fields() must return array, %t returned';
+                    ? 'Constant %s::FIELDS must define array|string, %t defined'
+                    : 'Method %s::fields() must return array|string, %t returned';
                 throw new EntityManagerException($message, [$entity::class, $ret]);
             }
         }
 
         if (!$def) {
             foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
-                // Skip entity properties & non-fields (with no "field" definition).
+                // Skip entity properties & non-fields (no "field", "field:null" definition).
                 if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
                     continue;
                 }
@@ -615,12 +615,12 @@ class EntityManager
         $ref = $classMeta->getReflection();
 
         if ($entity) {
-            // When "VALIDATIONS" constant is defined on entity class.
+            // If VALIDATIONS constant is defined on entity class.
             if ($ref->hasConstant('VALIDATIONS')) {
                 $ret = $entity::VALIDATIONS;
                 $def = 1;
             }
-            // When "validations()" method exists on entity class.
+            // If validations() method is defined on entity class.
             elseif ($ref->hasMethod('validations')) {
                 $ret = $entity->validations();
                 $def = 2;
@@ -634,10 +634,9 @@ class EntityManager
             }
         }
 
-        // When properties have "validation" meta on entity class.
         if (!$def) {
             foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
-                // Skip entity properties & non-fields (with no "field" definition).
+                // Skip entity properties & non-fields (no "field", "field:null" definition).
                 if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
                     continue;
                 }
@@ -669,11 +668,11 @@ class EntityManager
      */
     private function setInternalPropertyValues(object $entity, Record $record, array $state = null): void
     {
-        // When entity extends Entity.
+        // If entity extends Entity.
         if ($entity instanceof Entity) {
             $entity->proxy()->setManager($this);
 
-            // Set result state.
+            // Set result state (saved, finded, removed).
             $state && $entity->proxy()->setState(...$state);
         }
     }
@@ -716,13 +715,13 @@ class EntityManager
      */
     private function setPropertyValue(object $entity, ReflectionProperty $property, mixed $value): void
     {
-        // When property-specific setter is available.
+        // If property-specific setter is available.
         if (method_exists($entity, $method = 'set' . $property->name)) {
             $entity->$method($value);
             return;
         }
 
-        // Prevent invalid types.
+        // Prevent invalid (non-nullable) types.
         if ($value === null && $property->getType()?->allowsNull() === false) {
             return;
         }
@@ -735,7 +734,7 @@ class EntityManager
      */
     private function getPropertyValue(object $entity, ReflectionProperty $property): mixed
     {
-        // When property-specific getter is available.
+        // If property-specific getter is available.
         if (method_exists($entity, $method = 'get' . $property->name)) {
             return $entity->$method();
         }
@@ -755,12 +754,12 @@ class EntityManager
             $params = (array) $params;
         } else {
             foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
-                // Skip entity properties & non-fields (with no "field" definition).
+                // Skip entity properties & non-fields (no "field", "field:null" definition).
                 if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
                     continue;
                 }
 
-                // When "where" does not contains a condition already.
+                // If "where" does not contains a condition already.
                 if (!array_key_exists($field, $where)) {
                     $value = $this->getPropertyValue($entity, $propertyMeta->getReflection());
                     // Skip nulls.
