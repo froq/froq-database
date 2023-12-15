@@ -31,7 +31,7 @@ class MetaParser
     {
         is_object($class) && $class = $class::class;
 
-        // Check cache & a missing stuff (cos' of APCu cache).
+        // Check cache & a missing stuff (cos of APCu cache).
         if ($withProperties && ($classMeta = MetaCache::getItem($class))) {
             if (!$classMeta->getReflection()) {
                 $classMeta->setReflection(
@@ -106,7 +106,7 @@ class MetaParser
     {
         is_object($class) && $class = $class::class;
 
-        // Check cache & add missing stuff (cos' of APCu cache).
+        // Check cache & add missing stuff (cos of APCu cache).
         if ($propertyMeta = MetaCache::getItem($class .'.'. $property)) {
             if (!$propertyMeta->getReflection()) {
                 $propertyMeta->setReflection(
