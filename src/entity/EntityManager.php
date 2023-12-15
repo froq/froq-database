@@ -550,7 +550,7 @@ class EntityManager
     private function getPropertyMeta(string|object $entity, string $property): PropertyMeta
     {
         return MetaParser::parsePropertyMeta($entity, $property)
-            ?: throw new EntityManagerException('No meta on class property %s:$s', get_class_name($entity), $property);
+            ?: throw new EntityManagerException('No meta on class property %s::$s', get_class_name($entity), $property);
     }
 
     /**
