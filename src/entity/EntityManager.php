@@ -721,9 +721,41 @@ class EntityManager
             return;
         }
 
-        // Prevent invalid (non-nullable) types.
-        if ($value === null && $property->getType()?->allowsNull() === false) {
+        $propertyType = $property->getType();
+
+        // Skip non-nullables (false, 'cos non-typed is nullable).
+        if ($value === null && $propertyType?->allowsNull() === false) {
             return;
+        }
+
+        // Handle types.
+        if ($propertyType) {
+            $propertyType = \XReflectionType::from($propertyType);
+            if ($propertyType->isBuiltin()) {
+                settype($value, $propertyType->getName());
+            } else {
+                // Date/time (interface, subclass or union).
+                foreach ($propertyType->getNames() as $name) {
+                    if (equals($name, 'DateTime', 'DateTimeImmutable', 'DateTimeInterface')) {
+                        $class = is_subclass_of($name, 'DateTimeInterface')
+                            ? $name       // DateTime, DateTimeImmutable.
+                            : 'DateTime'; // DateTimeInterface.
+
+                        // Regular date.
+                        if (is_string($value)) {
+                            $value = new $class($value);
+                        } else {
+                            // Time / microtime.
+                            if (is_int($value)) {
+                                $value = $class::createFromFormat('U', sprintf('%010d', $value));
+                            } elseif (is_float($value)) {
+                                $value = $class::createFromFormat('U.u', sprintf('%.6F', $value));
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
         }
 
         $property->setValue($entity, $value);
