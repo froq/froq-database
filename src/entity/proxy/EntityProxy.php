@@ -7,6 +7,7 @@ namespace froq\database\entity\proxy;
 
 use froq\database\entity\{EntityManager, Entity};
 use froq\common\trait\StateTrait;
+use ReflectionProperty;
 
 /**
  * A proxy class for entity classes.
@@ -64,5 +65,20 @@ class EntityProxy extends Proxy
     public function remove(Entity $entity): Entity
     {
         return $this->manager->remove($entity);
+    }
+
+    /** Field ref cache (NOT static). */
+    private array $refs = [];
+
+    /** Set a field ref as cached. */
+    public function setRef(string $field, ReflectionProperty|false $ref): void
+    {
+        $this->refs[$field] = $ref;
+    }
+
+    /** Get a field ref if cached. */
+    public function getRef(string $field): ReflectionProperty|false|null
+    {
+        return $this->refs[$field] ?? null;
     }
 }

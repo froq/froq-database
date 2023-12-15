@@ -172,7 +172,8 @@ abstract class Entity implements EntityInterface
     {
         $data = [];
 
-        foreach ($this->child->getProperties() as $name => $_) {
+        /** @var array<string> */
+        foreach ($this->child->getProperties(true) as $name) {
             if ($ref = $this->getPropertyReflection($name)) {
                 $data[$name] = $ref->isInitialized($this) ? $ref->getValue($this) : null;
             }
@@ -259,6 +260,16 @@ abstract class Entity implements EntityInterface
     private function getPropertyReflection(string $name): ReflectionProperty|null
     {
         $class = $this->child->getName();
+        $field = $class . '.' . $name;
+
+        // Try cached one if exists.
+        $ref = $this->proxy->getRef($field);
+        if ($ref instanceof ReflectionProperty) {
+            return $ref; // Exists.
+        }
+        if ($ref === false) {
+            return null; // Absent (denied).
+        }
 
         // Try to get in regular way.
         if ($this->child->hasProperty($name)) {
@@ -266,6 +277,8 @@ abstract class Entity implements EntityInterface
 
             // Must be same class & non-static.
             if ($ref->class === $class && !$ref->isStatic()) {
+                $this->proxy->setRef($field, $ref);
+
                 return $ref;
             }
         }
@@ -273,10 +286,16 @@ abstract class Entity implements EntityInterface
         // Try to get from parsed entity meta, looking for ClassMeta properties.
         // @tome: Do NOT use this method like getMeta(class, property) as it catches EntityManagerException only
         // for empty meta, NOT absent property exceptions (reflection related, so MetaException in MetaParser).
-        $propertyMeta = $this->proxy->getManager()?->getMeta($class)?->getPropertyMeta($name);
-        if ($propertyMeta) {
-            return $propertyMeta->getReflection();
+        $propertyMetaRef = $this->proxy->getManager()?->getMeta($class)?->getPropertyMeta($name)?->getReflection();
+
+        if ($ref = $propertyMetaRef) {
+            $this->proxy->setRef($field, $ref);
+
+            return $ref;
         }
+
+        // Don't come back for this class.
+        $this->proxy->setRef($field, false);
 
         return null;
     }
