@@ -5,11 +5,12 @@
  */
 namespace froq\database\common;
 
-use froq\util\{Timer, storage\Storage};
+use froq\util\storage\Storage;
+use froq\util\bench\Timer;
 use PDOStatement;
 
 /**
- * Profiler class for database connection & queries.
+ * Profiler class for database link & queries.
  *
  * @package froq\database\common
  * @class   froq\database\common\Profiler
@@ -49,13 +50,13 @@ class Profiler
     }
 
     /**
-     * Get connection profile.
+     * Get link profile.
      *
      * @return array|null
      */
-    public function connectionProfile(): array|null
+    public function linkProfile(): array|null
     {
-        return $this->profiles->connection;
+        return $this->profiles->link;
     }
 
     /**
@@ -93,14 +94,14 @@ class Profiler
     }
 
     /**
-     * Profile a connection.
+     * Profile a link.
      *
      * @param  callable $call
      * @return void
      */
-    public function profileConnection(callable $call): void
+    public function profileLink(callable $call): void
     {
-        $this->profile('connection', $call);
+        $this->profile('link', $call);
     }
 
     /**
@@ -164,10 +165,10 @@ class Profiler
         $totalTime  = 0.0;
         $totalTimes = [];
 
-        if ($this->profiles->connection) {
-            $totalTime += $this->profiles->connection['time'];
+        if ($this->profiles->link) {
+            $totalTime += $this->profiles->link['time'];
             if (!$timeOnly) {
-                $totalTimes[] = 'connection('. $totalTime .')';
+                $totalTimes[] = 'link('. $totalTime .')';
             }
         }
 
@@ -224,37 +225,37 @@ class Profiler
     }
 
     /**
-     * Start a profile entry for a connection or query.
+     * Start a profile entry for a link or query.
      *
      * @throws Exception
      */
     private function start(string $type): void
     {
         switch ($type) {
-            case 'connection':
-                $this->profiles->connection['timer'] = new Timer();
+            case 'link':
+                $this->profiles->link['timer'] = new Timer();
                 break;
             case 'query':
                 $this->profiles->query[$this->queryCount]['timer'] = new Timer();
                 break;
             default:
-                throw new \Exception(format('Invalid type %q [valids: connection, query]', $type));
+                throw new \Exception(format('Invalid type %q [valids: link, query]', $type));
         }
     }
 
     /**
-     * End a profile entry for a connection or query.
+     * End a profile entry for a link or query.
      *
      * @throws Exception
      */
     private function end(string $type): void
     {
         switch ($type) {
-            case 'connection':
-                $timer = $this->profiles->connection['timer'];
-                $this->profiles->connection = $timer->stop()->toArray();
+            case 'link':
+                $timer = $this->profiles->link['timer'];
+                $this->profiles->link = $timer->stop()->toArray();
 
-                unset($this->profiles->connection['timer']);
+                unset($this->profiles->link['timer']);
                 break;
             case 'query':
                 $timer = $this->profiles->query[$this->queryCount]['timer'];
@@ -263,7 +264,7 @@ class Profiler
                 unset($this->profiles->query[$this->queryCount]['timer']);
                 break;
             default:
-                throw new \Exception(format('Invalid type %q [valids: connection, query]', $type));
+                throw new \Exception(format('Invalid type %q [valids: link, query]', $type));
         }
     }
 }

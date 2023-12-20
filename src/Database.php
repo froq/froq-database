@@ -84,7 +84,7 @@ class Database
     {}
 
     /**
-     * Get link property connecting if no connection yet.
+     * Get link property connecting if no link yet.
      *
      * @return froq\database\Link
      * @throws froq\database\DatabaseLinkException
@@ -97,7 +97,7 @@ class Database
 
             try {
                 empty($this->profiler) ? $this->link->connect()
-                    : $this->profiler->profileConnection(fn() => $this->link->connect());
+                    : $this->profiler->profileLink(fn() => $this->link->connect());
             } catch (LinkException $e) {
                 throw new DatabaseLinkException($e);
             }
