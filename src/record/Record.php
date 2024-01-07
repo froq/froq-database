@@ -416,6 +416,7 @@ class Record implements RecordInterface
             $id = $data[$primary] ?? null;
             $id ?? throw new RecordException('Null primary value');
         } else {
+            // Just in case.
             unset($data[$primary]);
         }
 

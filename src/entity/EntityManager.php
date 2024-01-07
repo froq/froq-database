@@ -117,25 +117,26 @@ class EntityManager
             }
         }
 
-        // Clear null values & discard validations for "update" actions only on existing records.
-        // So, if any non nullable field was sent to db, an error will be raised already.
-        $id = $this->getPrimaryValue($entity, $classMeta, check: false);
+        $id = $this->getPrimaryValue($entity, $classMeta, check: false, primary: $primary);
+
         if ($id !== null) {
-            $data = array_refine($data, [null]);
-            $validations = null;
+            $data = array_refine($data, [null]); // Update.
         } else {
-            $validations = true;
+            $primary && array_unset($data, $primary); // Insert.
         }
 
         /** @var froq\database\record\Record */
-        $record = $this->initRecord($classMeta, $entity, true, $validations);
+        $record = $this->initRecord($classMeta, $entity, true, true);
+
+        // Validation options (@see froq\validation\Validation).
+        static $options = ['dropUnknownFields' => false, 'populateAbsentFields' => true];
 
         try {
-            $record->save($data);
+            $record->save($data, $errors, $options);
         } catch (ValidationError $e) {
             throw new ValidationError(
                 'Cannot save entity (%s), validation failed [tip: %s]',
-                [$entity::class, ValidationError::tip()], errors: $e->errors()
+                [$entity::class, ValidationError::tip()], errors: $errors
             );
         }
 
@@ -436,10 +437,15 @@ class EntityManager
     private function initRecord(ClassMeta $classMeta, object $entity = null, bool $fields = null, bool $validations = null,
         bool $primaryRequired = false): Record
     {
-        // Use annotated record class or default.
-        $record = $classMeta->getRecordClass() ?: Record::class;
+        // Use annotated/attributed record class or default.
+        $recordClass = $classMeta->getRecordClass() ?: Record::class;
 
-        // Used for only "find/remove" actions.
+        if (!class_exists($recordClass)) {
+            throw new EntityManagerException('Record class %s not found for entity %s',
+                [$recordClass, $classMeta->getName()]);
+        }
+
+        // Used for "save/find/remove" actions.
         $fields && $fields = $this->getFields($entity, $classMeta);
 
         // Used for only "save" actions.
@@ -456,7 +462,7 @@ class EntityManager
                 $classMeta->getName());
         }
 
-        $record = new $record(
+        $record = new $recordClass(
             db: $this->db,
             table: new Table($table, $tablePrimary),
             validations: $validations, options: [
@@ -561,33 +567,27 @@ class EntityManager
      */
     private function getFields(object|null $entity, ClassMeta $classMeta): array|string
     {
-        $ret = $def = null;
-        $ref = $classMeta->getReflection();
+        $ret = null;
 
-        if ($entity) {
-            // If FIELDS constant is defined on entity class.
-            if ($ref->hasConstant('FIELDS')) {
-                $ret = $entity::FIELDS;
-                $def = 1;
-            }
-            // If fields() method is defined on entity class.
-            elseif ($ref->hasMethod('fields')) {
-                $ret = $entity->fields();
-                $def = 2;
-            }
+        // If fields() method is defined on entity class.
+        if ($entity && method_exists($entity, 'fields')) {
+            $ret = $entity->fields();
 
-            if ($def && !is_type_of($ret, 'array|string')) {
-                $message = ($def === 1)
-                    ? 'Constant %s::FIELDS must define array|string, %t defined'
-                    : 'Method %s::fields() must return array|string, %t returned';
-                throw new EntityManagerException($message, [$entity::class, $ret]);
-            }
+            is_array($ret) || throw new EntityManagerException(
+                'Method %s::fields() must return array, %t returned',
+                [$entity::class, $ret]
+            );
         }
 
-        if (!$def) {
+        if (!$ret) {
             foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
-                // Skip entity properties & non-fields (no "field", "field:null" definition).
+                // Skip entity properties & non-fields (field:null or absent).
                 if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
+                    continue;
+                }
+
+                // Skip hidden fields (hidden:true).
+                if ($propertyMeta->isHidden()) {
                     continue;
                 }
 
@@ -611,32 +611,21 @@ class EntityManager
      */
     private function getValidations(object|null $entity, ClassMeta $classMeta): array|null
     {
-        $ret = $def = null;
-        $ref = $classMeta->getReflection();
+        $ret = null;
 
-        if ($entity) {
-            // If VALIDATIONS constant is defined on entity class.
-            if ($ref->hasConstant('VALIDATIONS')) {
-                $ret = $entity::VALIDATIONS;
-                $def = 1;
-            }
-            // If validations() method is defined on entity class.
-            elseif ($ref->hasMethod('validations')) {
-                $ret = $entity->validations();
-                $def = 2;
-            }
+        // If validations() method is defined on entity class.
+        if ($entity && method_exists($entity, 'validations')) {
+            $ret = $entity->validations();
 
-            if ($def && !is_type_of($ret, 'array')) {
-                $message = ($def === 1)
-                    ? 'Constant %s::VALIDATIONS must define array, %t defined'
-                    : 'Method %s::validations() must return array, %t returned';
-                throw new EntityManagerException($message, [$entity::class, $ret]);
-            }
+            is_array($ret) || throw new EntityManagerException(
+                'Method %s::validations() must return array, %t returned',
+                [$entity::class, $ret]
+            );
         }
 
-        if (!$def) {
+        if (!$ret) {
             foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
-                // Skip entity properties & non-fields (no "field", "field:null" definition).
+                // Skip entity properties & non-fields (field:null or absent).
                 if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
                     continue;
                 }
@@ -682,7 +671,8 @@ class EntityManager
      *
      * @throws froq\database\entity\EntityManagerException
      */
-    private function getPrimaryValue(object $entity, ClassMeta $classMeta, bool $check = true): int|string|null
+    private function getPrimaryValue(object $entity, ClassMeta $classMeta, bool $check = true, string &$primary = null)
+        : int|string|null
     {
         $primary = (string) $classMeta->getTablePrimary();
 
@@ -771,7 +761,11 @@ class EntityManager
             return $entity->$method();
         }
 
-        return $property->getValue($entity);
+        if ($property->isInitialized($entity)) {
+            return $property->getValue($entity);
+        }
+
+        return null;
     }
 
     /**
@@ -786,7 +780,7 @@ class EntityManager
             $params = (array) $params;
         } else {
             foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
-                // Skip entity properties & non-fields (no "field", "field:null" definition).
+                // Skip entity properties & non-fields (field:null or absent).
                 if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
                     continue;
                 }
@@ -898,7 +892,8 @@ class EntityManager
      */
     private function callAction(object $entity, string $method, mixed ...$methodArgs): void
     {
-        if ($entity instanceof Entity && method_exists($entity, $method)) {
+        if (method_exists($entity, $method)) {
+            // Use ReflectionMethod, methods can also be encapsulated.
             $ref = new ReflectionMethod($entity, $method);
             $ref->invokeArgs($entity, $methodArgs);
         }

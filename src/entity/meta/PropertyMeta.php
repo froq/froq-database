@@ -118,12 +118,22 @@ class PropertyMeta extends Meta
     }
 
     /**
-     * Check whether this property is marked as "primary" field.
+     * Check if this property is marked as "primary" field for a table.
      *
      * @return bool
      */
     public function isPrimary(): bool
     {
         return $this->getOption('primary', default: false);
+    }
+
+    /**
+     * Check if this property is marked as "hidden" field for select/returning operations.
+     *
+     * @return bool
+     */
+    public function isHidden(): bool
+    {
+        return $this->getOption('hidden', default: false);
     }
 }
