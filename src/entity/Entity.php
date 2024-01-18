@@ -28,7 +28,7 @@ abstract class Entity implements EntityInterface
     /**
      * Constructor.
      *
-     * @param mixed ...$properties
+     * @param mixed ...$properties Map of named arguments.
      */
     public function __construct(mixed ...$properties)
     {
@@ -36,6 +36,9 @@ abstract class Entity implements EntityInterface
         $this->child = new XObject($this);
 
         $properties && $this->fill(...$properties);
+
+        // Will allow to skip subconstructor definition, call to this constructor from it.
+        $this->child->hasMethod('init') && $this->proxy->getManager()->callAction($this, 'init');
     }
 
     /**
@@ -146,7 +149,7 @@ abstract class Entity implements EntityInterface
     /**
      * Fill entity with given properties.
      *
-     * @param  mixed ...$properties
+     * @param  mixed ...$properties Map of named arguments.
      * @return self
      * @throws froq\database\entity\EntityException
      */
@@ -157,9 +160,7 @@ abstract class Entity implements EntityInterface
         );
 
         foreach ($properties as $name => $value) {
-            if ($ref = $this->getPropertyReflection($name)) {
-                $ref->setValue($this, $value);
-            }
+            $this->offsetSet($name, $value);
         }
 
         return $this;
@@ -174,9 +175,7 @@ abstract class Entity implements EntityInterface
 
         /** @var array<string> */
         foreach ($this->child->getProperties(true) as $name) {
-            if ($ref = $this->getPropertyReflection($name)) {
-                $data[$name] = $ref->isInitialized($this) ? $ref->getValue($this) : null;
-            }
+            $data[$name] = $this->offsetGet($name);
         }
 
         $deep && $data = EntityUtil::toDeepArray($data);
@@ -286,7 +285,7 @@ abstract class Entity implements EntityInterface
         // Try to get from parsed entity meta, looking for ClassMeta properties.
         // @tome: Do NOT use this method like getMeta(class, property) as it catches EntityManagerException only
         // for empty meta, NOT absent property exceptions (reflection related, so MetaException in MetaParser).
-        $propertyMetaRef = $this->proxy->getManager()?->getMeta($class)?->getPropertyMeta($name)?->getReflection();
+        $propertyMetaRef = $this->proxy->getManager()->getMeta($class)?->getPropertyMeta($name)?->getReflection();
 
         if ($ref = $propertyMetaRef) {
             $this->proxy->setRef($field, $ref);
@@ -294,7 +293,7 @@ abstract class Entity implements EntityInterface
             return $ref;
         }
 
-        // Don't come back for this class.
+        // Don't come back for this field.
         $this->proxy->setRef($field, false);
 
         return null;

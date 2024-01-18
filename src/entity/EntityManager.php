@@ -889,8 +889,10 @@ class EntityManager
      * Note: These methods always called regardless if they are public or encapsulaed
      * as private/protected. So they can be hidden from outer scope to prevent outer
      * calls by users.
+     *
+     * @internal
      */
-    private function callAction(object $entity, string $method, mixed ...$methodArgs): void
+    public function callAction(object $entity, string $method, mixed ...$methodArgs): void
     {
         if (method_exists($entity, $method)) {
             // Use ReflectionMethod, methods can also be encapsulated.
