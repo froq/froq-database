@@ -60,7 +60,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      *
      * @return self
      */
-    public final function saveAll(): self
+    public function saveAll(): self
     {
         return $this->proxy->saveAll($this);
     }
@@ -70,7 +70,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      *
      * @return self
      */
-    public final function findAll(): self
+    public function findAll(): self
     {
         return $this->proxy->findAll($this);
     }
@@ -80,7 +80,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      *
      * @return self
      */
-    public final function removeAll(): self
+    public function removeAll(): self
     {
         return $this->proxy->removeAll($this);
     }
@@ -90,7 +90,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      *
      * @return bool
      */
-    public final function isSavedAll(): bool
+    public function isSavedAll(): bool
     {
         return $this->getActionResult('isSaved');
     }
@@ -100,7 +100,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      *
      * @return bool
      */
-    public final function isFindedAll(): bool
+    public function isFindedAll(): bool
     {
         return $this->getActionResult('isFinded');
     }
@@ -110,7 +110,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      *
      * @return bool
      */
-    public final function isRemovedAll(): bool
+    public function isRemovedAll(): bool
     {
         return $this->getActionResult('isRemoved');
     }
@@ -118,7 +118,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     /**
      * @alias isFindedAll()
      */
-    public final function isFoundAll()
+    public function isFoundAll()
     {
         return $this->isFindedAll();
     }
@@ -130,7 +130,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      * @return self
      * @throws froq\database\entity\EntityListException
      */
-    public final function fill(object ...$entities): self
+    public function fill(object ...$entities): self
     {
         is_list($entities) || throw new EntityListException(
             'Parameter $entities must be a list array'

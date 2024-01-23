@@ -47,7 +47,7 @@ class Repository
      * @param  string|null $table
      * @return froq\database\Query
      */
-    public final function initQuery(string $table = null): Query
+    public function initQuery(string $table = null): Query
     {
         return new Query($this->db, $table);
     }
@@ -57,7 +57,7 @@ class Repository
      *
      * @return froq\database\query\QueryParam
      */
-    public final function initQueryParam(): QueryParam
+    public function initQueryParam(): QueryParam
     {
         return new QueryParam();
     }
@@ -67,7 +67,7 @@ class Repository
      *
      * @return froq\database\query\QueryParams
      */
-    public final function initQueryParams(): QueryParams
+    public function initQueryParams(): QueryParams
     {
         return new QueryParams();
     }

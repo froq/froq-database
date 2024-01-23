@@ -83,7 +83,7 @@ abstract class Entity implements EntityInterface
      *
      * @return self.
      */
-    public final function save(): self
+    public function save(): self
     {
         return $this->proxy->save($this);
     }
@@ -93,7 +93,7 @@ abstract class Entity implements EntityInterface
      *
      * @return self.
      */
-    public final function find(): self
+    public function find(): self
     {
         return $this->proxy->find($this);
     }
@@ -103,7 +103,7 @@ abstract class Entity implements EntityInterface
      *
      * @return self.
      */
-    public final function remove(): self
+    public function remove(): self
     {
         return $this->proxy->remove($this);
     }
@@ -113,7 +113,7 @@ abstract class Entity implements EntityInterface
      *
      * @return bool
      */
-    public final function isSaved(): bool
+    public function isSaved(): bool
     {
         return $this->getActionResult('saved');
     }
@@ -123,7 +123,7 @@ abstract class Entity implements EntityInterface
      *
      * @return bool
      */
-    public final function isFinded(): bool
+    public function isFinded(): bool
     {
         return $this->getActionResult('finded');
     }
@@ -133,7 +133,7 @@ abstract class Entity implements EntityInterface
      *
      * @return bool
      */
-    public final function isRemoved(): bool
+    public function isRemoved(): bool
     {
         return $this->getActionResult('removed');
     }
@@ -141,7 +141,7 @@ abstract class Entity implements EntityInterface
     /**
      * @alias isFinded()
      */
-    public final function isFound()
+    public function isFound()
     {
         return $this->isFinded();
     }
@@ -153,7 +153,7 @@ abstract class Entity implements EntityInterface
      * @return self
      * @throws froq\database\entity\EntityException
      */
-    public final function fill(mixed ...$properties): self
+    public function fill(mixed ...$properties): self
     {
         is_list($properties) && throw new EntityException(
             'Parameter $properties must be an associative array'
@@ -188,7 +188,7 @@ abstract class Entity implements EntityInterface
      */
     public function toObject(bool $deep = false): object
     {
-        $data = (object) $this->toArray(false);
+        $data = (object) $this->toArray();
 
         $deep && $data = EntityUtil::toDeepObject($data);
 
