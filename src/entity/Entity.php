@@ -178,7 +178,7 @@ abstract class Entity implements EntityInterface
             $data[$name] = $this->offsetGet($name);
         }
 
-        $deep && $data = EntityUtil::toDeepArray($data);
+        $deep && $data = EntityUtil::toArrayDeep($data);
 
         return $data;
     }
@@ -190,7 +190,7 @@ abstract class Entity implements EntityInterface
     {
         $data = (object) $this->toArray();
 
-        $deep && $data = EntityUtil::toDeepObject($data);
+        $deep && $data = EntityUtil::toObjectDeep($data);
 
         return $data;
     }

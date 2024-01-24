@@ -17,12 +17,12 @@ namespace froq\database\entity;
 class EntityUtil extends \StaticClass
 {
     /**
-     * Make a deep array, used by `toArray()` methods of `Entity` and `EntityList` classes.
+     * Apply a deep array conversion.
      *
      * @param  array $data
      * @return array
      */
-    public static function toDeepArray(array $data): array
+    public static function toArrayDeep(array $data): array
     {
         foreach ($data as &$item) {
             if ($item instanceof Entity || $item instanceof EntityList) {
@@ -34,12 +34,12 @@ class EntityUtil extends \StaticClass
     }
 
     /**
-     * Make a deep object, used by `toObject()` method of `Entity` class.
+     * Apply a deep object conversion.
      *
      * @param  object $data
      * @return object
      */
-    public static function toDeepObject(object $data): object
+    public static function toObjectDeep(object $data): object
     {
         foreach ($data as &$item) {
             if ($item instanceof Entity) {
@@ -59,7 +59,7 @@ class EntityUtil extends \StaticClass
     /**
      * Convert given given object to JSON string applying filter/map params if given.
      *
-     * Note: Map arguments (or $data only) must be passed byref for modifications or removals.
+     * Note: Map arguments (or `$data` only) must be passed byref for modifications or removals.
      *
      * @param  Entity|EntityList $object
      * @param  int               $flags

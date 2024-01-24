@@ -150,7 +150,7 @@ abstract class EntityList extends \ItemList implements EntityListInterface
     {
         $items = parent::toArray();
 
-        $deep && $items = EntityUtil::toDeepArray($items);
+        $deep && $items = EntityUtil::toArrayDeep($items);
 
         return $items;
     }
