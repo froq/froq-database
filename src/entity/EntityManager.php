@@ -214,7 +214,7 @@ class EntityManager
     {
         [$ids, $items, $primary, $classMeta] = $this->prepareListItems($entityList);
 
-        /** @var froq\database\record\RecordList */
+        /** @var froq\database\record\Record */
         $record = $this->initRecord($classMeta, $entity = $items[0], true);
 
         // Call action method when provided.
