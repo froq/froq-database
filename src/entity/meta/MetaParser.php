@@ -56,7 +56,9 @@ class MetaParser
         }
 
         $data = self::getDataFrom($classRef);
-        if (!$data) {
+
+        // Skip non @meta stuff.
+        if ($data === null && !$withProperties) {
             return null;
         }
 
