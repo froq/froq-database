@@ -31,6 +31,8 @@ abstract class EntityList extends \ItemList implements EntityListInterface
         $this->proxy = new EntityListProxy();
 
         $entities && $this->fill(...$entities);
+
+        parent::__construct([], type: 'object');
     }
 
     /**
