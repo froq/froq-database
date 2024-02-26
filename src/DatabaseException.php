@@ -5,8 +5,6 @@
  */
 namespace froq\database;
 
-use Throwable;
-
 /**
  * @package froq\database
  * @class   froq\database\DatabaseException
@@ -16,30 +14,23 @@ use Throwable;
 class DatabaseException extends \froq\common\Exception
 {
     /** SQL state. */
-    private string $sqlState = '';
+    private ?string $sqlState = null;
 
     /**
-     * Constructor.
-     *
-     * @param string|Throwable|null $message
-     * @param mixed|null            $messageParams
-     * @param int|string|null       $code
-     * @param Throwable|null        $previous
-     * @param Throwable|null        $cause
+     * @override
      */
-    public function __construct(string|Throwable $message = null, mixed $messageParams = null, int|string $code = null,
-        Throwable $previous = null, Throwable $cause = null)
+    public function __construct(string|\Throwable $message = null, mixed $messageParams = null, int|string $code = null,
+        mixed ...$arguments)
     {
         if ($message) {
             if (is_string($message)) {
-                $errorInfo = $this->parseErrorInfo($message);
+                $errorInfo = self::parseErrorInfo($message);
             } else {
                 $errorInfo = isset($message->errorInfo)
-                    ? ($message->errorInfo ?: $this->parseErrorInfo($message->getMessage()))
-                    : $this->parseErrorInfo($message->getMessage());
+                    ? ($message->errorInfo ?: self::parseErrorInfo($message->getMessage()))
+                    : self::parseErrorInfo($message->getMessage());
             }
 
-            // Update sql-state & code.
             if (is_string($code)) {
                 $this->sqlState = $code;
                 $code = 0;
@@ -49,25 +40,30 @@ class DatabaseException extends \froq\common\Exception
 
             // Override if null.
             $code ??= (int) $errorInfo[1];
+        } else {
+            $code = (int) $code;
         }
 
-        parent::__construct($message, $messageParams, $code, $previous, $cause);
+        parent::__construct($message, $messageParams, $code, ...$arguments);
     }
 
     /**
      * Get sql state.
      *
-     * @return string.
+     * @return string|null
      */
-    public function getSqlState(): string
+    public function getSqlState(): string|null
     {
         return $this->sqlState;
     }
 
     /**
      * Parse error info.
+     *
+     * @param  string $message
+     * @return string
      */
-    private function parseErrorInfo(string $message): array
+    public static function parseErrorInfo(string $message): array
     {
         // For all those FUCKs..
         // SQLSTATE[08006] [7] FATAL:  password authentication failed for user "root" ..
