@@ -22,12 +22,13 @@ trait StatementTrait
      * Prepare given input returning a `PDOStatement` object.
      *
      * @param  string $input
+     * @param  bool   $raw
      * @return PDOStatement
      * @throws froq\database\DatabaseException
      */
-    public function prepareStatement(string $input): PDOStatement
+    public function prepareStatement(string $input, bool $raw = true): PDOStatement
     {
-        $input = $this->prepareNameInput($input);
+        $input = $raw ? trim($input) : $this->prepareNameInput($input);
         $input || throw new DatabaseException('Empty input');
 
         try {
@@ -42,12 +43,13 @@ trait StatementTrait
      *
      * @param  string|PDOStatement $input
      * @param  array|null          $params
+     * @param  bool                $raw
      * @return PDOStatement
      * @causes froq\database\DatabaseException
      */
-    public function executeStatement(string|PDOStatement $input, array $params = null): PDOStatement
+    public function executeStatement(string|PDOStatement $input, array $params = null, bool $raw = true): PDOStatement
     {
-        $statement = is_string($input) ? $this->prepareStatement($input) : $input;
+        $statement = is_string($input) ? $this->prepareStatement($input, $raw) : $input;
 
         try {
             $statement->execute($params);
