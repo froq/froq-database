@@ -502,18 +502,20 @@ class Record implements RecordInterface
 
         $query = $this->query($table)->equal($primary, [$ids]);
 
-        $where = $this->query->pull('where');
-        if ($where) foreach ($where as [$where, $op]) {
-            $query->where($where, op: $op);
-        }
+        $fields = $fields ?: $this->query->pull('return.fields') ?: '*';
+        $result = $query->select(select: $fields);
 
         $select = $this->query->pull('select');
         if ($select) foreach ($select as $select) {
             $query->select($select, false, false);
         }
 
-        $fields = $fields ?: $this->query->pull('return.fields') ?: '*';
-        $result = $query->select(select: $fields)->run(fetch: 'array');
+        $where = $this->query->pull('where');
+        if ($where) foreach ($where as [$where, $op]) {
+            $query->where($where, op: $op);
+        }
+
+        $result = $query->run(fetch: 'array');
 
         // Copy with rows & "finded" state.
         $thats = $this->copy($result->rows(), state: ['finded', $result->count()]);
@@ -641,16 +643,17 @@ class Record implements RecordInterface
         $return && $fields = $return;
 
         $query = $this->query()->select($fields);
+
+        $select = $this->query->pull('select');
+        if ($select) foreach ($select as $select) {
+            $query->select($select, false, false);
+        }
+
         $query->where($where, $params, $op);
 
         $where = $this->query->pull('where');
         if ($where) foreach ($where as [$where, $op]) {
             $query->where($where, op: $op);
-        }
-
-        $select = $this->query->pull('select');
-        if ($select) foreach ($select as $select) {
-            $query->select($select, false, false);
         }
 
         $limit && $query->limit($limit, $offset);
