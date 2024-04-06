@@ -253,7 +253,7 @@ class EntityManager
      * Note: To prevent all of given entity object properties be used as search parameters, an
      * empty entity object or entity class can be given.
      *
-     * @param  object|string                         $entity
+     * @param  string|object                         $entity
      * @param  string|array|froq\database\Query|null $where  Discards entity props when it is Query.
      * @param  array|null                            $params Used only when $where is string.
      * @param  string|null                           $order
@@ -262,7 +262,7 @@ class EntityManager
      * @return froq\database\entity\EntityList
      * @causes froq\database\entity\EntityManagerException
      */
-    public function findBy(object|string $entity, string|array|Query $where = null, array $params = null,
+    public function findBy(string|object $entity, string|array|Query $where = null, array $params = null,
         string $order = null, int $limit = null, int $offset = null): EntityList
     {
         // If no entity instance given.
