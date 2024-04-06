@@ -110,8 +110,8 @@ abstract class Meta
                 case 'entityList':
                 case 'repository':
                 case 'list':
-                    $value = trim($value);
-                    if ($value === '') {
+                case 'record':
+                    if (!$value) {
                         continue 2;
                     }
 
