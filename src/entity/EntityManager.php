@@ -41,6 +41,27 @@ class EntityManager
     }
 
     /**
+     * Set database.
+     *
+     * @param  froq\database\Database $db
+     * @return void
+     */
+    public function setDatabase(Database $db): void
+    {
+        $this->db = $db;
+    }
+
+    /**
+     * Get database.
+     *
+     * @return froq\database\Database
+     */
+    public function getDatabase(): Database
+    {
+        return $this->db;
+    }
+
+    /**
      * Create an entity with/without given properties.
      *
      * @param  string    $class
