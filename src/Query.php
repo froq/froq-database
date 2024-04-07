@@ -564,14 +564,18 @@ class Query implements \Stringable
     /**
      * Add/append a "JOIN" query into query stack.
      *
-     * @param  string      $to
+     * @param  string|Sql  $to
      * @param  string|null $on
      * @param  array|null  $params
      * @param  string|null $type
      * @return self
      */
-    public function join(string $to, string $on = null, array $params = null, string $type = null): self
+    public function join(string|Sql $to, string $on = null, array $params = null, string $type = null): self
     {
+        if ($to instanceof Sql) {
+            return $this->add('join', [(string) $to, '']);
+        }
+
         $type && $type = strtoupper($type) . ' ';
 
         if ($on !== null) {
