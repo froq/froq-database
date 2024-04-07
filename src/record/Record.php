@@ -500,20 +500,10 @@ class Record implements RecordInterface
 
         $ids || throw new RecordException('Null primary values');
 
-        $query = $this->query($table)->equal($primary, [$ids]);
-
         $fields = $fields ?: $this->query->pull('return.fields') ?: '*';
-        $result = $query->select(select: $fields);
 
-        $select = $this->query->pull('select');
-        if ($select) foreach ($select as $select) {
-            $query->select($select, false, false);
-        }
-
-        $where = $this->query->pull('where');
-        if ($where) foreach ($where as [$where, $op]) {
-            $query->where($where, op: $op);
-        }
+        $query = $this->query($table)->equal($primary, [$ids]);
+        $query->select($fields)->merge($this->query);
 
         $result = $query->run(fetch: 'array');
 
@@ -642,19 +632,8 @@ class Record implements RecordInterface
         $return = $this->query->pull('return.fields');
         $return && $fields = $return;
 
-        $query = $this->query()->select($fields);
-
-        $select = $this->query->pull('select');
-        if ($select) foreach ($select as $select) {
-            $query->select($select, false, false);
-        }
-
-        $query->where($where, $params, $op);
-
-        $where = $this->query->pull('where');
-        if ($where) foreach ($where as [$where, $op]) {
-            $query->where($where, op: $op);
-        }
+        $query = $this->query()->where($where, $params, $op);
+        $query->select($fields)->merge($this->query);
 
         $limit && $query->limit($limit, $offset);
         $order && $query->order($order);
@@ -743,19 +722,19 @@ class Record implements RecordInterface
      */
     private function pack(int|string|array $id = null, bool $primary = false): array
     {
-        $table = $this->getTable();
+        @[$tableName, $tablePrimary] = $this->getTable()?->pack();
 
-        if (!$table || !$table->getName()) {
+        if (!$tableName) {
             throw new RecordException('Empty table for %s, call setTable()', static::class);
         }
-        if ($primary && !$table->getPrimary()) {
+        if ($primary && !$tablePrimary) {
             throw new RecordException('Empty table primary for %s, call table setPrimary()', static::class);
         }
 
         // Filter multiple ids by not-null check.
         is_array($id) && $id = array_filter($id, fn($id): bool => $id !== null);
 
-        return [$table->getName(), $table->getPrimary(), $id];
+        return [$tableName, $tablePrimary, $id];
     }
 
     /**

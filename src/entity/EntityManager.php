@@ -483,6 +483,9 @@ class EntityManager
                 $classMeta->getName());
         }
 
+        $table = $this->db->escapeNames($table);
+        $tablePrimary = $this->db->escapeName($tablePrimary);
+
         $record = new $recordClass(
             db: $this->db,
             table: new Table($table, $tablePrimary),
@@ -492,6 +495,9 @@ class EntityManager
                 'validate'    => $classMeta->getOption('validate',    default: !!$validations),
             ]
         );
+
+        // Prefix all field with table name.
+        $fields = array_map(fn($field) => "{$table}.{$this->db->escapeName($field)}", (array) $fields);
 
         $fields && $record->return($fields);
 

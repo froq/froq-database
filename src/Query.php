@@ -1574,6 +1574,31 @@ class Query implements \Stringable
     }
 
     /**
+     * Merge given query stack with this query stack.
+     *
+     * @param  array|Query $query
+     * @return self
+     * @since  7.0
+     */
+    public function merge(array|Query $query): self
+    {
+        if ($query instanceof Query) {
+            $query = $query->stack;
+        }
+
+        foreach ($query as $key => $item) {
+            if (is_array($item)) {
+                $this->stack[$key] ??= [];
+                $this->stack[$key] = [...$this->stack[$key], ...$item];
+            } else {
+                $this->stack[$key] = $item;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * Clone query.
      *
      * @param  bool $reset
@@ -1625,7 +1650,7 @@ class Query implements \Stringable
     }
 
     /**
-     * Pull an item from query stack (key: AKA path with dot notation).
+     * Pull an item from query stack (with dot notation).
      *
      * @param  string $key
      * @return mixed
@@ -1634,6 +1659,18 @@ class Query implements \Stringable
     public function pull(string $key): mixed
     {
         return array_pull($this->stack, $key);
+    }
+
+    /**
+     * Pick an item from query stack (with dot notation).
+     *
+     * @param  string $key
+     * @return mixed
+     * @since  7.0
+     */
+    public function pick(string $key): mixed
+    {
+        return array_get($this->stack, $key);
     }
 
     /**

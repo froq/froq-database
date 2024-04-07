@@ -78,4 +78,23 @@ class Table
     {
         return $this->primary ?? null;
     }
+
+    /**
+     * Pack name & primary if set.
+     *
+     * @return array
+     */
+    public function pack(): array
+    {
+        $ret = [null, null];
+
+        if ($name = $this->getName()) {
+            $ret[0] = $name;
+            if ($primary = $this->getPrimary()) {
+                $ret[1] = $name . '.' . $primary;
+            }
+        }
+
+        return $ret;
+    }
 }
