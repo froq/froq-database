@@ -1523,7 +1523,12 @@ class Query implements \Stringable
 
         // If paginator wanted.
         if (func_num_args() === 4) {
-            $paginator = new Paginator($page, perPage: $limit);
+            if ($paginator instanceof Paginator) {
+                $paginator->setPage($page)->setPerPage($limit);
+            } else {
+                $paginator = new Paginator(page: $page, perPage: $limit);
+            }
+
             $paginator->paginate($count ?? $this->count());
         }
 
