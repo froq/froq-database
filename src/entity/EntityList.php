@@ -28,11 +28,11 @@ abstract class EntityList extends \ItemList implements EntityListInterface
      */
     public function __construct(object ...$entities)
     {
+        parent::__construct([], type: 'object');
+
         $this->proxy = new EntityListProxy();
 
         $entities && $this->fill(...$entities);
-
-        parent::__construct([], type: 'object');
     }
 
     /**
