@@ -610,6 +610,17 @@ class Query implements \Stringable
     }
 
     /**
+     * Add/append a raw "JOIN" query into query stack.
+     *
+     * @param  string $query
+     * @return self
+     */
+    public function joinRaw(string $query): self
+    {
+        return $this->add('join', [$query, '']);
+    }
+
+    /**
      * Add/append an "ON" clause into query stack for joins.
      *
      * @param  string     $on
@@ -2009,8 +2020,8 @@ class Query implements \Stringable
 
                     foreach ($stack['join'] as $join) {
                         @[$content, $context] = $join;
-                        if (!$context) {
-                            throw new QueryException('No join context yet, use 2nd argument of join() or call'
+                        if (!$content) {
+                            throw new QueryException('No join content yet, use 2nd argument of join() or call'
                                 . ' on()/using() method');
                         }
                         $joins[] = trim($content . ' ' . $context);
