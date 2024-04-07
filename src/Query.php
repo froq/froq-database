@@ -68,16 +68,18 @@ class Query implements \Stringable
      * @param  string|Query $from
      * @param  string|null  $as
      * @param  bool         $prepare
+     * @param  bool         $wrap
      * @return self
      */
-    public function from(string|Query $from, string $as = null, bool $prepare = true): self
+    public function from(string|Query $from, string $as = null, bool $prepare = true, bool $wrap = false): self
     {
         if ($from instanceof Query) {
-            $from = '(' . $from . ')';
-            $prepare = false;
+            $wrap = true;
+        } else {
+            $prepare && $from = $this->prepareFields($from);
         }
 
-        $prepare && $from = $this->prepareFields($from);
+        $from = $wrap ? '(' . $from . ')' : $from;
 
         if ($as !== null) {
             $from .= ' AS ' . $this->prepareField($as);
@@ -564,16 +566,19 @@ class Query implements \Stringable
     /**
      * Add/append a "JOIN" query into query stack.
      *
-     * @param  string|Sql  $to
-     * @param  string|null $on
-     * @param  array|null  $params
-     * @param  string|null $type
+     * @param  string|Sql|Query $to
+     * @param  string|null      $on
+     * @param  array|null       $params
+     * @param  string|null      $type
      * @return self
      */
-    public function join(string|Sql $to, string $on = null, array $params = null, string $type = null): self
+    public function join(string|Sql|Query $to, string $on = null, array $params = null, string $type = null): self
     {
         if ($to instanceof Sql) {
             return $this->add('join', [(string) $to, '']);
+        }
+        if ($to instanceof Query) {
+            return $this->add('join', ['(' . $to . '', '']);
         }
 
         $type && $type = strtoupper($type) . ' ';
@@ -583,6 +588,28 @@ class Query implements \Stringable
         }
 
         return $this->add('join', [$type . 'JOIN ' . $this->prepareFields($to), $on]);
+    }
+
+    /**
+     * Add/append a Query "JOIN" query into query stack.
+     *
+     * @param  Query $query
+     * @return self
+     */
+    public function joinQuery(Query $query): self
+    {
+        return $this->add('join', [$query->toString(), '']);
+    }
+
+    /**
+     * Add/append a raw "JOIN" query into query stack.
+     *
+     * @param  string $query
+     * @return self
+     */
+    public function joinRaw(string $query): self
+    {
+        return $this->add('join', [$query, '']);
     }
 
     /**
@@ -611,17 +638,6 @@ class Query implements \Stringable
     public function joinRight(string $to, string $on, array $params = null, bool $outer = false): self
     {
         return $this->join($to, $on, $params, 'RIGHT' . ($outer ? ' OUTER' : ''));
-    }
-
-    /**
-     * Add/append a raw "JOIN" query into query stack.
-     *
-     * @param  string $query
-     * @return self
-     */
-    public function joinRaw(string $query): self
-    {
-        return $this->add('join', [$query, '']);
     }
 
     /**
