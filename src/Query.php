@@ -1681,21 +1681,28 @@ class Query implements \Stringable
     /**
      * Get query hash (for caching etc.).
      *
+     * @param  string $algo
      * @return string
      */
-    public function toHash(): string
+    public function toHash(string $algo = 'md5'): string
     {
-        return md5($this::class . serialize(sorted($this->stack, key: true)));
+        $stack = serialize($this->toArray(true));
+
+        return hash($algo, $this::class . $stack);
     }
 
     /**
      * Get query stack.
      *
+     * @param  bool $sort
      * @return array
      */
-    public function toArray(): array
+    public function toArray(bool $sort = false): array
     {
-        return $this->stack;
+        $stack = $this->stack;
+        $sort && ksort($stack);
+
+        return $stack;
     }
 
     /**
