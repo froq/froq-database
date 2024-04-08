@@ -1099,15 +1099,20 @@ class Query implements \Stringable
     /**
      * Add/append an "ORDER BY .." clause into query stack.
      *
-     * @param  string|Sql      $field
-     * @param  string|int|null $op
-     * @param  array|null      $options
+     * @param  string|array|Sql $field
+     * @param  string|int|null  $op
+     * @param  array|null       $options
      * @return self
      * @throws froq\database\QueryException
      */
-    public function orderBy(string|Sql $field, string|int $op = null, array $options = null): self
+    public function orderBy(string|array|Sql $field, string|int $op = null, array $options = null): self
     {
         $isSql = $field instanceof Sql;
+
+        // Eg: ['id', 'ASC' or 1].
+        if (is_array($field)) {
+            $field = join(' ', $field);
+        }
 
         $field = trim((string) $field);
         $field || throw new QueryException('No field given');
