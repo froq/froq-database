@@ -158,13 +158,14 @@ class Query implements \Stringable
      * Add/append a "SELECT" query into query stack from a raw query.
      *
      * @param  string       $select
+     * @param  array|null   $params
      * @param  string|null  $as
      * @param  bool         $wrap
      * @return self
      */
-    public function selectRaw(string $select, string $as = null, bool $wrap = false): self
+    public function selectRaw(string $select, array $params = null, string $as = null, bool $wrap = false): self
     {
-        $select = $this->prepare($select);
+        $select = $this->prepare($select, $params);
 
         return $this->select($select, false, $wrap, $as);
     }
