@@ -260,7 +260,8 @@ class Database
      */
     public function getRow(string|Query $query, mixed ...$args): Row|null
     {
-        $args = ['fetch' => 'array', 'flat' => null] + $args;
+        // Merge with constant defaults.
+        $args = [...$args, 'fetch' => 'array', 'flat' => null];
 
         return $this->getResult($query, ...$args)->rows(0, true);
     }
@@ -275,7 +276,8 @@ class Database
      */
     public function getRows(string|Query $query, mixed ...$args): Rows
     {
-        $args = ['fetch' => 'array', 'flat' => null] + $args;
+        // Merge with constant defaults.
+        $args = [...$args, 'fetch' => 'array', 'flat' => null];
 
         return $this->getResult($query, ...$args)->rows(null, true);
     }
@@ -373,7 +375,8 @@ class Database
      */
     public function selectRow(string $table, mixed ...$args): Row|null
     {
-        $args = ['fetch' => 'array', 'flat' => null, 'limit' => 1] + $args;
+        // Merge with constant defaults.
+        $args = [...$args, 'fetch' => 'array', 'flat' => null, 'limit' => 1];
 
         return $this->selectResult($table, ...$args)->rows(0, true);
     }
@@ -388,7 +391,8 @@ class Database
      */
     public function selectRows(string $table, mixed ...$args): Rows
     {
-        $args = ['fetch' => 'array', 'flat' => null] + $args;
+        // Merge with constant defaults.
+        $args = [...$args, 'fetch' => 'array', 'flat' => null];
 
         return $this->selectResult($table, ...$args)->rows(null, true);
     }
