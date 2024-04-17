@@ -1299,7 +1299,7 @@ class Query implements \Stringable
      * @return int
      * @since  4.3
      */
-    public function runExec(): int
+    public function exec(): int
     {
         return $this->db->execute($this->toString());
     }
@@ -1315,7 +1315,7 @@ class Query implements \Stringable
      */
     public function commit(): self
     {
-        $this->runExec();
+        $this->exec();
 
         // Keep target table for next query choosing any of.
         $table = array_choose($this->stack, ['table', 'from', 'into'], '');
