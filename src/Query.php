@@ -1953,7 +1953,7 @@ class Query implements \Stringable
 
                     if (!isset($stack['where'])) {
                         throw new QueryException('No \'where\' for update yet, it must be provided for security'
-                            . ' reasons, call at least where("1=1") proving you are aware of what is going on');
+                            . ' reasons, call at least where(1=1) proving you are aware of what is going on');
                     }
 
                     $ret = $nt . 'UPDATE ' . $table
@@ -1975,7 +1975,7 @@ class Query implements \Stringable
 
                     if (!isset($stack['where'])) {
                         throw new QueryException('No \'where\' for delete yet, it must be provided for security'
-                            . ' reasons, call at least where("1=1") proving you are aware of what is going on');
+                            . ' reasons, call at least where(1=1) proving you are aware of what is going on');
                     }
 
                     $ret = $nt . 'DELETE FROM ' . $table;
