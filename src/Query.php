@@ -882,7 +882,7 @@ class Query implements \Stringable
      */
     public function whereNull(string $field, string $op = null): self
     {
-        return $this->whereIs($field, op: $op);
+        return $this->whereIs($field, null, op: $op);
     }
 
     /**
@@ -894,7 +894,7 @@ class Query implements \Stringable
      */
     public function whereNotNull(string $field, string $op = null): self
     {
-        return $this->whereIsNot($field, op: $op);
+        return $this->whereIsNot($field, null, op: $op);
     }
 
     /**
