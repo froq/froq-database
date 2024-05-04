@@ -579,7 +579,7 @@ class Query implements \Stringable
             return $this->add('join', [(string) $to, '']);
         }
         if ($to instanceof Query) {
-            return $this->add('join', ['(' . $to . '', '']);
+            return $this->add('join', ['(' . $to . ')', '']);
         }
 
         $type && $type = strtoupper($type) . ' ';
@@ -610,7 +610,7 @@ class Query implements \Stringable
      */
     public function joinRaw(string $query): self
     {
-        return $this->add('join', [$query, '']);
+        return $this->add('join', [trim($query), '']);
     }
 
     /**
