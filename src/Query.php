@@ -2045,7 +2045,7 @@ class Query implements \Stringable
                     $joins = [];
 
                     foreach ($stack['join'] as $join) {
-                        @[$content, $context] = $join;
+                        [$content, $context] = array_pad($join, 2, '');
                         if (!$content) {
                             throw new QueryException('No join content yet, use 2nd argument of join() or call'
                                 . ' on()/using() method');
