@@ -1006,14 +1006,17 @@ class Database
         $input = trim($input);
 
         if ($input !== '') {
-            // Prepare names (eg: '@id = ?', 1 or '@[id, ..]').
             if (str_contains($input, '@')) {
-                $input = preg_replace_callback('~@([\w][\w\.\[\]]*)|@\[.+?\]~', function ($match) {
-                    if (count($match) === 1) {
-                        return $this->escapeNames(substr($match[0], 2, -1));
+                $input = preg_replace_callback(
+                    // Eg: '@id', '@u.id', or multi '@[id, ..]'.
+                    '~(?=[\.\[\]]?\w*|^)@([\w][\w\.\[\]]*)|@\[.+?\]~',
+                    function ($match) {
+                        if (count($match) === 1) {
+                            return $this->escapeNames(substr($match[0], 2, -1));
+                        }
+                        return $this->escapeName($match[1]);
                     }
-                    return $this->escapeName($match[1]);
-                }, $input);
+                , $input);
             }
         }
 
