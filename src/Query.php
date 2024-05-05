@@ -719,11 +719,16 @@ class Query implements \Stringable
      * @param  string|array|QueryParams $where
      * @param  array|Query|null         $params
      * @param  string|null              $op
+     * @param  bool                     $raw
      * @return self
      */
-    public function where(string|array|QueryParams $where, array|Query $params = null, string $op = null): self
+    public function where(string|array|QueryParams $where, array|Query $params = null, string $op = null, bool $raw = false): self
     {
         $op = $this->prepareOp($op ?: 'AND'); // @default=AND
+
+        if ($raw) {
+            return $this->add('where', [$where, $op]);
+        }
 
         if (is_string($where)) {
             // For single field with multi params, eg: (id, [1,2,3]).
@@ -991,7 +996,7 @@ class Query implements \Stringable
         $where = $ilike ? $this->db->platform->formatILike($field, $search)
                : $field . ' LIKE ' . $search;
 
-        return $this->where($where, op: $op);
+        return $this->where($where, op: $op, raw: true);
     }
 
     /**
@@ -1010,7 +1015,7 @@ class Query implements \Stringable
         $where = $ilike ? $this->db->platform->formatNotILike($field, $search)
                : $field . ' NOT LIKE ' . $search;
 
-        return $this->where($where, op: $op);
+        return $this->where($where, op: $op, raw: true);
     }
 
     /**
