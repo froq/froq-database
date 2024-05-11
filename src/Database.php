@@ -1110,8 +1110,24 @@ class Database
     {
         // If rows/fields wanted as return.
         if ($return) {
-            return $batch ? $result->rows()
-                 : $result->cols(0, $return === true ? '*' : $return);
+            return $batch ? $result->rows() : $result->cols(0, (function () use ($return) {
+                if ($return === '*' || $return === true) {
+                    return '*';
+                }
+
+                if (is_string($return)) {
+                    $return = map(split('\s*,\s*', $return), fn($s) => trim($s, '`[]"'));
+                    if (count($return) === 1) { // Single.
+                        $return = $return[0];
+                    }
+                }
+
+                if (is_array($return)) {
+                    return $return;
+                }
+
+                return ''; // Invalid.
+            })());
         }
 
         // If sequence isn't false return id/ids (@default=true).
