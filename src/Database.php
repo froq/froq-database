@@ -1117,8 +1117,9 @@ class Database
 
                 if (is_string($return)) {
                     $return = map(split('\s*,\s*', $return), fn($s) => trim($s, '`[]"'));
+
                     if (count($return) === 1) { // Single.
-                        $return = $return[0];
+                        return $return[0];
                     }
                 }
 
