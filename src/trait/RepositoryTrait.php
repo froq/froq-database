@@ -34,9 +34,9 @@ trait RepositoryTrait
      * depending on the called method of `EntityManager`.
      *
      * @param  string $method                    Case-sensitive.
-     * @param  array  $methodArgs                Any (see original methods).
+     * @param  array  $methodArgs                See original methods.
      * @return array<Entity>|object<Entity>|null Null for safety (future feat).
-     * @throws Error
+     * @throws CallError
      */
     public final function __call(string $method, array $methodArgs = []): array|object|null
     {
@@ -44,9 +44,9 @@ trait RepositoryTrait
             $methods = xarray(self::METHODS)
                 ->mapKeys(fn($m) => $m . '()');
 
-            throw new \Error(format(
-                'Invalid call as %s::%s() [valids: %A]',
-                static::class, $method, $methods->keys()
+            throw new \CallError(format(
+                'Invalid call as %S::%s() [valids: %A]',
+                $this::class, $method, $methods->keys()
             ));
         }
 
