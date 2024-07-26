@@ -480,7 +480,7 @@ class Database
 
         $result = $query->run();
 
-        return $this->getReturningData($result, $return, $batch);
+        return $this->getReturningData($result, $return, $batch, false);
     }
 
     /**
@@ -511,7 +511,7 @@ class Database
 
         $result = $query->run();
 
-        return $this->getReturningData($result, $return, $batch);
+        return $this->getReturningData($result, $return, $batch, false);
     }
 
     /**
