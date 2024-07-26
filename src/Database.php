@@ -289,14 +289,14 @@ class Database
      * @param  string|array      $fields
      * @param  string|array|null $where
      * @param  array|null        $params
-     * @param  string|null       $order
+     * @param  string|array|null $order
      * @param  string|null       $fetch
      * @param  string|bool|null  $flat
      * @param  string|null       $op
      * @return mixed
      */
     public function select(string $table, string|array $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, string $fetch = null, string|bool $flat = null, string $op = null): mixed
+        string|array $order = null, string $fetch = null, string|bool $flat = null, string $op = null): mixed
     {
         $query = $this->initQuery($table)->select($fields);
 
@@ -319,7 +319,7 @@ class Database
      * @param  string            $fields
      * @param  string|array|null $where
      * @param  array|null        $params
-     * @param  string|null       $order
+     * @param  string|array|null $order
      * @param  int|array|null    $limit
      * @param  string|null       $fetch
      * @param  string|bool|null  $flat
@@ -328,7 +328,7 @@ class Database
      * @return mixed
      */
     public function selectAll(string $table, string $fields = '*', string|array $where = null, array $params = null,
-        string $order = null, int|array $limit = null, string $fetch = null, string|bool $flat = null,
+        string|array $order = null, int|array $limit = null, string $fetch = null, string|bool $flat = null,
         string $op = null, bool $raw = false): mixed
     {
         $query = $this->initQuery($table)->select($fields);
