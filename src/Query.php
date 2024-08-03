@@ -29,12 +29,12 @@ class Query implements \Stringable
     /**
      * Constructor.
      *
-     * @param froq\database\Database $db
-     * @param string|null            $table
+     * @param froq\database\Database|null $db
+     * @param string|null                 $table
      */
-    public function __construct(Database $db, string $table = null)
+    public function __construct(Database $db = null, string $table = null)
     {
-        $this->db = $db;
+        $this->db = $db ?? DatabaseRegistry::getDefault();
         $this->db->link();
 
         $table && $this->table($table);
