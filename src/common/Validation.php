@@ -125,8 +125,11 @@ class Validation
      * @param  array|null  $options
      * @return bool
      */
-    public function run(array|null &$data, array|null &$errors, array|null $rules, array|null $options): bool
+    public function run(array|null &$data, array|null &$errors, array $rules = null, array $options = null): bool
     {
+        $rules ??= $this->getRules();
+        $options ??= $this->getOptions();
+
         $this->result = (new RealValidation($rules, $options))->validate($data, $errors);
 
         if ($errors !== null) {
