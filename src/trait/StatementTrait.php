@@ -32,7 +32,7 @@ trait StatementTrait
         $input || throw new DatabaseException('Empty input');
 
         try {
-            return $this->link()->pdo()->prepare($input);
+            return $this->pdo()->prepare($input);
         } catch (PDOException $e) {
             throw new DatabaseException($e);
         }

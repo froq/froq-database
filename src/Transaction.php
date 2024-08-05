@@ -35,7 +35,7 @@ class Transaction
     public function __construct(PDO $pdo = null)
     {
         if (!$pdo) try {
-            $pdo = DatabaseRegistry::getDefault()->link()->pdo();
+            $pdo = DatabaseRegistry::getDefault()->pdo();
         } catch (Throwable) {
             throw new TransactionException('No database link to work with');
         }

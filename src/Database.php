@@ -84,6 +84,16 @@ class Database
     {}
 
     /**
+     * Shortcut for link's pdo().
+     *
+     * @return PDO|null
+     */
+    public function pdo(): PDO|null
+    {
+        return $this->link()->pdo();
+    }
+
+    /**
      * Get link property connecting if no link yet.
      *
      * @return froq\database\Link
@@ -128,7 +138,7 @@ class Database
                 Profiler::mark($marker);
             }
 
-            $pdo          = $this->link()->pdo();
+            $pdo          = $this->pdo();
             $pdoStatement = empty($this->profiler) ? $pdo->query($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->query($query));
 
@@ -166,7 +176,7 @@ class Database
                 Profiler::mark($marker);
             }
 
-            $pdo       = $this->link()->pdo();
+            $pdo       = $this->pdo();
             $pdoResult = empty($this->profiler) ? $pdo->exec($query)
                 : $this->profiler->profileQuery($query, fn() => $pdo->exec($query));
 
@@ -590,7 +600,7 @@ class Database
      */
     public function transaction(callable $call = null, callable $callError = null): mixed
     {
-        $transaction = new Transaction($this->link()->pdo());
+        $transaction = new Transaction($this->pdo());
 
         // Return transaction object.
         if (!$call) {
@@ -623,7 +633,7 @@ class Database
      */
     public function quote(string $input): string
     {
-        return $this->link()->pdo()->quote($input);
+        return $this->pdo()->quote($input);
     }
 
     /**
