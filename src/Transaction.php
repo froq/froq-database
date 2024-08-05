@@ -5,7 +5,7 @@
  */
 namespace froq\database;
 
-use PDO, PDOException;
+use PDO, PDOException, Throwable;
 
 /**
  * A wrapper class for PDO transactions with nesting support for MySQL, PostgreSQL
@@ -30,10 +30,16 @@ class Transaction
     /**
      * Constructor.
      *
-     * @param PDO $pdo
+     * @param PDO|null $pdo
      */
-    public function __construct(PDO $pdo)
+    public function __construct(PDO $pdo = null)
     {
+        if (!$pdo) try {
+            $pdo = DatabaseRegistry::getDefault()->link()->pdo();
+        } catch (Throwable) {
+            throw new TransactionException('No database link to work with');
+        }
+
         $this->pdo                = $pdo;
         $this->savepointLevel     = 0;
         $this->savepointAvailable = $this->supportsSavepoints();
