@@ -128,6 +128,11 @@ class Database
      */
     public function query(string|Query $query, array $params = null, array $options = null): Result
     {
+        if ($query instanceof Query) {
+            $options['fetch'] ??= $query->pick('return.fetch');
+            $options['sequence'] ??= $query->pick('insert.sequence');
+        }
+
         $query = $params ? $this->prepare((string) $query, $params) : trim((string) $query);
         $query || throw new DatabaseException('Empty query');
 

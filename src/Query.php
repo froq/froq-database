@@ -1883,6 +1883,10 @@ class Query implements \Stringable
                     $table = $stack['into'] ?? $stack['table'] ??
                         throw new QueryException('Table is not defined yet, call into() or table() to continue');
 
+                    if (count($stack['insert']) < 2) {
+                        throw new QueryException('Invalid insert fields, probably invalid sequence()');
+                    }
+
                     if ($stack['insert'] === '1') {
                         $ret = $nt . 'INSERT INTO ' . $table;
                     } else {
