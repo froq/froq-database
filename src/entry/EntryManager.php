@@ -45,6 +45,16 @@ class EntryManager
     }
 
     /**
+     * Get entries.
+     *
+     * @return froq\database\entry\EntryStorage
+     */
+    public function entries(): EntryStorage
+    {
+        return $this->entries;
+    }
+
+    /**
      * Attach an entry.
      *
      * @param  froq\database\entry\Entry $entry

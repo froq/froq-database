@@ -218,6 +218,8 @@ abstract class Entry implements Arrayable
             $this->result = first($this->manager->commit());
             $this->manager->detach($this);
 
+            $this->okay((bool) $this->result->count());
+
             if ($row = $this->result->getRow()) {
                 $this->data->update($row);
             }
