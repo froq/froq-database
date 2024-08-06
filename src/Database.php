@@ -752,7 +752,7 @@ class Database
 
                 // Externals.
                 ($input instanceof \Stringable) => $this->escapeString((string) $input),
-                ($input instanceof \DateTimeInterface) => $this->escapeString($input->format('Y-m-d H:i:s')),
+                ($input instanceof \DateTimeInterface) => $this->escapeString($input->format('c')),
 
                 default => throw new DatabaseException(
                     'Invalid input object %q [valids: %A]',
