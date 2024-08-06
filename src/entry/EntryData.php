@@ -9,7 +9,7 @@ namespace froq\database\entry;
  * @package froq\database\entry
  * @class   froq\database\entry\EntryData
  * @author  Kerem Güneş
- * @since   7.0
+ * @since   7.1
  */
 class EntryData extends \Item
 {}

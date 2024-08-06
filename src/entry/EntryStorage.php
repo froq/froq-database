@@ -9,7 +9,7 @@ namespace froq\database\entry;
  * @package froq\database\entry
  * @class   froq\database\entry\EntryList
  * @author  Kerem Güneş
- * @since   7.0
+ * @since   7.1
  */
 class EntryStorage extends \froq\util\storage\ObjectStorage
 {}

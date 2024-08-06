@@ -9,7 +9,7 @@ namespace froq\database\entry;
  * @package froq\database\entry
  * @class   froq\database\entry\EntryException
  * @author  Kerem Güneş
- * @since   7.0
+ * @since   7.1
  */
 class EntryException extends \froq\database\DatabaseException
 {}

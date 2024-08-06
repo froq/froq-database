@@ -17,7 +17,7 @@ use Throwable;
 * @package froq\database\entry
 * @class   froq\database\entry\EntryManager
 * @author  Kerem Güneş
-* @since   7.0
+* @since   7.1
 */
 class EntryManager
 {
