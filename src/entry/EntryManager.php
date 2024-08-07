@@ -9,6 +9,7 @@ use froq\database\{
     Database, DatabaseRegistry, DatabaseRegistryException,
     Transaction, Result, trait\DbTrait
 };
+use froq\reflection\Reflection;
 use Throwable;
 
 /**
@@ -77,9 +78,9 @@ class EntryManager
     }
 
     /**
-     * Commit stored entry queries and return query results.
+     * Commit stored entry queries.
      *
-     * @return array
+     * @return array<froq\database\entry\Entry>
      * @throws froq\database\entry\EntryManagerException
      */
     public function commit(): array
@@ -92,21 +93,45 @@ class EntryManager
             $transaction = new Transaction($this->db->pdo());
             $transaction->begin();
 
-            /** @var Result[] */
-            $results = [];
+            static $options = ['fetch' => 'array'];
 
-            /** @var Entry $entry */
+            $entries = [];
+
             foreach ($this->entries as $entry) {
-                // Because it's a private property defined in Entry.
-                $query = reflect($entry)->getParent(top: true)
-                    ->getProperty('query')->getValue($entry);
+                // For private properties defined in Entry (query, result).
+                $ref = Reflection::reflectObject($entry)->getParent(top: true);
 
-                $results[] = $this->db->query($query);
+                $query = $ref->getProperty('query')->getValue($entry);
+
+                /** @var Result */
+                $result = $this->db->query($query, options: $options);
+
+                // Update entry's okay state.
+                $entry->okay((bool) $result->count());
+
+                // Update entry's action state.
+                $entry->action(match (true) {
+                    $query->has('select') => 'select',
+                    $query->has('insert') => 'insert',
+                    $query->has('update') => 'update',
+                    $query->has('delete') => 'delete',
+                    default               => null,
+                });
+
+                // Update entry's data stack.
+                if ($row = $result->first()) {
+                    $entry->data()->update($row);
+                }
+
+                // Set entry's result property.
+                $ref->getProperty('result')->setValue($entry, $result);
+
+                $entries[] = $entry;
             }
 
             $transaction->commit();
 
-            return $results;
+            return $entries;
         } catch (Throwable $e) {
             $transaction->rollback();
 

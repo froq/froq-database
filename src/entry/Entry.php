@@ -192,6 +192,21 @@ abstract class Entry implements Arrayable
     }
 
     /**
+     * Set / get action state.
+     *
+     * @param  string|null $action
+     * @return string|null
+     */
+    public function action(string $action = null): string|null
+    {
+        if (func_num_args()) {
+            $this->state->action = $action;
+        }
+
+        return $this->state->action;
+    }
+
+    /**
      * Persist / retrieve this object sending its data to database by attaching & detaching
      * it and calling its entry manager object, then assign its `$result` property that
      * returned from commit call and re-set its data with this result data if any.
@@ -215,14 +230,8 @@ abstract class Entry implements Arrayable
 
         try {
             $this->manager->attach($this);
-            $this->result = first($this->manager->commit());
+            $this->manager->commit();
             $this->manager->detach($this);
-
-            $this->okay((bool) $this->result->count());
-
-            if ($row = $this->result->getRow()) {
-                $this->data->update($row);
-            }
 
             return $this;
         } catch (Throwable $e) {
