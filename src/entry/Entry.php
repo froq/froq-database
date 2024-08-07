@@ -10,15 +10,15 @@ use froq\common\interface\Arrayable;
 use State, Throwable;
 
 /**
- * Base Entry class for managing entry data and queries.
+ * Base Entry class for managing entry queries, data and states.
  *
- * All properties are private to provide an ease for to set data fields dynamically.
+ * All properties are private to provide an ease to set data fields dynamically.
  *
  * Example: A `Book` entry can be declared and used as below, to use in repositories.
  *
  * ```
  * class Book extends Entry {
- *   function find(int $id): {
+ *   function find(int $id) {
  *     $this->query('books')->select('*')->id($id);
  *
  *     // Required to reset old data set by create() etc.
@@ -26,21 +26,25 @@ use State, Throwable;
  *
  *     $this->commit();
  *
- *     // Found tick for state.
- *     $this->okay(isset($this->id));
+ *     return $this;
  *   }
  *
- *   function create(array $data): {
+ *   function create(array $data): self {
  *     $this->query('books')->insert($data);
+ *     // If RETURNING supported by database system.
+ *     $this->query('books')->insert($data)->return('*');
+ *
  *     $this->commit();
  *
  *     // If no RETURNING supported by database system.
  *     $this->find($this->result()->id() ?? 0);
+ *
+ *     return $this;
  *   }
  * }
  *
  * $book = (new Book())->create($data);
- * return $book->okay() ? $book->toArray() : null;
+ * return $book->okay() ? $book->data() : null;
  * ```
  *
  * @package froq\database\entry
@@ -65,6 +69,12 @@ abstract class Entry implements Arrayable
     /** Dynamic state. */
     private State $state;
 
+    /**
+     * Constructor.
+     *
+     * @param iterable|null               $data
+     * @param froq\database\Database|null $db
+     */
     public function __construct(iterable $data = null, Database $db = null)
     {
         $this->manager = new EntryManager($db);

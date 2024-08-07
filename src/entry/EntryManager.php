@@ -13,7 +13,7 @@ use froq\reflection\Reflection;
 use Throwable;
 
 /**
- * Entry manager class for executing Entry queries.
+ * Entry manager class for executing Entry queries and updating their data and states.
  *
 * @package froq\database\entry
 * @class   froq\database\entry\EntryManager
@@ -78,7 +78,7 @@ class EntryManager
     }
 
     /**
-     * Commit stored entry queries.
+     * Commit stored entry queries and return them after updating their data and states.
      *
      * @return array<froq\database\entry\Entry>
      * @throws froq\database\entry\EntryManagerException
