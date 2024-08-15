@@ -748,8 +748,8 @@ class EntityManager
         // Handle types.
         if ($propertyType) {
             $propertyType = \XReflectionType::from($propertyType);
-            if ($propertyType->isBuiltin()) {
-                settype($value, $propertyType->getName());
+            if ($propertyType->isCastable()) {
+                settype($value, $propertyType->getPureName());
             } else {
                 // Date/time (interface, subclass or union).
                 foreach ($propertyType->getNames() as $name) {

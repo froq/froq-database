@@ -433,7 +433,7 @@ class Query implements \Stringable
         $fetch ??= $this->stack['return']['fetch'] ?? null;
 
         // Return fallback for no "RETURNING" supported databases.
-        if (!$this->db->platform->equals('pgsql', 'sqlite', 'oci')) {
+        if (!$this->db->platform->equals('pgsql', 'oci')) {
             // For insert stuff.
             if (isset($this->stack['table'], $this->stack['insert'])) {
                 $this->stack['return.fallback'] = [
