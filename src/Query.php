@@ -1487,6 +1487,21 @@ class Query implements \Stringable
     }
 
     /**
+     * Get result.
+     *
+     * @param  string|null $fetch
+     * @param  int|null    $limit
+     * @param  int|null    $offset
+     * @return froq\database\Result
+     */
+    public function getResult(string $fetch = null, int $limit = null, int $offset = null): Result
+    {
+        $limit && $this->limit($limit, $offset);
+
+        return $this->run($fetch);
+    }
+
+    /**
      * Get count result & running current query stack.
      *
      * @return int
