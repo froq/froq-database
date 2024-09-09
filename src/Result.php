@@ -8,7 +8,8 @@ namespace froq\database;
 use froq\database\result\{Ids, Rows, Row};
 use froq\common\interface\Arrayable;
 use froq\util\mapper\Mapper;
-use PDO, PDOStatement, PDOException, Closure;
+use PDO, PDOStatement, PDOException;
+use Closure;
 
 /**
  * A result class, for query result stuff such as count, ids & rows.
@@ -386,6 +387,68 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
     }
 
     /**
+     * Collect mapped fields to array, optionally indexing by given key/key mapper.
+     *
+     * @param  Closure             $rowMapper
+     * @param  string|Closure|null $keyMapper
+     * @return object
+     * @throws KeyError
+     */
+    public function collect(Closure $rowMapper, string|Closure $keyMapper = null): array
+    {
+        $keys = null;
+
+        if (is_string($keyMapper)) {
+            $key = $keyMapper;
+            $row = $this->getRow(0);
+
+            if ($row) {
+                if (!$row->hasKey($key)) {
+                    throw new \KeyError('Absent row key %q', $key);
+                }
+                unset($row);
+
+                $keys = array_column($this->toArray(true), $key);
+            }
+        } elseif (is_closure($keyMapper)) {
+            $keys = array_map($keyMapper, $this->toArray());
+        }
+
+        $ret = array_map($rowMapper, $this->toArray());
+
+        if ($keys && $ret) {
+            foreach ($keys as $i => $key) {
+                if ($key === '') {
+                    throw new \KeyError('Mapped key must not be an empty string');
+                }
+                if (!is_int($key) && !is_string($key)) {
+                    throw new \KeyError('Mapped key must be int|string, %t given', $key);
+                }
+
+                $tmp[$key] = $ret[$i];
+            }
+
+            $ret = $tmp;
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Collect mapped fields to given class, optionally indexing by given key/key mapper.
+     *
+     * @param  string              $class
+     * @param  Closure             $rowMapper
+     * @param  string|Closure|null $keyMapper
+     * @return object
+     * @causes Error|KeyError
+     */
+    public function collectTo(string $class, Closure $rowMapper, string|Closure $keyMapper = null): object
+    {
+        return new $class($this->collect($rowMapper, $keyMapper));
+    }
+
+    /**
      * Map all items to given (map-like) class.
      *
      * Note: This method is mate of listTo(), so mapTo() must be called first
@@ -428,39 +491,6 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
         }
 
         return $object;
-    }
-
-    /**
-     * Map rows by given column key.
-     *
-     * @param  string|Closure $key
-     * @return array
-     * @throws KeyError
-     */
-    public function toMap(string|Closure $key): array
-    {
-        $ret = [];
-
-        if (is_string($key)) {
-            $row = $this->row(0, true);
-            if ($row) {
-                if (!$row->hasKey($key)) {
-                    throw new \KeyError('Absent row key %q', $key);
-                }
-
-                foreach ($this->toArray(true) as $row) {
-                    $offset = $row[$key];
-                    $ret[$offset] = $row;
-                }
-            }
-        } else {
-            foreach ($this->toArray() as $row) {
-                $offset = $key($row);
-                $ret[$offset] = $row;
-            }
-        }
-
-        return $ret;
     }
 
     /**
