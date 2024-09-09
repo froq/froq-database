@@ -154,17 +154,6 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
     }
 
     /**
-     * Get a copy of first row.
-     *
-     * @return Row|null
-     * @since  6.0
-     */
-    public function getRow(): Row|null
-    {
-        return $this->row(0, true);
-    }
-
-    /**
      * Get a copy of ids property.
      *
      * @return froq\database\result\Ids
@@ -173,6 +162,18 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
     public function getIds(): Ids
     {
         return (clone $this->ids);
+    }
+
+    /**
+     * Get a copy of first row as default.
+     *
+     * @param  int $index
+     * @return Row|null
+     * @since  6.0
+     */
+    public function getRow(int $index = 0): Row|null
+    {
+        return $this->row($index, true);
     }
 
     /**
@@ -257,7 +258,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
         $row = $this->rows($index);
 
         if ($row && $field !== '*') {
-            $orow = new Row((array) $row);
+            $orow = $this->toRow((array) $row);
             // Single field.
             if (is_string($field)) {
                 return $orow->get($field);
