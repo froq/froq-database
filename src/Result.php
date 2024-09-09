@@ -7,7 +7,8 @@ namespace froq\database;
 
 use froq\database\result\{Ids, Rows, Row};
 use froq\common\interface\Arrayable;
-use PDO, PDOStatement, PDOException;
+use froq\util\mapper\Mapper;
+use PDO, PDOStatement, PDOException, Closure;
 
 /**
  * A result class, for query result stuff such as count, ids & rows.
@@ -159,7 +160,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
      */
     public function getRow(): Row|null
     {
-        return $this->rows(0, true);
+        return $this->row(0, true);
     }
 
     /**
@@ -222,8 +223,7 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
      */
     public function row(int $index, bool $init = false): array|object|null
     {
-        $row = $this->rows->item($index);
-        return $init && $row ? $this->toRow($row) : $row;
+        return $this->rows($index, $init);
     }
 
     /**
@@ -241,26 +241,6 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
         }
         $rows = $this->rows->items();
         return $init ? $this->toRows($rows) : $rows;
-    }
-
-    /**
-     * Get first row.
-     *
-     * @return array|object|null
-     */
-    public function first(): array|object|null
-    {
-        return $this->rows->first();
-    }
-
-    /**
-     * Get last row.
-     *
-     * @return array|object|null
-     */
-    public function last(): array|object|null
-    {
-        return $this->rows->last();
     }
 
     /**
@@ -287,6 +267,26 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
         }
 
         return $row;
+    }
+
+    /**
+     * Get first row.
+     *
+     * @return array|object|null
+     */
+    public function first(): array|object|null
+    {
+        return $this->rows->first();
+    }
+
+    /**
+     * Get last row.
+     *
+     * @return array|object|null
+     */
+    public function last(): array|object|null
+    {
+        return $this->rows->last();
     }
 
     /**
@@ -398,13 +398,11 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
      */
     public function mapTo(string $class, array $classArgs = []): self
     {
+        $mapper = new Mapper(null, ['cast' => true]);
         $object = new $class(...$classArgs);
-        foreach ($this->rows as $i => $row) {
-            $clone = clone $object;
-            foreach ($row as $name => $value) {
-                $clone->$name = $value;
-            }
-            $this->rows[$i] = $clone;
+
+        foreach ($this->toArray(true) as $i => $row) {
+            $this->rows[$i] = $mapper->map($row, clone $object);
         }
 
         return $this;
@@ -424,7 +422,8 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
     public function listTo(string $class, array $classArgs = []): object
     {
         $object = new $class(...$classArgs);
-        foreach ($this->rows as $row) {
+
+        foreach ($this->toArray() as $row) {
             $object[] = $row;
         }
 
@@ -432,7 +431,40 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
     }
 
     /**
-     * Get rows as given class instance.
+     * Map rows by given column key.
+     *
+     * @param  string|Closure $key
+     * @return array
+     * @throws KeyError
+     */
+    public function toMap(string|Closure $key): array
+    {
+        $ret = [];
+
+        if (is_string($key)) {
+            $row = $this->row(0, true);
+            if ($row) {
+                if (!$row->hasKey($key)) {
+                    throw new \KeyError('Absent row key %q', $key);
+                }
+
+                foreach ($this->toArray(true) as $row) {
+                    $offset = $row[$key];
+                    $ret[$offset] = $row;
+                }
+            }
+        } else {
+            foreach ($this->toArray() as $row) {
+                $offset = $key($row);
+                $ret[$offset] = $row;
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Map rows to given class instance.
      *
      * @param  string $class
      * @param  bool   $ctor
@@ -444,16 +476,15 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
         $ret = [];
 
         if (!$ctor) {
-            // When class consumes row fields as property.
-            foreach ($this->toArray() as $row) {
-                $class = new $class(...$ctorArgs);
-                foreach ($row as $name => $value) {
-                    $class->$name = $value;
-                }
-                $ret[] = $class;
+            $mapper = new Mapper(null, ['cast' => true]);
+            $object = new $class(...$ctorArgs);
+
+            // When class uses row fields as property.
+            foreach ($this->toArray(true) as $row) {
+                $ret[] = $mapper->map($row, clone $object);
             }
         } else {
-            // When class consumes row as parameter.
+            // When class uses row as parameter.
             foreach ($this->toArray() as $row) {
                 $ret[] = new $class($row, ...$ctorArgs);
             }
