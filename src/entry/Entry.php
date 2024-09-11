@@ -37,7 +37,7 @@ use State, Throwable;
  *     $this->commit();
  *
  *     // If no RETURNING supported by database system.
- *     $this->find($this->result()->id() ?? 0);
+ *     $this->find($this->id() ?? 0);
  *
  *     return $this;
  *   }
@@ -214,6 +214,16 @@ abstract class Entry implements Arrayable
         }
 
         return $this->state->action;
+    }
+
+    /**
+     * Last insert id getter (for insert queries).
+     *
+     * @return int|string|null
+     */
+    public function id(): int|string|null
+    {
+        return $this->result()?->id();
     }
 
     /**
