@@ -714,6 +714,25 @@ class Query implements \Stringable
     }
 
     /**
+     * Run a wrapped if/else procedure.
+     *
+     * @param  mixed         $what
+     * @param  callable      $callback
+     * @param  callable|null $fallback
+     * @return self
+     */
+    public function when(mixed $what, callable $callback, callable $fallback = null): self
+    {
+        if ($what) {
+            $callback($this, $what);
+        } elseif ($fallback) {
+            $fallback($this, $what);
+        }
+
+        return $this;
+    }
+
+    /**
      * Add/append a "WHERE" query into query stack.
      *
      * @param  string|array|QueryParams $where
@@ -1265,12 +1284,13 @@ class Query implements \Stringable
     /**
      * Shortcut for whereEqual() with "id" field.
      *
-     * @param  int|string $id
+     * @param  int|string|array $id
      * @return self
      */
-    public function id(int|string $id): self
+    public function id(int|string|array $id): self
     {
-        return $this->whereEqual('id', $id);
+        return is_array($id) ? $this->whereIn('id', $id)
+                             : $this->whereEqual('id', $id);
     }
 
     /**
