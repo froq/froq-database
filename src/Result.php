@@ -388,6 +388,29 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
     }
 
     /**
+     * Group mapped fields to array.
+     *
+     * @param  string|Closure $field
+     * @return array
+     */
+    public function group(string|Closure $field): array
+    {
+        return array_group($this->toArray(), $field);
+    }
+
+    /**
+     * Group mapped fields to given class.
+     *
+     * @param  string         $class
+     * @param  string|Closure $field
+     * @return object
+     */
+    public function groupTo(string $class, string|Closure $field): object
+    {
+        return new $class($this->group($field));
+    }
+
+    /**
      * Collect mapped fields to array, optionally indexing by given key/key mapper.
      *
      * @param  Closure             $rowMapper
