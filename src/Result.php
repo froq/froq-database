@@ -388,88 +388,40 @@ class Result implements Arrayable, \Countable, \IteratorAggregate, \ArrayAccess
     }
 
     /**
-     * Group mapped fields to array.
+     * Group mapped fields to an array or class.
      *
      * @param  string|Closure $field
-     * @return array
+     * @param  string|null    $class
+     * @return array|object
      */
-    public function group(string|Closure $field): array
+    public function group(string|Closure $field, string $class = null): array|object
     {
-        return array_group($this->toArray(), $field);
-    }
+        $ret = array_group($this->toArray(), $field);
 
-    /**
-     * Group mapped fields to given class.
-     *
-     * @param  string         $class
-     * @param  string|Closure $field
-     * @return object
-     */
-    public function groupTo(string $class, string|Closure $field): object
-    {
-        return new $class($this->group($field));
-    }
-
-    /**
-     * Collect mapped fields to array, optionally indexing by given key/key mapper.
-     *
-     * @param  Closure             $rowMapper
-     * @param  string|Closure|null $keyMapper
-     * @return object
-     * @throws KeyError
-     */
-    public function collect(Closure $rowMapper, string|Closure $keyMapper = null): array
-    {
-        $keys = null;
-
-        if (is_string($keyMapper)) {
-            $key = $keyMapper;
-            $row = $this->getRow(0);
-
-            if ($row) {
-                if (!$row->hasKey($key)) {
-                    throw new \KeyError('Absent row key %q', $key);
-                }
-                unset($row);
-
-                $keys = array_column($this->toArray(true), $key);
-            }
-        } elseif (is_closure($keyMapper)) {
-            $keys = array_map($keyMapper, $this->toArray());
-        }
-
-        $ret = array_map($rowMapper, $this->toArray());
-
-        if ($keys && $ret) {
-            foreach ($keys as $i => $key) {
-                if ($key === '') {
-                    throw new \KeyError('Mapped key must not be an empty string');
-                }
-                if (!is_int($key) && !is_string($key)) {
-                    throw new \KeyError('Mapped key must be int|string, %t given', $key);
-                }
-
-                $tmp[$key] = $ret[$i];
-            }
-
-            $ret = $tmp;
+        if ($class !== null) {
+            $ret = new $class($ret);
         }
 
         return $ret;
     }
 
     /**
-     * Collect mapped fields to given class, optionally indexing by given key/key mapper.
+     * Collect mapped fields to an array or class, optionally indexing by given field.
      *
-     * @param  string              $class
-     * @param  Closure             $rowMapper
-     * @param  string|Closure|null $keyMapper
-     * @return object
-     * @causes Error|KeyError
+     * @param  Closure             $mapper
+     * @param  string|Closure|null $field
+     * @param  string|null         $class
+     * @return array|object
      */
-    public function collectTo(string $class, Closure $rowMapper, string|Closure $keyMapper = null): object
+    public function collect(Closure $mapper, string|Closure $field = null, string $class = null): array|object
     {
-        return new $class($this->collect($rowMapper, $keyMapper));
+        $ret = array_collect($this->toArray(), $mapper, $field);
+
+        if ($class !== null) {
+            $ret = new $class($ret);
+        }
+
+        return $ret;
     }
 
     /**
