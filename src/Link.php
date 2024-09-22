@@ -212,7 +212,7 @@ class Link
         $options['driver'] = null;
 
         // Eg: pgsql:host=localhost;dbname=bugs ...
-        if ($driver = strbcut($options['dsn'], ':')) {
+        if ($driver = strtok($options['dsn'], ':')) {
             $options['driver'] = $driver;
         }
 

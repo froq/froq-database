@@ -67,7 +67,7 @@ class Database
 
         // Grab driver name.
         if (isset($options['dsn'])) {
-            $driver = strbcut($options['dsn'], ':');
+            $driver = strtok($options['dsn'], ':');
             $this->platform = new Platform($driver);
         }
 

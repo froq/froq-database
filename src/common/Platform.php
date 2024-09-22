@@ -16,7 +16,7 @@ namespace froq\database\common;
 class Platform
 {
     /** Platform name. */
-    private string $name;
+    public readonly string $name;
 
     /**
      * Constructor.
@@ -36,15 +36,14 @@ class Platform
     }
 
     /**
-     * Check whether this name equals given name or names.
+     * Check whether this name equals to any of given names.
      *
-     * @param  string    $name
      * @param  string ...$names
      * @return bool
      */
-    public function equals(string $name, string ...$names): bool
+    public function equals(string ...$names): bool
     {
-        return equals($this->name, $name, ...$names);
+        return equals($this->name, ...$names);
     }
 
     /**
