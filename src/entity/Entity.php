@@ -167,6 +167,22 @@ abstract class Entity implements EntityInterface
     }
 
     /**
+     * Set/get state.
+     *
+     * @param  string     $state
+     * @param  mixed|null $value
+     * @return mixed
+     */
+    public function state(string $state, mixed $value = null): mixed
+    {
+        if (func_num_args() === 2) {
+            $this->proxy->setState($state, $value);
+        }
+
+        return $this->proxy->getState($state);
+    }
+
+    /**
      * @inheritDoc froq\common\interface\Arrayable
      */
     public function toArray(bool $deep = false): array
