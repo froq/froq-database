@@ -608,8 +608,8 @@ class EntityManager
 
         if (!$ret) {
             foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
-                // Skip entity properties & non-fields (field:null or absent).
-                if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
+                // Skip non-fields (field:null or absent).
+                if (!$field = $propertyMeta->getField()) {
                     continue;
                 }
 
@@ -652,8 +652,8 @@ class EntityManager
 
         if (!$ret) {
             foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
-                // Skip entity properties & non-fields (field:null or absent).
-                if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
+                // Skip non-fields (field:null or absent).
+                if ($field = $propertyMeta->getField()) {
                     continue;
                 }
 
@@ -673,9 +673,16 @@ class EntityManager
 
         foreach ($data as $name => $value) {
             // Set present (defined/parsed) properties only.
-            if ($propertyMeta = $classMeta->getPropertyMeta($name)) {
-                $this->setPropertyValue($entity, $propertyMeta->getReflection(), $value);
+            if (!$propertyMeta = $classMeta->getPropertyMeta($name)) {
+                continue;
             }
+
+            // Skip non-fields (field:null or absent).
+            if (!$propertyMeta->isField()) {
+                continue;
+            }
+
+            $this->setPropertyValue($entity, $propertyMeta->getReflection(), $value);
         }
     }
 
@@ -807,8 +814,8 @@ class EntityManager
             $params = (array) $params;
         } else {
             foreach ($classMeta->getPropertyMetas() as $propertyMeta) {
-                // Skip entity properties & non-fields (field:null or absent).
-                if ($propertyMeta->hasEntityClass() || !($field = $propertyMeta->getField())) {
+                // Skip non-fields (field:null or absent).
+                if (!$field = $propertyMeta->getField()) {
                     continue;
                 }
 

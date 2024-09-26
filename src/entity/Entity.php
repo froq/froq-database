@@ -189,9 +189,22 @@ abstract class Entity implements EntityInterface
     {
         $data = [];
 
-        /** @var array<string> */
-        foreach ($this->child->getProperties(true) as $name) {
-            $data[$name] = $this->offsetGet($name);
+        /** @var array<froq\database\entity\meta\PropertyMeta> */
+        $propertyMetas = (array) $this->proxy->getManager()
+            ->getMeta($this->child->getName())?->getPropertyMetas();
+
+        foreach ($propertyMetas as $name => $propertyMeta) {
+            // Skip non-fields (field:null or absent).
+            if (!$propertyMeta->isField()) {
+                continue;
+            }
+
+            // Skip hidden fields (hidden:true).
+            if ($propertyMeta->isHidden()) {
+                continue;
+            }
+
+            $data[$name] = $this->getPropertyValue($propertyMeta->getReflection());
         }
 
         $deep && $data = EntityUtil::toArrayDeep($data);
@@ -236,7 +249,7 @@ abstract class Entity implements EntityInterface
     public function offsetGet(mixed $name): mixed
     {
         if ($ref = $this->getPropertyReflection($name)) {
-            return $ref->isInitialized($this) ? $ref->getValue($this) : null;
+            return $this->getPropertyValue($ref);
         }
         return null;
     }
@@ -270,7 +283,7 @@ abstract class Entity implements EntityInterface
     }
 
     /**
-     * Get a property reflection defined in subclass entity.
+     * Get a property reflection if defined in subclass entity and available.
      */
     private function getPropertyReflection(string $name): ReflectionProperty|null
     {
@@ -313,5 +326,13 @@ abstract class Entity implements EntityInterface
         $this->proxy->setRef($field, false);
 
         return null;
+    }
+
+    /**
+     * Get a property value if defined in subclass entity and available.
+     */
+    private function getPropertyValue(ReflectionProperty $ref): mixed
+    {
+        return $ref->isInitialized($this) ? $ref->getValue($this) : null;
     }
 }

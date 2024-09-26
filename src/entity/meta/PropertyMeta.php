@@ -28,6 +28,16 @@ class PropertyMeta extends Meta
     }
 
     /**
+     * Check whether property is a field.
+     *
+     * @return bool
+     */
+    public function isField(): bool
+    {
+        return $this->hasDataItem('field');
+    }
+
+    /**
      * Get field name.
      *
      * @return string|null
@@ -75,26 +85,6 @@ class PropertyMeta extends Meta
     public function getValidationDefault(): mixed
     {
         return $this->getDataItem('validation.default');
-    }
-
-    /**
-     * Check whether property has entity class.
-     *
-     * @return bool
-     */
-    public function hasEntityClass(): bool
-    {
-        return $this->hasDataItem('entity');
-    }
-
-    /**
-     * Check whether property has entity list class.
-     *
-     * @return bool
-     */
-    public function hasEntityListClass(): bool
-    {
-        return $this->hasDataItem('entityList');
     }
 
     /**
