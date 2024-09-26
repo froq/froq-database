@@ -191,14 +191,9 @@ abstract class Entity implements EntityInterface
 
         /** @var array<froq\database\entity\meta\PropertyMeta> */
         $propertyMetas = (array) $this->proxy->getManager()
-            ->getMeta($this->child->getName())?->getPropertyMetas();
+            ->getMeta($this->child->name)?->getPropertyMetas();
 
         foreach ($propertyMetas as $name => $propertyMeta) {
-            // Skip non-fields (field:null or absent).
-            if (!$propertyMeta->isField()) {
-                continue;
-            }
-
             // Skip hidden fields (hidden:true).
             if ($propertyMeta->isHidden()) {
                 continue;
@@ -287,7 +282,7 @@ abstract class Entity implements EntityInterface
      */
     private function getPropertyReflection(string $name): ReflectionProperty|null
     {
-        $class = $this->child->getName();
+        $class = $this->child->name;
         $field = $class . '.' . $name;
 
         // Try cached one if exists.
@@ -331,8 +326,19 @@ abstract class Entity implements EntityInterface
     /**
      * Get a property value if defined in subclass entity and available.
      */
-    private function getPropertyValue(ReflectionProperty $ref): mixed
+    private function getPropertyValue(ReflectionProperty $property): mixed
     {
-        return $ref->isInitialized($this) ? $ref->getValue($this) : null;
+        $entity = $this->child->object;
+
+        // If property-specific getter is available.
+        if (method_exists($entity, $method = 'get' . $property->name)) {
+            return $entity->$method();
+        }
+
+        if ($property->isInitialized($entity)) {
+            return $property->getValue($entity);
+        }
+
+        return null;
     }
 }

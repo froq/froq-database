@@ -50,6 +50,7 @@ class EntityUtil extends \StaticClass
                         $item[$i] = $entity->toObject(true);
                     }
                 }
+                $item = $item->toArray();
             }
         }
 
