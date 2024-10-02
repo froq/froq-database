@@ -1615,24 +1615,24 @@ class Query implements \Stringable
     /**
      * Init a `Sql` instance for a raw query/clause/statement.
      *
-     * @param  string     $input
+     * @param  string     $sql
      * @param  array|null $params
      * @return froq\database\sql\Sql
      */
-    public function sql(string $input, array $params = null): Sql
+    public function sql(string $sql, array $params = null): Sql
     {
-        return new Sql($this->prepare($input, $params));
+        return new Sql($this->prepare($sql, $params));
     }
 
     /**
      * Init a `Name` instance for an identifier (table, field etc).
      *
-     * @param  string $input
+     * @param  string $name
      * @return froq\database\sql\Name
      */
-    public function name(string $input): Name
+    public function name(string $name): Name
     {
-        return new Name($input);
+        return new Name($name);
     }
 
     /**
@@ -2299,10 +2299,7 @@ class Query implements \Stringable
 
         [$start, $search, $end] = array_pad($params, 3, '');
 
-        $search = $this->db->escapeLikeString($search, false);
-        $search = $this->db->quote($start . $search . $end);
-
-        return $search;
+        return $this->db->escapeLikeString($start . $search . $end);
     }
 
     /**

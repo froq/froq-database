@@ -738,7 +738,7 @@ class Database
 
         if (is_array($input) && $format !== '?a') {
             return array_map(
-                fn(mixed $input): mixed => $this->escape($input, $format),
+                fn($item) => $this->escape($item, $format),
                 $input
             );
         }
@@ -755,8 +755,8 @@ class Database
                 ($input instanceof \DateTimeInterface) => $this->escapeString($input->format('c')),
 
                 default => throw new DatabaseException(
-                    'Invalid input object %q [valids: %A]',
-                    [$input::class, [Query::class, Sql::class, Name::class, 'Stringable', 'DateTimeInterface']]
+                    'Invalid input object %T [valids: %A]',
+                    [$input, [Sql::class, Name::class, Query::class, 'Stringable', 'DateTimeInterface']]
                 )
             };
         }
@@ -820,7 +820,23 @@ class Database
      */
     public function escapeLikeString(string $input, bool $wrap = true): string
     {
-        return $this->escapeString($input, $wrap, '%_');
+        $start = $end = null;
+
+        if (str_starts_with($input, '%')) {
+            [$start, $input] = ['%', substr($input, 1)];
+        }
+        if (str_ends_with($input, '%')) {
+            [$end, $input] = ['%', substr($input, 0, -1)];
+        }
+
+        $search = $this->escapeString($input, true, '%_');
+
+        // Strip wrapper quotes.
+        if (strlen($search) >= 2) {
+            $search = substr($search, 1, -1);
+        }
+
+        return $wrap ? "'" . $start . $search . $end . "'" : $start . $search . $end;
     }
 
     /**
@@ -989,17 +1005,26 @@ class Database
     }
 
     /**
-     * Init a `Sql` object with/without given params to prepare.
+     * Init an `Sql` object.
      *
-     * @param  string     $input
+     * @param  string     $content
      * @param  array|null $params
      * @return froq\database\sql\Sql
      */
-    public function initSql(string $input, array $params = null): Sql
+    public function initSql(string $content, array $params = null): Sql
     {
-        $params && $input = $this->prepare($input, $params);
+        return new Sql($params ? $this->prepare($content, $params) : $content);
+    }
 
-        return new Sql($input);
+    /**
+     * Init a `Name` object.
+     *
+     * @param  string $name
+     * @return froq\database\sql\Name
+     */
+    public function initName(string $name): Name
+    {
+        return new Name($name);
     }
 
     /**
