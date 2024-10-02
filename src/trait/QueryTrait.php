@@ -263,54 +263,6 @@ trait QueryTrait
     }
 
     /**
-     * @alias whereEqual()
-     */
-    public function eq(...$args)
-    {
-        return $this->whereEqual(...$args);
-    }
-
-    /**
-     * @alias whereNotEqual()
-     */
-    public function neq(...$args)
-    {
-        return $this->whereNotEqual(...$args);
-    }
-
-    /**
-     * @alias whereLessThan()
-     */
-    public function lt(...$args)
-    {
-        return $this->whereLessThan(...$args);
-    }
-
-    /**
-     * @alias whereLessThanEqual()
-     */
-    public function lte(...$args)
-    {
-        return $this->whereLessThanEqual(...$args);
-    }
-
-    /**
-     * @alias whereGreaterThan()
-     */
-    public function gt(...$args)
-    {
-        return $this->whereGreaterThan(...$args);
-    }
-
-    /**
-     * @alias whereGreaterThanEqual()
-     */
-    public function gte(...$args)
-    {
-        return $this->whereGreaterThanEqual(...$args);
-    }
-
-    /**
      * @alias selectMin()
      * @since 4.4
      */
